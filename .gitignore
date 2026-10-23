@@ -16,20 +16,14 @@ data/raw/
 data/cache/
 *.pdf
 
-# Screenshots and images: never committed to this repo (locked-decisions P0.2)
+# Screenshots and images: never committed to this repo (locked-decisions P0.4).
+# Only these formats are blocked; the project's own .svg and .ico files are allowed.
 *.png
+*.PNG
 *.jpg
+*.JPG
 *.jpeg
-*.gif
-*.webp
-*.heic
-*.heif
-*.bmp
-*.tif
-*.tiff
-*.svg
-*.ico
-*.avif
+*.JPEG
 
 # Frontend
 node_modules/

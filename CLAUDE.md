@@ -15,7 +15,7 @@ More, each from the brief:
 - **Never read or edit `.env`.** `.claude/settings.json` denies it. Check secrets with `uv run python scripts/check_env.py [--phase N]`, which prints only set / empty / missing / commented out. Ask the user to fill `.env` before the first step that needs a secret.
 - **BUILD_LOG.md is append-only.** Entry format in brief §10.2. The DECISION line records only the user's judgement, quoted where useful. Run `date` right before writing the heading, and commit right after appending.
 - **Git:** commit as you go; never squash, rebase, amend pushed commits, or force-push; tag `phase-<n>-done` at each phase end; stays local until the user says to push; never commit a session transcript.
-- **No screenshots or images are ever committed** (locked-decisions P0.2). `.gitignore` excludes image formats; don't force-add one.
+- **No `.png`, `.jpg` or `.jpeg` file is ever committed** (locked-decisions P0.4). `.gitignore` blocks them; don't force-add one. The project's own `.svg` and `.ico` files are allowed.
 - **No absolute local paths** in any committed file. Use repo-relative paths or `~`.
 - **Counts come from scripts**, never by eye. **Timeouts and retries name their basis** (a measurement, or "placeholder until measured"). A paid request is never retried automatically.
 - **Restate before acting** when an instruction reads two ways (brief §0). Stop and ask in every case in brief §12.
@@ -33,6 +33,7 @@ More, each from the brief:
 - `BUILD_LOG.md`: the raw record, append-only.
 - `docs/design/locked-decisions.md`: every decision after the brief.
 - `scripts/check_env.py`: reports which secrets are set.
+- `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
 - `.env.example`: the variable names; the user creates `.env`.
 
 ## Environment quirks (from the previous build)
@@ -40,7 +41,8 @@ More, each from the brief:
 - `uv run uvicorn` stalled in the preview tool: launch `.venv/bin/uvicorn` directly.
 - `preview_start` failed with `EPERM`: serve from a background shell instead.
 - The shell is **zsh, which does not split an unquoted variable.** Write `gcloud` flags out in full; never pass them through a variable.
-- Claude Code transcripts live outside the repo, under `~/.claude/projects/`. `cleanupPeriodDays` is not set, so the default cleanup (about 30 days) applies; the user decides whether to change it.
+- Claude Code transcripts live outside the repo, under `~/.claude/projects/`. `cleanupPeriodDays` stays unset at the user's direction (P0.5); don't change it.
+- **CourtListener limits for the user's EDU account: 20 requests a minute, 1,000 an hour** (stated by the user, Oct 23, 2026). Pace below both, serially, and cache every raw response so nothing is fetched twice.
 
 ## Two sessions in one checkout (from Phase 4, locked-decisions P0.3)
 
