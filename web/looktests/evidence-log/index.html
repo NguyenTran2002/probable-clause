@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probable Clause, look 3: Evidence log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..800;1,62..125,400..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<p class="sample-banner">Look test 3 of 3: Evidence log. Every case, passage, date and result here is sample content, and all notice wording is placeholder. <a href="states.html">See the states</a> <a href="../index.html">All looks</a></p>
+
+<header class="masthead">
+  <h1 class="wordmark">Probable C<span class="l">l</span>ause</h1>
+  <p class="what">Supreme Court passages on the Fourth Amendment and digital technology, found and shown verbatim.</p>
+  <p class="affil">Independent project. Not affiliated with Anthropic.</p>
+</header>
+
+<section class="terms" aria-label="What this is and is not">
+  <dl>
+    <div><dt>Research, not legal advice</dt><dd>This finds and shows passages from Supreme Court opinions and describes what the Court held. It does not apply them to your situation.</dd></div>
+    <div><dt>Not a citator, not exhaustive</dt><dd>It does not tell you whether a case is still good law, and a search can miss relevant passages.</dd></div>
+    <div><dt>You are using AI</dt><dd>Answers are written by Claude, Anthropic's model, through the Claude API. Check every factual assertion against the opinions.</dd></div>
+    <div><dt>Coverage</dt><dd>Corpus covers decisions through June 30, 2026, pulled Oct 23, 2026.</dd></div>
+  </dl>
+</section>
+
+<div class="layout">
+
+  <section id="log" aria-label="Research log">
+
+    <form class="ask sheet" action="#">
+      <label for="q">Your question</label>
+      <textarea id="q" name="q">Sample question: is reading a phone's stored location history a Fourth Amendment search?</textarea>
+      <div class="actions">
+        <button type="button">Research</button>
+        <a href="states.html#replay">Watch a recorded run instead</a>
+      </div>
+    </form>
+
+    <div class="sec-head">
+      <h2>Log</h2>
+      <p>8 steps, 52 s</p>
+    </div>
+
+    <ol class="log sheet">
+      <li>
+        <time class="num">00:03</time>
+        <div>
+          <h3>Searched the corpus</h3>
+          <p class="query">“acquiring records held by a third party as a search”</p>
+          <p class="tool">search_corpus, 4 passages returned</p>
+          <p class="refs">Logged as <a href="#p-01">P-01</a><a href="#p-02">P-02</a><a href="#p-03">P-03</a><a href="#p-04">P-04</a></p>
+        </div>
+      </li>
+      <li>
+        <time class="num">00:11</time>
+        <div>
+          <h3>Reviewed 4 exhibits</h3>
+          <p class="refs"><span class="k">Kept</span> <a href="#p-01">P-01</a><a href="#p-02">P-02</a><a href="#p-03">P-03</a> <span class="d">Discarded</span> <a href="#p-04">P-04</a></p>
+          <p class="tool">review_passages. Each reason is stamped on its exhibit.</p>
+        </div>
+      </li>
+      <li>
+        <time class="num">00:14</time>
+        <div>
+          <h3>Searched the corpus</h3>
+          <p class="query">“stored location history and the warrant requirement”</p>
+          <p class="tool">search_corpus, 3 passages returned</p>
+          <p class="refs">Logged as <a href="#p-05">P-05</a><a href="#p-06">P-06</a><a href="#p-07">P-07</a></p>
+        </div>
+      </li>
+      <li>
+        <time class="num">00:21</time>
+        <div>
+          <h3>Reviewed 3 exhibits</h3>
+          <p class="refs"><span class="k">Kept</span> <a href="#p-05">P-05</a> <span class="d">Discarded</span> <a href="#p-06">P-06</a><a href="#p-07">P-07</a></p>
+          <p class="tool">review_passages</p>
+        </div>
+      </li>
+      <li class="rejected">
+        <time class="num">00:24</time>
+        <div>
+          <h3>Tried to submit the answer: not accepted</h3>
+          <p class="tool">submit_answer, with P-01, P-02, P-03, P-05</p>
+          <p class="result">Not accepted: no update check has been run. Run one, or explain why it isn't needed, then resubmit.</p>
+          <p class="tool">The server returned this as the tool's result. The attempt stays in the log.</p>
+        </div>
+      </li>
+      <li>
+        <time class="num">00:31</time>
+        <div>
+          <h3>Checked the web for later developments</h3>
+          <p class="tool">search_web_updates, 3 sources returned. Every parameter Claude chose:</p>
+          <dl class="params">
+            <dt>query</dt><dd>Supreme Court stored location data Fourth Amendment</dd>
+            <dt>published after</dt><dd>2026-06-30</dd>
+            <dt>published before</dt><dd>not set</dd>
+            <dt>category</dt><dd>news</dd>
+            <dt>include domains</dt><dd>not set</dd>
+            <dt>exclude domains</dt><dd>not set</dd>
+            <dt>search type</dt><dd>auto</dd>
+            <dt>results</dt><dd>8 (the server allows up to 10)</dd>
+          </dl>
+        </div>
+      </li>
+      <li>
+        <time class="num">00:38</time>
+        <div>
+          <h3>Submitted the answer</h3>
+          <p class="tool">submit_answer, with P-01, P-02, P-03, P-05</p>
+        </div>
+      </li>
+      <li>
+        <time class="num">00:52</time>
+        <div>
+          <h3>Wrote the answer from the 4 kept exhibits</h3>
+          <p class="tool">No tools. Only kept exhibits can be cited.</p>
+        </div>
+      </li>
+    </ol>
+
+    <section class="outside" aria-labelledby="update-h">
+      <h2 id="update-h">Update check</h2>
+      <p class="label">Update check, a convenience: searched the web for material published since June 30, 2026. Finding nothing does not mean nothing has changed.</p>
+      <p class="synth-tag">Claude's summary of what the search found</p>
+      <p class="synth">[Sample summary.] Two sources published after the corpus's coverage date mention a pending petition on a related question about location data. None reports a new Supreme Court decision on this question.</p>
+      <ul>
+        <li><a href="https://example.com/sample-petition">Sample article: a petition on location data reaches the Court</a><span class="pub">example.com, published August 14, 2026</span></li>
+        <li><a href="https://example.org/sample-explainer">Sample explainer: what the newest location-data case left open</a><span class="pub">example.org, published July 2, 2026</span></li>
+        <li><a href="https://example.net/sample-docket">Sample docket note</a><span class="pub">example.net, published September 30, 2026</span></li>
+      </ul>
+      <p class="linkonly">Sources are linked, not quoted, and are not exhibits: web results never become cited evidence in the answer. Parameters are in the log at 00:31.</p>
+    </section>
+
+    <section class="findings sheet" aria-labelledby="answer-h">
+      <div class="sec-head">
+        <h2 id="answer-h">Answer</h2>
+        <p>Cites 4 kept exhibits</p>
+      </div>
+      <p class="byline">Sample answer about fictional cases, written by Claude from the kept exhibits.</p>
+      <div class="prose">
+        <p>In <i>Exemplar v. United States</i> (1967), the majority set out the test the later cases apply.<a class="ex" href="#p-01">P-01</a> The dissent in that case read the test more narrowly.<a class="ex" href="#p-02">P-02</a></p>
+        <p><i>Placeholder v. State of Example</i> (1979) held that records a person hands to a third party fall outside that protection.<a class="ex" href="#p-03">P-03</a> <i>Illustration v. United States</i> (2026) treated the acquisition of stored location history as a search, narrowing the earlier rule for this kind of data.<a class="ex" href="#p-05">P-05</a></p>
+        <p class="synth"><span class="synth-label">Claude's synthesis: no exhibit behind it</span>Read in date order, the line runs from a broad test, to a third-party rule, to a narrower view of that rule for location data. Some discussions also point to <span class="flagged"><i>Phantom v. United States</i></span>.<span class="flag-note">Case name not found in the corpus. It may be misnamed or outside the corpus; check it before relying on it.</span></p>
+        <p class="closing">This describes what the Court held. It does not say how the holdings apply to anyone's situation.</p>
+        <p class="key">A tag after a sentence links to the kept exhibit it rests on. The ruled, labelled block is Claude's own synthesis and has no source.</p>
+      </div>
+    </section>
+
+  </section>
+
+  <aside id="exhibits" aria-label="Exhibits: passages considered">
+    <div class="exhibits-bar">
+      <span class="count num">Exhibits: 7 considered, <span class="k">4 kept</span></span>
+      <a class="exhibits-open" href="#exhibits">Open</a>
+      <a class="exhibits-close" href="#log">Close</a>
+    </div>
+    <div class="sec-head">
+      <h2>Exhibits</h2>
+      <p class="num">7 considered, 4 kept</p>
+    </div>
+    <ol class="exhibit-list">
+
+      <li class="tag kept" id="p-01">
+        <div class="head"><p class="exno">P-01</p><span class="stamp">Kept</span></div>
+        <p class="reason">States the test the later cases apply.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>Exemplar v. United States</i></dd>
+          <dt>Citation</dt><dd>000 U.S. 101 (1967)</dd>
+          <dt>Decided</dt><dd class="num">December 18, 1967</dd>
+          <dt>Opinion</dt><dd>Majority, by Justice Alder</dd>
+          <dt>Joined by</dt><dd>Justices Birch, Cedar, Dogwood, Elm, Fir, Gum</dd>
+          <dt>Found by</dt><dd>“acquiring records held by a third party as a search”</dd>
+        </dl>
+        <p class="text">[Sample passage. This paragraph stands in for majority-opinion text about when acquiring information is a search. Phase 1 supplies the real, verbatim paragraph.] <span class="pin">000 U.S., at 106</span></p>
+        <p class="guarantee">This passage appears verbatim in this opinion.</p>
+      </li>
+
+      <li class="tag kept" id="p-02">
+        <div class="head"><p class="exno">P-02</p><span class="stamp">Kept</span></div>
+        <p class="reason">Shows where the opinions disagree on the test's reach.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>Exemplar v. United States</i></dd>
+          <dt>Citation</dt><dd>000 U.S. 101 (1967)</dd>
+          <dt>Decided</dt><dd class="num">December 18, 1967</dd>
+          <dt>Opinion</dt><dd>Dissent, by Justice Hazel</dd>
+          <dt>Joined by</dt><dd>No other Justice</dd>
+          <dt>Found by</dt><dd>“acquiring records held by a third party as a search”</dd>
+        </dl>
+        <p class="text">[Sample passage. This paragraph stands in for dissent text reading the test more narrowly.] <span class="pin">000 U.S., at 112</span></p>
+        <p class="guarantee">This passage appears verbatim in this opinion.</p>
+      </li>
+
+      <li class="tag kept" id="p-03">
+        <div class="head"><p class="exno">P-03</p><span class="stamp">Kept</span></div>
+        <p class="reason">The third-party records rule the newest case narrows.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>Placeholder v. State of Example</i></dd>
+          <dt>Citation</dt><dd>000 U.S. 202 (1979)</dd>
+          <dt>Decided</dt><dd class="num">June 20, 1979</dd>
+          <dt>Opinion</dt><dd>Majority, by Justice Ironwood</dd>
+          <dt>Joined by</dt><dd>Justices Juniper, Katsura, Larch, Maple, Nutmeg</dd>
+          <dt>Found by</dt><dd>“acquiring records held by a third party as a search”</dd>
+        </dl>
+        <p class="text">[Sample passage. This paragraph stands in for majority-opinion text on records a person hands to a third party.] <span class="pin">000 U.S., at 209</span></p>
+        <p class="guarantee">This passage appears verbatim in this opinion.</p>
+      </li>
+
+      <li class="tag discarded" id="p-04">
+        <div class="head"><p class="exno">P-04</p><span class="stamp">Discarded</span></div>
+        <p class="reason">About a tracker fixed to a car, not stored records.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>United States v. Specimen</i></dd>
+          <dt>Citation</dt><dd>000 U.S. 303 (2012)</dd>
+          <dt>Decided</dt><dd class="num">January 23, 2012</dd>
+          <dt>Opinion</dt><dd>Plurality, by Justice Oak</dd>
+          <dt>Joined by</dt><dd>Justices Pine, Quince, Rowan</dd>
+          <dt>Found by</dt><dd>“acquiring records held by a third party as a search”</dd>
+        </dl>
+        <p class="text">[Sample passage. This paragraph stands in for plurality-opinion text about a device attached to a vehicle.] <span class="pin">000 U.S., at 307</span></p>
+        <p class="guarantee">This passage appears verbatim in this opinion.</p>
+      </li>
+
+      <li class="tag kept" id="p-05">
+        <div class="head"><p class="exno">P-05</p><span class="stamp">Kept</span></div>
+        <p class="reason">Addresses stored location history directly; the newest case in the corpus.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>Illustration v. United States</i></dd>
+          <dt>Citation</dt><dd>000 U.S. ___ (2026)</dd>
+          <dt>Decided</dt><dd class="num">June 25, 2026</dd>
+          <dt>Opinion</dt><dd>Majority, by Justice Willow</dd>
+          <dt>Joined by</dt><dd>Justices Aspen, Beech, Cypress, Ebony, Hawthorn</dd>
+          <dt>Found by</dt><dd>“stored location history and the warrant requirement”</dd>
+        </dl>
+        <p class="text">[Sample passage. This paragraph stands in for majority-opinion text holding that acquiring stored location history is a search.] <span class="pin">slip op., at 9</span></p>
+        <p class="guarantee">This passage appears verbatim in this opinion.</p>
+        <p class="slip">Slip opinion: not yet final in the U.S. Reports, and subject to formal revision.</p>
+      </li>
+
+      <li class="tag discarded syllabus" id="p-06">
+        <div class="head"><p class="exno">P-06</p><span class="stamp">Discarded</span></div>
+        <p class="reason">The Reporter's summary, not the Court's words; P-05 makes the point in the opinion.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>Illustration v. United States</i></dd>
+          <dt>Citation</dt><dd>000 U.S. ___ (2026)</dd>
+          <dt>Decided</dt><dd class="num">June 25, 2026</dd>
+          <dt>Opinion</dt><dd>Syllabus, by the Reporter of Decisions</dd>
+          <dt>Found by</dt><dd>“stored location history and the warrant requirement”</dd>
+        </dl>
+        <p class="syl-label">Syllabus. Prepared by the Reporter of Decisions; it constitutes no part of the opinion of the Court.</p>
+        <p class="text">[Sample syllabus text. This stands in for the Reporter's summary of the holding.]</p>
+        <p class="guarantee">This passage appears verbatim in this opinion's syllabus.</p>
+        <p class="slip">Slip opinion: not yet final in the U.S. Reports, and subject to formal revision.</p>
+      </li>
+
+      <li class="tag discarded" id="p-07">
+        <div class="head"><p class="exno">P-07</p><span class="stamp">Discarded</span></div>
+        <p class="reason">A concurrence; the newer majority opinion (P-05) speaks to the question directly.</p>
+        <dl class="fields">
+          <dt>Case</dt><dd><i>United States v. Specimen</i></dd>
+          <dt>Citation</dt><dd>000 U.S. 303 (2012)</dd>
+          <dt>Decided</dt><dd class="num">January 23, 2012</dd>
+          <dt>Opinion</dt><dd>Concurrence, by Justice Sycamore</dd>
+          <dt>Joined by</dt><dd>Justice Tamarind</dd>
+          <dt>Found by</dt><dd>“stored location history and the warrant requirement”</dd>
+        </dl>
+        <p class="text">[Sample passage. This paragraph stands in for concurrence text about long-term location tracking.] <span class="pin">000 U.S., at 318</span></p>
+        <p class="guarantee">This passage appears verbatim in this opinion.</p>
+      </li>
+
+    </ol>
+  </aside>
+
+</div>
+
+<footer class="colophon">
+  <p>Opinion text comes from the U.S. Reports and Supreme Court opinions, via CourtListener, from Free Law Project. Free Law Project did not produce, review or endorse this analysis.</p>
+  <p>The text is normalised from the official opinions and is unofficial. The official text is the U.S. Reports.</p>
+  <p>Answers are written by Claude, Anthropic's model, through the Claude API. Independent project. Not affiliated with Anthropic.</p>
+  <p>The steps of each live run, including your question, are kept for about a day so a dropped connection can resume, then deleted.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,394 @@
+/* Look 2: Cover stock. Supreme Court Rule 33 gives each kind of brief a
+   cover colour. Here each colour marks one kind of text on the page, and
+   only that: kept and discarded are told apart by shape and words. */
+
+:root {
+  color-scheme: light;
+  --paper: #ffffff;
+  --ink: #1e2732;
+  --ink-soft: #55606c;
+  --line: #c4c9cf;
+
+  --stock-white: #ffffff;    /* petition: the question */
+  --stock-blue: #cfe0f1;     /* merits brief, light blue: opinion text */
+  --stock-tan: #e2d3b3;      /* tan: the Reporter's syllabus */
+  --stock-yellow: #f6e8a6;   /* reply, yellow: what came after (update check) */
+  --stock-green: #d6eacb;    /* amicus, neither party, light green: Claude's synthesis */
+  --stock-orange: #f4b97c;   /* brief in opposition, orange: not accepted */
+  --stock-red: #f3cbc5;      /* light red: name not found */
+  --stock-gray: #dfe2e5;     /* United States, gray: our notices */
+  --stock-darkgreen: #2c5d3f;/* amicus for respondent, dark green: the "l", actions */
+
+  --sans: "Public Sans", system-ui, sans-serif;
+  --serif: "Source Serif 4", Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--stock-darkgreen); text-underline-offset: 0.15em; }
+a:focus-visible, button:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sample-banner {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.85rem;
+}
+.sample-banner a { color: #fff; margin-left: 0.75rem; white-space: nowrap; }
+
+/* Masthead */
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: 1.75rem 1rem 1.25rem;
+}
+.wordmark {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.wordmark .l {
+  color: var(--stock-darkgreen);
+}
+.masthead .what { margin: 0.5rem 0 0; color: var(--ink-soft); max-width: 34rem; }
+.masthead .affil { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+
+/* Notices on gray stock */
+.notices {
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+.notices .stock {
+  background: var(--stock-gray);
+  padding: 1rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 0.75rem 2rem;
+  font-size: 0.92rem;
+}
+.notices p { margin: 0; }
+.notices strong { font-weight: 700; }
+
+/* Legend: what each colour means */
+.legend {
+  max-width: 82rem;
+  margin: 1rem auto 0;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.legend ul {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+}
+.legend li { display: flex; align-items: center; gap: 0.4rem; color: var(--ink); }
+.swatch {
+  display: inline-block;
+  width: 1.4rem;
+  height: 0.9rem;
+  border: 1px solid rgba(30, 39, 50, 0.25);
+}
+.sw-blue { background: var(--stock-blue); }
+.sw-tan { background: var(--stock-tan); }
+.sw-yellow { background: var(--stock-yellow); }
+.sw-green { background: var(--stock-green); }
+.sw-orange { background: var(--stock-orange); }
+.sw-red { background: var(--stock-red); }
+.legend .basis { margin: 0.35rem 0 0; }
+
+/* Two columns */
+.layout {
+  max-width: 82rem;
+  margin: 1.5rem auto 0;
+  padding: 0 1rem 3rem;
+}
+.tabs { display: none; }
+
+.pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 0.35rem;
+  margin: 0 0 1rem;
+}
+.pane-head h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+.pane-head p { margin: 0; font-size: 0.88rem; color: var(--ink-soft); }
+
+/* Question box: white stock, like a petition */
+.ask {
+  border: 2px solid var(--ink);
+  padding: 1rem;
+  margin-bottom: 1.75rem;
+}
+.ask label { display: block; font-weight: 700; margin-bottom: 0.4rem; }
+.ask textarea {
+  display: block;
+  width: 100%;
+  min-height: 4.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  resize: vertical;
+}
+.ask .actions { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; margin-top: 0.75rem; }
+.ask button {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.55rem 1.4rem;
+  background: var(--stock-darkgreen);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+}
+
+/* Steps */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps > li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0 0.5rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.steps > li::before {
+  content: counter(step);
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.steps h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.steps p { margin: 0.2rem 0 0; }
+.steps .query { font-family: var(--serif); font-size: 1.05rem; }
+.steps .tool { font-size: 0.85rem; color: var(--ink-soft); }
+.steps .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+.chip {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--stock-blue);
+  color: var(--ink);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.chip.out { border: 1px dashed var(--ink); padding: 0 0.4rem; font-weight: 400; }
+.chip.syl { background: var(--stock-tan); }
+
+.steps > li.rejected .body {
+  background: var(--stock-orange);
+  padding: 0.6rem 0.75rem;
+}
+.steps > li.rejected .result { font-weight: 600; }
+
+.params {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.15rem 1rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+}
+.params dt { color: var(--ink-soft); }
+.params dd { margin: 0; overflow-wrap: anywhere; font-weight: 600; }
+
+/* Update check: yellow stock */
+.update {
+  background: var(--stock-yellow);
+  padding: 1.1rem 1.25rem 1.25rem;
+  margin-top: 1.75rem;
+}
+.update h2 { margin: 0 0 0.4rem; font-size: 1.15rem; font-weight: 800; }
+.update .label { margin: 0 0 0.8rem; font-weight: 600; }
+.update .synth-tag { margin: 0; font-size: 0.82rem; color: var(--ink-soft); }
+.update .synth { margin: 0.2rem 0 0.8rem; }
+.update ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(30,39,50,0.25); }
+.update li { padding: 0.5rem 0; border-bottom: 1px solid rgba(30,39,50,0.25); }
+.update li a { font-weight: 600; color: var(--ink); }
+.update li .pub { display: block; font-size: 0.82rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+.update .linkonly { margin: 0.6rem 0 0; font-size: 0.85rem; }
+.update .params { margin-top: 0.75rem; }
+
+/* Answer */
+.answer { margin-top: 2rem; }
+.answer .byline { margin: 0 0 1rem; font-size: 0.88rem; color: var(--ink-soft); }
+.answer .prose {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  line-height: 1.65;
+  max-width: 40rem;
+}
+.answer .prose p { margin: 0 0 1rem; }
+.answer .chip { font-family: var(--sans); vertical-align: 0.15em; margin-left: 0.15rem; }
+.answer .synth {
+  background: var(--stock-green);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.1rem 0.25rem;
+}
+.answer .flagged {
+  background: var(--stock-red);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.05rem 0.2rem;
+  outline: 2px solid #b4483b;
+}
+.answer .flag-note {
+  display: block;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--stock-red);
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+.answer .closing { font-family: var(--sans); font-size: 0.95rem; color: var(--ink-soft); }
+.answer .key { font-family: var(--sans); font-size: 0.85rem; color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 0.6rem; }
+
+/* Passages panel */
+.passages { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.85rem; }
+.passage {
+  background: var(--stock-blue);
+  padding: 0.85rem 1rem 0.9rem;
+  border-left: 6px solid var(--ink);
+  font-size: 0.9rem;
+}
+.passage.syllabus { background: var(--stock-tan); }
+/* Discarded keeps its stock colour (it is still opinion or syllabus text);
+   the solid bar becomes a dashed one and the mark goes hollow. */
+.passage.discarded { border-left: 6px dashed var(--ink-soft); }
+.passage.discarded .text, .passage.discarded .case { color: var(--ink-soft); }
+.passage .verdict { display: flex; flex-wrap: wrap; gap: 0.2rem 0.6rem; align-items: baseline; margin: 0 0 0.45rem; }
+.passage .mark { font-weight: 800; }
+.passage .mark::before { content: "\25A0\00a0"; }
+.passage.discarded .mark::before { content: "\25A1\00a0"; }
+.passage .pid { font-size: 0.8rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.passage .reason { flex-basis: 100%; }
+.passage .case { margin: 0; font-weight: 700; font-size: 0.95rem; }
+.passage .meta { margin: 0.15rem 0 0.5rem; color: var(--ink-soft); }
+.passage .text {
+  margin: 0.5rem 0;
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+.passage .pin { font-family: var(--sans); font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
+.passage .syl-label { margin: 0.35rem 0; font-weight: 600; }
+.passage .guarantee { margin: 0.4rem 0 0; font-weight: 600; }
+.passage .slip { margin: 0.25rem 0 0; font-style: italic; }
+.passage .found { margin: 0.25rem 0 0; color: var(--ink-soft); }
+.passage:target { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+.colophon {
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+  border-top: 3px solid var(--ink);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 0.5rem 2rem;
+}
+.colophon p { margin: 0; }
+
+/* States page */
+.states { max-width: 44rem; margin: 1.5rem auto 0; padding: 0 1rem 3rem; display: grid; gap: 1.25rem; }
+.state h2 { margin: 0 0 0.35rem; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.state .card { padding: 1rem 1.15rem; border: 2px solid var(--ink); }
+.state .card.gray { background: var(--stock-gray); border-color: transparent; }
+.state .card.orange { background: var(--stock-orange); border-color: transparent; }
+.state .card.yellow { background: var(--stock-yellow); border-color: transparent; }
+.state .say { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.state .sub { margin: 0.3rem 0 0; }
+.state .elapsed { font-variant-numeric: tabular-nums; }
+
+@media (min-width: 1000px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+    gap: 2.5rem;
+    align-items: start;
+  }
+  #passages {
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 0.25rem 0.25rem 1rem 0;
+  }
+}
+
+/* Phone and small tablets: one pane at a time, switched by a sticky tab bar.
+   No script: the tabs are links, and :target picks the pane. A passage link
+   in the answer opens the Passages pane on that passage. */
+@media (max-width: 999px) {
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: 0 -1rem 1rem;
+    background: var(--paper);
+    border-bottom: 3px solid var(--ink);
+  }
+  .tabs a {
+    display: block;
+    padding: 0.7rem 0.5rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .tabs .count { font-weight: 400; font-size: 0.85rem; }
+  .tab-research { background: var(--ink); color: #fff !important; }
+
+  #passages { display: none; }
+  .layout:has(#passages:target, #passages :target) #passages { display: block; }
+  .layout:has(#passages:target, #passages :target) #research { display: none; }
+  .layout:has(#passages:target, #passages :target) .tab-research { background: transparent; color: var(--ink-soft) !important; }
+  .layout:has(#passages:target, #passages :target) .tab-passages { background: var(--ink); color: #fff; }
+
+  #research, #passages { scroll-margin-top: 3.5rem; }
+  .passage { scroll-margin-top: 3.75rem; }
+  .pane-head { margin-top: 0.25rem; }
+}
+
+@media (max-width: 480px) {
+  .masthead { padding-top: 1.25rem; }
+  .steps > li { grid-template-columns: 1.75rem minmax(0, 1fr); }
+  .answer .prose { font-size: 1.08rem; }
+}

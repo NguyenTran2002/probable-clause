@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probable Clause, look 3: states</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..800;1,62..125,400..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<p class="sample-banner">Look test 3 of 3: Evidence log, the states. Sample content and placeholder wording throughout. <a href="index.html">The full run</a> <a href="../index.html">All looks</a></p>
+
+<header class="masthead">
+  <h1 class="wordmark">Probable C<span class="l">l</span>ause</h1>
+  <p class="what">Each state the research can be in, as it would appear in the log.</p>
+  <p class="affil">Independent project. Not affiliated with Anthropic.</p>
+</header>
+
+<main class="states">
+  <ol class="log sheet">
+
+    <li id="waking">
+      <time class="num">00:41</time>
+      <div>
+        <h3><span class="state-name">Waking up</span>Starting the research server</h3>
+        <p>Waiting <span class="num">41</span> seconds so far. The server sleeps when nobody is using it, and starts when someone asks. Your question will be sent once it answers.</p>
+        <p class="tool">Recorded runs don't need the server: <a href="#replay">watch one now</a>.</p>
+        <div class="bar" role="presentation"></div>
+      </div>
+    </li>
+
+    <li id="working">
+      <time class="num">00:14</time>
+      <div>
+        <h3><span class="state-name">Working</span>Working</h3>
+        <p>Step 3: searching the corpus for “stored location history and the warrant requirement”.</p>
+      </div>
+    </li>
+
+    <li id="reconnecting">
+      <time class="num">00:26</time>
+      <div>
+        <h3><span class="state-name">Reconnecting</span>Connection lost. Reconnecting.</h3>
+        <p>The run is paused on the server and no new step starts until this page is back. Steps already taken are kept.</p>
+      </div>
+    </li>
+    <li>
+      <time class="num">00:49</time>
+      <div>
+        <h3><span class="state-name">Reconnected</span>Reconnected</h3>
+        <p>Caught up on 2 steps taken while the connection was down.</p>
+      </div>
+    </li>
+
+    <li id="interrupted" class="rejected">
+      <time class="num">01:10</time>
+      <div>
+        <h3><span class="state-name">Interrupted</span>This run was interrupted</h3>
+        <p>The server no longer holds it. The 4 steps recorded before the interruption are shown. No answer was written.</p>
+        <p class="tool"><a href="#replay">Watch a recorded run</a></p>
+      </div>
+    </li>
+
+    <li id="cap">
+      <time class="num">00:00</time>
+      <div>
+        <h3><span class="state-name">Spend cap reached</span>Live research is paused for today. Recorded runs are still available.</h3>
+        <p class="tool"><a href="#replay">Choose a recorded run</a></p>
+      </div>
+    </li>
+
+    <li id="step-limit">
+      <time class="num">01:58</time>
+      <div>
+        <h3><span class="state-name">Step limit</span>Stopped at step limit. Answer built from the evidence gathered so far.</h3>
+        <p>The answer cites only the 3 exhibits kept before the limit.</p>
+      </div>
+    </li>
+
+  </ol>
+
+  <section class="outside" id="declined">
+    <h2>Update check</h2>
+    <p class="label">Update check declined after reminder</p>
+    <p class="synth-tag">Claude's stated reason</p>
+    <p class="synth">[Sample reason.] The question is about a rule from 1979, and the corpus already holds the 2026 decision that narrowed it.</p>
+  </section>
+
+  <section class="outside" id="unavailable">
+    <h2>Update check</h2>
+    <p class="label">Update check unavailable</p>
+    <p class="synth">The web search could not run for this question. The answer rests on the corpus alone, which covers decisions through June 30, 2026.</p>
+  </section>
+
+  <section class="findings sheet" id="replay">
+    <div class="sec-head">
+      <h2>Recording</h2>
+      <p>Made November 2, 2026</p>
+    </div>
+    <p>A stored run of “Sample question: is reading a phone's stored location history a Fourth Amendment search?” It plays back the steps as they happened; it does not start live research.</p>
+    <p><a href="index.html">Play from the start</a></p>
+  </section>
+</main>
+
+<footer class="colophon">
+  <p>Opinion text comes from the U.S. Reports and Supreme Court opinions, via CourtListener, from Free Law Project. Free Law Project did not produce, review or endorse this analysis.</p>
+  <p>Answers are written by Claude, Anthropic's model, through the Claude API. Independent project. Not affiliated with Anthropic.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,413 @@
+/* Look 1: Slip opinion. The page set like the Court's own printed opinions:
+   white paper, black ink, a Century-like serif, small-caps justices, and
+   passages in the margin beside the step that found them. */
+
+:root {
+  --paper: #ffffff;
+  --ink: #1b1b1b;
+  --ink-soft: #4d4d4d;
+  --rule: #9a9a9a;
+  --hair: #d6d6d6;
+  --correction: #2348a8;      /* proofreader's blue: the "l", links, markers */
+  --correction-wash: #eef1fa;
+  --flag: #a3241a;            /* verifier flag only */
+  --measure: 36rem;
+  --margin: 25rem;
+  font-size: 100%;
+}
+
+/* Light only for the look tests; a dark scheme is a later decision. */
+:root { color-scheme: light; }
+
+* { box-sizing: border-box; }
+
+html { background: var(--paper); }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--correction); text-underline-offset: 0.15em; }
+a:focus-visible, button:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--correction);
+  outline-offset: 2px;
+}
+
+.sc {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+
+/* Sample banner: always visible, never mistaken for the product. */
+.sample-banner {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: var(--correction-wash);
+  color: var(--ink);
+  font-size: 0.875rem;
+  text-align: center;
+  border-bottom: 1px solid var(--hair);
+}
+.sample-banner a { white-space: nowrap; margin-left: 0.75rem; }
+
+.page {
+  max-width: calc(var(--measure) + var(--margin) + 4rem);
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+/* Running head, as on a slip opinion. */
+.runhead {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0 0.5rem;
+  border-bottom: 1px solid var(--ink);
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+.runhead p { margin: 0; }
+
+.masthead {
+  text-align: center;
+  padding: 2.5rem 0 1.75rem;
+  border-bottom: 1px solid var(--hair);
+}
+.wordmark {
+  margin: 0;
+  font-weight: 400;
+  font-size: clamp(2.5rem, 7vw, 4.25rem);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+.wordmark .l { color: var(--correction); font-weight: 700; }
+.masthead .what {
+  margin: 0.75rem auto 0;
+  max-width: 30rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.masthead .affil {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+}
+
+/* The plain-spoken notices sit up front, set like the Court's
+   bracketed notice on a slip opinion. */
+.notice {
+  max-width: var(--measure);
+  margin: 1.75rem auto 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--rule);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.notice p { margin: 0 0 0.5rem; }
+.notice p:last-child { margin-bottom: 0; }
+.notice .coverage { color: var(--ink-soft); }
+
+/* Question box */
+.ask {
+  max-width: var(--measure);
+  margin: 2rem auto 0;
+}
+.ask label { display: block; font-weight: 700; margin-bottom: 0.4rem; }
+.ask textarea {
+  display: block;
+  width: 100%;
+  min-height: 5.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+.ask .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.75rem;
+}
+.ask button {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.45rem 1.4rem;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  cursor: pointer;
+}
+.ask .hint { font-size: 0.9rem; color: var(--ink-soft); }
+
+/* The run: each row is a step, with the passages it surfaced in the margin. */
+.run { margin-top: 3rem; }
+
+.run-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+.run-head h2, .run-head p { margin: 0; }
+.run-head h2 { font-size: 1.35rem; font-weight: 700; }
+.run-head .margin-head { display: none; }
+.run-head .status { font-style: italic; color: var(--ink-soft); }
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.1rem 0 1.25rem;
+  border-bottom: 1px solid var(--hair);
+}
+
+.step { max-width: var(--measure); }
+.step h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.step h3 .n { font-weight: 400; color: var(--ink-soft); margin-right: 0.4rem; }
+.step p { margin: 0.25rem 0; }
+.step .query {
+  font-style: italic;
+}
+.step .tool { font-size: 0.85rem; color: var(--ink-soft); }
+.step ul.tally { margin: 0.35rem 0 0; padding-left: 1.2rem; }
+
+.step.rejected h3 { color: var(--flag); }
+.step.rejected .result {
+  margin-top: 0.5rem;
+  padding-left: 0.9rem;
+  border-left: 3px double var(--flag);
+}
+
+.params {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.1rem 1rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+}
+.params dt { color: var(--ink-soft); }
+.params dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Passages, in the margin */
+.margin { min-width: 0; }
+.passage {
+  padding: 0.75rem 0 0.9rem;
+  border-top: 1px solid var(--hair);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.passage:first-child { border-top: 0; padding-top: 0; }
+.passage .verdict {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  align-items: baseline;
+  margin: 0 0 0.3rem;
+}
+.passage .mark {
+  font-weight: 700;
+}
+.passage.kept .mark { color: var(--correction); }
+.passage.discarded .mark { color: var(--ink-soft); }
+.passage .pid { color: var(--ink-soft); font-size: 0.85rem; }
+.passage .reason { font-style: italic; }
+.passage .case { margin: 0; font-weight: 700; }
+.passage .meta { margin: 0.15rem 0 0.4rem; color: var(--ink-soft); font-size: 0.88rem; }
+.passage .text {
+  margin: 0.4rem 0;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.passage .text .pin { color: var(--ink-soft); font-size: 0.85rem; white-space: nowrap; }
+.passage .guarantee { margin: 0.35rem 0 0; font-size: 0.85rem; }
+.passage .guarantee::before { content: "\2713\00a0"; color: var(--correction); }
+.passage .found { margin: 0.15rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+.passage .slip {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+.passage.discarded .text { color: var(--ink-soft); }
+
+/* The Reporter's syllabus: boxed and labelled apart from opinion text. */
+.passage.syllabus .text {
+  border: 1px solid var(--rule);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.92rem;
+}
+.passage .syl-label {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+}
+
+.passage:target {
+  background: var(--correction-wash);
+  outline: 6px solid var(--correction-wash);
+}
+
+/* Update-check band: its own ruled box, apart from the corpus evidence. */
+.update {
+  max-width: var(--measure);
+  margin: 2.5rem 0 0;
+  border-top: 3px double var(--ink);
+  border-bottom: 3px double var(--ink);
+  padding: 1rem 0 1.1rem;
+}
+.update h2 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+.update .label { margin: 0 0 0.75rem; font-style: italic; }
+.update .synth { margin: 0.5rem 0; }
+.update .synth-tag { font-size: 0.85rem; color: var(--ink-soft); }
+.update ol { margin: 0.5rem 0; padding-left: 1.4rem; }
+.update li { margin: 0.35rem 0; }
+.update li .pub { display: block; font-size: 0.85rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+.update .linkonly { font-size: 0.88rem; color: var(--ink-soft); margin: 0.5rem 0 0; }
+.update details { margin-top: 0.6rem; font-size: 0.92rem; }
+.update summary { cursor: pointer; }
+
+/* The answer, set as opinion text. */
+.answer {
+  max-width: var(--measure);
+  margin: 2.5rem 0 0;
+}
+.answer h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  text-align: center;
+}
+.answer .byline { text-align: center; margin: 0.25rem 0 1.25rem; color: var(--ink-soft); font-size: 0.92rem; }
+.answer p { margin: 0 0 1rem; text-indent: 1.5em; hyphens: auto; }
+.answer p.first { text-indent: 0; }
+.answer sup a {
+  font-size: 0.75em;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 0 0.1em;
+}
+.answer .synthesis {
+  text-indent: 0;
+  margin: 1.25rem 0 1.25rem 1.5em;
+  padding-left: 0.9rem;
+  border-left: 1px dotted var(--correction);
+  font-style: italic;
+}
+.answer .synthesis .tag {
+  display: block;
+  font-style: normal;
+  font-size: 0.85rem;
+  color: var(--correction);
+}
+.flagged {
+  text-decoration: underline wavy var(--flag);
+  text-underline-offset: 0.2em;
+}
+.flag-note {
+  display: block;
+  margin-top: 0.3rem;
+  font-style: normal;
+  font-size: 0.88rem;
+  color: var(--flag);
+}
+.answer .closing { text-indent: 0; font-size: 0.95rem; color: var(--ink-soft); }
+.answer .key {
+  border-top: 1px solid var(--hair);
+  padding-top: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  text-indent: 0;
+}
+
+.colophon {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+}
+.colophon p { margin: 0 0 0.6rem; }
+
+/* States page */
+.state {
+  max-width: var(--measure);
+  margin: 2rem 0 0;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--hair);
+}
+.state h2 { font-size: 1rem; font-weight: 400; color: var(--ink-soft); margin: 0 0 0.6rem; }
+.state .say { font-size: 1.15rem; margin: 0 0 0.4rem; }
+.state .say strong { font-weight: 700; }
+.state .sub { margin: 0.2rem 0; color: var(--ink-soft); font-size: 0.95rem; }
+.state .bar {
+  margin-top: 0.6rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--correction) 0 30%, var(--hair) 30%);
+}
+.state .boxed { border: 1px solid var(--rule); padding: 0.8rem 1rem; }
+.state .boxed.alert { border-color: var(--flag); }
+
+@media (min-width: 960px) {
+  .run-head, .row {
+    grid-template-columns: minmax(0, var(--measure)) minmax(0, var(--margin));
+    column-gap: 3.5rem;
+    justify-content: space-between;
+  }
+  .run-head .margin-head {
+    display: block;
+    align-self: end;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .margin {
+    border-left: 1px solid var(--hair);
+    padding-left: 1.25rem;
+  }
+  .step { position: sticky; top: 1rem; align-self: start; }
+  .ask, .notice { margin-left: 0; }
+  .masthead { text-align: left; }
+  .masthead .what { margin-left: 0; }
+}
+
+@media (max-width: 959px) {
+  .margin:not(:empty) {
+    margin-left: 0.75rem;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--hair);
+  }
+  .margin .margin-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.4rem;
+  }
+}
+@media (min-width: 960px) {
+  .margin .margin-label { display: none; }
+}
+
+@media (max-width: 480px) {
+  body { font-size: 1.0625rem; }
+  .runhead { flex-direction: column; gap: 0.1rem; }
+  .masthead { padding-top: 1.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
+html { scroll-behavior: smooth; }
