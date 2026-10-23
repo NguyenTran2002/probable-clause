@@ -44,6 +44,8 @@ PDF_CASES = {
     "riley": ("USREPORTS-573-373.pdf", 373, 2680439, False),
     "grady": ("USREPORTS-575-306.pdf", 306, 2789928, False),
     "carpenter": ("USREPORTS-585-296.pdf", 296, 4510032, False),
+    "jones": ("USREPORTS-565-400.pdf", 400, 622304, False),  # P1.12
+    "quon": ("USREPORTS-560-746.pdf", 746, 148797, False),  # P1.12, filter-check candidate
     "chatrie": ("25-112_0am4.pdf", 1, None, True),
 }
 

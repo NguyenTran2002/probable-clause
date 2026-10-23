@@ -58,7 +58,8 @@ def read_pages(pdf: Path) -> list[list[dict]]:
                             and merged[-1]["t"][-1:].isalpha())
                 # After small capitals, a comma can arrive as its own word ("ALITO ,").
                 stray_punct = (merged and re.fullmatch(r"[,.;:)\]’”]+", w["t"])
-                               and w["x0"] - merged[-1]["x1"] < 4 and not w["h"] < merged[-1]["h"] * 0.7)
+                               and w["x0"] - merged[-1]["x1"] < 4 and not w["h"] < merged[-1]["h"] * 0.7
+                               and not merged[-1]["h"] < w["h"] * 0.7)  # never onto a footnote marker
                 if touching or stray_punct:
                     merged[-1] = {**merged[-1], "t": merged[-1]["t"] + w["t"], "x1": w["x1"],
                                   "h": max(merged[-1]["h"], w["h"])}
@@ -95,7 +96,9 @@ def classify(pages: list[list[dict]]) -> tuple[float, list[dict]]:
             else:
                 l["kind"] = "foot"
             for w in l["words"]:
-                w["sup"] = w["h"] < sup
+                # A footnote marker is small and is a number or symbol; small
+                # capitals in a heading are small too, but are letters.
+                w["sup"] = w["h"] < sup and bool(re.fullmatch(r"[\d*†‡§]+", w["t"]))
         body_x = Counter(round(l["x0"], 0) for l in lines if l["kind"] == "body" and l["x1"] - l["x0"] > 200)
         foot_x = Counter(round(l["x0"], 0) for l in lines if l["kind"] == "foot" and l["x1"] - l["x0"] > 200)
         info.append({"label": label,
@@ -293,7 +296,7 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
                 continue
         if line["kind"] == "body":
             centered = line["x0"] - margin > 40 and (line["right"] or line["x1"]) - line["x1"] > 40
-            heading_line = line["h"] < body_h * 0.97 and line["h"] >= body_h * 0.9
+            heading_line = line["h"] < body_h * 0.97
             starts = (cur_body is None or centered or 6 <= indent <= 16
                       or (heading_line and not (cur_body and cur_body["heading_size"]))
                       or (cur_body and cur_body["heading_size"] and not heading_line
