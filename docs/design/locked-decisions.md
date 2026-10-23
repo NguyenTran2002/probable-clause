@@ -44,3 +44,19 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** `cleanupPeriodDays` stays unset (Claude Code's default cleanup, about 30 days). The agent does not change it.
 - **User's words:** *"Transcript retention, leave cleanupPeriodDays alone for now. This project will be done in 2 days."*
 - **Date:** Oct 23, 2026
+
+---
+
+## Phase 1: Corpus
+
+### P1.1 Exhaustive corpus verification, scripts plus independent subagents
+
+- **Decision:** Phase 1 ends with exhaustive verification, not the spot check brief §4.5 asks for. Scripts check everything mechanically: every cleaned opinion aligned word by word against the official PDF text with every difference listed; every opinion in the Court's lineup present after splitting, with correct boundaries; every metadata field compared against the official text. Opus subagents, each given a batch of cases and none told the main session's conclusions, judge every listed difference (cleaning artifact, real difference, or OCR noise in the official PDF) and check opinion type, author and joiners. One further subagent builds its own case list from scratch and compares it with the corpus, alongside the citation-graph filter check (§4.7).
+- **User's words:** *"At the end of Phase 1, subagents to verify the corpus exhaustively will be crucial here. We also want to pull all relevant metadata for each corpus item."* On the design: *"Verification design with subagents looks good to me."*
+- **Date:** Oct 23, 2026
+
+### P1.2 Pull all metadata; keep `scdb_decision_direction` out of the manifest and the prompt
+
+- **Decision:** Every field CourtListener holds for each docket, cluster and opinion is cached raw (gitignored). A curated manifest carries what the app uses. The Supreme Court Database's `scdb_decision_direction` (a liberal or conservative coding of each outcome) stays in the raw cache only: never in the manifest, the system prompt, a tool result, or the page, because it would break the political-heat guardrail (brief §2, "never says whether the Court was right").
+- **User's words:** *"We also want to pull all relevant metadata for each corpus item."* On the exclusion: *"Keeping scdb_decision_direction out is a good catch."*
+- **Date:** Oct 23, 2026
