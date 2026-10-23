@@ -60,3 +60,37 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** Every field CourtListener holds for each docket, cluster and opinion is cached raw (gitignored). A curated manifest carries what the app uses. The Supreme Court Database's `scdb_decision_direction` (a liberal or conservative coding of each outcome) stays in the raw cache only: never in the manifest, the system prompt, a tool result, or the page, because it would break the political-heat guardrail (brief §2, "never says whether the Court was right").
 - **User's words:** *"We also want to pull all relevant metadata for each corpus item."* On the exclusion: *"Keeping scdb_decision_direction out is a good catch."*
 - **Date:** Oct 23, 2026
+
+### P1.3 The update check shows Claude's synthesis plus source links, never Exa's content
+
+- **Decision:** Exa stays as the update-check search (brief §2 unchanged). On the page and in replays, the update-check band shows **Claude's own synthesis** of what the search found, plus a **link to each source** (title, URL, published date). It never shows page text, highlights, or Citations `cited_text` drawn from web results. Internally, Citations still mark which sentences are grounded in a web result; on screen, such a sentence links to its source instead of quoting it. This changes how brief §6.3 and §6.4 display results. Every parameter Claude chose is still shown, and the honesty label still applies.
+- **Why:** Exa's Terms §4.2(a), read literally, require written permission to display, copy or publish information obtained through the service (`docs/research/licensing.md` §4). Synthesis plus links removes any republication of third-party web text. It does not by itself satisfy the literal clause ("modify", "create derivative works from" are also listed), so the user is emailing Exa (hello@exa.ai, the address named in the terms) for written permission covering public display and stored replays. If no answer arrives before launch, the project proceeds with this design and the remaining risk is logged as accepted by the user.
+- **User's words:** *"Exa, can we only display what Claude synthesize after doing the search? This will avoid directly copying and pasting Exa's returning content."* Then: *"Draft the Exa email and give me an email address to send it to. Hopefully we'll get a response back soon. Otherwise, we proceed as normal."* and *"I lock all three decisions here with you"*.
+- **Date:** Oct 23, 2026
+
+### P1.4 Anthropic Usage Policy: the case rests on what the tool does
+
+- **Decision:** Probable Clause proceeds as planned under Anthropic's Usage Policy. The basis, as recorded:
+  - The tool does not do the high-risk activity. It explains what the Court held and shows verbatim evidence, and never applies the law to a person's own facts (brief §2). The policy published for Nov 12, 2026 excludes exactly this: "explaining what a law says … without applying it to the individual's circumstances".
+  - The page discloses AI use, and tells visitors to check factual assertions independently (Commercial Terms §D.3).
+  - The README and page do **not** claim that the visitor is the "human in the loop".
+- **Gap, recorded:** the policy in force until Nov 12 (since Sep 15, 2025) treats consumer-facing "legal" use as high-risk, and its full text was not found. Describing a holding could be read as legal interpretation under that wording. The user accepts this reading.
+- **User's words:** *"On Anthropic's Usage Policy, we have AI disclosure and we don't provide legal advice. It's a research and citation tool, with the user is the human review piece because the project only ever present up evidence."* Then: *"I lock all three decisions here with you"*.
+- **Date:** Oct 23, 2026
+
+### P1.5 Crediting Claude: plain descriptive sentences, as in the previous build
+
+- **Decision:** Claude, Claude Code and Anthropic are named only in plain, factual sentences, following the previous build's README. Examples:
+  - a README section headed "How this was built with Claude Code"
+  - on the page, a sentence such as "Answers are written by Claude, Anthropic's model, through the Claude API"
+  - the non-affiliation line near the name (brief default 4)
+
+  No logos, no badge or tagline-style credit, no Claude brand colours, nothing implying endorsement. This replaces default 4's "Built with Claude" footer idea. The README's licence section says the opinion text is public domain and not covered by the code licence. Exact page wording is settled in Phase 3.
+- **User's words:** *"On "Built with Claude" wording, I used this phrase in the past that is not trade marked and was just a literal sentence "How this was built with Claude Code" in the README."* Then: *"I lock all three decisions here with you"*.
+- **Date:** Oct 23, 2026
+
+### P1.6 Art-direction look tests start now, in a second session the user starts
+
+- **Decision:** The Phase 3 art-direction look tests (brief §7.3) move forward to run alongside Phase 1, in a second Claude Code session that **the user starts**, in this same folder and branch (not a worktree), under P0.3's rules. Its brief is `docs/sessions/frontend-brief.md`. This changes P0.3's start condition for look tests only. The contract-bound mock frontend still waits for contract v1 (start of Phase 4). The art direction the user picks is locked by the main session in Phase 3 as a T-entry, from the frontend session's log.
+- **User's words:** *"Starting the look test in parallel with phase 1 would be nice?"* Then: *"I want to start the look test session myself, so prep the ground for that session, and let me know where to point that session to kick start it."*
+- **Date:** Oct 23, 2026

@@ -30,10 +30,15 @@ More, each from the brief:
 ## Layout
 
 - `PROBABLE_CLAUSE_KICKOFF.md`: the brief, frozen.
-- `BUILD_LOG.md`: the raw record, append-only.
-- `docs/design/locked-decisions.md`: every decision after the brief.
+- `BUILD_LOG.md`: the raw record, append-only. Written by the main session only.
+- `docs/design/locked-decisions.md`: every decision after the brief. Written by the main session only.
+- `docs/research/licensing.md`: licences and terms of every source, with each quote string-matched against its page.
+- `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
+- `scripts/verify_quotes.py`: re-fetches cited pages and string-matches quotes (brief §9's re-check). Cache under `data/cache/pages/`.
+- `data/` (gitignored for now): `data/raw/` for raw CourtListener responses and official PDFs, `data/cache/` for fetched pages. Never committed.
+- `web/looktests/`: the frontend session's look tests (P1.6).
 - `.env.example`: the variable names; the user creates `.env`.
 
 ## Environment quirks (from the previous build)
@@ -42,13 +47,55 @@ More, each from the brief:
 - `preview_start` failed with `EPERM`: serve from a background shell instead.
 - The shell is **zsh, which does not split an unquoted variable.** Write `gcloud` flags out in full; never pass them through a variable.
 - Claude Code transcripts live outside the repo, under `~/.claude/projects/`. `cleanupPeriodDays` stays unset at the user's direction (P0.5); don't change it.
-- **CourtListener limits for the user's EDU account: 20 requests a minute, 1,000 an hour** (stated by the user, Oct 23, 2026). Pace below both, serially, and cache every raw response so nothing is fetched twice.
+- **CourtListener limits for the user's EDU account: 20 requests a minute, 1,000 an hour** (stated by the user, Oct 23, 2026). The API returns no rate-limit headers, so pacing is ours: about 15 a minute, serially, and cache every raw response so nothing is fetched twice.
+- Some pages (SCDB, case.law, Exa's collection pages) render by JavaScript and can't be string-matched; `curl` with a browser user agent reaches courtlistener.com/terms when WebFetch gets 403.
 
-## Two sessions in one checkout (from Phase 4, locked-decisions P0.3)
+## Two sessions in one checkout (P0.3, P1.6)
 
-The frontend will be built by a second Claude Code session in this same folder and branch. The rules (one writer per file; the frontend session writes only `web/` and `docs/sessions/frontend-log.md`; commit only your own paths by name; no stash, reset, `checkout -- .` or branch switch; only the main session writes the shared docs and tags) are in P0.3. A fuller "If you are the frontend session" section is added here before that session starts.
+Two Claude Code sessions share this folder and the `main` branch. The **main session** runs the phases and owns every shared file. The **frontend session**, started by the user, builds the art-direction look tests now and the mock frontend from Phase 4.
+
+**If you are the frontend session:** your brief is `docs/sessions/frontend-brief.md`. Read it in full first. You write only under `web/looktests/` (later `web/`) and `docs/sessions/frontend-log.md`, and never call CourtListener.
+
+**Rules for both:**
+- One writer per file.
+- Commit only your own paths, by name (`git commit -- <paths>`); never `git add -A` or `git add .`.
+- Never `git stash`, `reset`, `checkout -- .`, `restore` on another session's files, a branch switch, rebase or amend.
+- On `index.lock`, wait and retry; never delete it.
+- Only the main session tags, and only after the frontend session is idle with its work committed.
+- Only the main session touches `.venv`, `pyproject.toml` and `uv.lock`.
+- Dev servers: main session on 8000; frontend session on another port (8765 suggested).
+
+**If you are the main session:** fold `docs/sessions/frontend-log.md` into `BUILD_LOG.md` and `locked-decisions.md` under your own timestamped entries. Never edit `web/`. Before tagging a phase, check `git status` for the frontend session's uncommitted work and ask the user.
 
 ## Current state and next step
 
-- **State:** Phase 0 (Bootstrap) done: git initialized with the brief as the first commit, scaffold in place, tagged `phase-0-done`. Locked so far: P0.1 to P0.3.
-- **Next:** Phase 1 (Corpus). It starts by settling the inclusion rule with the user (brief §4.1, including the *Riley* tension). Before the first CourtListener call, the user fills `.env` and runs `uv run python scripts/check_env.py --phase 1`; then read the actual rate limits on the user's CourtListener profile page (§4.2).
+*Updated Oct 23, 2026, 17:11 CDT, before a planned compaction.*
+
+- **State:** Phase 0 done (`phase-0-done`). Phase 1 has not started its pull. Done so far in Phase 1:
+  - pre-pull checks: all four secrets set; the CourtListener token works
+  - the licensing research (`docs/research/licensing.md`)
+  - decisions locked: P0.1 to P0.5 and P1.1 to P1.6
+
+  Read `locked-decisions.md` in full after compaction.
+- **Waiting on others:**
+  - The user is emailing Exa (hello@exa.ai) for written permission to show update-check results and store them in replays (P1.3). If no answer comes by launch, proceed with synthesis plus links and log the risk as accepted.
+  - The user is starting the frontend session for look tests (P1.6). It may already be working in `web/looktests/`.
+- **Open questions for the user:**
+  - Keep *every* SCDB-derived field out of the manifest, so no SCDB citation is owed (proposed, not answered; P1.2 covers only `scdb_decision_direction`)?
+  - Optionally email Free Law Project to confirm the portfolio use is in scope.
+- **Next: Phase 1 (Corpus), on the user's signal after compaction.** Do not start before the signal.
+  1. Propose the inclusion rule (brief §4.1), resolving the *Riley* tension. The user decides.
+  2. Pull the cases from CourtListener (§4.3), with these settings:
+     - Pace: about 15 requests a minute, serial.
+     - Fetch all fields of each docket, cluster and opinion, raw, into `data/raw/` (P1.2). Record each cluster's `source` code.
+     - Run the three first tests (§4.4): opinion splitting, text artifacts, page numbers.
+     - Known: *Chatrie* (cluster 10881683) has one sub-opinion (likely a Combined Opinion), and no citation on CourtListener. The Court's Term 2025 table lists it as **609 U.S. 605**, so check whether the official PDF is final.
+  3. Clean the text (§4.5), with these rules from the licensing notes:
+     - Strip any West or Lexis headnotes and summaries, and any embedded S. Ct. or L. Ed. star-paging markers.
+     - Pinpoints use U.S. Reports pages only.
+     - Keep the syllabus separate and labelled as the Reporter's.
+     - Never paraphrase.
+  4. Build the manifest: metadata, coverage dates (§4.6), the filter check (§4.7, the user decides each addition), and token counts (§4.8, Anthropic token counting).
+  5. Official PDFs for verification: **ask the user's permission once, with the full list** (filename, source, approximate size), before downloading from supremecourt.gov or GovInfo.
+  6. Exhaustive verification (P1.1): scripts check everything; Opus subagents, not told your conclusions, judge every listed difference; one independent subagent builds its own case list.
+  7. The user approves the corpus. Freeze it, log, update this section, commit, tag `phase-1-done`.
