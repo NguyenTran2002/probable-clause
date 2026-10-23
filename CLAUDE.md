@@ -78,7 +78,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
   Read `locked-decisions.md` in full after compaction.
 - **Waiting on others:**
-  - The user is emailing Exa (hello@exa.ai) for written permission to show update-check results and store them in replays (P1.3). If no answer comes by launch, proceed with synthesis plus links and log the risk as accepted.
+  - The user has emailed Exa (hello@exa.ai) for written permission to show update-check results and store them in replays (P1.3). **Assume no reply until the user reports one** (P1.7): build synthesis plus links, and log the remaining risk as accepted at launch.
   - The user is starting the frontend session for look tests (P1.6). It may already be working in `web/looktests/`.
 - **Open questions for the user:**
   - Keep *every* SCDB-derived field out of the manifest, so no SCDB citation is owed (proposed, not answered; P1.2 covers only `scdb_decision_direction`)?
