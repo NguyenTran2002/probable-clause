@@ -1,0 +1,45 @@
+# Secrets (the agent never reads or edits .env; .env.example is committed)
+.env
+.env.*
+!.env.example
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Raw API responses and downloaded PDFs: cached locally, never committed (brief §4.3, default 3)
+data/raw/
+data/cache/
+*.pdf
+
+# Screenshots and images: never committed to this repo (locked-decisions P0.2)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.heic
+*.heif
+*.bmp
+*.tif
+*.tiff
+*.svg
+*.ico
+*.avif
+
+# Frontend
+node_modules/
+dist/
+
+# Claude Code: personal settings stay local. Session transcripts live outside
+# the repo and are never committed (brief §10.3)
+.claude/settings.local.json
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
