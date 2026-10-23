@@ -107,3 +107,24 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Why:** SCDB asks to be cited with its release number, and the release CourtListener ingested is unknown. Coverage is uneven (the modern database starts in 1946; *Chatrie* may be absent). SCDB counts votes for the outcome, so a justice concurring in the judgment counts with the majority, which a naive lineup count might not; showing both would invite a visible contradiction.
 - **User's words:** *"Let's use the SCDB fields as verification only."*
 - **Date:** Oct 23, 2026
+
+### P1.9 Corpus scope and inclusion rule: technology, three parts
+
+- **Decision:** The corpus stays on the Fourth Amendment and technology, as in brief §2, which is unchanged. The inclusion rule (brief §4.1):
+
+  > *Supreme Court opinions deciding (a) whether the government's acquisition of information through a surveillance or sensing technology, or from records held by a third party, is a Fourth Amendment search; (b) whether the Fourth Amendment requires a warrant before the government searches the data on a digital device; or (c) whether a physical intrusion to gather information is a search under the property-based test.*
+
+  Part (b) brings in *Riley v. California*; part (c) brings in *Florida v. Jardines*. Within this scope, borderline cases lean toward inclusion (the user's "extra over missing"). The case list for the pull, 21 cases, each to be confirmed against CourtListener: *Olmstead*, *Goldman*, *On Lee*, *Silverman*, *Lopez*, *Katz*, *United States v. White*, *United States v. Miller*, *Smith v. Maryland*, *Knotts*, *Karo*, *California v. Ciraolo*, *Dow Chemical*, *Florida v. Riley*, *Kyllo*, *United States v. Jones*, *Jardines*, *Riley v. California*, *Grady v. North Carolina*, *Carpenter*, *Chatrie*.
+- **Filter check (brief §4.7) runs in both directions:** later Supreme Court opinions that cite the core cases, and earlier ones the core cases cite most (foundations such as *Chimel*, *Robinson* or *Boyd*). The user decides each addition. *City of Ontario v. Quon* and *Berger v. New York* are pulled into the raw cache and decided there.
+- **Scope is also enforced in the system prompt:** Claude judges whether a question is within the corpus's subject and uses the out-of-scope flag (brief §5.2) when it is not.
+- **Verification:** P1.1 stands unchanged (every opinion verified by scripts and by subagents).
+- **Where the index lives:** the user's Atlas cluster is the free tier, with about half its storage left. The corpus and its search index ship inside the API container; Atlas holds only spend counters and run events (brief §8.3, §8.4).
+- **Considered and not taken: widening to every Fourth Amendment case.** CourtListener's search counted, on Oct 23, 2026, 984 Supreme Court cases mentioning "Fourth Amendment", 329 of them also quoting "unreasonable searches and seizures", and about 1,115 matching any of several phrasings. Discussed: a mention-based rule, programmatic verification with a seeded sample, scope enforced by the prompt, and the costs (a pull of about 6 hours, a corpus of an estimated 10 to 25 million tokens, an index too large for the free Atlas tier, P1.1 unaffordable at that size). The user chose to narrow.
+- **User's words:** *"I'm considering widening the corpus to anything related to the Fourth Amendment. My take is that as a corpus, it's better to contain extra than missing something."* Then: *"Let's narrow. The goal of the project is show casing Claude Citation, and it doesn't need a huge corpus to effectively showcase that."* On the proposal: *"Thanks for incorporating my suggestions. We can lock here."*
+- **Date:** Oct 23, 2026
+
+### P1.10 Case-name verifier: "not in this corpus", never "does not exist"
+
+- **Decision:** A case name the verifier (brief §5.8) cannot resolve is flagged on screen as **not in this corpus**, never as nonexistent or fabricated, since a real case outside the corpus must read differently from an invented one. The system prompt tells Claude to name only cases it cites from the corpus. Exact wording is settled in Phase 3.
+- **User's words:** *"Thanks for incorporating my suggestions. We can lock here."*
+- **Date:** Oct 23, 2026

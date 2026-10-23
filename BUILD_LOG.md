@@ -96,3 +96,20 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Emailed Exa. Assume no response from them until I come back with an actual response. We proceed with Claude's summary plus links to the sources."* (P1.7)
 - *"Let's use the SCDB fields as verification only."* (P1.8)
 - *"If all decisions are locked, prep the ground for compaction."*
+
+## Oct 23, 2026, 17:42 CDT — Phase 1: Corpus (inclusion rule and scope)
+
+**Asked:** Start Phase 1. Then discuss widening the corpus to everything related to the Fourth Amendment ("better to contain extra than missing something"), and a direction of mechanical inclusion, programmatic verification with a few spot checks, and scope enforced by the prompt. Then: how much that would load the database, and how long processing, chunking and embedding would take. Then narrow again, since the goal is showcasing Citations.
+
+**Came back:**
+- A proposed three-part inclusion rule resolving the *Riley* tension (part b) and a second one the agent found, *Jardines* (part c), plus the cases the planning draft's wording also catches.
+- Four CourtListener search requests (counts only): 984 Supreme Court cases mention "Fourth Amendment"; 329 also quote "unreasonable searches and seizures"; 154 match other phrasings without that phrase; about 1,115 match any phrasing.
+- Discussion of widening: agreed in principle at first, with pushback on matching a single phrase and on undefined spot checks; then estimates (unmeasured) for the wide corpus: 10 to 25 million tokens, 50,000 to 125,000 chunks, a pull of about 6 hours, an index that would press against the free Atlas tier. Observed that Claude, not the visitor, writes the search queries, which may make keyword search enough.
+- Locked P1.9 (scope and inclusion rule, 21 cases, two-way filter check) and P1.10 (verifier says "not in this corpus").
+
+**Failures:** None. One inconsistency noted: the search counts overlap by about 23 more cases than they should; moot after narrowing.
+
+**DECISION (user):**
+- *"I'm considering widening the corpus to anything related to the Fourth Amendment."* Then: *"Let's narrow. The goal of the project is show casing Claude Citation, and it doesn't need a huge corpus to effectively showcase that."*
+- Atlas: *"My Atlas cluster is free tier, with only about half of its storage left."*
+- *"Thanks for incorporating my suggestions. We can lock here."* (P1.9, P1.10)
