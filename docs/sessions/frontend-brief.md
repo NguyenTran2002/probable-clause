@@ -80,7 +80,7 @@ Load the **frontend-design** skill before designing.
 - **Independent checking:** factual assertions should be checked against the opinions.
 - **Opinion-text credit:** text from the U.S. Reports and Supreme Court opinions via CourtListener (Free Law Project), with a note that Free Law Project did not produce, review or endorse this analysis. Always "Free Law Project", never "The Free Law Project". No Free Law Project logo.
 - **Text status:** normalised from the official opinion and unofficial; the official text is the U.S. Reports.
-- **Syllabus label:** when a passage comes from a syllabus, it is labelled the Reporter of Decisions' summary, "no part of the opinion of the Court", and styled apart from opinion text.
+- ~~**Syllabus label:** when a passage comes from a syllabus, it is labelled the Reporter of Decisions' summary, "no part of the opinion of the Court", and styled apart from opinion text.~~ *Dropped Oct 23, 2026 (locked-decisions P1.13): the syllabus is never in the corpus, so no passage comes from one and no syllabus label is needed.*
 - **Slip-opinion note**, for a case not yet final in the U.S. Reports: subject to formal revision.
 - **Credit and affiliation (P1.5):** a plain sentence such as "Answers are written by Claude, Anthropic's model, through the Claude API", and *"Independent project. Not affiliated with Anthropic."* No Anthropic, Claude or Exa logos, and no badge.
 

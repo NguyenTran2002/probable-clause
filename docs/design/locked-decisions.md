@@ -141,3 +141,15 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Official PDFs:** the user approved downloading 23 files (about 71 MB) once, with the full list: 22 from GovInfo (`USREPORTS-<vol>-<page>.pdf`) and *Chatrie*'s slip opinion `25-112_0am4.pdf` from supremecourt.gov. Kept under `data/raw/pdfs/`, gitignored.
 - **User's words:** *"Approved: use the text-source plan as proposed, and download the 23 official PDFs listed."*
 - **Date:** Oct 23, 2026
+
+### P1.12 *Jones* and *Quon* take their text from the official PDF (amends P1.11)
+
+- **Decision:** *Jones* and *Quon* use the official GovInfo PDF of the U.S. Reports, like *Jardines*, *Riley*, *Grady* and *Carpenter*, not CourtListener's Harvard scan. The Harvard copies proved to be OCR with misreadings (about 170 to 250 small differences per case against the official text, such as "HH" for the section numeral "I", "swpra", "ease" for "case"); the official PDFs for both are born-digital, with ligature characters and soft hyphens intact. The rest of P1.11 stands.
+- **User's words:** *"Jones and Quon take their text from the official PDF -> This is a more reliable and authoritative way."*
+- **Date:** Oct 23, 2026
+
+### P1.13 The syllabus is never part of the citable corpus
+
+- **Decision:** The Reporter of Decisions' syllabus is left out of the citable corpus entirely, for every case, since it is not the Court's text ("no part of the opinion of the Court"). Only opinions (majority, plurality, concurrences, dissents, and Justices' statements) are citable. This supersedes the plan, in `docs/research/licensing.md` and the frontend brief, to keep the syllabus as a labelled passage.
+- **User's words:** *"Syllabus -> Strictly leave out of the citable corpus because they aren't from the Court."*
+- **Date:** Oct 23, 2026
