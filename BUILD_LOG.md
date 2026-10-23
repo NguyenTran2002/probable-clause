@@ -22,3 +22,32 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - No images in the repo (P0.2): *"On screenshots or images, we will never commit any to the repo, lock that too."*
 - Two-session frontend plan approved (P0.3): *"The plan looks sound to me."*
 - *"Start with Phase 0."*
+
+## Oct 23, 2026, 16:54 CDT — Phase 1: Corpus (before the pull: checks and licensing)
+
+**Asked:** Narrow the image block to PNG and JPEG, leave transcript retention alone, run checks now that `.env` is filled (without reading it), and discuss the way forward as a whole: which Phase 1 steps are the user's, exhaustive verification by subagents, pulling all metadata, and whether the frontend mock can start during the pull. Then, as a load-bearing first step: confirm the licence and terms of every source before pulling, since they also shape the frontend.
+
+**Came back:**
+- `.gitignore` now blocks only `.png`, `.jpg`, `.jpeg` (P0.4 supersedes P0.2); P0.5 records transcript retention left at the default. CLAUDE.md records the user's CourtListener limits.
+- `check_env.py`: all four variables set. `scripts/probe_courtlistener.py`, one authenticated request: cluster 10881683 is *Chatrie v. United States*, decided 2026-06-29, with one sub-opinion (likely a Combined Opinion needing splitting) and no citation. No rate-limit headers are returned.
+- P1.1 (exhaustive verification design) and P1.2 (all metadata pulled raw; `scdb_decision_direction` excluded) locked.
+- `docs/research/licensing.md`: licences and terms of every source, from three research subagents. The main session re-fetched every page and string-matched every quote (details in the file). Headline findings:
+  - Opinions and the syllabus are public domain; West and Lexis editorial matter is not.
+  - CourtListener permits this non-commercial use. It forbids implying that Free Law Project endorsed AI analysis.
+  - **Exa's terms, read literally, require written permission to display results publicly or store them for replays.**
+  - **Anthropic's Usage Policy in force until Nov 12, 2026 treats consumer-facing legal use as high-risk; the Nov 12 version excludes explaining what the law says without applying it to someone's facts.**
+  - AI disclosure and an independent-checking notice are required on the page.
+  - The Court's own table gives *Chatrie* as 609 U.S. 605.
+- Spend: none; one CourtListener request (free).
+
+**Failures:**
+- Two of 18 CourtListener quotes did not match at first. One differed only by a space at a link boundary. The other is on SCDB's JavaScript-rendered page and could not be verified.
+- The subagent was blocked (403) from courtlistener.com/terms; a direct fetch worked.
+
+**DECISION (user):**
+- *"Correction: for image blocking, only count jpeg, jpg, and png. I wouldn't have any image in any other format. The project itself might use svg and ico."* (P0.4)
+- *"Transcript retention, leave cleanupPeriodDays alone for now. This project will be done in 2 days."* (P0.5)
+- CourtListener limits for the EDU account: *"It's 20 RPM and 1000 RPH for my EDU account."*
+- Timing: *"We don't have to commit hard timing plan into docs because I'll keep the time. Your job with time is to mainly log things correctly using system time."*
+- *"Verification design with subagents looks good to me."* (P1.1); *"Keeping scdb_decision_direction out is a good catch."* (P1.2)
+- *"Let's confirm license of all sources we want to pull and see what we're allowed to do with them first, because this also affects the frontend design as well."*
