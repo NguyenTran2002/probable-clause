@@ -77,3 +77,22 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"I lock all three decisions here with you"*
 - *"Don't proceed with Phase 1 right away, prep the ground for compaction. I will compact this conversation and then give you the signal to proceed with Phase 1 after compaction."*
 - *"I want to start the look test session myself, so prep the ground for that session, and let me know where to point that session to kick start it."* (P1.6)
+
+## Oct 23, 2026, 17:17 CDT — Phase 1: Corpus (Exa follow-up, SCDB fields; ready for compaction)
+
+**Asked:** The user emailed Exa; proceed on synthesis plus links without waiting. Give more context on the SCDB fields so the user can decide. Then, with every decision locked, prepare for compaction.
+
+**Came back:**
+- P1.7 locked: assume no reply from Exa until the user reports one.
+- SCDB context, from CourtListener's `cl/search/models.py` (current `main`, read Oct 23, 2026): clusters carry exactly four SCDB fields. These are `scdb_id`, `scdb_decision_direction` (1 Conservative, 2 Liberal, 3 Unspecifiable), `scdb_votes_majority` and `scdb_votes_minority`.
+- Options laid out: exclude entirely; verification only (recommended); show on the page.
+- Also flagged: the cluster `headnotes` and `summary` fields may hold commercial-reporter editorial matter. Plan: leave them out unless shown to be official, and report in Phase 1.
+- P1.8 locked: SCDB fields are used for verification only.
+- CLAUDE.md's current-state section updated for the compaction.
+
+**Failures:** None.
+
+**DECISION (user):**
+- *"Emailed Exa. Assume no response from them until I come back with an actual response. We proceed with Claude's summary plus links to the sources."* (P1.7)
+- *"Let's use the SCDB fields as verification only."* (P1.8)
+- *"If all decisions are locked, prep the ground for compaction."*

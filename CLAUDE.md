@@ -69,25 +69,25 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 23, 2026, 17:11 CDT, before a planned compaction.*
+*Updated Oct 23, 2026, 17:17 CDT, before a planned compaction.*
 
 - **State:** Phase 0 done (`phase-0-done`). Phase 1 has not started its pull. Done so far in Phase 1:
   - pre-pull checks: all four secrets set; the CourtListener token works
   - the licensing research (`docs/research/licensing.md`)
-  - decisions locked: P0.1 to P0.5 and P1.1 to P1.6
+  - decisions locked: P0.1 to P0.5 and P1.1 to P1.8
 
   Read `locked-decisions.md` in full after compaction.
 - **Waiting on others:**
   - The user has emailed Exa (hello@exa.ai) for written permission to show update-check results and store them in replays (P1.3). **Assume no reply until the user reports one** (P1.7): build synthesis plus links, and log the remaining risk as accepted at launch.
   - The user is starting the frontend session for look tests (P1.6). It may already be working in `web/looktests/`.
-- **Open questions for the user:**
-  - Keep *every* SCDB-derived field out of the manifest, so no SCDB citation is owed (proposed, not answered; P1.2 covers only `scdb_decision_direction`)?
-  - Optionally email Free Law Project to confirm the portfolio use is in scope.
+- **Open for the user (optional):** email Free Law Project to confirm the portfolio use is in scope.
+- **To report in Phase 1:** clusters also carry `headnotes` and `summary` text fields, which may hold commercial-reporter editorial matter depending on each case's `source`. Plan: leave both out of the manifest unless shown to be official Court text, and report what is found. The syllabus comes from the official opinion, labelled as the Reporter's.
 - **Next: Phase 1 (Corpus), on the user's signal after compaction.** Do not start before the signal.
   1. Propose the inclusion rule (brief §4.1), resolving the *Riley* tension. The user decides.
   2. Pull the cases from CourtListener (§4.3), with these settings:
      - Pace: about 15 requests a minute, serial.
      - Fetch all fields of each docket, cluster and opinion, raw, into `data/raw/` (P1.2). Record each cluster's `source` code.
+     - SCDB fields (P1.8): raw cache and verification only, never the manifest, prompt, tool results, replays or page. Votes shown come from each opinion's lineup; verification compares them with `scdb_votes_majority`/`minority`.
      - Run the three first tests (§4.4): opinion splitting, text artifacts, page numbers.
      - Known: *Chatrie* (cluster 10881683) has one sub-opinion (likely a Combined Opinion), and no citation on CourtListener. The Court's Term 2025 table lists it as **609 U.S. 605**, so check whether the official PDF is final.
   3. Clean the text (§4.5), with these rules from the licensing notes:

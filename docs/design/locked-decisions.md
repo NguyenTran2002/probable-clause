@@ -100,3 +100,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The user has emailed Exa for written permission (P1.3). Until the user reports an actual reply, assume none: build the update check as Claude's synthesis plus links to the sources, with no Exa content shown or stored.
 - **User's words:** *"Emailed Exa. Assume no response from them until I come back with an actual response. We proceed with Claude's summary plus links to the sources."*
 - **Date:** Oct 23, 2026
+
+### P1.8 SCDB fields are used for verification only
+
+- **Decision:** CourtListener clusters carry four SCDB fields: `scdb_id`, `scdb_decision_direction`, `scdb_votes_majority` and `scdb_votes_minority` (checked in CourtListener's `cl/search/models.py`, Oct 23, 2026). All four stay in the raw cache. **None goes into the manifest, the system prompt, a tool result, a replay, or the page.** Vote splits shown in the product come from each opinion's own lineup in the official text. In Phase 1 verification (P1.1), the scripts also compare those lineup-derived votes with SCDB's counts where they exist, and every disagreement goes to the verification agents to explain from the official text. This is internal checking, not republication, so no SCDB citation is owed; if the README mentions the check, it names SCDB in a sentence. P1.2's exclusion of `scdb_decision_direction` stands, and that field is not used even in verification.
+- **Why:** SCDB asks to be cited with its release number, and the release CourtListener ingested is unknown. Coverage is uneven (the modern database starts in 1946; *Chatrie* may be absent). SCDB counts votes for the outcome, so a justice concurring in the judgment counts with the majority, which a naive lineup count might not; showing both would invite a visible contradiction.
+- **User's words:** *"Let's use the SCDB fields as verification only."*
+- **Date:** Oct 23, 2026
