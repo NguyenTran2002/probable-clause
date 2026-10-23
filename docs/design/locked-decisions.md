@@ -128,3 +128,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** A case name the verifier (brief §5.8) cannot resolve is flagged on screen as **not in this corpus**, never as nonexistent or fabricated, since a real case outside the corpus must read differently from an invented one. The system prompt tells Claude to name only cases it cites from the corpus. Exact wording is settled in Phase 3.
 - **User's words:** *"Thanks for incorporating my suggestions. We can lock here."*
 - **Date:** Oct 23, 2026
+
+### P1.11 Text source of record per case; official PDFs downloaded
+
+- **Decision:** Each case's text comes from the best public-domain copy of the U.S. Reports text:
+  - **1928 to 2001, plus *Goldman* and *Berger*:** CourtListener's Lawbox copy (clean text, U.S. Reports page markers only), split on the opinion headings, with CourtListener's Harvard split as a check. The Harvard scan's OCR misreadings ("evidehce", "dan riot" for "can not") cannot be fixed under brief §4.5, so it is not the text of record.
+  - ***Jones* and *Quon*:** CourtListener's Harvard scan of the U.S. Reports, already split, with U.S. pages.
+  - ***Jardines*, *Riley*, *Grady*, *Carpenter*:** the official GovInfo PDF of the final U.S. Reports (born-digital). CourtListener holds only the slip opinion and a scan of West's Supreme Court Reporter for these.
+  - ***Chatrie*:** the Court's slip opinion (not yet on GovInfo), labelled subject to formal revision.
+
+  CourtListener stays the source of metadata and the citation graph. Decision dates come from the official text, since CourtListener's `date_filed` is wrong for at least *Ciraolo* and *Florida v. Riley*. CourtListener copies scanned from the Lawyers' Edition or West's Supreme Court Reporter are excluded. This partly changes brief §2's corpus-source row: for four cases the official PDF is the source, not only the cross-check.
+- **Official PDFs:** the user approved downloading 23 files (about 71 MB) once, with the full list: 22 from GovInfo (`USREPORTS-<vol>-<page>.pdf`) and *Chatrie*'s slip opinion `25-112_0am4.pdf` from supremecourt.gov. Kept under `data/raw/pdfs/`, gitignored.
+- **User's words:** *"Approved: use the text-source plan as proposed, and download the 23 official PDFs listed."*
+- **Date:** Oct 23, 2026
