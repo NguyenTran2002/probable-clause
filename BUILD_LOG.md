@@ -113,3 +113,26 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"I'm considering widening the corpus to anything related to the Fourth Amendment."* Then: *"Let's narrow. The goal of the project is show casing Claude Citation, and it doesn't need a huge corpus to effectively showcase that."*
 - Atlas: *"My Atlas cluster is free tier, with only about half of its storage left."*
 - *"Thanks for incorporating my suggestions. We can lock here."* (P1.9, P1.10)
+
+## Oct 23, 2026, 18:26 CDT — Phase 1: Corpus (pull, first tests, text sources, cleaning)
+
+**Asked:** Approve the text-source plan and the download of 23 official PDFs; proceed with the pull, the three first tests and cleaning.
+
+**Came back:**
+- `scripts/pull_courtlistener.py`: one citation-lookup request, then each case's cluster, docket and opinions, raw, paced at one request every 4 s. 22 cases resolved (21 core plus *Berger* and *Quon* for the filter check), 146 requests. *Riley*'s U.S. citation is not on CourtListener (resolved by S. Ct.). *Goldman*, *Jones* and *Quon* each have two clusters; for *Jones* and *Quon* the second is a Lawyers' Edition scan (commercial), excluded.
+- First tests (§4.4):
+  - Splitting: the Harvard split holds for the older cases, with labelling errors (*Lopez* splits Brennan's dissent in two; *White* and *On Lee* fold Black's statements into the majority); `joined_by` is empty for every opinion; the five recent cases arrive as one combined slip opinion each.
+  - Artifacts: the Harvard scans carry OCR misreadings that §4.5 cannot fix; Lawbox text is clean; the born-digital U.S. Reports PDFs of *Riley*, *Grady* and *Carpenter* drop the letter after "f" in "fi"/"fl" ligatures and have no soft hyphens.
+  - Page numbers: U.S. Reports pages for all cases except *Chatrie* (slip pages).
+- CourtListener's `date_filed` is wrong for *Ciraolo* and *Florida v. Riley*; dates come from the official text. The `headnotes`, `summary` and `syllabus` fields are empty on all 26 clusters.
+- P1.11 locked; `scripts/fetch_official_pdfs.py` downloaded the 23 PDFs (71,180,581 bytes, SHA-256 recorded).
+- `scripts/build_corpus.py` with `corpus_common.py` and `corpus_pdf.py`: splits each case on the Court's own headings, records U.S. page breaks and footnote markers as offsets, attaches footnotes to their opinions, and drops running heads, captions and print matter. For the lossy PDFs it restores ligature letters and resolves line-end hyphens only where the Court's slip text of the same case confirms the word in context. Built so far (script counts): 21 cases, 75 opinions, 1,599 paragraphs, 331 footnotes; 450 ligature letters restored; 57 hyphen decisions logged for review.
+
+**Failures:**
+- One CourtListener request returned 502 (server error) after 90 requests; re-run by hand, resuming from the cache.
+- Splitting needed several fixes, each found by comparing against the Harvard split: headings whose "with whom MR. JUSTICE ..." clause contains periods; a quoted "dissenting, stated" taken as a heading; *Kyllo*'s mixed-case headings; wrapped headings; small capitals split into separate words in the slip PDF. Two role-less headings (Holmes in *Olmstead*; Stone and Frankfurter in *Goldman*) and one statement (Black in *On Lee*) are typed by an explicit table, flagged for verification.
+- The first ligature repair assumed whole ligatures were dropped; the font keeps the "f". It also trusted the document's own vocabulary, where the broken forms recur, and produced one wrong repair ("Ayer" to "flAyer"). Fixed before any output was kept.
+- Page labels first took the volume number from "Cite as: 573 U. S. 373"; fixed to the standalone page number, and every PDF's labels checked for continuity.
+
+**DECISION (user):**
+- *"Approved: use the text-source plan as proposed, and download the 23 official PDFs listed."* (P1.11)
