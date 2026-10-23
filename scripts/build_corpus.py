@@ -16,11 +16,13 @@ Usage:
     uv run python scripts/build_corpus.py [case_key ...]
 """
 
-import html
 import json
 import re
 import sys
 from pathlib import Path
+
+from corpus_pdf import build_pdf_case
+from corpus_common import BARE, HEADING, PER_CURIAM, ROLELESS, STATEMENT, STATEMENTS, WHO, justices, opinion_type, text_of
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
@@ -34,75 +36,16 @@ LAWBOX = {
     "ciraolo": 111666, "dow": 111667, "florida_v_riley": 112175, "kyllo": 118443,
 }
 
-# A heading names one or more Justices and ends at its role phrase, so a sentence
-# in the body that merely mentions a Justice ("..., dissenting, stated ...") is
-# not one.
-JUSTICE = r"(?:MR\.?|ME\.)?\s*(?:CHIEF\s+)?JUSTICE\s+[A-Z][A-Za-z'’\-]+|THE\s+CHIEF\s+JUSTICE"
-WHO = rf"(?P<who>(?:{JUSTICE})(?:(?:,? and |, )(?:{JUSTICE}))*)"
-# "with whom MR. JUSTICE X joins" contains periods, so this clause may too.
-WITH = r"(?P<with>,? (?:with whom|in which|while)[^:]{0,300}?)"
-ROLE = (
-    r"delivered the opinion of the Court"
-    r"|announced the judgment of the Court(?: and (?:delivered )?an opinion)?(?:,? in which[^:]{0,250}?joins?)?"
-    r"|(?:concurring|dissenting)(?:[^.:,]|, and ){0,60}?"
-    r"|took no part in the consideration or decision of (?:this|these) cases?"
-)
-HEADING = re.compile(rf"^{WHO}{WITH}?,?\s*(?P<role>{ROLE})\s*[.:](?=\s|$)", re.I)
-# A heading with no role ("MR. JUSTICE HOLMES:"); its type comes from ROLELESS.
-BARE = re.compile(rf"^{WHO}:(?=\s|$)", re.I)
-# A one-paragraph statement ("MR. JUSTICE BLACK, while adhering to ..., concurs
-# in the judgment of the Court for the reasons set forth in ...").
-STATEMENT = re.compile(rf"^{WHO}{WITH}?,?\s*(?P<role>concurs? in the (?:judgment|result)|dissents?)\b[^:]{{0,400}}\.$", re.I)
-PER_CURIAM = re.compile(r"^PER CURIAM\.?(?=\s|$)", re.I)
-
-# Headings that name no role, typed by reading the opinion; each is flagged for
-# P1.1 verification against the official text and SCDB's vote counts.
-ROLELESS = {
-    ("olmstead", "Holmes"): "dissent",  # "I am not prepared to say ... I think it a less evil"
-    ("goldman", "Stone"): "concurrence",  # would overrule Olmstead, but do not dissent
+# Official PDFs (P1.11): file, first U.S. page, the CourtListener cluster whose
+# opinion holds the Court's slip text (the reference copy for repairs), and
+# whether the PDF itself is a slip opinion.
+PDF_CASES = {
+    "jardines": ("USREPORTS-569-1.pdf", 1, 856347, False),
+    "riley": ("USREPORTS-573-373.pdf", 373, 2680439, False),
+    "grady": ("USREPORTS-575-306.pdf", 306, 2789928, False),
+    "carpenter": ("USREPORTS-585-296.pdf", 296, 4510032, False),
+    "chatrie": ("25-112_0am4.pdf", 1, None, True),
 }
-# Statements written as a sentence about a Justice, not as a heading. Keyed by
-# case and the statement's opening words.
-STATEMENTS = {
-    ("on_lee", "MR. JUSTICE BLACK believes"): "dissent",
-}
-
-
-def text_of(fragment: str) -> str:
-    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", fragment))).strip()
-
-
-def opinion_type(role: str) -> str:
-    r = role.lower()
-    if "took no part" in r:
-        return "note"
-    if "announced the judgment" in r:
-        return "plurality"
-    if "delivered the opinion" in r:
-        return "majority"
-    if "concurring in part" in r and "judgment" in r:
-        return "concurrence in part and in the judgment"
-    if "dissent" in r and "concur" in r:
-        return "concurrence in part and dissent in part"
-    if "dissent" in r:
-        return "dissent"
-    if "judgment" in r or "result" in r:
-        return "concurrence in the judgment"
-    if "concurring in part" in r:
-        return "concurrence in part"
-    return "concurrence"
-
-
-def justices(s: str) -> list[str]:
-    names = []
-    for m in re.finditer(r"(THE CHIEF JUSTICE)|(?:CHIEF\s+)?JUSTICE\s+([A-Z][A-Za-z'’\-]+)", s, re.I):
-        if m.group(1):
-            names.append("The Chief Justice")
-        else:
-            name = m.group(2).replace("’", "'").title()
-            names.append(re.sub(r"^Mc(.)", lambda x: "Mc" + x.group(1).upper(), name))
-    return names
-
 
 # ---------------------------------------------------------------------------
 # Lawbox: one combined HTML document per case.
@@ -253,6 +196,16 @@ def lawbox_case(key: str, cluster_id: int) -> dict:
     }
 
 
+def slip_text(cluster_id: int) -> str | None:
+    """The Court's slip opinion text as CourtListener holds it, for one cluster."""
+    cluster = json.loads((RAW / "clusters" / f"{cluster_id}.json").read_text())
+    for url in cluster["sub_opinions"]:
+        op = json.loads((RAW / "opinions" / f"{url.rstrip('/').rsplit('/', 1)[-1]}.json").read_text())
+        if op.get("plain_text"):
+            return op["plain_text"]
+    return None
+
+
 def cluster_cite_page(cluster: dict) -> str:
     for c in cluster.get("citations", []):
         if c["reporter"] == "U.S.":
@@ -269,11 +222,16 @@ def page_at_start(breaks: list, page_after: int) -> int:
 
 
 def main() -> int:
-    keys = sys.argv[1:] or list(LAWBOX)
+    keys = sys.argv[1:] or list(LAWBOX) + list(PDF_CASES)
     OUT.mkdir(parents=True, exist_ok=True)
     for key in keys:
         if key in LAWBOX:
             case = lawbox_case(key, LAWBOX[key])
+        elif key in PDF_CASES:
+            name, first, ref_op, slip = PDF_CASES[key]
+            ref = slip_text(ref_op) if ref_op else None
+            case = build_pdf_case(key, RAW / "pdfs" / name, first, ref, slip,
+                                  {"kind": "slip-opinion-pdf" if slip else "govinfo-us-reports-pdf", "file": name})
         else:
             print(f"{key}: no adapter yet")
             continue
