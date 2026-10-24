@@ -712,3 +712,30 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T3.7 locked: see `docs/design/locked-decisions.md`.
 **DECISION (user):**
 - T3.7: *"Lock topic 7 as T3.7 with run events kept 24 hours, the rest as proposed."*
+
+## Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 closed (run lifecycle and infrastructure)
+**Asked:** Run Area 3 after the compaction, topics first, one topic at a time, each locked in the user's words.
+**Came back:**
+- Seven topics, confirmed by the user, all locked:
+  - T3.1 (17:55): starting a run and streaming it — Server-Sent Events (`POST /runs`, `GET /runs/{id}/events`), the loop starting when the first stream attaches, numbered events, the answer one block at a time, no thinking summaries, passage text in the events, memory first with Atlas copies, replays in the same format.
+  - T3.2 (17:58): disconnect detection — a heartbeat from the page (10 s; attended under 25 s; abandoned 60 s after the last; page watchdog 45 s), checked before every paid call.
+  - T3.3 (18:04): the paid calls — streamed Claude calls, per-call deadlines, the loop's 370,000 / 8,000-token share of the budget, visible retries by our code for Anthropic and Voyage, composition from what was kept once retries run out, a page warning when meaning search was degraded.
+  - T3.4 (18:13): spend counters and caps — the worst case (about $1.67) reserved atomically at the start in one Atlas document per Chicago month, settled as calls complete; every budget stop recorded; a Console workspace limit as backstop; test runs on their own database.
+  - T3.5 (18:26): Cloud Run and the gateway — the `probable-clause` project, the two services' settings, a 900 s API timeout, a 10-minute run deadline, one new goodnight block forwarding no client IP, Secret Manager, Atlas `Probable_Clause` and `Probable_Clause_test`.
+  - T3.6 (18:28): start-up and the wake protocol — vectors in memory, the vectors file committed, a header on the embedded text, everything loaded and timed before the port opens, the page's wake handling and long-wait states.
+  - T3.7 (18:38): protections and retention — a 2,000-character question cap, every tool input validated, safe rendering, run events kept 24 hours, statistics without question text kept, no cookies or analytics, the privacy note's contents.
+- Superseded or amended: brief §10.7's "a paid request is never retried automatically", for Anthropic and Voyage calls (T3.3); P2.8 and T1.11 amended (T3.3); T1.1's open points settled (T3.6). The brief §8.2 per-visitor limit was already gone (P2.6).
+- Read with the user's permission: goodnight's configuration and Cloud Run settings, read only, nothing copied into this repository.
+- Carried forward: the working doc's "Area 3 closed" section (build, interfaces contract, Phase 5 measurements and tests, Areas 4 and 5); Area 4's proposed topics drafted there for after the compaction.
+**Failures:** Two working-doc times written before reading the clock (topic 2 at 17:59 for 17:57; topic 4 at 18:08 for 18:09), both corrected and logged in the T3.2 and T3.4 entries; `date` now runs in its own step before any time is written.
+**DECISION (user):**
+- Topics: *"The seven topics work. Open topic 1."*
+- T3.1: *"Your recommendations work here. Lock and proceed."*
+- T3.2: *"Lock option A. Proceed."*
+- T3.3: *"I'm leaning allowing retries for both Anthropic and Voyage. Especially when Voyage fails, I want to display a warning to user that quality of this response is affected due to this."* Then *"Lock topic 3 as T3.3 with retries as revised; compose from what was kept after retries run out."*
+- Voyage tier: *"I'm on Usage tier 1 for Voyage. Practically, we will never hit any limit. It's only during initial processing where we process every passage that we're at risk."*
+- T3.4: *"B1 is good, but I'd also want it logged in our database how many times have a run failed due to budget as well. This is for me to keep an eye on usage and refusal just in case."* Then *"Record everything stopped due to budget regardless of how as long as it's a budget concern. Lock otherwise."*
+- goodnight read: *"You're clear to read goodnight's nginx.conf and its Cloud Run settings. Don't bring any of its code over here though--contamination."*
+- T3.5: Atlas open to all addresses, in us-central1, database `Probable_Clause`; client IP dropped and Secret Manager (*"Good on both notes."*); the URI's user readWrite on `Probable_Clause` and `Probable_Clause_test`; the GCP project `probable-clause` (1066460440617); *"Lock otherwise."*
+- T3.6: *"Lock topic 6 as T3.6: vectors in memory, the vectors file committed, the header on embedded text, the rest as proposed."*
+- T3.7: *"Lock topic 7 as T3.7 with run events kept 24 hours, the rest as proposed."*
