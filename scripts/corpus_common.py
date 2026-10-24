@@ -5,6 +5,7 @@ Used by build_corpus.py (Lawbox HTML) and corpus_pdf.py (official PDFs).
 
 import html
 import re
+import unicodedata
 
 # A heading names one or more Justices and ends at its role phrase, so a sentence
 # in the body that merely mentions a Justice ("..., dissenting, stated ...") is
@@ -41,7 +42,12 @@ STATEMENTS = {
 
 
 def text_of(fragment: str) -> str:
-    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", fragment))).strip()
+    """Plain text of an HTML fragment. Also repairs Lawbox's encoding: its em
+    dashes are the Windows-1252 byte 0x97 read as a Unicode control character,
+    with a stray space beside it (the U.S. Reports set em dashes closed up)."""
+    t = html.unescape(re.sub(r"<[^>]+>", "", fragment))
+    t = re.sub(r"[ \t\n]*\x97[ \t\n]*", "\u2014", t)
+    return unicodedata.normalize("NFC", re.sub(r"\s+", " ", t)).strip()
 
 
 def opinion_type(role: str) -> str:

@@ -152,7 +152,7 @@ def verify(key: str) -> dict:
     pdf, labels = pdf_labels(case, key)
     units = list(corpus_units(case))
     vocab = {t for u in units for t in norm_tokens(u["text"])}
-    otoks, opages, obroken = official_stream(pdf, labels, vocab)
+    otoks, opages, obroken, oafter = official_stream(pdf, labels, vocab)
     oindex = kgram_index(otoks)
     third = third_copy(case, key)
     tindex = kgram_index(third) if third else None
@@ -160,7 +160,7 @@ def verify(key: str) -> dict:
     hindex = kgram_index(hv[0]) if hv else None
     covered = [False] * len(otoks)
 
-    aligned, not_found, diffs, page_issues, harvard_pages = 0, [], [], [], []
+    aligned, not_found, diffs, page_issues, harvard_pages, punct = 0, [], [], [], [], []
     interruptions, near, h_near = 0, 0, 0
     for u in units:
         ptoks = norm_tokens(u["text"])
@@ -192,6 +192,19 @@ def verify(key: str) -> dict:
                     harvard_pages.append({"where": u["where"], "words_off": len(bad),
                                           "near": " ".join(ptoks[max(0, bad[0] - 3):bad[0] + 3]),
                                           "corpus": cpages[bad[0]], "harvard": hpg[bad[0]]})
+        # Punctuation between consecutive words that match consecutive official
+        # words: dashes, brackets, parentheses, semicolons and colons compared.
+        offs = [m.end() for m in re.finditer(r"[a-z0-9]+", u["text"].lower())]
+        starts = token_offsets(u["text"])
+        for blk in sm.get_matching_blocks():
+            for i in range(blk.size - 1):
+                ci, oj = blk.a + i, base + blk.b + i
+                cg = u["text"][offs[ci]:starts[ci + 1]]
+                og = oafter[oj]
+                ck, ok = punct_key(cg), punct_key(og)
+                if ck != ok:
+                    punct.append({"where": u["where"], "corpus": cg.strip(), "official": og.strip(),
+                                  "context": " ".join(ptoks[max(0, ci - 4):ci + 5])})
         for tag, a0, a1, b0, b1 in sm.get_opcodes():
             if tag == "equal":
                 continue
@@ -249,12 +262,29 @@ def verify(key: str) -> dict:
         "key": key, "units": len(units), "aligned": aligned, "not_found": not_found,
         "diffs": diffs, "diff_labels": dict(Counter(d["label"] for d in diffs)),
         "page_issues": page_issues, "harvard_page_issues": harvard_pages,
+        "punctuation": punct, "punctuation_kinds": dict(Counter(punct_kind(p) for p in punct)),
         "uncovered_official": uncovered, "interruptions": interruptions,
         "official_words": len(otoks), "official_words_covered": sum(covered), "third_copy": bool(third),
     }
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{key}.json").write_text(json.dumps(report, indent=1, ensure_ascii=False))
     return report
+
+
+PUNCT_COMPARED = "—–-()[];:?!§"
+
+
+def punct_key(gap: str) -> str:
+    """The compared punctuation in a gap between words, in order."""
+    return "".join(ch for ch in gap if ch in PUNCT_COMPARED)
+
+
+def punct_kind(p: dict) -> str:
+    both = p["corpus"] + p["official"]
+    for kind, chars in (("dash", "—–"), ("hyphen", "-"), ("bracket", "()[]"), ("semicolon/colon", ";:"), ("other", "?!§")):
+        if any(ch in both for ch in chars):
+            return kind
+    return "other"
 
 
 def split_across(c_seg: list[str], o_seg: list[str]) -> bool:
@@ -274,12 +304,12 @@ def split_across(c_seg: list[str], o_seg: list[str]) -> bool:
 def main() -> int:
     keys = sys.argv[1:] or sorted(p.stem for p in CASES.glob("*.json"))
     total = Counter()
-    print(f"{'case':16} {'units':>5} {'missing':>7} {'diffs':>5} {'pg-off':>6} {'pg-harv':>7} {'uncov':>5}")
+    print(f"{'case':16} {'units':>5} {'missing':>7} {'diffs':>5} {'pg-off':>6} {'pg-harv':>7} {'uncov':>5} punct")
     for key in keys:
         r = verify(key)
         total.update(r["diff_labels"])
         print(f"{key:16} {r['units']:>5} {len(r['not_found']):>7} {len(r['diffs']):>5} {len(r['page_issues']):>6} "
-              f"{len(r['harvard_page_issues']):>7} {len(r['uncovered_official']):>5}")
+              f"{len(r['harvard_page_issues']):>7} {len(r['uncovered_official']):>5} {r['punctuation_kinds']}")
     print(dict(total), sum(total.values()))
     return 0
 

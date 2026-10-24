@@ -24,6 +24,7 @@ Every repair and every unresolved case is listed in the case's cleaning stats.
 import html
 import re
 import subprocess
+import unicodedata
 from collections import Counter
 from pathlib import Path
 
@@ -45,7 +46,7 @@ def read_pages(pdf: Path) -> list[list[dict]]:
             words = []
             for w in re.finditer(r'<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">(.*?)</word>',
                                  ln.group(1)):
-                t = html.unescape(w.group(5))
+                t = unicodedata.normalize("NFC", html.unescape(w.group(5)))
                 for k, v in LIGATURES.items():
                     t = t.replace(k, v)
                 words.append({"t": t, "x0": float(w.group(1)), "y0": float(w.group(2)),

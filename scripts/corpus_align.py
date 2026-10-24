@@ -27,12 +27,12 @@ def token_offsets(text: str) -> list[int]:
     return [m.start() for m in TOKEN.finditer(text.lower())]
 
 
-def official_stream(pdf: Path, labels: list[int], vocab: set) -> tuple[list[str], list[int], set]:
-    """The official PDF's words in reading order, each with its page label, and
-    the indices of words rejoined from a line-end hyphen. Read from word boxes,
-    not poppler's plain text, which silently drops line-end hyphens. A broken
-    word is rejoined without its hyphen when the joined form is one the corpus
-    uses; otherwise the hyphen stays."""
+def official_stream(pdf: Path, labels: list[int], vocab: set) -> tuple[list[str], list[int], set, list[str]]:
+    """The official PDF's words in reading order, with each word's page label,
+    the indices of words rejoined from a line-end hyphen, and the punctuation
+    that follows each word (spaces dropped). Read from word boxes, not poppler's
+    plain text, which silently drops line-end hyphens. A broken word is rejoined
+    without its hyphen when the joined form is one the corpus uses."""
     from corpus_pdf import read_pages
     flat = []
     for i, lines in enumerate(read_pages(pdf)):
@@ -40,24 +40,38 @@ def official_stream(pdf: Path, labels: list[int], vocab: set) -> tuple[list[str]
             words = [w["t"] for w in line["words"]]
             for j, w in enumerate(words):
                 flat.append((w, labels[i], j == len(words) - 1))
-    toks, pages, broken = [], [], set()
+    toks, pages, broken, after = [], [], set(), []
+
+    def add(raw: str, label: int, from_break: bool):
+        low = raw.replace("\u00ad", "").lower()
+        for k, v in LIG.items():
+            low = low.replace(k, v)
+        ms = list(TOKEN.finditer(low))
+        if not ms:
+            if after:
+                after[-1] += low
+            return
+        if after:
+            after[-1] += low[:ms[0].start()]
+        for n, m in enumerate(ms):
+            if from_break:
+                broken.add(len(toks))
+            toks.append(m.group(0))
+            pages.append(label)
+            after.append(low[m.end():ms[n + 1].start()] if n + 1 < len(ms) else low[m.end():])
+
     k = 0
     while k < len(flat):
         w, label, line_end = flat[k]
-        if line_end and w.endswith(("-", "­")) and k + 1 < len(flat):
-            joined = norm_tokens(w[:-1] + flat[k + 1][0])
-            ts = joined if joined and all(t in vocab for t in joined) else norm_tokens(w[:-1] + "-" + flat[k + 1][0])
-            for t in ts:
-                broken.add(len(toks))
-                toks.append(t)
-                pages.append(label)
+        if line_end and w.endswith(("-", "\u00ad")) and k + 1 < len(flat):
+            nxt = flat[k + 1][0]
+            joined = norm_tokens(w[:-1] + nxt)
+            add(w[:-1] + nxt if joined and all(t in vocab for t in joined) else w[:-1] + "-" + nxt, label, True)
             k += 2
             continue
-        for t in norm_tokens(w):
-            toks.append(t)
-            pages.append(label)
+        add(w, label, False)
         k += 1
-    return toks, pages, broken
+    return toks, pages, broken, after
 
 
 def kgram_index(toks: list[str]) -> dict:

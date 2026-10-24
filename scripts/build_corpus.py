@@ -211,7 +211,7 @@ def reanchor_pages(case: dict, key: str) -> None:
     units = [p for op in case["opinions"] for p in op["paragraphs"] if p["kind"] != "section"]
     vocab = {t for op in case["opinions"] for p in op["paragraphs"] for t in norm_tokens(p["text"])}
     vocab |= {t for op in case["opinions"] for f in op["footnotes"] for x in f["paragraphs"] for t in norm_tokens(x)}
-    otoks, opages, _ = official_stream(pdf, labels, vocab)
+    otoks, opages, _, _ = official_stream(pdf, labels, vocab)
     oindex = kgram_index(otoks)
     stats = {"paragraphs_reanchored": 0, "paragraphs_not_found": 0, "breaks_changed": 0}
     near = 0
