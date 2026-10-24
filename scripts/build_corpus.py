@@ -545,7 +545,10 @@ def lineup_joiners(case: dict, key: str) -> None:
     flat = flat.replace("’", "'").lower()
     known = {j.lower(): j for j in JUSTICES}
     for op in case["opinions"]:
-        if op["type"] not in ("majority", "plurality") or op["author"] == ["Per Curiam"]:
+        if op["author"] == ["Per Curiam"]:
+            op["joined_by_source"] = "per curiam"  # an opinion of the Court with no author or joiners
+            continue
+        if op["type"] not in ("majority", "plurality"):
             continue
         author = op["author"][0].replace("’", "'").lower()
         m = re.search(rf"{re.escape(author)},(?:c\.)?j\.,(?:delivered|announced)(.{{0,900}}?)joined\.", flat)
