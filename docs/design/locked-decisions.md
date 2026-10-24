@@ -252,3 +252,9 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The Phase 2 research plan is approved as laid out: six read-only research agents in parallel, paid checks run by the main session from committed `scripts/probe_*.py` (Anthropic ceiling $2, on the product's model and effort, P2.1; Exa at most 20 requests from the free credit), every quoted source re-checked by `scripts/verify_quotes.py` and an agent not told the conclusions, findings in `docs/research/phase2-findings.md`. Subagents run on Sonnet 5.5 at high effort at the least; extra-high effort is allowed for parts that need it; max effort is never used. Opus is not used for subagents in this phase.
 - **User's words:** *"I don't want us to default to Opus always in the plan here, already I saw that more machinery parts of the plan would only need Sonnet."* Then: *"The research plan looks good to me. One note though, use Sonnet 5.5 at high effort in the minimum. You're allowed to set extra high effort for certain parts of the plan. However, you're barred from using Sonnet 5.5 at max effort."*
 - **Date:** Oct 24, 2026
+
+### P2.6 No per-visitor run limit; spend is capped by cost only
+
+- **Decision:** The per-visitor limit of brief §8.2 ("3 a day, by client IP") is removed. Live research is limited only by the global daily cost cap and the monthly cost cap. Consequences recorded with it: brief §8.5's "counts as one of the visitor's daily runs" for an abandoned run no longer applies (its spend still counts toward the cost caps), and one visitor can use the whole day's budget, after which live research pauses for everyone until the next day while replays stay available (brief §7.2).
+- **User's words:** *"On cap on runs per visitor, uncap it. We will control with daily cost cap and monthly cost cap only. I don't want a focused visitor getting blocked from trying out the demo."*
+- **Date:** Oct 24, 2026
