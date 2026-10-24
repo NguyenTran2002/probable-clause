@@ -233,3 +233,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The project is on Exa's free tier, with $10 of credits a month. The prices, read from the user's Exa console on Oct 24, 2026, are authoritative and are not re-checked: search $4 (Lite), $7 (Auto) or $12 (Deep) per 1,000 requests, plus $1 per 1,000 additional results beyond 10; content $1 per 1,000 pages; answer $5 per 1,000 answers. This replaces brief §6.5's figures. Phase 2 still checks which of these charges a search through Exa's MCP server incurs, and what happens when the monthly credit runs out.
 - **User's words:** *"For Exa, screenshotted is our current plan and pricing. It's from my console so it's authoritative. (I. e. no double checking needed for these exact numbers.)"*
 - **Date:** Oct 24, 2026
+
+### P2.3 Keep-only triage: Claude records only what it keeps, with a reason
+
+- **Decision:** Claude's triage tool records only the passages it keeps, each with a reason. Every passage it does not keep is discarded with no reason and no call. This replaces brief §5.2's `review_passages` (keep or discard, each with a reason) and drops the discard reasons of brief §1 and §3. How passages are surfaced to Claude and how Claude queries the corpus stay open for the Phase 3 architecture conversation, where the user reviews them in full and gives the green light before anything is locked.
+- **Why:** The corpus search will return more false positives than true positives, so asking Claude to account for each rejection would burden the loop.
+- **User's words:** *"Instead we should expose only keep tool, with sources not acted on by Claude simply discarded. This will save a round and arguably make the pipeline more accurate now that it doesn't have to taint its history with meaningless not keep tool calls."* Then: *"On not keeping passage without providing a reason, it's attuned for the nature of this task. Claude is searching thru a search feature, and the search feature (not yet fully designed nor implemented) will by nature return more false positives than true positives. Thus, we don't want to burden the system with what not to keep, only what is kept would want a reason. Everything else discarded."*
+- **Date:** Oct 24, 2026
+
+### P2.4 Claude cites the Phase 1 corpus text, not the official PDFs
+
+- **Decision:** The citable source given to Claude is the cleaned, verified corpus text from Phase 1 (P1.22), not the official PDFs handed to the Citations feature for the server to parse and chunk. The reasons, from Phase 1's findings: the PDFs' text layers carry OCR misreadings, line-break hyphens and running heads that would appear inside quotations; a PDF mixes the syllabus (excluded, P1.13) with several opinions that begin mid-page, so opinion type, author and joiners would not attach to a citation; and PDF pages are billed as text and image. Each passage keeps its official page numbers. Whether a citable unit is a paragraph or a sentence is settled in Phase 3.
+- **User's words:** *"On sticking with Phase's 1 work and finding, you have my green light here."*
+- **Date:** Oct 24, 2026
