@@ -37,7 +37,8 @@ More, each from the brief:
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
 - `scripts/verify_quotes.py`: re-fetches cited pages and string-matches quotes (brief §9's re-check). Cache under `data/cache/pages/`.
-- `data/` (gitignored for now): `data/raw/` for raw CourtListener responses and official PDFs, `data/cache/` for fetched pages. Never committed.
+- Corpus pipeline (Phase 1): `scripts/pull_courtlistener.py`, `fetch_official_pdfs.py`, `build_corpus.py` (with `corpus_common.py`, `corpus_pdf.py`, `corpus_align.py`, and the reviewed `corrections.json`), `verify_corpus.py`, `verify_lineup.py`, `build_manifest.py`, `filter_check.py`. Order and purpose under "Current state and next step".
+- `data/` (gitignored for now): `data/raw/` for raw CourtListener responses and official PDFs, `data/cache/` for fetched pages, `data/corpus/` for the built corpus, `data/verification/` for verification reports and agent findings. Raw responses are never committed; whether the cleaned corpus is committed is decided at the freeze.
 - `web/looktests/`: the frontend session's look tests (P1.6).
 - `.env.example`: the variable names; the user creates `.env`.
 
