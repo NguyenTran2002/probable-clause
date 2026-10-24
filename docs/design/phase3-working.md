@@ -23,7 +23,7 @@
 | 1. The research loop | T1 | **Closed** Oct 24, 17:05 CDT (T1.1 to T1.14) |
 | 2. The update check (Exa wrapper) | T2 | **Closed** Oct 24, 17:46 CDT (T2.1 to T2.5) |
 | 3. Run lifecycle and infrastructure | T3 | **Closed** Oct 24, 18:38 CDT (T3.1 to T3.7) |
-| 4. The interface | T4 | **Next**, after the compaction |
+| 4. The interface | T4 | **Open** (five topics; the prototype is the baseline) |
 | 5. The user's wording and the replays | T5 | Not started |
 | Design note (Phase 3's gate) | — | After Area 5 |
 
@@ -294,17 +294,20 @@ Decisions: T3.1 to T3.7 in `locked-decisions.md`; the closing log entry is "Oct 
 - Area 4: the page states for paused, resumed, reconnecting, interrupted and abandoned runs; retries shown as steps; the Voyage warning; the time-limit and error-stopped answers; the waking and long-wait states; the cap-paused state; whether each call's cost is shown (T3.1); one question per run, follow-ups as new runs (T3.7).
 - Area 5: wording for all of the above; the privacy note (T3.7), with Anthropic's, Voyage's and Exa's retention read and cited; Cloud Logging's default retention checked.
 
-## Area 4: the interface (to open after the compaction)
+## Area 4: the interface
 
-Facts in brief §7, the frontend direction folded into `BUILD_LOG.md` (Oct 23, 20:48 and the Oct 24 supplement; P1.6), `docs/sessions/frontend-log.md` and the look tests under `web/looktests/`, and items carried from Areas 1 to 3 above. Proposed topics, to confirm with the user when the area opens:
+Facts in brief §7, the frontend direction folded into `BUILD_LOG.md` (Oct 23, 20:48 and the Oct 24 supplement; P1.6), `docs/sessions/frontend-log.md` and the prototype under `web/looktests/machinery/` (commit badc05f), and items carried from Areas 1 to 3 above. Resumed after the compaction at Oct 24, 2026, 18:49 CDT.
+
+**The prototype is the baseline.** The user, on the first draft of nine topics: *"Wait, the frontend prototype is done and locked. What will that change about this area?"* So what the prototype shows stays; Area 4 covers only what it leaves open, what Areas 1 to 3 force on it, and what it never built. Five topics confirmed by the user (*"The five topics work. Open topic 1."*):
 
 | # | Topic | Status | Notes |
 |---|---|---|---|
-| 1 | Art direction | Open | The T-entry from the fold-ins (machinery prototype, Evergreen; P1.6); phone sizes (brief §7.3) |
-| 2 | The frontend stack | Open | Brief §2 default 1 ("Frontend chosen in Phase 3"); static build served by the web service (T3.5) |
-| 3 | Layout | Open | Left column and corpus panel (brief §2, §7.1); phone layout; where the band and the answer sit |
-| 4 | The step log | Open | How each event of T3.1 reads: searches, reads, keeps, rejections, retries, pauses, failures; costs shown or not |
-| 5 | The corpus panel | Open | Passage states (kept and cited, kept not cited, shown never kept, matched again); the cited sentence inside its paragraph (T1.9); footnotes; headers |
-| 6 | The answer | Open | Markdown and citation underlines (T1.11); synthesis marking skipping headings; the two checks' flags and line (T1.12); cut-off, incomplete, error-stopped and time-limit states; the pointer to the band |
-| 7 | The update-check band | Open | Outcomes, findings with links, overview, collapsed pages, incomplete searches (T2.3, T2.4) |
-| 8 | States outside a normal run | Open | Waking and the long wait (T3.6), paused by the caps (T3.4), reconnecting, interrupted, abandoned (T3.2), the Voyage warning (T3.3), replays labelled as recordings (brief §7.4), one question per run (T3.7) |
+| 1 | Record the lock | Open | The art-direction T-entry from the fold-ins (P1.6); no discussion, the user's sign-off |
+| 2 | The frontend stack | Open | Brief §2 default 1; the prototype is plain JavaScript, no library, no build step; served static by the web service (T3.5) |
+| 3 | Where Areas 1 to 3 change the prototype | Open | "Discarded" cards (P2.3: shown, never kept); the band's draft label vs T2.3's findings, overview and links; the red verifier flag vs T1.12's two checks and their line; "View source" needs the whole opinion vs T3.1's passage-only events; "View API calls" contents incl. composition and custom documents (T1.9); the contract assumption of `search_result` blocks (T1.9) |
+| 4 | New pieces in the prototype's style | Open | Waking and the long wait (T3.6), paused by a cap (T3.4), reconnecting, interrupted, abandoned (T3.2), the Voyage warning (T3.3), replay labels (brief §7.4), one question per run (T3.7); retries and pauses in the step log (T3.3, T3.2); cut-off, incomplete, error-stopped and time-limit answers (T1.11, T3.3, T3.5) |
+| 5 | Whether each call's cost is shown | Open | T3.1 left it to Area 4 |
+
+### Discussion notes
+
+- **Topic 1 opened, 18:49 CDT.** Draft entry shown for the user's sign-off, from the fold-ins of Oct 23, 20:48 and Oct 24, 13:59 and the frontend log 19:04 to 20:18; checked in the prototype: the wordmark's "l" in its own span (brief §2), Google Fonts link for the three faces, `prefers-color-scheme` dark mode, `--chat: 51.25rem`.
