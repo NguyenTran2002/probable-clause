@@ -68,7 +68,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 23, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 23, 2026, 16:54 CDT — Phase 1: Corpus (before the pull: checks and licensing)"
 
-### P1.3 The update check shows Claude's synthesis plus source links, never Exa's content
+### P1.3 The update check shows Claude's synthesis plus source links, never Exa's content — AMENDED by T2.3 (Claude names each statement's sources, checked by our code; no Citations on web results)
 
 - **Decision:** Exa stays as the update-check search (brief §2 unchanged). On the page and in replays, the update-check band shows **Claude's own synthesis** of what the search found, plus a **link to each source** (title, URL, published date). It never shows page text, highlights, or Citations `cited_text` drawn from web results. Internally, Citations still mark which sentences are grounded in a web result; on screen, such a sentence links to its source instead of quoting it. This changes how brief §6.3 and §6.4 display results. Every parameter Claude chose is still shown, and the honesty label still applies.
 - **Why:** Exa's Terms §4.2(a), read literally, require written permission to display, copy or publish information obtained through the service (`docs/research/licensing.md` §4). Synthesis plus links removes any republication of third-party web text. It does not by itself satisfy the literal clause ("modify", "create derivative works from" are also listed), so the user is emailing Exa (hello@exa.ai, the address named in the terms) for written permission covering public display and stored replays. If no answer arrives before launch, the project proceeds with this design and the remaining risk is logged as accepted by the user.
@@ -436,7 +436,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)"
 
-### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs")
+### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1)
 
 - **Decision:** Area 1, topic 6:
   - **`submit_answer(out_of_scope, note?, update_skip_reason?)`.** No list of kept IDs: the composition call uses the kept set as it stands when the submit is accepted (T1.7). This supersedes brief §2's Termination row ("Its input lists the kept passage IDs"); the invariant stands (every citation points to a passage the viewer watched Claude keep).
@@ -530,3 +530,20 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I'm leaning not trusting Exa's highlight here."* *"Let's keep 4000"*. *"I mean take Exa's date as written, with no conversion"*. Then: *"Lock topic 2 as T2.2 as restated."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:33 CDT — Phase 3: Architecture, Area 2 (what a web result looks like to Claude, T2.2)"
+
+### T2.3 The update-check band: structured findings in `submit_answer` (amends P1.3 and T1.10)
+
+- **Decision:** Area 2, topic 3, option A:
+  1. **Fields** added to `submit_answer` (amends T1.10): `update_findings`, a list of `{statement, sources}` (source IDs `web-<search>-<n>`, T2.2), an empty list meaning nothing relevant was found; `update_overview`, optional. Caps, placeholders against overrun only: 20 findings, 600 characters a statement, 10 sources a statement, 600 characters for the overview. Statements describe what a page reports, attributed to its source, never whether the law has changed (system prompt).
+  2. **Checked after rejection rule 1 and before rules 2 to 4** (T1.10): an unknown source ID, a statement with no source, or findings when no update search ran refuse the submit with an error naming each problem; repeatable.
+  3. **Copy guard:** a statement or the overview that repeats 10 or more consecutive words (a placeholder, tested in Phase 5) of any page returned in the run, compared ignoring case, punctuation and spacing, refuses the submit with a request to paraphrase. Accepted: each refusal uses a round, and repeating a Court quotation found in an article trips it.
+  4. **The outcome is worked out by our code,** never set by Claude: found (at least one finding); nothing relevant (an update search ran, findings empty); skipped (`update_skip_reason`); declined after reminder (rule 4); unavailable (topic 4). The pointer line under the answer (T1.11) appears only on "found".
+  5. **Out-of-scope and nothing-kept runs:** no answer is composed, but the band still shows if an update search ran.
+  6. **Fallbacks:** at the step limit or the token ceiling there is no submit, so the band shows each search's parameters and returned pages, labelled as not summarised because the run stopped first.
+  7. **The band shows** the outcome, each search's parameters (T2.1), each finding linked to its sources (title, domain, date as written, T2.2), the overview marked as Claude's synthesis, a collapsed list of every page returned, and the honesty label. Layout in Area 4, wording in Area 5.
+  8. **Replays store** the parameters, findings, overview and link details, never page text (P1.7), labelled with the recording date.
+- **P1.3 amended:** its "Internally, Citations still mark which sentences are grounded in a web result; on screen, such a sentence links to its source" becomes: Claude names the sources for each statement and our code checks that they were returned in the run. The page must not call this verified (wording in Area 5). Brief §6.4's guarantee sentence for the band ("text as fetched from that page") no longer fits, since no web text is shown; its replacement is Area 5's.
+- **Why not a Citations call (option B):** no web text reaches the page either way (P1.3), and a Citations pointer shows only that the cited span exists, not that it supports the statement; B would add a call (estimate +$0.02 to $0.08 a run) written by a second Claude that did not do the research.
+- **User's words:** *"Go with option A, structured findings in submit_answer. Let's go through the details."* Then: *"Lock topic 3 as T2.3: option A with the eight details as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:40 CDT — Phase 3: Architecture, Area 2 (the band's summary and links, T2.3)"

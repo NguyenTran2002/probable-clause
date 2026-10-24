@@ -587,3 +587,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"I'm leaning not trusting Exa's highlight here."* *"Let's keep 4000 but is this 4000 first characters of all pages? Not excerpts within a page? How are these characters generated?"*
 - *"Wait I'm not clear on how you're saying converting date will lose accuracy here."* *"By frontend's time zone, I mean the timezone of every visitor's browser."* Then: *"Oh I see. In that case, what about we don't bother with handling date at all?"* and *"I mean take Exa's date as written, with no conversion"*.
 - T2.2: *"Lock topic 2 as T2.2 as restated."*
+
+## Oct 24, 2026, 17:40 CDT — Phase 3: Architecture, Area 2 (the band's summary and links, T2.3)
+**Asked:** Area 2, topic 3: how the update-check band's summary is written and tied to its sources, given the conflict found when Area 2 opened. The user chose option A and asked to go through its details.
+**Came back:**
+- The conflict: P1.3 assumed Citations would ground the band's sentences, but the summary is written in the loop (T1.11), where web results are plain text (T1.6, T2.2) and a tool input carries no citations.
+- Three options: (A) structured findings in `submit_answer`, each statement naming the `web-` IDs it rests on, checked by our code; (B) a separate Citations call after the loop (estimate +$0.02 to $0.08 a run), its `cited_text` discarded; (C) free text plus a list of links. Recommended A: no web text reaches the page either way, a Citations pointer proves only that a span exists, not that it supports the statement, and A costs nothing.
+- Eight details of A proposed and accepted: fields and caps; when they are checked; a copy guard against republishing page text; the outcome worked out by our code; out-of-scope and nothing-kept runs; the fallbacks; the band's contents; what replays store.
+- T2.3 locked: see `docs/design/locked-decisions.md`. P1.3 and T1.10 marked amended.
+**DECISION (user):**
+- *"Go with option A, structured findings in submit_answer. Let's go through the details."*
+- T2.3: *"Lock topic 3 as T2.3: option A with the eight details as proposed."*
