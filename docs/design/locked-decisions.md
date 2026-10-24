@@ -217,3 +217,19 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - Recorded with it, the main session's convention for page breaks (no user decision needed): a word divided across a page turn is on the page where it begins.
 - **User's words:** *"Approved. Include Boyd's p.618 caption as a quote paragraph, commit the cleaned corpus with attribution (default 3), and accept the two smaller points as recommended. Go ahead with the freeze."*
 - **Date:** Oct 23, 2026
+
+---
+
+## Phase 2: Research
+
+### P2.1 Model: Sonnet 5.5 at high effort
+
+- **Decision:** The model is `claude-sonnet-5-5` at high effort (brief §2, Model row). Raising the effort or considering Opus happens only on evidence that Sonnet 5.5 at high effort cannot do what the product needs, and only with the user. Phase 2 confirms how effort is set for this model in the current API.
+- **User's words:** *"For model check, let's lock Sonnet 5.5 at high effort and only increase the effort or ponder Opus if we see evidence that Sonnet 5.5 at high cannot handle what we want. My rationale being the demo has tight scope and machinery tasks, so we don't need too much frontier intelligence. (And also my wallet is not that deep as well.)"*
+- **Date:** Oct 24, 2026
+
+### P2.2 Exa plan and prices come from the user's console
+
+- **Decision:** The project is on Exa's free tier, with $10 of credits a month. The prices, read from the user's Exa console on Oct 24, 2026, are authoritative and are not re-checked: search $4 (Lite), $7 (Auto) or $12 (Deep) per 1,000 requests, plus $1 per 1,000 additional results beyond 10; content $1 per 1,000 pages; answer $5 per 1,000 answers. This replaces brief §6.5's figures. Phase 2 still checks which of these charges a search through Exa's MCP server incurs, and what happens when the monthly credit runs out.
+- **User's words:** *"For Exa, screenshotted is our current plan and pricing. It's from my console so it's authoritative. (I. e. no double checking needed for these exact numbers.)"*
+- **Date:** Oct 24, 2026
