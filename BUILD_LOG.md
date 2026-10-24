@@ -511,3 +511,54 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **Came back:** a five-part outline (role and the division of labour; the corpus, its coverage dates from the manifest, text notes, the ID scheme and the catalog; research strategy with the tools; judgement rules; out-of-scope and borderline questions); a status line on each turn's tool results; a one-hour cache breakpoint on the fixed opening (tools, system prompt, catalog; about 12,000 tokens, estimate); the user's review of the drafted prompt text before its first paid run.
 
 **DECISION (user):** T1.14: *"Lock topic 10 as T1.14 as proposed; borderline questions like the employer email get researched (the state-action limit), not flagged out of scope."*
+
+## Oct 24, 2026, 17:05 CDT — Phase 3: Architecture, Area 1 closed (the research loop)
+
+**Asked:** Finish Area 1, the research loop, topic by topic, then compact before Area 2 (*"I want us to compact after each area"*).
+
+**Came back:**
+- Fourteen decisions, T1.1 to T1.14, each with its own entry above:
+  - retrieval as two search tools, semantic on `voyage-law-2` with `rerank-3`, and keyword (T1.1)
+  - keyword lists `all_of`, `any_of`, `none_of` (T1.2)
+  - read-around as one marked result (T1.3)
+  - optional filters and query inputs (T1.4)
+  - *Oliver*'s heading fixed at the start of Phase 4 (T1.5)
+  - how passages reach Claude, with `read_passages` and the catalog (T1.6)
+  - batched keeps with reasons, no withdraw list (T1.7)
+  - composition on Opus 5.5 at high effort (T1.8)
+  - sentence citations from our splitter, as custom content documents (T1.9)
+  - `submit_answer` and four rejection rules (T1.10)
+  - the composition call (T1.11)
+  - a quotation check and a narrow full-citation check in place of the general verifier (T1.12)
+  - no citing-cases lookup (T1.13)
+  - the loop's system prompt outline (T1.14)
+- Superseded or amended along the way: brief §2's kept-ID list (T1.10) and Case-name verifier row (T1.12); P1.10 (T1.12); P1.21 for one entry (T1.5); P2.1 for composition (T1.8); T1.6 and T1.7 for the composition call (T1.9).
+- New scripts: `scripts/check_structure.py` (headings and footnote markers against every raw copy, read only) and `scripts/probe_chunking.py` (Anthropic's plain-text sentence chunking).
+- Carried forward, recorded in `docs/design/phase3-working.md`:
+  - **For the design note:** vectors held in memory in the API container; a metadata header prepended to the embedded text.
+  - **For the start of Phase 4:** T1.5; the sentence splitter's check and sampled review (T1.9).
+  - **For build tests:** plain-text loop results (T1.6); custom-content citation ranges (T1.9); Citations, thinking and effort on Opus (T1.8); Markdown straddling (T1.11).
+  - **For Phase 4:** the user's review of both prompt drafts (T1.14).
+  - **For Phase 5:** the Sonnet against Opus composition comparison (T1.8), and every placeholder measured.
+  - **For Areas 2 to 5:** their own items.
+
+**Failures:**
+- Phase 1's verification had skipped section headings by design, and *Oliver*'s missing "II" had passed the agents. Found while designing T1.6; a read-only structure check of all headings and footnote markers followed (one defect, none in markers).
+- Estimates later corrected by measurement:
+  - the corpus catalog, estimated at 4,000 to 5,000 tokens, counted at 7,257
+  - a paragraph, "about 150 tokens", is about 231 (median) once section headings are excluded
+- The Phase 2 sentence splitter broke citations (491 suspicious splits across the corpus); replaced by a conservative splitter (T1.9).
+- My quick rule for resolving short citations matched two citations to the wrong corpus case; caught by the cross-check against CourtListener's graph and fixed with a page-range rule, before the lookup was cut (T1.13).
+- I recommended prose-only answers, then withdrew it when the Phase 2 answers showed no citation crossing Markdown structure (T1.11).
+- Two times written with "~" in working files were replaced by `date` readings before commit.
+
+**Spend:** Anthropic: 1 call, $0.1422 (the chunking probe, Sonnet 5.5 at low effort); token counting free. Ledger total $0.6964 of the $2.00 ceiling. No Exa or Voyage calls.
+
+**DECISION (user):**
+- How Phase 3 runs: *"I want us to compact after each area, so how about you keep a working document for yourself somewhere of your choosing within this repo. (It's fine to have git track this document.)"* And, on the record: *"Don't forget we're ALWAYS keeping BUILD LOG updated with system time as well."*
+- The four topics the user added to Area 1, verbatim:
+  1. *"I'm concerned of the fragile deterministic case-name verifier, particularly how do we recognize robustly what is a case name to check within Claude's answer without requesting Claude to write it as structured output (which breaks Citations feature). I'm considering not offering this if it's something we cannot check reliably. The response is covered under the AI disclosure already, and adding a check that isn't reliable might give false confidence to user."*
+  2. *"On search corpus, I'm pondering whether we'd want to also offer a keyword-based search tool in addition as well for Claude to dynamically pick and choose thru its research loop."*
+  3. *"For all search tools, should we consider giving Claude more filtering options before the search is ran? Claude can filter by date, for example, or exclude any passage containing certain words, etc."*
+  4. *"From the current architecture, the Composition call is the only place where Citations is in action, which makes sense because for Citations to work, we must not be using structured output. However, with the context of legal citation, citing a sentence (within the context of a passage) is often a more frequent practice than citing whole passage. This is from my experience in Constitutional Law class back in college. Thus, I want us to explore giving Claude flexibility in deciding not only what to cite but also how much to cite. Then, in the source panel, we always show the sentence within a paragraph."*
+- On usage: *"don't send any subagent out again because this is a targeted fix. I also want to conserve usage as well. Push back otherwise."*
