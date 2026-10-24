@@ -366,3 +366,21 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Use four groups HOWEVER, Claude must be aware of this because it's a deviation from standards."*
 - *"this description needs improvement "Most searches need no filters. Add one only to narrow a search you have a reason to narrow." My take is that this encourage Claude to add only one filter most of the time, which is not what we want."*
 - T1.4: *"Lock topic 2 as T1.4 with the revised wording and the four groups stated to Claude."*
+
+## Oct 24, 2026, 15:47 CDT — Phase 3: Architecture, Area 1 (structure check; Oliver's heading, T1.5)
+
+**Asked:** While reviewing topic 3, the user asked how reliable the detection of section headings is, and whether they would be excluded or merged into adjacent passages. After the main session found *Oliver*'s majority missing its "II", the user raised the principle: *"See how you missed Oliver's heading II even though we technically did verify in Phase 1?"* Then: run a read-only structure check on headings and footnote markers against the raw sources, with no corpus changes.
+
+**Came back:**
+- Why Phase 1 missed it: `scripts/verify_corpus.py` skips `section` paragraphs by design, so the word-by-word check never covered headings; round 2's agents reported sections right, and missed it. Headings rested on agent reading only. Footnote marker positions had no scripted check either. Both become load-bearing in Phase 3 (section labels in passage headers; footnotes attached inside the citing passage).
+- `scripts/check_structure.py` (read only): each of the 1,964 paragraphs matched by its opening words to every raw copy (Lawbox, CourtListener's `html` copy and Harvard's scan for the Lawbox cases; Harvard and the slip copies for the PDF cases), then 286 headings and 498 footnote markers compared, plus the corpus's own consistency.
+  - Headings: one defect, *Oliver*'s missing "II" (p. 176), present in the official PDF, the `html` copy and Harvard; Lawbox, the build's source, drops it. Every other difference traced to a copy's own gap, with the other copies agreeing with the corpus.
+  - Markers: no defects. Every opinion's markers pair with its footnotes in order, labels matching. Riley's 3 markers confirmed in the official PDF; Carpenter's and Chatrie's 40 markers found in the official PDF text right after the same words.
+  - For the design: footnote labels repeat within an opinion (*Boyd*), so footnotes link by order; three omission rows and *White*'s appendix letterhead and signature lines are typed `section`, so section labels come only from numbered headings and appendix titles.
+- Passage lengths measured: the 1,964 content paragraphs average 774 characters (median 696); 286 of the 2,250 corpus "paragraphs" are section headings. The corpus catalog for the system prompt counted at 7,257 tokens (`count_tokens`).
+
+**DECISION (user):**
+- *"Your proposed handling of section headings stored as paragraphs looks fine, but I wonder how fragile is our detection? And would we then be excluding those headings forever? Should we inspect and merge the headings into adjacent passages?"*
+- *"Well my issue is more in principle though. See how you missed Oliver's heading II even though we technically did verify in Phase 1?"*
+- *"Run the read-only structure check on headings and footnote markers against the raw sources and report what it finds. No corpus changes."*
+- T1.5: *"Fix Oliver's missing II through the corrections table at the start of Phase 4, confirmed against the page image, with the Phase 1 checks and the structure check re-run and logged. However, don't send any subagent out again because this is a targeted fix. I also want to conserve usage as well. Push back otherwise."*

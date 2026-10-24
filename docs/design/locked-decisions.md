@@ -376,3 +376,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Use four groups HOWEVER, Claude must be aware of this because it's a deviation from standards."* *"with this many filter options, which is good, I want us to clearly present them as optional to Claude, so that Claude does not mistaken and try to fill every filters for all requests."* Then: *"Lock topic 2 as T1.4 with the revised wording and the four groups stated to Claude."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 15:07 CDT — Phase 3: Architecture, Area 1 (query inputs and filters, T1.4)"
+
+### T1.5 Oliver's missing "II" fixed at the start of Phase 4, confirmed by the main session (amends P1.21 for this entry)
+
+- **Decision:** *Oliver*'s majority lacks its Part "II" heading before "The rule announced in Hester…" (p. 176); the official PDF, CourtListener's `html` copy and Harvard's scan have it, and Lawbox (the build's source) drops it. **At the start of Phase 4** the heading is added through `scripts/corrections.json`, confirmed against the page image, then the Phase 1 checks and `scripts/check_structure.py` are re-run and the change is logged (brief §4.10). **No subagent:** the main session confirms the page image itself, since this is one targeted fix and the user wants to conserve usage. This amends P1.21 ("every entry in it is a correction a verification agent confirmed against the page image") for this entry only.
+- **Why not pushed back:** the entry adds a heading, not citable text, and three independent readings of the print (the official PDF's text layer, the `html` copy, Harvard's scan) already agree.
+- **User's words:** *"Fix Oliver's missing II through the corrections table at the start of Phase 4, confirmed against the page image, with the Phase 1 checks and the structure check re-run and logged. However, don't send any subagent out again because this is a targeted fix. I also want to conserve usage as well. Push back otherwise."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 15:47 CDT — Phase 3: Architecture, Area 1 (structure check; Oliver's heading, T1.5)"
