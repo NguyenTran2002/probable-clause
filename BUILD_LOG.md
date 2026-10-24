@@ -759,3 +759,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Options laid out: (A) plain JavaScript as ES modules, no build step, one vendored Markdown library; (B) Vite with plain TypeScript; (C) a component framework, a rewrite of the locked prototype. Recommended A. Locked as T4.2.
 
 **DECISION (user):** *"Lock topic 2 as T4.2: option A as proposed."*
+
+## Oct 24, 2026, 18:54 CDT — Phase 3: Architecture, Area 4 (where Areas 1 to 3 change the prototype, T4.3)
+
+**Asked:** Area 4, topic 3: the changes Areas 1 to 3 force on the locked prototype (T4.1), each the smallest change to what is built.
+
+**Came back:**
+- Read in the prototype's `run.js`: Reviewing → Kept or Discarded cards with reasons; a syllabus card and reader; four hues for four kept passages with an ID pill after each citation; the band as one summary, a links list and one parameter list; a case-name check step with a wavy red underline; `search_result_location` citations; `submit_answer` with a `kept` list; mock reader text with one source credit for every case; the API window built from per-passage request and response fragments.
+- Corpus case files measured by script: 32 files, 2,454,857 bytes, the largest 320,464; each paragraph carries `page_start` and `page_breaks`.
+- Seven changes proposed (cards, syllabus, hues, the band, the checks, View source, View API calls), with two choices: the reader's opinion text from static per-opinion files on the web service (6a, amending T3.1), and exact API fragments carried in the events (7b). Locked as T4.3.
+
+**DECISION (user):** *"Lock topic 3 as T4.3: the seven changes as proposed, 6(a) and 7(b)."*
