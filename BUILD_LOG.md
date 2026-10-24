@@ -703,3 +703,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T3.6 locked: see `docs/design/locked-decisions.md`. T1.1's open points are settled.
 **DECISION (user):**
 - T3.6: *"Lock topic 6 as T3.6: vectors in memory, the vectors file committed, the header on embedded text, the rest as proposed."*
+
+## Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 (protections and retention, T3.7)
+**Asked:** Area 3, topic 7: input caps, tool-input handling, safe rendering, what is stored and for how long, and the privacy note (brief §8.3).
+**Came back:**
+- Facts: brief §8.3; Anthropic's strict tool use allows at most 24 optional parameters across all strict schemas and no numeric or length constraints (structured-outputs page, cached), so it likely cannot cover every tool here; the question reaches every Claude call, and Claude's searches reach Voyage and Exa.
+- Proposal: a 2,000-character question cap (placeholder) checked before any paid call; our code validating every tool input, strict mode only where it fits; Markdown rendered with raw HTML off and only Exa-returned `http`/`https` links; retention per record type; no question, query or answer text in logs; no cookies or analytics; the privacy note's contents. One choice for the user: run events kept 24 hours or 1 hour.
+- T3.7 locked: see `docs/design/locked-decisions.md`.
+**DECISION (user):**
+- T3.7: *"Lock topic 7 as T3.7 with run events kept 24 hours, the rest as proposed."*

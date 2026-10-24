@@ -685,3 +685,22 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 6 as T3.6: vectors in memory, the vectors file committed, the header on embedded text, the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:28 CDT — Phase 3: Architecture, Area 3 (start-up and the wake protocol, T3.6)"
+
+### T3.7 Protections and retention
+
+- **Decision:** Area 3, topic 7 (brief §8.3):
+  - **Question cap:** 2,000 characters (placeholder; about 500 to 660 tokens); empty or whitespace-only questions refused; control characters stripped; checked before any paid call. `POST /runs` and heartbeat bodies are size-capped. One question per run; a follow-up is a new run with no carried context (to confirm in Area 4).
+  - **Tool inputs:** our code validates every field of every tool call (types, ranges, lengths, ID formats and the per-tool rules already locked); a failure returns an error tool result, shown as a step. Strict tool use is added only on tools whose schemas fit its limits (at most 24 optional parameters across strict schemas; no numeric or length constraints), counted in the build.
+  - **Rendering:** Markdown rendered with raw HTML disabled; links only `http` and `https`, and only from Exa results (T2.3), opened with `noopener noreferrer`; text from the visitor, Claude, the corpus or the web inserted as text, never as HTML.
+  - **Injection:** passage and web text stay data (T1.14, T2.2); Claude reaches nothing beyond its six tools, so a hostile question can at worst spend one bounded run (T3.4).
+  - **Retention:**
+    - **Run events** (question, Claude's queries, passages, keeps, web titles and URLs, the answer): Atlas, **TTL 24 hours**. Replays are exported from them by script when recorded (Phase 5).
+    - **Per-run records** (run ID, Chicago times, end state, steps, searches, keeps, tokens and spend by service, retries, answer length, check flags, the Voyage warning), with no question or answer text: no expiry.
+    - **Monthly spend documents and budget-stop records** (T3.4): no expiry.
+    - **Heartbeat records** (T3.2): TTL 10 minutes. **The Exa flag** (T2.4): until the 1st.
+  - **Logs:** our application logs never hold the question, Claude's queries, or any answer or page text; only run IDs, states, timings, costs and error kinds. No personal data in any URL. Cloud Logging's default retention applies to request logs (to check).
+  - **No cookies and no analytics** in this app; sessionStorage holds only the run ID (T3.2).
+  - **The privacy note** (wording Area 5) states: what is kept and for how long; that the question and Claude's searches go to Anthropic, and Claude's searches to Voyage and Exa, under their own retention (read and cited when the note is written); that this app neither uses nor stores IP addresses, while the domain's gateway keeps standard request logs (T3.5).
+- **User's words:** *"Lock topic 7 as T3.7 with run events kept 24 hours, the rest as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 (protections and retention, T3.7)"
