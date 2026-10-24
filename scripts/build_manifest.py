@@ -77,12 +77,14 @@ def main() -> int:
                 total_tokens += tokens if ROLE[key] == "core" else 0
             ops.append({
                 "id": f"{key}-{n}", "type": op["type"], "author": op["author"], "joined_by": op["joined_by"],
+                "joined_by_source": op.get("joined_by_source", "heading"), "joined_by_note": op.get("joined_by_note"),
                 "heading": op["heading"], "statement": op.get("statement", False),
                 "paragraphs": sum(1 for p in op["paragraphs"] if p["kind"] != "section"),
                 "footnotes": len(op["footnotes"]), "words": len(text.split()), "tokens": tokens,
             })
         cases.append({
             "key": key, "name": NAME[key], "citation": US_CITE[key], "decided": decided,
+            "decided_source": c.get("decided_source", "official text"),
             "role": ROLE[key], "source": c["source"], "not_participating": c.get("notes", []),
             "slip_opinion": c["source"]["kind"] == "slip-opinion-pdf", "opinions": ops,
         })
@@ -94,7 +96,7 @@ def main() -> int:
             "latest_decision_full_pull": max(x["decided"] for x in cases),
             "latest_decision_in_corpus": max(x["decided"] for x in core),
             "ingested": pulled,
-            "note": "The full pull is the 21 core cases plus the filter-check candidates.",
+            "note": "The full pull is every case pulled: the core cases plus City of Ontario v. Quon, considered and left out (P1.14), whose date is earlier than the latest core case.",
         },
         "token_model": MODEL if count else None,
         "core_cases": len(core), "core_opinions": sum(len(x["opinions"]) for x in core),

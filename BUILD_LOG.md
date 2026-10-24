@@ -136,3 +136,27 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 
 **DECISION (user):**
 - *"Approved: use the text-source plan as proposed, and download the 23 official PDFs listed."* (P1.11)
+
+## Oct 23, 2026, 19:52 CDT — Phase 1: Corpus (verification round 1, filter check, rework)
+
+**Asked:** Approve P1.12 and P1.13; then the filter-check additions and *Kyllo*'s switch (P1.14, P1.15) and the download of nine more official PDFs; then four decisions on how to fix what verification found (P1.16 to P1.19).
+
+**Came back:**
+- Scripted verification (`scripts/verify_corpus.py`, `scripts/verify_lineup.py`): every corpus paragraph aligned word by word with the official PDF's text layer, each difference labelled by a third copy; punctuation compared; pages checked against the PDF and against Harvard's independent page markers; official text left uncovered listed.
+- Manifest and token counts (`scripts/build_manifest.py`): after the additions, 31 core cases, 99 opinions, 598,889 tokens (`claude-sonnet-5-5`, token-counting endpoint, free). Coverage: latest decision June 29, 2026, in the full pull and in the corpus; ingested Oct 23, 2026.
+- Two-way filter check (`scripts/filter_check.py`): 235 later Supreme Court cases cite a core case; 51 earlier cases are cited by three or more core cases. An independent agent's own list from the inclusion rule contained all 21 original core cases and proposed *Clinton v. Virginia* (1964), offered to the user after P1.14 was decided.
+- Verification round 1: six Opus agents, each given batches of cases and none told the main session's conclusions, judged every listed difference against the page images and checked every opinion's heading, type, author, joiners, boundaries, footnotes, date and votes. Structure, dates and votes were right in all 21 cases; all 428 ligature restorations checked out. They found wording errors in the Lawbox copies (for example *Olmstead* "We have to chose", *Lopez* "notwithstanding are the verdict", *Miller* "400 U. S. 322" for 409, *White* "nothing" for "noting"), Lawbox's dropped Part numerals, omission rows and appendix headings, and systematic faults in the main session's cleaning (line-end compound hyphens dropped, break hyphens kept in names, ellipses collapsed, URLs and dashes spaced, plurality joiners missed, about 15 wrong page breaks, footnote separator rules kept).
+- The rework (`scripts/build_corpus.py`, `corpus_pdf.py`, `corpus_align.py`, `corpus_common.py`): hyphens decided by how each document prints the word mid-line; ellipses, brackets, URLs and dashes as printed; separator rules dropped; sections and appendices recognised; quotes straightened (P1.17); Lawbox's Part numerals and encodings restored; 50 two-scan corrections (P1.16); body text aligned only with official body lines and footnotes near their marker's page; a reviewed corrections table (`scripts/corrections.json`, 9 entries) for what scans cannot correct; majority joiners from the Reporter's lineup (P1.18), "The Chief Justice" resolved by date. The nine additions were pulled (46 requests), their PDFs downloaded (32 official PDFs, 100,164,787 bytes in all), and built.
+- CourtListener's `date_filed` is wrong for six cases (*Ciraolo*, *Dunn*, *Florida v. Riley*, *Karo*, *On Lee*, *White*). *Ex parte Jackson*'s volume prints the Term, not a decision date; its date comes from CourtListener and is flagged.
+
+**Failures:**
+- *Carpenter*'s footnotes vanished once (appendix mode stayed on past Kennedy's appendix); *Oliver*'s footnotes went unrecognised (the scan's body heights scatter, so the most common height was the footnote size); a Lawbox one-off ("thermalimaging") vouched for itself as a word. Each was fixed before results were kept.
+- The macOS word list (Webster's 1934) lacks words such as "coordinate" and "committed"; a fuller list (`english-words`, dev dependency) and the Lawbox copies' shared vocabulary now back the hyphen decisions.
+- The verifier itself produced artifacts (running heads and footnotes printed inside paragraphs, words split across pages); reading the official text by region removed most.
+
+**DECISION (user):**
+- *"Jones and Quon take their text from the official PDF -> This is a more reliable and authoritative way."* (P1.12)
+- *"Syllabus -> Strictly leave out of the citable corpus because they aren't from the Court."* (P1.13)
+- *"Approve your recommended additions (the five squarely in the rule, plus Greenwood, Ex parte Jackson, Shultz, Berger and Boyd; leave out Quon and the rest). Also switch Kyllo to its official PDF."* (P1.14, P1.15)
+- *"Approved: download the nine official GovInfo PDFs listed."*
+- *"Take your recommendations on all four: correct Lawbox where both scans agree and have agents review every correction; straight quotation marks throughout; majority joiners from the Reporter's lineup where printed; Goldman's Stone and Frankfurter statement as concurrence in the judgment."* (P1.16 to P1.19)
