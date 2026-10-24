@@ -754,3 +754,22 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 3 as T4.3: the seven changes as proposed, 6(a) and 7(b)."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:54 CDT — Phase 3: Architecture, Area 4 (where Areas 1 to 3 change the prototype, T4.3)"
+
+### T4.4 New pieces in the prototype's style (settles T3.7's follow-up question)
+
+- **Decision:** Area 4, topic 4. Every piece goes in an element the prototype already has (the status line above the composer, the step list, the answer section, the landing chips), styled like what is there; all wording is a placeholder for Area 5.
+  1. **Waking (T3.6):** the landing check shows nothing. Pressing Research before the server is ready still glides the question into the chat; the first step reads "Starting the research server" and the status line shows the seconds elapsed. After 90 s the step says it is taking longer than usual and offers the recorded runs as chips in place; after 5 minutes it stops and shows "Try again", which starts a fresh check, never a run.
+  2. **Paused by a cap (T3.4):** when `/health` reports live research paused, the landing input is disabled with the brief §7.2 message beneath it and the chips still work; when `POST /runs` refuses, the refusal is the run's last step. Atlas unreachable is shown the same way, with its own message.
+  3. **Reconnecting (T3.1, T3.2):** "Reconnecting…" in the status line; the missed steps then arrive as usual; a pause and a resume are each a step.
+  4. **Retries (T3.3):** a line inside the step (for example "Claude call failed (overloaded); retrying, attempt 2 of 3"); a call that still fails marks its step failed.
+  5. **Interrupted and abandoned (T3.1, T3.2):** a last step under the stored steps, with what was gathered still on screen.
+  6. **Reload:** goes straight back into the run, from the run ID in sessionStorage (T3.2).
+  7. **The Voyage warning (T3.3)** sits above the answer, styled like the scope note (T1.10), not in red (red is for check flags only).
+  8. **Stop labels:** at the top of the answer for the step limit, token ceiling, time limit or an error (T1.11, T3.3, T3.5); at the end for cut off at the length limit or incomplete.
+  9. **A failed composition** is shown as an error with the kept passages still in the panel; no try-again button (it would be a new paid call); the visitor can ask again.
+  10. **No-sources replies** (out of scope, nothing found) take the answer's place, labelled as Claude's reply with no sources (T1.10).
+  11. **Replays (brief §7.4):** "Recorded run, <Chicago date>" at the top of the conversation and in the status line; played at the recorded pace; "Skip to the end" for replays only.
+  12. **One question per run (T3.7):** "Ask another question" starts a fresh run screen, conversation and sources cleared, rather than adding to the chat, since a growing chat would suggest memory of the earlier question; a short line by the composer says each question is researched from scratch.
+- **User's words:** *"Lock topic 4 as T4.4 as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:56 CDT — Phase 3: Architecture, Area 4 (new pieces in the prototype's style, T4.4)"

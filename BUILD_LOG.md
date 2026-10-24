@@ -770,3 +770,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Seven changes proposed (cards, syllabus, hues, the band, the checks, View source, View API calls), with two choices: the reader's opinion text from static per-opinion files on the web service (6a, amending T3.1), and exact API fragments carried in the events (7b). Locked as T4.3.
 
 **DECISION (user):** *"Lock topic 3 as T4.3: the seven changes as proposed, 6(a) and 7(b)."*
+
+## Oct 24, 2026, 18:56 CDT — Phase 3: Architecture, Area 4 (new pieces in the prototype's style, T4.4)
+
+**Asked:** Area 4, topic 4: where the states and labels the prototype never built go, in its existing elements and styles.
+
+**Came back:**
+- Read in the prototype's `index.html`: the status line above the composer, the composer ("Ask another question", "Skip to the end"), the landing's recorded-run chips, the disclaimer with folded sources and credits.
+- Twelve placements proposed: waking and the long wait; paused by a cap or Atlas unreachable; reconnecting, paused and resumed; retries inside their step; interrupted and abandoned; reload reattaching; the Voyage warning above the answer; stop labels at the top or end of the answer; a failed composition with no try-again; no-sources replies; replays labelled with their Chicago recording date, "Skip to the end" for replays only; one question per run, the composer starting a fresh run screen. Locked as T4.4; T3.7's "to confirm in Area 4" (follow-ups as new runs) settled.
+
+**DECISION (user):** *"Lock topic 4 as T4.4 as proposed."*
