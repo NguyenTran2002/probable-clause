@@ -350,3 +350,19 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - T1.2: *"I'd decide to go with Claude writing structured fields. This would be easier on the model as well. all_of, any_of, then none_of would be suitable. Our code will build the query."*
 - T1.3: *"On reading around a passage on demand, I'm thinking we should return the full requested content WITH the passage Claude has already read as well so Claude see a unified block instead of having to make the mental connection that the block it already saw is fitting into the middle of this somewhere. This is a trade off to gain more quality and accuracy while incurring a bit more cost and time."*
+
+## Oct 24, 2026, 15:07 CDT — Phase 3: Architecture, Area 1 (query inputs and filters, T1.4)
+
+**Asked:** Area 1, topic 2, reviewed in full by the user: how Claude queries both search tools, and the filters before a search runs. The user asked what the opinion-type groups meant, and that the filters be presented to Claude as clearly optional.
+
+**Came back:**
+- The design: shared optional filters (`cases`, `decided_from`/`decided_to`, `opinion_types` in four groups, `authors`, `none_of` on both tools, `include_footnotes`) inside one optional `filters` object; `max_results` 1 to 10, default 8, clamped; the semantic tool's single `query` (filter, top 50 by vector as a placeholder, `rerank-3`, top `max_results`); the keyword lists (T1.2), at least one item in `all_of` or `any_of`, quoted items as phrases, about 10 items per list as a placeholder; error results for bad input, "no passages matched" with the filters repeated; a corpus catalog in the system prompt. Sorting by date considered and left out.
+- Opinion types explained with corpus examples: the corpus records eight exact types from the printed headings (30 majority, 2 plurality, 40 dissent, 30 across the concurring forms and the mixed type); Harlan's concurrence in *Katz* is the source of the expectation-of-privacy test.
+- Optional filters made explicit in the schema, the descriptions, the system prompt and our code (empty lists treated as unset), with a count of Claude's filter use in testing. The tool-description wording was redrafted after the user's objection.
+
+**DECISION (user):**
+- *"I'm not clear on what do you mean for the opinion types here. Can you give me more context?"*
+- *"with this many filter options, which is good, I want us to clearly present them as optional to Claude, so that Claude does not mistaken and try to fill every filters for all requests."*
+- *"Use four groups HOWEVER, Claude must be aware of this because it's a deviation from standards."*
+- *"this description needs improvement "Most searches need no filters. Add one only to narrow a search you have a reason to narrow." My take is that this encourage Claude to add only one filter most of the time, which is not what we want."*
+- T1.4: *"Lock topic 2 as T1.4 with the revised wording and the four groups stated to Claude."*
