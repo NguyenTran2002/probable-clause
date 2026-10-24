@@ -76,6 +76,7 @@
   {"case": "katz", "page_starts_at": "to the problems presented by", "page": 356, "source": "final_b", "reason": "\"rele-|vant\": a word divided across the page turn is on the page where it begins"},
   {"case": "dow", "page_starts_at": "Working with pers", "page": 242, "source": "final_pages2", "reason": "\"de-|scription\": a word divided across the page turn is on the page where it begins"},
   {"case": "dow", "page_starts_at": "warrantless inspections may be permitted", "page": 246, "source": "final_pages2", "reason": "\"in-|spections\": a word divided across the page turn is on the page where it begins"},
-  {"case": "shultz", "page_starts_at": "report or the filing of a false", "page": 41, "source": "final_pages2", "reason": "\"re-|quired\": a word divided across the page turn is on the page where it begins"}
+  {"case": "shultz", "page_starts_at": "report or the filing of a false", "page": 41, "source": "final_pages2", "reason": "\"re-|quired\": a word divided across the page turn is on the page where it begins"},
+  {"case": "boyd", "insert_after": "it reads as follows, to wit:", "texts": ["\"The United States of America against E. A. B., 1–35, Thirty-five Cases of Plate Glass."], "kind": "quote", "page": 618, "source": "final_c", "reason": "the order's quoted caption, printed in three braced lines and omitted by Lawbox; included by the user's decision (P1.22)"}
  ]
 }

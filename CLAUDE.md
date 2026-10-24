@@ -38,7 +38,7 @@ More, each from the brief:
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
 - `scripts/verify_quotes.py`: re-fetches cited pages and string-matches quotes (brief §9's re-check). Cache under `data/cache/pages/`.
 - Corpus pipeline (Phase 1): `scripts/pull_courtlistener.py`, `fetch_official_pdfs.py`, `build_corpus.py` (with `corpus_common.py`, `corpus_pdf.py`, `corpus_align.py`, and the reviewed `corrections.json`), `verify_corpus.py`, `verify_lineup.py`, `build_manifest.py`, `filter_check.py`. Order and purpose under "Current state and next step".
-- `data/` (gitignored for now): `data/raw/` for raw CourtListener responses and official PDFs, `data/cache/` for fetched pages, `data/corpus/` for the built corpus, `data/verification/` for verification reports and agent findings. Raw responses are never committed; whether the cleaned corpus is committed is decided at the freeze.
+- `data/`: `data/raw/` (raw CourtListener responses and official PDFs) and `data/cache/` (fetched pages) are gitignored and never committed; `data/corpus/` (the frozen corpus) is committed (P1.22); `data/verification/` (verification reports and agent findings) stays local.
 - `web/looktests/`: the frontend session's look tests (P1.6).
 - `.env.example`: the variable names; the user creates `.env`.
 
@@ -70,11 +70,11 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 23, 2026, 20:14 CDT, before a planned compaction.*
+*Updated Oct 23, 2026, 21:17 CDT, at the end of Phase 1.*
 
-- **State:** Phase 0 done. Phase 1 decisions P1.1 to P1.21 locked; read `docs/design/locked-decisions.md` in full (P1.21 replaces P1.16's automatic corrections). The corpus is 32 core cases (21 original, 10 from the filter check, *Clinton*). Built, never committed: `data/corpus/cases/*.json`, `data/corpus/manifest.json` (gitignored until the freeze). The built files are the pre-fix build; fixes from verification round 2 are written in the scripts (committed, untested) but not yet applied.
-- **Read next: `docs/sessions/phase1-handoff.md`.** It lists every open finding from verification rounds 1 and 2 and the next steps in order: make two-scan report-only (P1.21); move all agent-confirmed corrections into `scripts/corrections.json` (new entry types for page breaks and notes); finish the generic fixes; add the comma and period check; rebuild and re-verify by script; run the final agent pass; report to the user for approval; then freeze, log, commit, tag.
-- **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py` (resumes from cache), `fetch_official_pdfs.py` (33 approved PDFs), `build_corpus.py` (`CORPUS_OUT=<dir>` to test elsewhere), `verify_corpus.py`, `verify_lineup.py`, `build_manifest.py` (token counts, free endpoint), `filter_check.py` (done).
-- **Verification agents' findings** are in `data/verification/agents/` (gitignored): round 1 `batch1-6.json`, round 2 `r2_batch1-6.json`, new cases `batch7-10.json`, the independent case list `independent_list.json`; briefs `BRIEF.md` (updated for P1.17 to P1.18 conventions) and `BRIEF_ROUND2.md`. Agents run on Opus and are never told the main session's conclusions.
-- **Frontend session:** it has uncommitted work in `web/looktests/machinery/`. Never touch it; before tagging, ask the user.
-- **Open for the user:** *Boyd*'s quoted caption on p.618 (include or not); at the freeze, whether to commit the cleaned corpus (brief default 3).
+- **State:** Phases 0 and 1 done (tag `phase-1-done`). Decisions P1.1 to P1.22 locked; read `docs/design/locked-decisions.md` in full. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
+- **Next: Phase 2**, per the brief.
+- **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py` (resumes from cache), `fetch_official_pdfs.py` (33 approved PDFs), `build_corpus.py` (`CORPUS_OUT=<dir>` to build elsewhere), `verify_corpus.py` (`VERIFY_OUT=<dir>`; includes the comma and period report), `verify_lineup.py`, `build_manifest.py` (token counts, free endpoint), `filter_check.py` (done).
+- **Verification record** (local, gitignored): `data/verification/text/` (script reports), `data/verification/agents/` (briefs `BRIEF.md`, `BRIEF_ROUND2.md`, `BRIEF_FINAL.md`; findings `batch1-10`, `r2_batch1-6`, `final_a`-`final_d`, `final_case`, `final_pages2`; `final_checklist.json`). `docs/sessions/phase1-handoff.md` is the round-2 handoff, now historical.
+- **Frontend session:** the direction is chosen (machinery prototype, Evergreen; folded into `BUILD_LOG.md`); it is locked as a T-entry in Phase 3 (P1.6). Open for the contract: sentence or paragraph text blocks (brief §5).
+- **Known, left as built** (P1.22 and the final pass): "supersensitive" (*Jardines*) unresolvable from the print; paragraph division inside the *Kyllo* and *Carpenter* appendices and one *Shultz* footnote; one *Ciraolo* footnote marker one character early; `lineup.json` shows no printed lineup for *White* and *Chatrie* though one is printed (verifier report only; the corpus joiners are right); *Kyllo*'s `header_footnotes_dropped` reads 0 for its excluded amici note.

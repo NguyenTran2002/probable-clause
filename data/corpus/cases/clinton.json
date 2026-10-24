@@ -1,0 +1,93 @@
+{
+ "key": "clinton",
+ "source": {
+  "kind": "courtlistener-lawbox",
+  "cluster": 106815,
+  "opinion": 106815
+ },
+ "decided_text": "May 4, 1964",
+ "argued_text": "April 27, 1964",
+ "notes": [],
+ "header_footnotes_dropped": 0,
+ "opinions": [
+  {
+   "heading": "PER CURIAM.",
+   "type": "majority",
+   "author": [
+    "Per Curiam"
+   ],
+   "joined_by": [],
+   "joined_by_note": null,
+   "statement": false,
+   "typed_by_table": false,
+   "paragraphs": [
+    {
+     "text": "The motion to strike the supplemental brief on behalf of the respondent is denied. The judgment is reversed. Silverman v. United States, 365 U. S. 505; Ker v. California, 374 U. S. 23.",
+     "kind": "text",
+     "page_start": 158,
+     "page_breaks": [],
+     "footnote_refs": []
+    }
+   ],
+   "footnotes": [],
+   "joined_by_source": "per curiam"
+  },
+  {
+   "heading": "MR. JUSTICE CLARK, concurring:",
+   "type": "concurrence",
+   "author": [
+    "Clark"
+   ],
+   "joined_by": [],
+   "joined_by_note": null,
+   "statement": false,
+   "typed_by_table": false,
+   "paragraphs": [
+    {
+     "text": "Since the Court finds that the \"spiked\" mike used by the police officers penetrated petitioner's premises sufficiently to be an actual trespass thereof, I join in the judgment.",
+     "kind": "text",
+     "page_start": 158,
+     "page_breaks": [],
+     "footnote_refs": []
+    }
+   ],
+   "footnotes": []
+  },
+  {
+   "heading": "",
+   "type": "dissent",
+   "author": [
+    "White"
+   ],
+   "joined_by": [],
+   "joined_by_note": null,
+   "statement": true,
+   "typed_by_table": false,
+   "paragraphs": [
+    {
+     "text": "MR. JUSTICE WHITE dissents.",
+     "kind": "text",
+     "page_start": 158,
+     "page_breaks": [],
+     "footnote_refs": []
+    }
+   ],
+   "footnotes": []
+  }
+ ],
+ "cleaning": {
+  "page_markers": 0,
+  "footnote_markers": 0,
+  "unmatched_footnote_markers": [],
+  "unmatched_notes": [],
+  "two_scan_candidates": [],
+  "two_scan_refused": [],
+  "pages_from_official_pdf": {
+   "paragraphs_reanchored": 3,
+   "paragraphs_not_found": 0,
+   "breaks_changed": 0
+  },
+  "reviewed_corrections": [],
+  "paragraph_pages_raised": 0
+ }
+}

@@ -1,0 +1,2368 @@
+{
+ "coverage": {
+  "latest_decision_full_pull": "2026-06-29",
+  "latest_decision_in_corpus": "2026-06-29",
+  "ingested": "2026-10-23",
+  "note": "The full pull is every case pulled: the core cases plus City of Ontario v. Quon, considered and left out (P1.14), whose date is earlier than the latest core case."
+ },
+ "token_model": "claude-sonnet-5-5",
+ "core_cases": 32,
+ "core_opinions": 102,
+ "core_tokens": 599094,
+ "cases": [
+  {
+   "key": "berger",
+   "name": "Berger v. New York",
+   "citation": "388 U.S. 41",
+   "decided": "1967-06-12",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 107483,
+    "opinion": 107483
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "berger-0",
+     "type": "majority",
+     "author": [
+      "Clark"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE CLARK delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 31,
+     "footnotes": 6,
+     "words": 6678,
+     "tokens": 13554
+    },
+    {
+     "id": "berger-1",
+     "type": "concurrence",
+     "author": [
+      "Douglas"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE DOUGLAS, concurring.",
+     "statement": false,
+     "paragraphs": 10,
+     "footnotes": 0,
+     "words": 1239,
+     "tokens": 2443
+    },
+    {
+     "id": "berger-2",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Stewart"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE STEWART, concurring in the result.",
+     "statement": false,
+     "paragraphs": 7,
+     "footnotes": 2,
+     "words": 592,
+     "tokens": 1259
+    },
+    {
+     "id": "berger-3",
+     "type": "dissent",
+     "author": [
+      "Black"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BLACK, dissenting.",
+     "statement": false,
+     "paragraphs": 35,
+     "footnotes": 3,
+     "words": 5766,
+     "tokens": 11018
+    },
+    {
+     "id": "berger-4",
+     "type": "dissent",
+     "author": [
+      "Harlan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE HARLAN, dissenting.",
+     "statement": false,
+     "paragraphs": 37,
+     "footnotes": 8,
+     "words": 5521,
+     "tokens": 11257
+    },
+    {
+     "id": "berger-5",
+     "type": "dissent",
+     "author": [
+      "White"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE WHITE, dissenting.",
+     "statement": false,
+     "paragraphs": 60,
+     "footnotes": 6,
+     "words": 6392,
+     "tokens": 12892
+    }
+   ]
+  },
+  {
+   "key": "boyd",
+   "name": "Boyd v. United States",
+   "citation": "116 U.S. 616",
+   "decided": "1886-02-01",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 91573,
+    "opinion": 91573
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "boyd-0",
+     "type": "majority",
+     "author": [
+      "Bradley"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRADLEY delivered the opinion of the court.",
+     "statement": false,
+     "paragraphs": 43,
+     "footnotes": 8,
+     "words": 8553,
+     "tokens": 15161
+    },
+    {
+     "id": "boyd-1",
+     "type": "concurrence",
+     "author": [
+      "Miller"
+     ],
+     "joined_by": [
+      "Waite"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE MILLER, with whom was the CHIEF JUSTICE, concurring:",
+     "statement": false,
+     "paragraphs": 14,
+     "footnotes": 0,
+     "words": 1163,
+     "tokens": 1946
+    }
+   ]
+  },
+  {
+   "key": "carpenter",
+   "name": "Carpenter v. United States",
+   "citation": "585 U.S. 296",
+   "decided": "2018-06-22",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "govinfo-us-reports-pdf",
+    "file": "USREPORTS-585-296.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "carpenter-0",
+     "type": "majority",
+     "author": [
+      "Roberts"
+     ],
+     "joined_by": [
+      "Ginsburg",
+      "Breyer",
+      "Sotomayor",
+      "Kagan"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "Chief Justice Roberts delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 52,
+     "footnotes": 5,
+     "words": 6621,
+     "tokens": 13601
+    },
+    {
+     "id": "carpenter-1",
+     "type": "dissent",
+     "author": [
+      "Kennedy"
+     ],
+     "joined_by": [
+      "Thomas",
+      "Alito"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Kennedy, with whom Justice Thomas and Justice Alito join, dissenting.",
+     "statement": false,
+     "paragraphs": 71,
+     "footnotes": 0,
+     "words": 6695,
+     "tokens": 13403
+    },
+    {
+     "id": "carpenter-2",
+     "type": "dissent",
+     "author": [
+      "Thomas"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Thomas, dissenting.",
+     "statement": false,
+     "paragraphs": 36,
+     "footnotes": 10,
+     "words": 6317,
+     "tokens": 14369
+    },
+    {
+     "id": "carpenter-3",
+     "type": "dissent",
+     "author": [
+      "Alito"
+     ],
+     "joined_by": [
+      "Thomas"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Alito, with whom Justice Thomas joins, dissenting.",
+     "statement": false,
+     "paragraphs": 64,
+     "footnotes": 6,
+     "words": 8628,
+     "tokens": 17367
+    },
+    {
+     "id": "carpenter-4",
+     "type": "dissent",
+     "author": [
+      "Gorsuch"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Gorsuch, dissenting.",
+     "statement": false,
+     "paragraphs": 39,
+     "footnotes": 0,
+     "words": 6627,
+     "tokens": 13572
+    }
+   ]
+  },
+  {
+   "key": "chatrie",
+   "name": "Chatrie v. United States",
+   "citation": "609 U.S. ___ (slip opinion; assigned 609 U.S. 605)",
+   "decided": "2026-06-29",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "slip-opinion-pdf",
+    "file": "25-112_0am4.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": true,
+   "opinions": [
+    {
+     "id": "chatrie-0",
+     "type": "majority",
+     "author": [
+      "Kagan"
+     ],
+     "joined_by": [
+      "Roberts",
+      "Sotomayor",
+      "Kavanaugh",
+      "Jackson"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "JUSTICE KAGAN delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 56,
+     "footnotes": 11,
+     "words": 10661,
+     "tokens": 21424
+    },
+    {
+     "id": "chatrie-1",
+     "type": "concurrence",
+     "author": [
+      "Jackson"
+     ],
+     "joined_by": [
+      "Sotomayor"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE JACKSON, with whom JUSTICE SOTOMAYOR joins, concurring.",
+     "statement": false,
+     "paragraphs": 6,
+     "footnotes": 0,
+     "words": 623,
+     "tokens": 1236
+    },
+    {
+     "id": "chatrie-2",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Gorsuch"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE GORSUCH, concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 18,
+     "footnotes": 0,
+     "words": 2489,
+     "tokens": 5332
+    },
+    {
+     "id": "chatrie-3",
+     "type": "dissent",
+     "author": [
+      "Alito"
+     ],
+     "joined_by": [
+      "Thomas",
+      "Barrett"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": "with whom JUSTICE THOMAS joins as to Part I and with whom JUSTICE BARRETT joins as to Parts II–B, II–C–1, and II–C–2",
+     "heading": "JUSTICE ALITO, with whom JUSTICE THOMAS joins as to Part I and with whom JUSTICE BARRETT joins as to Parts II–B, II–C–1, and II–C–2, dissenting.",
+     "statement": false,
+     "paragraphs": 39,
+     "footnotes": 8,
+     "words": 6244,
+     "tokens": 13241
+    },
+    {
+     "id": "chatrie-4",
+     "type": "dissent",
+     "author": [
+      "Barrett"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BARRETT, dissenting.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 65,
+     "tokens": 166
+    }
+   ]
+  },
+  {
+   "key": "ciraolo",
+   "name": "California v. Ciraolo",
+   "citation": "476 U.S. 207",
+   "decided": "1986-05-19",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 111666,
+    "opinion": 111666
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "ciraolo-0",
+     "type": "majority",
+     "author": [
+      "Burger"
+     ],
+     "joined_by": [
+      "White",
+      "Rehnquist",
+      "Stevens",
+      "O'Connor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "CHIEF JUSTICE BURGER delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 20,
+     "footnotes": 3,
+     "words": 2108,
+     "tokens": 4271
+    },
+    {
+     "id": "ciraolo-1",
+     "type": "dissent",
+     "author": [
+      "Powell"
+     ],
+     "joined_by": [
+      "Brennan",
+      "Marshall",
+      "Blackmun"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE POWELL, with whom JUSTICE BRENNAN, JUSTICE MARSHALL, and JUSTICE BLACKMUN join, dissenting.",
+     "statement": false,
+     "paragraphs": 16,
+     "footnotes": 11,
+     "words": 3612,
+     "tokens": 7359
+    }
+   ]
+  },
+  {
+   "key": "clinton",
+   "name": "Clinton v. Virginia",
+   "citation": "377 U.S. 158",
+   "decided": "1964-05-04",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 106815,
+    "opinion": 106815
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "clinton-0",
+     "type": "majority",
+     "author": [
+      "Per Curiam"
+     ],
+     "joined_by": [],
+     "joined_by_source": "per curiam",
+     "joined_by_note": null,
+     "heading": "PER CURIAM.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 35,
+     "tokens": 88
+    },
+    {
+     "id": "clinton-1",
+     "type": "concurrence",
+     "author": [
+      "Clark"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE CLARK, concurring:",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 32,
+     "tokens": 85
+    },
+    {
+     "id": "clinton-2",
+     "type": "dissent",
+     "author": [
+      "White"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "",
+     "statement": true,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 4,
+     "tokens": 26
+    }
+   ]
+  },
+  {
+   "key": "dow",
+   "name": "Dow Chemical Co. v. United States",
+   "citation": "476 U.S. 227",
+   "decided": "1986-05-19",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 111667,
+    "opinion": 111667
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "dow-0",
+     "type": "majority",
+     "author": [
+      "Burger"
+     ],
+     "joined_by": [
+      "White",
+      "Rehnquist",
+      "Stevens",
+      "O'Connor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": "joined in part, per the Reporter's lineup: Part III: Brennan, Marshall, Blackmun, Powell",
+     "heading": "CHIEF JUSTICE BURGER delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 30,
+     "footnotes": 7,
+     "words": 3705,
+     "tokens": 7565
+    },
+    {
+     "id": "dow-1",
+     "type": "concurrence in part and dissent in part",
+     "author": [
+      "Powell"
+     ],
+     "joined_by": [
+      "Brennan",
+      "Marshall",
+      "Blackmun"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE POWELL, with whom JUSTICE BRENNAN, JUSTICE MARSHALL, and JUSTICE BLACKMUN join, concurring in part, and dissenting in part.",
+     "statement": false,
+     "paragraphs": 21,
+     "footnotes": 14,
+     "words": 4355,
+     "tokens": 8996
+    }
+   ]
+  },
+  {
+   "key": "dunn",
+   "name": "United States v. Dunn",
+   "citation": "480 U.S. 294",
+   "decided": "1987-03-03",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 111833,
+    "opinion": 111833
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "dunn-0",
+     "type": "majority",
+     "author": [
+      "White"
+     ],
+     "joined_by": [
+      "Rehnquist",
+      "Blackmun",
+      "Powell",
+      "Stevens",
+      "O'Connor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": "joined in part, per the Reporter's lineup: all but the paragraph headed 'Third' in Part II: Scalia",
+     "heading": "JUSTICE WHITE delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 18,
+     "footnotes": 4,
+     "words": 3202,
+     "tokens": 6354
+    },
+    {
+     "id": "dunn-1",
+     "type": "concurrence in part",
+     "author": [
+      "Scalia"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE SCALIA, concurring in part.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 109,
+     "tokens": 216
+    },
+    {
+     "id": "dunn-2",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [
+      "Marshall"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BRENNAN, with whom JUSTICE MARSHALL joins, dissenting.",
+     "statement": false,
+     "paragraphs": 34,
+     "footnotes": 13,
+     "words": 5136,
+     "tokens": 10506
+    }
+   ]
+  },
+  {
+   "key": "ex_parte_jackson",
+   "name": "Ex parte Jackson",
+   "citation": "96 U.S. 727",
+   "decided": "1878-05-13",
+   "decided_source": "CourtListener date_filed; no decision date printed in the U.S. Reports",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 89759,
+    "opinion": 89759
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "ex_parte_jackson-0",
+     "type": "majority",
+     "author": [
+      "Field"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE FIELD, after stating the case, delivered the opinion of the court.",
+     "statement": false,
+     "paragraphs": 10,
+     "footnotes": 0,
+     "words": 1999,
+     "tokens": 3564
+    }
+   ]
+  },
+  {
+   "key": "florida_v_riley",
+   "name": "Florida v. Riley",
+   "citation": "488 U.S. 445",
+   "decided": "1989-01-23",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 112175,
+    "opinion": 112175
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "florida_v_riley-0",
+     "type": "plurality",
+     "author": [
+      "White"
+     ],
+     "joined_by": [
+      "Rehnquist",
+      "Scalia",
+      "Kennedy"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "JUSTICE WHITE announced the judgment of the Court and delivered an opinion, in which THE CHIEF JUSTICE, JUSTICE SCALIA, and JUSTICE KENNEDY join.",
+     "statement": false,
+     "paragraphs": 8,
+     "footnotes": 3,
+     "words": 1589,
+     "tokens": 3099
+    },
+    {
+     "id": "florida_v_riley-1",
+     "type": "concurrence in the judgment",
+     "author": [
+      "O'Connor"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE O'CONNOR, concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 7,
+     "footnotes": 0,
+     "words": 1220,
+     "tokens": 2484
+    },
+    {
+     "id": "florida_v_riley-2",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [
+      "Marshall",
+      "Stevens"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BRENNAN, with whom JUSTICE MARSHALL and JUSTICE STEVENS join, dissenting.",
+     "statement": false,
+     "paragraphs": 20,
+     "footnotes": 7,
+     "words": 3925,
+     "tokens": 7718
+    },
+    {
+     "id": "florida_v_riley-3",
+     "type": "dissent",
+     "author": [
+      "Blackmun"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BLACKMUN, dissenting.",
+     "statement": false,
+     "paragraphs": 6,
+     "footnotes": 0,
+     "words": 560,
+     "tokens": 1226
+    }
+   ]
+  },
+  {
+   "key": "goldman",
+   "name": "Goldman v. United States",
+   "citation": "316 U.S. 129",
+   "decided": "1942-04-27",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 2443377,
+    "opinion": 2443377
+   },
+   "not_participating": [
+    "MR. JUSTICE JACKSON took no part in the consideration or decision of these cases."
+   ],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "goldman-0",
+     "type": "majority",
+     "author": [
+      "Roberts"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE ROBERTS delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 18,
+     "footnotes": 8,
+     "words": 1756,
+     "tokens": 3267
+    },
+    {
+     "id": "goldman-1",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Stone",
+      "Frankfurter"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. CHIEF JUSTICE STONE and MR. JUSTICE FRANKFURTER:",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 69,
+     "tokens": 142
+    },
+    {
+     "id": "goldman-2",
+     "type": "dissent",
+     "author": [
+      "Murphy"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE MURPHY, dissenting:",
+     "statement": false,
+     "paragraphs": 11,
+     "footnotes": 9,
+     "words": 2199,
+     "tokens": 4430
+    }
+   ]
+  },
+  {
+   "key": "grady",
+   "name": "Grady v. North Carolina",
+   "citation": "575 U.S. 306",
+   "decided": "2015-03-30",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "govinfo-us-reports-pdf",
+    "file": "USREPORTS-575-306.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "grady-0",
+     "type": "majority",
+     "author": [
+      "Per Curiam"
+     ],
+     "joined_by": [],
+     "joined_by_source": "per curiam",
+     "joined_by_note": null,
+     "heading": "Per Curiam.",
+     "statement": false,
+     "paragraphs": 10,
+     "footnotes": 1,
+     "words": 1325,
+     "tokens": 2788
+    }
+   ]
+  },
+  {
+   "key": "greenwood",
+   "name": "California v. Greenwood",
+   "citation": "486 U.S. 35",
+   "decided": "1988-05-16",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 112067,
+    "opinion": 112067
+   },
+   "not_participating": [
+    "JUSTICE KENNEDY took no part in the consideration or decision of this case."
+   ],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "greenwood-0",
+     "type": "majority",
+     "author": [
+      "White"
+     ],
+     "joined_by": [
+      "Rehnquist",
+      "Blackmun",
+      "Stevens",
+      "O'Connor",
+      "Scalia"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "JUSTICE WHITE delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 24,
+     "footnotes": 5,
+     "words": 2867,
+     "tokens": 6242
+    },
+    {
+     "id": "greenwood-1",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [
+      "Marshall"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BRENNAN, with whom JUSTICE MARSHALL joins, dissenting.",
+     "statement": false,
+     "paragraphs": 23,
+     "footnotes": 4,
+     "words": 3771,
+     "tokens": 8347
+    }
+   ]
+  },
+  {
+   "key": "hester",
+   "name": "Hester v. United States",
+   "citation": "265 U.S. 57",
+   "decided": "1924-05-05",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 100413,
+    "opinion": 100413
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "hester-0",
+     "type": "majority",
+     "author": [
+      "Holmes"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE HOLMES delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 3,
+     "footnotes": 0,
+     "words": 501,
+     "tokens": 915
+    }
+   ]
+  },
+  {
+   "key": "jacobsen",
+   "name": "United States v. Jacobsen",
+   "citation": "466 U.S. 109",
+   "decided": "1984-04-02",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 111143,
+    "opinion": 111143
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "jacobsen-0",
+     "type": "majority",
+     "author": [
+      "Stevens"
+     ],
+     "joined_by": [
+      "Burger",
+      "Blackmun",
+      "Powell",
+      "Rehnquist",
+      "O'Connor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": "joined in part, per the Reporter's lineup: Part III: White",
+     "heading": "JUSTICE STEVENS delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 29,
+     "footnotes": 28,
+     "words": 5763,
+     "tokens": 11763
+    },
+    {
+     "id": "jacobsen-1",
+     "type": "concurrence in part and in the judgment",
+     "author": [
+      "White"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE WHITE, concurring in part and concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 17,
+     "footnotes": 0,
+     "words": 2535,
+     "tokens": 4718
+    },
+    {
+     "id": "jacobsen-2",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [
+      "Marshall"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BRENNAN, with whom JUSTICE MARSHALL joins, dissenting.",
+     "statement": false,
+     "paragraphs": 20,
+     "footnotes": 0,
+     "words": 2996,
+     "tokens": 5718
+    }
+   ]
+  },
+  {
+   "key": "jardines",
+   "name": "Florida v. Jardines",
+   "citation": "569 U.S. 1",
+   "decided": "2013-03-26",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "govinfo-us-reports-pdf",
+    "file": "USREPORTS-569-1.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "jardines-0",
+     "type": "majority",
+     "author": [
+      "Scalia"
+     ],
+     "joined_by": [
+      "Thomas",
+      "Ginsburg",
+      "Sotomayor",
+      "Kagan"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "Justice Scalia delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 22,
+     "footnotes": 4,
+     "words": 2935,
+     "tokens": 5792
+    },
+    {
+     "id": "jardines-1",
+     "type": "concurrence",
+     "author": [
+      "Kagan"
+     ],
+     "joined_by": [
+      "Ginsburg",
+      "Sotomayor"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Kagan, with whom Justice Ginsburg and Justice Sotomayor join, concurring.",
+     "statement": false,
+     "paragraphs": 7,
+     "footnotes": 2,
+     "words": 1429,
+     "tokens": 2838
+    },
+    {
+     "id": "jardines-2",
+     "type": "dissent",
+     "author": [
+      "Alito"
+     ],
+     "joined_by": [
+      "Roberts",
+      "Kennedy",
+      "Breyer"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Alito, with whom The Chief Justice, Justice Kennedy, and Justice Breyer join, dissenting.",
+     "statement": false,
+     "paragraphs": 29,
+     "footnotes": 6,
+     "words": 3585,
+     "tokens": 7140
+    }
+   ]
+  },
+  {
+   "key": "jones",
+   "name": "United States v. Jones",
+   "citation": "565 U.S. 400",
+   "decided": "2012-01-23",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "govinfo-us-reports-pdf",
+    "file": "USREPORTS-565-400.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "jones-0",
+     "type": "majority",
+     "author": [
+      "Scalia"
+     ],
+     "joined_by": [
+      "Roberts",
+      "Kennedy",
+      "Thomas",
+      "Sotomayor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "Justice Scalia delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 23,
+     "footnotes": 8,
+     "words": 3779,
+     "tokens": 7742
+    },
+    {
+     "id": "jones-1",
+     "type": "concurrence",
+     "author": [
+      "Sotomayor"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Sotomayor, concurring.",
+     "statement": false,
+     "paragraphs": 8,
+     "footnotes": 1,
+     "words": 1640,
+     "tokens": 3649
+    },
+    {
+     "id": "jones-2",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Alito"
+     ],
+     "joined_by": [
+      "Ginsburg",
+      "Breyer",
+      "Kagan"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Alito, with whom Justice Ginsburg, Justice Breyer, and Justice Kagan join, concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 29,
+     "footnotes": 11,
+     "words": 4189,
+     "tokens": 8456
+    }
+   ]
+  },
+  {
+   "key": "karo",
+   "name": "United States v. Karo",
+   "citation": "468 U.S. 705",
+   "decided": "1984-07-03",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 111257,
+    "opinion": 111257
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "karo-0",
+     "type": "majority",
+     "author": [
+      "White"
+     ],
+     "joined_by": [
+      "Burger",
+      "Blackmun",
+      "Powell"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": "joined in part, per the Reporter's lineup: Parts I, II and IV: Rehnquist, O'Connor; Part III: Brennan, Marshall, Stevens",
+     "heading": "JUSTICE WHITE delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 32,
+     "footnotes": 7,
+     "words": 4973,
+     "tokens": 9291
+    },
+    {
+     "id": "karo-1",
+     "type": "concurrence in part and in the judgment",
+     "author": [
+      "O'Connor"
+     ],
+     "joined_by": [
+      "Rehnquist"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE O'CONNOR, with whom JUSTICE REHNQUIST joins, concurring in part and concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 18,
+     "footnotes": 2,
+     "words": 2083,
+     "tokens": 3662
+    },
+    {
+     "id": "karo-2",
+     "type": "concurrence in part and dissent in part",
+     "author": [
+      "Stevens"
+     ],
+     "joined_by": [
+      "Brennan",
+      "Marshall"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE STEVENS, with whom JUSTICE BRENNAN and JUSTICE MARSHALL join, concurring in part and dissenting in part.",
+     "statement": false,
+     "paragraphs": 20,
+     "footnotes": 12,
+     "words": 3252,
+     "tokens": 5995
+    }
+   ]
+  },
+  {
+   "key": "katz",
+   "name": "Katz v. United States",
+   "citation": "389 U.S. 347",
+   "decided": "1967-12-18",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 107564,
+    "opinion": 107564
+   },
+   "not_participating": [
+    "MR. JUSTICE MARSHALL took no part in the consideration or decision of this case."
+   ],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "katz-0",
+     "type": "majority",
+     "author": [
+      "Stewart"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE STEWART delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 18,
+     "footnotes": 24,
+     "words": 3879,
+     "tokens": 7709
+    },
+    {
+     "id": "katz-1",
+     "type": "concurrence",
+     "author": [
+      "Douglas"
+     ],
+     "joined_by": [
+      "Brennan"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE DOUGLAS, with whom MR. JUSTICE BRENNAN joins, concurring.",
+     "statement": false,
+     "paragraphs": 4,
+     "footnotes": 0,
+     "words": 336,
+     "tokens": 678
+    },
+    {
+     "id": "katz-2",
+     "type": "concurrence",
+     "author": [
+      "Harlan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE HARLAN, concurring.",
+     "statement": false,
+     "paragraphs": 5,
+     "footnotes": 1,
+     "words": 694,
+     "tokens": 1350
+    },
+    {
+     "id": "katz-3",
+     "type": "concurrence",
+     "author": [
+      "White"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE WHITE, concurring.",
+     "statement": false,
+     "paragraphs": 2,
+     "footnotes": 1,
+     "words": 437,
+     "tokens": 879
+    },
+    {
+     "id": "katz-4",
+     "type": "dissent",
+     "author": [
+      "Black"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BLACK, dissenting.",
+     "statement": false,
+     "paragraphs": 22,
+     "footnotes": 1,
+     "words": 3332,
+     "tokens": 6379
+    }
+   ]
+  },
+  {
+   "key": "knotts",
+   "name": "United States v. Knotts",
+   "citation": "460 U.S. 276",
+   "decided": "1983-03-02",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 110882,
+    "opinion": 110882
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "knotts-0",
+     "type": "majority",
+     "author": [
+      "Rehnquist"
+     ],
+     "joined_by": [
+      "Burger",
+      "White",
+      "Powell",
+      "O'Connor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "JUSTICE REHNQUIST delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 28,
+     "footnotes": 1,
+     "words": 2724,
+     "tokens": 5608
+    },
+    {
+     "id": "knotts-1",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [
+      "Marshall"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BRENNAN, with whom JUSTICE MARSHALL joins, concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 3,
+     "footnotes": 0,
+     "words": 468,
+     "tokens": 1022
+    },
+    {
+     "id": "knotts-2",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Blackmun"
+     ],
+     "joined_by": [
+      "Brennan",
+      "Marshall",
+      "Stevens"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE BLACKMUN, with whom JUSTICE BRENNAN, JUSTICE MARSHALL, and JUSTICE STEVENS join, concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 3,
+     "footnotes": 0,
+     "words": 229,
+     "tokens": 504
+    },
+    {
+     "id": "knotts-3",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Stevens"
+     ],
+     "joined_by": [
+      "Brennan",
+      "Marshall"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE STEVENS, with whom JUSTICE BRENNAN, and JUSTICE MARSHALL join, concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 4,
+     "footnotes": 0,
+     "words": 243,
+     "tokens": 494
+    }
+   ]
+  },
+  {
+   "key": "kyllo",
+   "name": "Kyllo v. United States",
+   "citation": "533 U.S. 27",
+   "decided": "2001-06-11",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "govinfo-us-reports-pdf",
+    "file": "USREPORTS-533-27.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "kyllo-0",
+     "type": "majority",
+     "author": [
+      "Scalia"
+     ],
+     "joined_by": [
+      "Souter",
+      "Thomas",
+      "Ginsburg",
+      "Breyer"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "Justice Scalia delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 16,
+     "footnotes": 6,
+     "words": 3880,
+     "tokens": 7702
+    },
+    {
+     "id": "kyllo-1",
+     "type": "dissent",
+     "author": [
+      "Stevens"
+     ],
+     "joined_by": [
+      "Rehnquist",
+      "O'Connor",
+      "Kennedy"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Stevens, with whom The Chief Justice, Justice O'Connor, and Justice Kennedy join, dissenting.",
+     "statement": false,
+     "paragraphs": 21,
+     "footnotes": 6,
+     "words": 3804,
+     "tokens": 7423
+    }
+   ]
+  },
+  {
+   "key": "lee",
+   "name": "United States v. Lee",
+   "citation": "274 U.S. 559",
+   "decided": "1927-05-31",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 101118,
+    "opinion": 101118
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "lee-0",
+     "type": "majority",
+     "author": [
+      "Brandeis"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRANDEIS delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 10,
+     "footnotes": 0,
+     "words": 1282,
+     "tokens": 2388
+    }
+   ]
+  },
+  {
+   "key": "lopez",
+   "name": "Lopez v. United States",
+   "citation": "373 U.S. 427",
+   "decided": "1963-05-27",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 106622,
+    "opinion": 106622
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "lopez-0",
+     "type": "majority",
+     "author": [
+      "Harlan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE HARLAN delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 32,
+     "footnotes": 12,
+     "words": 4224,
+     "tokens": 7682
+    },
+    {
+     "id": "lopez-1",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Warren"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. CHIEF JUSTICE WARREN, concurring in the result.",
+     "statement": false,
+     "paragraphs": 9,
+     "footnotes": 3,
+     "words": 1937,
+     "tokens": 3659
+    },
+    {
+     "id": "lopez-2",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [
+      "Douglas",
+      "Goldberg"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRENNAN, with whom MR. JUSTICE DOUGLAS and MR. JUSTICE GOLDBERG join, dissenting.",
+     "statement": false,
+     "paragraphs": 35,
+     "footnotes": 21,
+     "words": 8741,
+     "tokens": 17661
+    }
+   ]
+  },
+  {
+   "key": "miller",
+   "name": "United States v. Miller",
+   "citation": "425 U.S. 435",
+   "decided": "1976-04-21",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 109433,
+    "opinion": 109433
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "miller-0",
+     "type": "majority",
+     "author": [
+      "Powell"
+     ],
+     "joined_by": [
+      "Burger",
+      "Stewart",
+      "White",
+      "Blackmun",
+      "Rehnquist",
+      "Stevens"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE POWELL delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 25,
+     "footnotes": 9,
+     "words": 3192,
+     "tokens": 6495
+    },
+    {
+     "id": "miller-1",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRENNAN, dissenting.",
+     "statement": false,
+     "paragraphs": 17,
+     "footnotes": 4,
+     "words": 2459,
+     "tokens": 5015
+    },
+    {
+     "id": "miller-2",
+     "type": "dissent",
+     "author": [
+      "Marshall"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE MARSHALL, dissenting.",
+     "statement": false,
+     "paragraphs": 4,
+     "footnotes": 0,
+     "words": 397,
+     "tokens": 805
+    }
+   ]
+  },
+  {
+   "key": "oliver",
+   "name": "Oliver v. United States",
+   "citation": "466 U.S. 170",
+   "decided": "1984-04-17",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 111146,
+    "opinion": 111146
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "oliver-0",
+     "type": "majority",
+     "author": [
+      "Powell"
+     ],
+     "joined_by": [
+      "Burger",
+      "Blackmun",
+      "Rehnquist",
+      "O'Connor"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": "joined in part, per the Reporter's lineup: Parts I and II: White",
+     "heading": "JUSTICE POWELL delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 22,
+     "footnotes": 15,
+     "words": 4132,
+     "tokens": 8618
+    },
+    {
+     "id": "oliver-1",
+     "type": "concurrence in part and in the judgment",
+     "author": [
+      "White"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE WHITE, concurring in part and concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 69,
+     "tokens": 138
+    },
+    {
+     "id": "oliver-2",
+     "type": "dissent",
+     "author": [
+      "Marshall"
+     ],
+     "joined_by": [
+      "Brennan",
+      "Stevens"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "JUSTICE MARSHALL, with whom JUSTICE BRENNAN and JUSTICE STEVENS join, dissenting.",
+     "statement": false,
+     "paragraphs": 23,
+     "footnotes": 21,
+     "words": 4670,
+     "tokens": 9626
+    }
+   ]
+  },
+  {
+   "key": "olmstead",
+   "name": "Olmstead v. United States",
+   "citation": "277 U.S. 438",
+   "decided": "1928-06-04",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 101320,
+    "opinion": 101320
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "olmstead-0",
+     "type": "majority",
+     "author": [
+      "Taft"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. CHIEF JUSTICE TAFT delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 51,
+     "footnotes": 0,
+     "words": 4571,
+     "tokens": 8384
+    },
+    {
+     "id": "olmstead-1",
+     "type": "dissent",
+     "author": [
+      "Holmes"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE HOLMES:",
+     "statement": false,
+     "paragraphs": 2,
+     "footnotes": 0,
+     "words": 567,
+     "tokens": 935
+    },
+    {
+     "id": "olmstead-2",
+     "type": "dissent",
+     "author": [
+      "Brandeis"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRANDEIS, dissenting.",
+     "statement": false,
+     "paragraphs": 18,
+     "footnotes": 21,
+     "words": 5251,
+     "tokens": 11462
+    },
+    {
+     "id": "olmstead-3",
+     "type": "dissent",
+     "author": [
+      "Butler"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BUTLER, dissenting.",
+     "statement": false,
+     "paragraphs": 10,
+     "footnotes": 1,
+     "words": 751,
+     "tokens": 1465
+    },
+    {
+     "id": "olmstead-4",
+     "type": "dissent",
+     "author": [
+      "Stone"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE STONE, dissenting.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 114,
+     "tokens": 228
+    }
+   ]
+  },
+  {
+   "key": "on_lee",
+   "name": "On Lee v. United States",
+   "citation": "343 U.S. 747",
+   "decided": "1952-06-02",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 105021,
+    "opinion": 105021
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "on_lee-0",
+     "type": "majority",
+     "author": [
+      "Jackson"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE JACKSON delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 19,
+     "footnotes": 5,
+     "words": 3112,
+     "tokens": 5901
+    },
+    {
+     "id": "on_lee-1",
+     "type": "dissent",
+     "author": [
+      "Black"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "",
+     "statement": true,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 42,
+     "tokens": 97
+    },
+    {
+     "id": "on_lee-2",
+     "type": "dissent",
+     "author": [
+      "Frankfurter"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE FRANKFURTER, dissenting.",
+     "statement": false,
+     "paragraphs": 13,
+     "footnotes": 0,
+     "words": 1267,
+     "tokens": 2450
+    },
+    {
+     "id": "on_lee-3",
+     "type": "dissent",
+     "author": [
+      "Douglas"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE DOUGLAS, dissenting.",
+     "statement": false,
+     "paragraphs": 7,
+     "footnotes": 0,
+     "words": 848,
+     "tokens": 1656
+    },
+    {
+     "id": "on_lee-4",
+     "type": "dissent",
+     "author": [
+      "Burton"
+     ],
+     "joined_by": [
+      "Frankfurter"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BURTON, with whom MR. JUSTICE FRANKFURTER concurs, dissenting.",
+     "statement": false,
+     "paragraphs": 4,
+     "footnotes": 0,
+     "words": 666,
+     "tokens": 1371
+    }
+   ]
+  },
+  {
+   "key": "riley",
+   "name": "Riley v. California",
+   "citation": "573 U.S. 373",
+   "decided": "2014-06-25",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "govinfo-us-reports-pdf",
+    "file": "USREPORTS-573-373.pdf"
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "riley-0",
+     "type": "majority",
+     "author": [
+      "Roberts"
+     ],
+     "joined_by": [
+      "Scalia",
+      "Kennedy",
+      "Thomas",
+      "Ginsburg",
+      "Breyer",
+      "Sotomayor",
+      "Kagan"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "Chief Justice Roberts delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 67,
+     "footnotes": 2,
+     "words": 8525,
+     "tokens": 16646
+    },
+    {
+     "id": "riley-1",
+     "type": "concurrence in part and in the judgment",
+     "author": [
+      "Alito"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "Justice Alito, concurring in part and concurring in the judgment.",
+     "statement": false,
+     "paragraphs": 13,
+     "footnotes": 1,
+     "words": 1718,
+     "tokens": 3567
+    }
+   ]
+  },
+  {
+   "key": "shultz",
+   "name": "California Bankers Assn. v. Shultz",
+   "citation": "416 U.S. 21",
+   "decided": "1974-04-01",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 109005,
+    "opinion": 109005
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "shultz-0",
+     "type": "majority",
+     "author": [
+      "Rehnquist"
+     ],
+     "joined_by": [
+      "Burger",
+      "Stewart",
+      "White",
+      "Blackmun",
+      "Powell"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE REHNQUIST delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 92,
+     "footnotes": 30,
+     "words": 16086,
+     "tokens": 32201
+    },
+    {
+     "id": "shultz-1",
+     "type": "concurrence",
+     "author": [
+      "Powell"
+     ],
+     "joined_by": [
+      "Blackmun"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE POWELL, with whom MR. JUSTICE BLACKMUN joins, concurring.",
+     "statement": false,
+     "paragraphs": 3,
+     "footnotes": 0,
+     "words": 295,
+     "tokens": 635
+    },
+    {
+     "id": "shultz-2",
+     "type": "dissent",
+     "author": [
+      "Douglas"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": "joined in part, per the Reporter's lineup: Parts I and II-A: Brennan",
+     "heading": "MR. JUSTICE DOUGLAS, dissenting.",
+     "statement": false,
+     "paragraphs": 25,
+     "footnotes": 17,
+     "words": 3909,
+     "tokens": 7881
+    },
+    {
+     "id": "shultz-3",
+     "type": "dissent",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRENNAN, dissenting.",
+     "statement": false,
+     "paragraphs": 7,
+     "footnotes": 0,
+     "words": 712,
+     "tokens": 1559
+    },
+    {
+     "id": "shultz-4",
+     "type": "dissent",
+     "author": [
+      "Marshall"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE MARSHALL, dissenting.",
+     "statement": false,
+     "paragraphs": 12,
+     "footnotes": 0,
+     "words": 1759,
+     "tokens": 3559
+    }
+   ]
+  },
+  {
+   "key": "silverman",
+   "name": "Silverman v. United States",
+   "citation": "365 U.S. 505",
+   "decided": "1961-03-06",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 106187,
+    "opinion": 106187
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "silverman-0",
+     "type": "majority",
+     "author": [
+      "Stewart"
+     ],
+     "joined_by": [],
+     "joined_by_source": "not printed",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE STEWART delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 16,
+     "footnotes": 4,
+     "words": 2214,
+     "tokens": 4210
+    },
+    {
+     "id": "silverman-1",
+     "type": "concurrence",
+     "author": [
+      "Douglas"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE DOUGLAS, concurring.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 288,
+     "tokens": 519
+    },
+    {
+     "id": "silverman-2",
+     "type": "concurrence",
+     "author": [
+      "Clark",
+      "Whittaker"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE CLARK and MR. JUSTICE WHITTAKER, concurring.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 46,
+     "tokens": 119
+    }
+   ]
+  },
+  {
+   "key": "smith",
+   "name": "Smith v. Maryland",
+   "citation": "442 U.S. 735",
+   "decided": "1979-06-20",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 110118,
+    "opinion": 110118
+   },
+   "not_participating": [
+    "MR. JUSTICE POWELL took no part in the consideration or decision of this case."
+   ],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "smith-0",
+     "type": "majority",
+     "author": [
+      "Blackmun"
+     ],
+     "joined_by": [
+      "Burger",
+      "White",
+      "Rehnquist",
+      "Stevens"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BLACKMUN delivered the opinion of the Court.",
+     "statement": false,
+     "paragraphs": 20,
+     "footnotes": 5,
+     "words": 3275,
+     "tokens": 6716
+    },
+    {
+     "id": "smith-1",
+     "type": "dissent",
+     "author": [
+      "Stewart"
+     ],
+     "joined_by": [
+      "Brennan"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE STEWART, with whom MR. JUSTICE BRENNAN joins, dissenting.",
+     "statement": false,
+     "paragraphs": 7,
+     "footnotes": 2,
+     "words": 713,
+     "tokens": 1338
+    },
+    {
+     "id": "smith-2",
+     "type": "dissent",
+     "author": [
+      "Marshall"
+     ],
+     "joined_by": [
+      "Brennan"
+     ],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE MARSHALL, with whom MR. JUSTICE BRENNAN joins, dissenting.",
+     "statement": false,
+     "paragraphs": 8,
+     "footnotes": 2,
+     "words": 1265,
+     "tokens": 2772
+    }
+   ]
+  },
+  {
+   "key": "white",
+   "name": "United States v. White",
+   "citation": "401 U.S. 745",
+   "decided": "1971-04-05",
+   "decided_source": "official text",
+   "role": "core",
+   "source": {
+    "kind": "courtlistener-lawbox",
+    "cluster": 108304,
+    "opinion": 108304
+   },
+   "not_participating": [],
+   "slip_opinion": false,
+   "opinions": [
+    {
+     "id": "white-0",
+     "type": "plurality",
+     "author": [
+      "White"
+     ],
+     "joined_by": [
+      "Burger",
+      "Stewart",
+      "Blackmun"
+     ],
+     "joined_by_source": "lineup",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE WHITE announced the judgment of the Court and an opinion in which THE CHIEF JUSTICE, MR. JUSTICE STEWART, and MR. JUSTICE BLACKMUN join.",
+     "statement": false,
+     "paragraphs": 17,
+     "footnotes": 4,
+     "words": 2481,
+     "tokens": 4951
+    },
+    {
+     "id": "white-1",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Black"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "",
+     "statement": true,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 45,
+     "tokens": 113
+    },
+    {
+     "id": "white-2",
+     "type": "concurrence in the judgment",
+     "author": [
+      "Brennan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE BRENNAN, concurring in the result.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 367,
+     "tokens": 775
+    },
+    {
+     "id": "white-3",
+     "type": "dissent",
+     "author": [
+      "Douglas"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE DOUGLAS, dissenting.",
+     "statement": false,
+     "paragraphs": 39,
+     "footnotes": 6,
+     "words": 3777,
+     "tokens": 7453
+    },
+    {
+     "id": "white-4",
+     "type": "dissent",
+     "author": [
+      "Harlan"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE HARLAN, dissenting.",
+     "statement": false,
+     "paragraphs": 46,
+     "footnotes": 30,
+     "words": 8755,
+     "tokens": 18285
+    },
+    {
+     "id": "white-5",
+     "type": "dissent",
+     "author": [
+      "Marshall"
+     ],
+     "joined_by": [],
+     "joined_by_source": "heading",
+     "joined_by_note": null,
+     "heading": "MR. JUSTICE MARSHALL, dissenting.",
+     "statement": false,
+     "paragraphs": 1,
+     "footnotes": 0,
+     "words": 141,
+     "tokens": 318
+    }
+   ]
+  }
+ ]
+}

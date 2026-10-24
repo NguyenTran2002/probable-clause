@@ -38,6 +38,6 @@ dist/
 .idea/
 .vscode/
 
-# Built corpus and verification output, until the corpus is frozen (brief default 3)
-data/corpus/
+# Verification output (script reports, agent findings) stays local. The cleaned
+# corpus in data/corpus/ is committed (brief default 3, locked-decisions P1.22).
 data/verification/

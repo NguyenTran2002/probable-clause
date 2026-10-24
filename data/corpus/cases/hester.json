@@ -1,0 +1,74 @@
+{
+ "key": "hester",
+ "source": {
+  "kind": "courtlistener-lawbox",
+  "cluster": 100413,
+  "opinion": 100413
+ },
+ "decided_text": "May 5, 1924",
+ "argued_text": "submitted April 24, 1924",
+ "notes": [],
+ "header_footnotes_dropped": 0,
+ "opinions": [
+  {
+   "heading": "MR. JUSTICE HOLMES delivered the opinion of the Court.",
+   "type": "majority",
+   "author": [
+    "Holmes"
+   ],
+   "joined_by": [],
+   "joined_by_note": null,
+   "statement": false,
+   "typed_by_table": false,
+   "paragraphs": [
+    {
+     "text": "The plaintiff in error, Hester, was convicted of concealing distilled spirits &c. under Rev. Stats., § 3296. The case is brought here directly from the District Court on the single ground that by refusing to exclude the testimony of two witnesses and to direct a verdict for the defendant, the plaintiff in error, the Court violated his rights under the Fourth and Fifth Amendments of the Constitution of the United States.",
+     "kind": "text",
+     "page_start": 57,
+     "page_breaks": [
+      {
+       "offset": 337,
+       "page": 58
+      }
+     ],
+     "footnote_refs": []
+    },
+    {
+     "text": "The witnesses whose testimony is objected to were revenue officers. In consequence of information they went toward the house of Hester's father, where the plaintiff in error lived, and as they approached saw one Henderson drive near to the house. They concealed themselves from fifty to one hundred yards away and saw Hester come out and hand Henderson a quart bottle. An alarm was given. Hester went to a car standing near, took a gallon jug from it and he and Henderson ran. One of the officers pursued, and fired a pistol. Hester dropped his jug, which broke but kept about a quart of its contents. Henderson threw away his bottle also. The jug and bottle both contained what the officers, being experts, recognized as moonshine whiskey, that is whiskey illicitly distilled; said to be easily recognizable. The other officer entered the house, but being told there was no whiskey there left it, but found outside a jar that had been thrown out and broken and that also contained whiskey. While the officers were there other cars stopped at the house but were spoken to by Hester's father and drove off. The officers had no warrant for search or arrest, and it is contended that this made their evidence inadmissible, it being assumed, on the strength of the pursuing officer's saying that he supposed they were on Hester's land, that such was the fact. It is obvious that even if there had been a trespass, the above testimony was not obtained by an illegal search or seizure. The defendant's own acts, and those of his associates, disclosed the jug, the jar and the bottle—and there was no seizure in the sense of the law when the officers examined the contents of each after it had been abandoned. This evidence was not obtained by the entry into the house and it is immaterial to discuss that. The suggestion that the defendant was compelled to give evidence against himself does not require an answer. The only shadow of a ground for bringing up the case is drawn from the hypothesis that the examination of the vessels took place upon Hester's father's land. As to that, it is enough to say that, apart from the justification, the special protection accorded by the Fourth Amendment to the people in their \"persons, houses, papers, and effects,\" is not extended to the open fields. The distinction between the latter and the house is as old as the common law. 4 Bl. Comm. 223, 225, 226.",
+     "kind": "text",
+     "page_start": 58,
+     "page_breaks": [
+      {
+       "offset": 1881,
+       "page": 59
+      }
+     ],
+     "footnote_refs": []
+    },
+    {
+     "text": "Judgment affirmed.",
+     "kind": "text",
+     "page_start": 59,
+     "page_breaks": [],
+     "footnote_refs": []
+    }
+   ],
+   "footnotes": [],
+   "joined_by_source": "not printed"
+  }
+ ],
+ "cleaning": {
+  "page_markers": 2,
+  "footnote_markers": 0,
+  "unmatched_footnote_markers": [],
+  "unmatched_notes": [],
+  "two_scan_candidates": [],
+  "pages_from_official_pdf": {
+   "paragraphs_reanchored": 3,
+   "paragraphs_not_found": 0,
+   "breaks_changed": 0
+  },
+  "reviewed_corrections": [],
+  "paragraph_pages_raised": 0
+ }
+}

@@ -194,3 +194,23 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **Failures:** Recorded in the frontend log (layout grid bug at the start of a run, card-outline hairlines, smooth-scroll cancellation, stale cached assets); each fixed in that session.
 
 **DECISION (user):** *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."* Under P1.6 the direction is locked as a T-entry in Phase 3, from this record.
+
+## Oct 23, 2026, 21:17 CDT — Phase 1: Corpus (final pass; approved and frozen)
+
+**Asked:** After compaction, carry out P1.21: make the two-scan check report-only, move every agent-confirmed correction into the reviewed table, finish the generic fixes, add the comma and period check, rebuild, run the final agent pass, and report for approval. Then, on approval: include *Boyd*'s caption, commit the cleaned corpus with attribution, and freeze.
+
+**Came back:**
+- Two-scan check report-only (`cleaning.two_scan_candidates`): 27 candidates and 22 filtered, every one judged in round 2.
+- Reviewed corrections table (`scripts/corrections.json`): 77 entries, each confirmed by a verification agent against the page image, each naming its batch. New entry types: `set_note`, `page_starts_at`, `remove_break`, `split_at`.
+- Page alignment: every page break listed in the round-2 handoff now comes out right from the code (a break before a word opening with a quote or parenthesis had been pushed one word late; footnotes wholly on their marker's page are looked for there alone; run-on footnotes searched over three pages; the nearest well-supported match preferred, so *Boyd*'s statute no longer matches *Miller*'s later quotation of it; damaged page-split words take the official page; paragraph pages never go back within an opinion).
+- PDF cases: same-height line pieces joined (*Chatrie*'s paragraph split in four), URL line breaks, closing quotes after a thin print gap, nested opening quotes, a line-end hyphen kept before a capital, hyphen evidence from line-end words. Lawbox: Windows-1252 footnote labels, ellipsis and fraction spacing, "MR. JUSTICE", reargued and submitted dates.
+- Comma and period check in `scripts/verify_corpus.py`: where the official text layer and Harvard agree and the corpus differs. On the earlier build it caught all 8 of *Berger*'s comma errors; on the final build its 10 candidates were judged by agents (shared OCR misreadings and printed specks).
+- Final agent pass: four Opus agents over all 32 cases (`BRIEF_FINAL.md`, `final_checklist.json`), then three short follow-ups (four-dot ellipses, capitalisation, divided words at page turns). All 52 table entries checked were right; every listed page break was right. They found about 25 more errors, all fixed through code or the table and confirmed: thin print gaps read as spaces, letterspaced words ("Car roll"), URL and capital hyphens, five closed-up four-dot ellipses, "liquor License", "Secretary", two run-in paragraphs merged in *Berger*'s appendix, and 10 page breaks that put a divided word on the later page (convention set: on the page where it begins).
+- Frozen corpus: 32 cases, 102 opinions, 599,094 tokens (`claude-sonnet-5-5`, token-counting endpoint). Committed under `data/corpus/` with a README giving sources and attribution. Raw responses, PDFs and verification output stay local. Locked P1.22.
+
+**Failures:**
+- The first build of the round-2 code dropped *Boyd*'s dagger footnotes (labels left as raw Windows-1252 bytes) and spaced an ellipsis after opening quotes; both fixed before anything was kept.
+- Joining same-height line pieces at first also joined running-head pieces ("388 U. S." with "Opinion of the Court"), which then leaked into the official body stream; limited to gaps under 40 pt (body gaps measured up to 22 pt, running heads 79 pt and more).
+- A script meant to find divided words at page turns misread *Shultz*'s ("re-|quired" taken as "report"); the confirming agent caught it.
+
+**DECISION (user):** *"Approved. Include Boyd's p.618 caption as a quote paragraph, commit the cleaned corpus with attribution (default 3), and accept the two smaller points as recommended. Go ahead with the freeze."* (P1.22)

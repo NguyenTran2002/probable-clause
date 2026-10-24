@@ -206,3 +206,14 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The automatic two-scan correction of P1.16 no longer changes the corpus. Verification round 2 found about half of its corrections wrong (roughly 26 right, 22 wrong): the official text layer and the Harvard scan often share a misreading (O read as 0, A1 as Al, III as Ill, Amdt. as Arndt, accents and "œ" dropped, a paragraph-opening "I" deleted, small capitals and line-end hyphens split). The build applies only the reviewed corrections table (`scripts/corrections.json`), and every entry in it is a correction a verification agent confirmed against the page image. The two-scan check stays as a report of candidates. A scripted comma and period check (Lawbox against the official text and Harvard) is added as a report, and a final agent pass reviews what changed.
 - **User's words:** *"I want to apply only agent-confirmed corrections from the reviewed table; keep the two-scan check as a report of candidates, not an automatic change. Run the comma/period check and the final agent pass you described."*
 - **Date:** Oct 23, 2026
+
+### P1.22 Corpus approved and frozen; four points settled
+
+- **Decision:** The Phase 1 corpus is approved as built after the final agent pass: 32 core cases, 102 opinions. Four points settled with it:
+  1. *Boyd*'s quoted caption on p. 618 ("The United States of America against E. A. B., 1–35, Thirty-five Cases of Plate Glass.") is included, as a quote paragraph, through the corrections table.
+  2. The cleaned corpus (`data/corpus/`) is committed, with source attribution (brief default 3; `docs/research/licensing.md`). Raw API responses, the PDFs and the verification output stay uncommitted.
+  3. Printed typos: a misspelled word stays as printed ("dislosures", "throroughfares"); a stray printed mark that Lawbox omits stays omitted ("273 U S. 28" kept as "U. S.", "of.crime" as "of crime").
+  4. In the older (Lawbox) cases, an en dash printed between numbers or in section numbers may appear as a hyphen ("§ 813-a"), as in page ranges; the source does not distinguish them and they cannot be restored reliably.
+- Recorded with it, the main session's convention for page breaks (no user decision needed): a word divided across a page turn is on the page where it begins.
+- **User's words:** *"Approved. Include Boyd's p.618 caption as a quote paragraph, commit the cleaned corpus with attribution (default 3), and accept the two smaller points as recommended. Go ahead with the freeze."*
+- **Date:** Oct 23, 2026

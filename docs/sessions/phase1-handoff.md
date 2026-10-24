@@ -1,5 +1,7 @@
 # Phase 1 handoff: finishing the corpus after verification round 2
 
+*Historical. Every step below was carried out and Phase 1 was frozen on Oct 23, 2026 (BUILD_LOG.md; locked-decisions P1.22).*
+
 *Written Oct 23, 2026, 20:13 CDT, by the main session, before a planned compaction. Read this in full before continuing Phase 1. It holds every open finding from verification rounds 1 and 2, so nothing depends on the conversation.*
 
 The agents' full findings are on disk (gitignored): `data/verification/agents/batch1-10.json` and `r2_batch1-6.json`. The briefs are `BRIEF.md` and `BRIEF_ROUND2.md` in the same folder. Where this file names an offset or page, it was reported by an agent against the build of Oct 23 ~19:50; re-locate by the quoted text, not the offset.
