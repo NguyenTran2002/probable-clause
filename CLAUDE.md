@@ -69,33 +69,18 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 23, 2026, 17:17 CDT, before a planned compaction.*
+*Updated Oct 23, 2026, 19:53 CDT, during verification round 2.*
 
-- **State:** Phase 0 done (`phase-0-done`). Phase 1 has not started its pull. Done so far in Phase 1:
-  - pre-pull checks: all four secrets set; the CourtListener token works
-  - the licensing research (`docs/research/licensing.md`)
-  - decisions locked: P0.1 to P0.5 and P1.1 to P1.8
-
-  Read `locked-decisions.md` in full after compaction.
-- **Waiting on others:**
-  - The user has emailed Exa (hello@exa.ai) for written permission to show update-check results and store them in replays (P1.3). **Assume no reply until the user reports one** (P1.7): build synthesis plus links, and log the remaining risk as accepted at launch.
-  - The user is starting the frontend session for look tests (P1.6). It may already be working in `web/looktests/`.
-- **Open for the user (optional):** email Free Law Project to confirm the portfolio use is in scope.
-- **To report in Phase 1:** clusters also carry `headnotes` and `summary` text fields, which may hold commercial-reporter editorial matter depending on each case's `source`. Plan: leave both out of the manifest unless shown to be official Court text, and report what is found. The syllabus comes from the official opinion, labelled as the Reporter's.
-- **Next: Phase 1 (Corpus), on the user's signal after compaction.** Do not start before the signal.
-  1. Propose the inclusion rule (brief §4.1), resolving the *Riley* tension. The user decides.
-  2. Pull the cases from CourtListener (§4.3), with these settings:
-     - Pace: about 15 requests a minute, serial.
-     - Fetch all fields of each docket, cluster and opinion, raw, into `data/raw/` (P1.2). Record each cluster's `source` code.
-     - SCDB fields (P1.8): raw cache and verification only, never the manifest, prompt, tool results, replays or page. Votes shown come from each opinion's lineup; verification compares them with `scdb_votes_majority`/`minority`.
-     - Run the three first tests (§4.4): opinion splitting, text artifacts, page numbers.
-     - Known: *Chatrie* (cluster 10881683) has one sub-opinion (likely a Combined Opinion), and no citation on CourtListener. The Court's Term 2025 table lists it as **609 U.S. 605**, so check whether the official PDF is final.
-  3. Clean the text (§4.5), with these rules from the licensing notes:
-     - Strip any West or Lexis headnotes and summaries, and any embedded S. Ct. or L. Ed. star-paging markers.
-     - Pinpoints use U.S. Reports pages only.
-     - Keep the syllabus separate and labelled as the Reporter's.
-     - Never paraphrase.
-  4. Build the manifest: metadata, coverage dates (§4.6), the filter check (§4.7, the user decides each addition), and token counts (§4.8, Anthropic token counting).
-  5. Official PDFs for verification: **ask the user's permission once, with the full list** (filename, source, approximate size), before downloading from supremecourt.gov or GovInfo.
-  6. Exhaustive verification (P1.1): scripts check everything; Opus subagents, not told your conclusions, judge every listed difference; one independent subagent builds its own case list.
-  7. The user approves the corpus. Freeze it, log, update this section, commit, tag `phase-1-done`.
+- **State:** Phase 0 done. Phase 1 decisions P1.1 to P1.19 locked (read `locked-decisions.md` in full). The corpus is 31 core cases (21 original plus 10 from the filter check, P1.14), 99 opinions, 598,889 tokens (`claude-sonnet-5-5`). Built, never committed: `data/corpus/cases/*.json` and `data/corpus/manifest.json` (gitignored until the freeze).
+- **How the corpus is built** (all re-runnable, in this order):
+  1. `uv run python scripts/pull_courtlistener.py` (raw cache; resumes from cache)
+  2. `uv run python scripts/fetch_official_pdfs.py` (32 official PDFs, approved by the user)
+  3. `uv run python scripts/build_corpus.py` (Lawbox adapter for the older cases with two-scan corrections and pages from the official PDF; official-PDF adapter for Kyllo, Quon-era and later cases; Chatrie from the slip PDF; then `scripts/corrections.json`, lineup joiners, Chief Justice by date)
+  4. `uv run python scripts/verify_corpus.py` and `scripts/verify_lineup.py` (reports in `data/verification/`)
+  5. `uv run python scripts/build_manifest.py` (coverage dates, token counts; free endpoint)
+  6. `uv run python scripts/filter_check.py` (done; P1.14 decided)
+- **Verification (P1.1):** round 1 (six Opus agents, `data/verification/agents/batch1-6.json`) found Lawbox wording errors and cleaning faults; the rework fixed them. Round 2 is running: `r2_batch1-6` re-check the 21 original cases (`BRIEF_ROUND2.md`); `batch7-9` verify the 10 new cases in full (`BRIEF.md`). Independent case list: `independent_list.json`.
+- **Next:**
+  1. Fold round-2 findings into code or `scripts/corrections.json`; rebuild; re-verify by script.
+  2. Report to the user: what verification found and fixed, what remains, the *Ex parte Jackson* date (CourtListener's, the volume prints none), and *Clinton v. Virginia* (proposed by the independent agent after P1.14).
+  3. The user approves the corpus. Then: decide whether the cleaned text is committed (brief default 3; licensing notes say public domain), freeze, log, update this section, commit, tag `phase-1-done` (check `git status` for the frontend session's work first).
