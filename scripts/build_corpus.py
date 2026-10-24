@@ -601,24 +601,25 @@ def apply_corrections(case: dict, key: str) -> None:
     paragraph, set paragraphs' kind, set an opinion's joined_by_note, or fix a
     page break. Every entry must apply exactly once, or the build stops."""
     entries = [e for e in json.loads(CORRECTIONS.read_text())["entries"] if e["case"] == key]
-    log = []
+    log, where = [], []
 
     def units():
         """Each paragraph, and each footnote paragraph, with its text and its
         page breaks (offsets into that text)."""
-        for op in case["opinions"]:
-            for p in op["paragraphs"]:
-                yield p, None, p["text"], p["page_breaks"]
+        for oi, op in enumerate(case["opinions"]):
+            for pi, p in enumerate(op["paragraphs"]):
+                yield p, None, p["text"], p["page_breaks"], f"op{oi}.p{pi}"
             for f in op["footnotes"]:
                 for qi, x in enumerate(f["paragraphs"]):
-                    yield f, qi, x, f["page_breaks"][qi] if f.get("page_breaks") else []
+                    yield f, qi, x, f["page_breaks"][qi] if f.get("page_breaks") else [], f"op{oi}.fn{f['label']}.{qi}"
 
     def unique(text: str):
-        hits = [(u, qi, t, breaks) for u, qi, t, breaks in units() if text in t]
-        total = sum(t.count(text) for _, _, t, _ in hits)
+        hits = [(u, qi, t, breaks, w) for u, qi, t, breaks, w in units() if text in t]
+        total = sum(h[2].count(text) for h in hits)
         if total != 1:
             sys.exit(f"{key}: correction text {text!r} found {total} times")
-        return hits[0]
+        where.append(hits[0][4])
+        return hits[0][:4]
 
     for e in entries:
         if "find" in e:
@@ -632,7 +633,7 @@ def apply_corrections(case: dict, key: str) -> None:
                 u["text"] = text
             else:
                 u["paragraphs"][qi] = text
-            log.append({"replaced": e["find"], "with": e["replace"], "source": e["source"]})
+            log.append({"replaced": e["find"], "with": e["replace"], "source": e["source"], "where": where[-1]})
         elif "insert_after" in e:
             spots = [(op, i) for op in case["opinions"] for i, p in enumerate(op["paragraphs"]) if e["insert_after"] in p["text"]]
             n = e.get("occurrence")
@@ -675,7 +676,7 @@ def apply_corrections(case: dict, key: str) -> None:
             else:
                 kept.append({"offset": at, "page": page})
             breaks[:] = sorted(kept, key=lambda b: b["offset"])
-            log.append({"page_starts_at": e["page_starts_at"], "page": page, "source": e["source"]})
+            log.append({"page_starts_at": e["page_starts_at"], "page": page, "source": e["source"], "where": where[-1]})
         elif "remove_break" in e:
             # A spurious break: the paragraph or footnote holding the text stays
             # on the page before. Footnote paragraphs after it that were put on
@@ -690,7 +691,7 @@ def apply_corrections(case: dict, key: str) -> None:
                     if u["page_starts"][j] == page:
                         u["page_starts"][j] = page - 1
                         u["page_breaks"][j] = [b for b in u["page_breaks"][j] if b["page"] != page]
-            log.append({"remove_break": e["remove_break"], "page": page, "source": e["source"]})
+            log.append({"remove_break": e["remove_break"], "page": page, "source": e["source"], "where": where[-1]})
         else:
             sys.exit(f"{key}: unknown correction entry {e}")
     case["cleaning"]["reviewed_corrections"] = log
