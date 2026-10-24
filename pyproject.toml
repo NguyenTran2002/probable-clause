@@ -3,4 +3,6 @@ name = "probable-clause"
 version = "0.1.0"
 description = "Citation and precedent finder for U.S. Supreme Court Fourth Amendment and digital-technology case law, built on the Claude API."
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "anthropic>=2.3.0",
+]
