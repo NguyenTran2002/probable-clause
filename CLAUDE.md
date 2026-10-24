@@ -73,7 +73,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 24, 2026, 13:59 CDT, at the end of Phase 2.*
+*Updated Oct 24, 2026, 14:03 CDT, at the end of Phase 2, before a planned compaction.*
 
 - **State:** Phases 0 to 2 done (tag `phase-2-done`). Decisions P0.1 to P2.12 locked; read `docs/design/locked-decisions.md` in full, and `docs/research/phase2-findings.md`. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
 - **Settled in Phase 2:**
@@ -84,7 +84,22 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - Exa's server-side retries accepted (P2.8); no keyless Exa fallback (P2.11).
   - Name kept; the repo is `NguyenTran2002/probable-clause` and the frontend will be served at `nguyennhattran.com/probable-clause` (P2.9).
   - Measured: a run costs about $0.14 to $0.24 of Claude and takes 30 to 45 s.
-- **Next: Phase 3, the architecture conversation,** which starts on the user's green light (brief §3). Topics carried in:
+- **Next: Phase 3, the architecture conversation.** The user plans to start it right after the compaction ("I'd want to start Phase 3 after a /compact command"). Confirm the green light in one line before the first topic (brief §3, §12).
+- **How Phase 3 runs** (brief §3, §10.4; P2.12):
+  - Before the first topic, read: the brief in full; `docs/design/locked-decisions.md`; `docs/research/phase2-findings.md`; and `BUILD_LOG.md` from the Oct 23, 20:48 fold-in on (the frontend direction and the user's directions).
+  - Go topic by topic, laying out options with a recommendation and waiting. Nothing is locked without the user's words.
+  - Each locked topic becomes a T-entry, written to both `BUILD_LOG.md` and `locked-decisions.md` in one commit.
+  - Art direction is a T-entry, taken from the BUILD_LOG fold-ins (P1.6).
+  - At the end, a short design note for the user's review. Phase 3's gate is its approval.
+- **Observed in the Phase 2 probes, useful for the loop design** (findings §1 to §3):
+  - Claude read the passage IDs and metadata placed in each search result's `title`.
+  - It made two or three searches per turn.
+  - It ran the update check unprompted in both runs, so the rejection never fired on its own.
+  - It once kept and submitted in the same turn.
+  - Sentence blocks gave one- or two-sentence citations, and `cited_text` always equalled the blocks' text.
+  - Exa needs a text cap per result (1 MB event limit).
+- **Subagent models:** for Phase 2 the user chose Sonnet 5.5 at high effort or above, never max, and no Opus subagents (P2.5): *"more machinery parts of the plan would only need Sonnet."* The brief's Phase 4 says subagents run on Opus; raise that with the build plan rather than assume either.
+- **Topics carried into Phase 3:**
   - How passages are surfaced to Claude and how it queries the corpus, and the keep tool's shape (P2.3; the user reviews in full before anything is locked).
   - The retrieval method (findings §5).
   - Paragraph or sentence text blocks (P2.4; findings §1).
