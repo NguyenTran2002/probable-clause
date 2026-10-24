@@ -514,3 +514,19 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I only have 1 correction here, for include and exclude domains, set a high limit (100) to prevent overrun only and give Claude flexibilities."* Then: *"Lock topic 1 as T2.1: reading B, domains up to 100 each, the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:18 CDT — Phase 3: Architecture, Area 2 (the update-check tool's inputs, T2.1)"
+
+### T2.2 What an update-check result looks like to Claude
+
+- **Decision:** Area 2, topic 2:
+  - **Format:** plain-text blocks, one per page, as for corpus results (T1.6); not `search_result` blocks.
+  - **IDs:** our own, `web-<search>-<n>`, so the band's summary can tie each statement to its source (topic 3).
+  - **Opening line:** the search exactly as sent, our fixed settings included; how many pages came back and how many had no published date.
+  - **Header per page:** title; domain and URL; "published <YYYY-MM-DD> (Exa's estimate)" or "no published date"; author when Exa gives one.
+  - **Dates taken as written, no conversion:** our code keeps the date part of whatever Exa sends (`2026-06-29T14:17:34Z` → 2026-06-29), the same for Claude and every visitor; no time-zone handling. Most of Exa's values are a printed date stored as midnight UTC, which converting would move back a day in every U.S. zone. **An exception to brief §10.7** for these values: a page published at a real moment in a U.S. evening may show the next (UTC) day; the "Exa's estimate" label covers it.
+  - **Text:** the opening **4,000 characters** of Exa's cleaned page text (a placeholder, measured in Phase 5), marked when cut; inside fixed markers labelling it as data from the page, not instructions, with any copy of the closing marker inside the text escaped by our code. **No highlights** (model-chosen excerpts) and no summaries (T2.1).
+  - **Repeats:** a page an earlier search returned is listed under its first ID, not sent again.
+  - **Dropped:** image, favicon, Exa's own IDs and scores; Exa's cost is recorded (T2.1), not shown to Claude.
+  - **The page and the stored run events** carry only each page's title, URL and date, never its text (P1.3, P1.7). What replays keep is topic 3.
+- **User's words:** *"I'm leaning not trusting Exa's highlight here."* *"Let's keep 4000"*. *"I mean take Exa's date as written, with no conversion"*. Then: *"Lock topic 2 as T2.2 as restated."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:33 CDT — Phase 3: Architecture, Area 2 (what a web result looks like to Claude, T2.2)"

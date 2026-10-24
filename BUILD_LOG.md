@@ -574,3 +574,16 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Topics: *"The five topics work. Open topic 1."*
 - The one correction to the proposal: *"I only have 1 correction here, for include and exclude domains, set a high limit (100) to prevent overrun only and give Claude flexibilities."*
 - T2.1: *"Lock topic 1 as T2.1: reading B, domains up to 100 each, the rest as proposed."*
+
+## Oct 24, 2026, 17:33 CDT — Phase 3: Architecture, Area 2 (what a web result looks like to Claude, T2.2)
+**Asked:** Area 2, topic 2: how an update-check result reaches Claude. The user distrusted Exa's highlights, chose 4,000 characters and asked how the text is made, asked why converting Exa's dates would lose accuracy, and then chose to take Exa's date as written.
+**Came back:**
+- From Exa's cached docs: `text` is the page's full text, converted to clean markdown with ads and navigation stripped; the character cap shortens that text (the opening, INFERRED from "limit"); highlights are "Text snippets the LLM identifies as most relevant", so model-chosen; the API's main-content and section settings are not exposed by the MCP tool, so Exa's defaults apply.
+- Size at 4,000 characters: about 10,000 to 13,000 tokens a 10-result search (estimate), about $0.01 to $0.02 more a run than 2,000 for one update search.
+- Dates (script on the Phase 2 probe summary): 28 of 32 dated results at exactly midnight UTC, 4 with a real time (news pages, e.g. Reuters 2026-06-29T14:17:34Z); every supremecourt.gov result at midnight UTC or undated. Read as a moment and converted, the Court's *Chatrie* page (2026-06-29T00:00Z) would show as June 28 in every U.S. zone, before the decision; so midnight values are printed dates. A rule with visitor-zone conversion for real moments was proposed, then replaced by the user's simpler choice.
+- T2.2 locked: see `docs/design/locked-decisions.md`.
+**Failures:** My first explanation of the date problem did not make clear why converting would lose accuracy; the user asked, and the supremecourt.gov example answered it.
+**DECISION (user):**
+- *"I'm leaning not trusting Exa's highlight here."* *"Let's keep 4000 but is this 4000 first characters of all pages? Not excerpts within a page? How are these characters generated?"*
+- *"Wait I'm not clear on how you're saying converting date will lose accuracy here."* *"By frontend's time zone, I mean the timezone of every visitor's browser."* Then: *"Oh I see. In that case, what about we don't bother with handling date at all?"* and *"I mean take Exa's date as written, with no conversion"*.
+- T2.2: *"Lock topic 2 as T2.2 as restated."*
