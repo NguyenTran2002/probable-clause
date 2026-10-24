@@ -21,7 +21,8 @@ import re
 import sys
 from pathlib import Path
 
-from corpus_pdf import build_pdf_case
+from corpus_align import align, kgram_index, norm_tokens, official_stream, token_offsets, word_pages
+from corpus_pdf import build_pdf_case, read_pages
 from corpus_common import BARE, HEADING, PER_CURIAM, ROLELESS, STATEMENT, STATEMENTS, WHO, justices, opinion_type, text_of
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -198,6 +199,63 @@ def lawbox_case(key: str, cluster_id: int) -> dict:
     }
 
 
+def reanchor_pages(case: dict, key: str) -> None:
+    """Take a Lawbox case's page breaks from the official PDF. Lawbox moves its
+    page markers to nearby sentence ends, and gives footnotes no page; the
+    official PDF's word stream carries the printed page of every word."""
+    pdfs = json.loads((RAW / "pdfs" / "manifest.json").read_text())
+    name = pdfs[key]["file"]
+    pdf = RAW / "pdfs" / name
+    first = int(name.rsplit("-", 1)[-1].split(".")[0])
+    labels = [first + i for i in range(len(read_pages(pdf)))]
+    units = [p for op in case["opinions"] for p in op["paragraphs"] if p["kind"] != "section"]
+    vocab = {t for op in case["opinions"] for p in op["paragraphs"] for t in norm_tokens(p["text"])}
+    vocab |= {t for op in case["opinions"] for f in op["footnotes"] for x in f["paragraphs"] for t in norm_tokens(x)}
+    otoks, opages, _ = official_stream(pdf, labels, vocab)
+    oindex = kgram_index(otoks)
+    stats = {"paragraphs_reanchored": 0, "paragraphs_not_found": 0, "breaks_changed": 0}
+    near = 0
+
+    def pages_for(text: str) -> tuple[int, list] | None:
+        nonlocal near
+        ptoks = norm_tokens(text)
+        hit = align(ptoks, otoks, oindex, near) if ptoks else None
+        if hit is None:
+            stats["paragraphs_not_found"] += 1
+            return None
+        near = hit[0]
+        pages = word_pages(ptoks, hit[0], hit[1], opages)
+        known = [pg for pg in pages if pg is not None]
+        if not known:
+            return None
+        last = known[0]
+        for i, pg in enumerate(pages):  # unmatched words take the page before; never go back
+            last = pg if pg is not None and pg >= last else last
+            pages[i] = last
+        offs = token_offsets(text)
+        breaks = [{"offset": offs[i], "page": pages[i]} for i in range(1, len(pages)) if pages[i] != pages[i - 1]]
+        stats["paragraphs_reanchored"] += 1
+        return pages[0], breaks
+
+    for op in case["opinions"]:
+        for p in op["paragraphs"]:
+            if p["kind"] == "section":
+                continue
+            got = pages_for(p["text"])
+            if got:
+                if got[1] != p["page_breaks"] or got[0] != p["page_start"]:
+                    stats["breaks_changed"] += 1
+                p["page_start"], p["page_breaks"] = got
+        for f in op["footnotes"]:
+            starts, breaks = [], []
+            for x in f["paragraphs"]:
+                got = pages_for(x)
+                starts.append(got[0] if got else f["page"])
+                breaks.append(got[1] if got else [])
+            f["page"], f["page_starts"], f["page_breaks"] = starts[0], starts, breaks
+    case["cleaning"]["pages_from_official_pdf"] = stats
+
+
 def slip_text(cluster_id: int) -> str | None:
     """The Court's slip opinion text as CourtListener holds it, for one cluster."""
     cluster = json.loads((RAW / "clusters" / f"{cluster_id}.json").read_text())
@@ -229,6 +287,7 @@ def main() -> int:
     for key in keys:
         if key in LAWBOX:
             case = lawbox_case(key, LAWBOX[key])
+            reanchor_pages(case, key)
         elif key in PDF_CASES:
             name, first, ref_op, slip = PDF_CASES[key]
             ref = slip_text(ref_op) if ref_op else None

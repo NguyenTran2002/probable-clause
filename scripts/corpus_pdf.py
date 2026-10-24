@@ -65,7 +65,19 @@ def read_pages(pdf: Path) -> list[list[dict]]:
                                   "h": max(merged[-1]["h"], w["h"])}
                 else:
                     merged.append(w)
-            words = merged
+            # An asterisk or dagger footnote marker can arrive fused to its word
+            # ("approach.*", "*United"): split it off as its own superscript word.
+            split = []
+            for w in merged:
+                # Not before a digit: "*303" is a star page cited in the text.
+                m = re.fullmatch(r"([*†‡]+)([^\W\d]\S*)|(\S+?)([*†‡]+)", w["t"])
+                if m and m.group(1):
+                    split += [{**w, "t": m.group(1), "fused_marker": True}, {**w, "t": m.group(2)}]
+                elif m and m.group(4):
+                    split += [{**w, "t": m.group(3)}, {**w, "t": m.group(4), "fused_marker": True}]
+                else:
+                    split.append(w)
+            words = split
             if words:
                 lines.append({"words": words, "x0": words[0]["x0"], "x1": words[-1]["x1"],
                               "y0": min(w["y0"] for w in words),
@@ -98,7 +110,7 @@ def classify(pages: list[list[dict]]) -> tuple[float, list[dict]]:
             for w in l["words"]:
                 # A footnote marker is small and is a number or symbol; small
                 # capitals in a heading are small too, but are letters.
-                w["sup"] = w["h"] < sup and bool(re.fullmatch(r"[\d*†‡§]+", w["t"]))
+                w["sup"] = (w["h"] < sup and bool(re.fullmatch(r"[\d*†‡§]+", w["t"]))) or w.get("fused_marker", False)
         body_x = Counter(round(l["x0"], 0) for l in lines if l["kind"] == "body" and l["x1"] - l["x0"] > 200)
         foot_x = Counter(round(l["x0"], 0) for l in lines if l["kind"] == "foot" and l["x1"] - l["x0"] > 200)
         info.append({"label": label,
@@ -309,14 +321,15 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
         else:
             label_word = words[0] if words[0].get("sup") else None
             if label_word is not None:
-                cur_foot = {"label": label_word["t"], "page": line["page"], "paras": []}
+                cur_foot = {"label": label_word["t"], "page": line["page"], "paras": [],
+                            "after_para": len(body_paras)}
                 foot_items.append(cur_foot)
                 para = new_para("foot", line)
                 cur_foot["paras"].append(para)
                 append_words(para, words[1:], line)
             elif cur_foot is not None:
                 para = cur_foot["paras"][-1]
-                if 6 <= indent <= 16:
+                if 6 <= indent <= 16 and para["text"]:
                     para = new_para("foot", line)
                     cur_foot["paras"].append(para)
                 append_words(para, words, line)
@@ -393,6 +406,14 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
         for r in p["footnote_refs"]:
             marker_queue.append((r["label"], len(opinions) - 1))
 
+    # Footnotes printed before the first opinion heading belong to the caption,
+    # counsel or syllabus (their markers may sit in lines that are not body text).
+    first_heading = next((i for i, p in enumerate(body_paras)
+                          if HEADING.match(p["text"].strip()) and (p["heading_size"] or len(p["text"]) < 400)), 0)
+    header_items = [f for f in foot_items if f["after_para"] <= first_heading]
+    foot_items = [f for f in foot_items if f["after_para"] > first_heading]
+    header_refs = []  # handled by position above
+
     # Footnotes: matched to markers in reading order, label by label.
     by_label = {}
     for f in foot_items:
@@ -419,7 +440,7 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
         "decided_text": decided.group(1) if decided else None,
         "argued_text": argued.group(1) if argued else None,
         "notes": [],
-        "header_footnotes": [],
+        "header_footnotes": [[x["text"] for x in f["paras"]] for f in header_items],
         "opinions": opinions,
         "cleaning": {
             "body_type_size": body_h,
