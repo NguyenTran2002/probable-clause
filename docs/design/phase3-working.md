@@ -70,18 +70,30 @@ visitor question
 
 ### Topics
 
+Revised Oct 24, 2026, 14:30 CDT, with the user's four additions (quoted below the table) folded in.
+
 | # | Topic | Status | Notes |
 |---|---|---|---|
-| 1 | Retrieval method | Open | Findings §5. FTS5 measured: 0.04 s index, 3.55 MB, under 1 ms a query. No Anthropic embeddings; Voyage `voyage-law-2` recommended by Anthropic |
-| 2 | How Claude queries the corpus | Open; user's full review | `search_corpus` inputs: query only in the probe. Candidates: filters (case, date range, opinion type), result count |
+| 1 | Retrieval method, and one search tool or several | Open | User's item 2. Findings §5. FTS5 measured: 0.04 s index, 3.55 MB, under 1 ms a query. No Anthropic embeddings; Voyage `voyage-law-2` recommended by Anthropic. **Restate first:** the probe's `search_corpus` is already keyword search (FTS5, bm25), so "a keyword-based search tool in addition" reads two ways (a second, meaning-based search beside it; or an exact-match tool beside a ranked one) |
+| 2 | How Claude queries: inputs and filters before the search runs | Open; user's full review | User's item 3 (date filter, excluding passages with certain words, etc.). Probe: query only. Candidates: case, date range, opinion type, author, exclusions, result count |
 | 3 | How passages reach Claude | Open; user's full review | Result size, metadata in `title`, repeats, context growth under append-only history |
 | 4 | The keep tool's shape | Open; user's full review | P2.3 locked keep-only with a reason. Open: un-keep, reason length, batch shape |
-| 5 | Citable unit: paragraph or sentence blocks | Open | P2.4; findings §1. Frontend renders both (fold-in, Oct 23 20:48) |
+| 5 | Citation granularity: Claude chooses how much to cite | Open | User's item 4; replaces "paragraph or sentence blocks" (P2.4). Mechanism fact: a citation is a range of whole text blocks, so the split sets the smallest unit and Claude picks the span (one sentence to the whole paragraph with sentence blocks). Source panel always shows the cited sentence inside its paragraph (prototype already does). Sentence splitting in legal text (U. S., v., Id., ellipses) must be exact |
 | 6 | `submit_answer` and the rejection rules | Open | Brief §5.4; the rejection never fired naturally in the probe |
-| 7 | The composition call | Open | Inputs, synthesis marking, step-limit fallback, verifier placement |
-| 8 | Citing-cases lookup | Open | Brief §3 cut list, second |
-| 9 | System prompt outline | Open | Brief §5.6; full text written in the build |
+| 7 | The composition call | Open | Inputs, synthesis marking, step-limit fallback |
+| 8 | Case-name verifier: reliable, or not offered | Open | User's item 1. **Brief §2 row** ("In the minimum demo"), so dropping it is a superseding decision by the user. P1.10 wording rule depends on it |
+| 9 | Citing-cases lookup | Open | Brief §3 cut list, second |
+| 10 | System prompt outline | Open | Brief §5.6; full text written in the build |
 
 ### Discussion notes
 
 *(Filled in as topics are discussed: options shown, the user's questions, what is still open.)*
+
+**The user's four additions, Oct 24, 2026, 14:30 CDT** (verbatim, for the log at the end of Area 1):
+
+1. *"I'm concerned of the fragile deterministic case-name verifier, particularly how do we recognize robustly what is a case name to check within Claude's answer without requesting Claude to write it as structured output (which breaks Citations feature). I'm considering not offering this if it's something we cannot check reliably. The response is covered under the AI disclosure already, and adding a check that isn't reliable might give false confidence to user."*
+2. *"On search corpus, I'm pondering whether we'd want to also offer a keyword-based search tool in addition as well for Claude to dynamically pick and choose thru its research loop."*
+3. *"For all search tools, should we consider giving Claude more filtering options before the search is ran? Claude can filter by date, for example, or exclude any passage containing certain words, etc."*
+4. *"From the current architecture, the Composition call is the only place where Citations is in action, which makes sense because for Citations to work, we must not be using structured output. However, with the context of legal citation, citing a sentence (within the context of a passage) is often a more frequent practice than citing whole passage. This is from my experience in Constitutional Law class back in college. Thus, I want us to explore giving Claude flexibility in deciding not only what to cite but also how much to cite. Then, in the source panel, we always show the sentence within a paragraph."*
+
+Then: *"Let's list out topics and go into them one at a time together."*
