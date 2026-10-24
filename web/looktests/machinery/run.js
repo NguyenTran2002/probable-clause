@@ -265,8 +265,15 @@ function openApi(id) {
   if (p.verdictShown === 'discarded') steps.push(`<li><p class="x-note">Not sent to the composition call. Claude discarded this passage, so the call that writes the answer never saw it and cannot cite it.</p></li>`);
   if (playing) steps.push(`<li><p class="x-note">The run is still working. More exchanges appear here as it goes.</p></li>`);
   $('#api-steps').innerHTML = steps.join('');
-  dlg.querySelector('.dlg-wire').scrollTop = 0;
   dlg.showModal();
+  // open at the exchange that matters: the citation (or, for a discarded passage, the discard); else the latest
+  // (on desktop the traffic column scrolls; on a phone the whole modal body does)
+  const wire = dlg.querySelector('.dlg-wire');
+  const scroller = [wire, dlg.querySelector('.dlg-body')].find(e => e.scrollHeight > e.clientHeight + 1);
+  const opened = [...wire.querySelectorAll('details[open]')].pop();
+  if (scroller) scroller.scrollTop = opened
+    ? scroller.scrollTop + opened.closest('li').getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12
+    : scroller.scrollHeight;
 }
 // both modals close from their Close button or a click on the backdrop
 for (const d of document.querySelectorAll('dialog')) {

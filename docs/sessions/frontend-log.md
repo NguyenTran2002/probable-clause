@@ -175,3 +175,30 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
   - On desktop the excerpt opens centred in the reader (measured 290 to 470 px in a 759 px viewport).
 **Failures:** None.
 **DECISION (user):** *"Good improvements."* Then: *"On desktop, increase the amount of width that the chat interface uses by 50% to both sizes."* Read as 50% wider overall, growing equally on both sides. Also: *"For each source, next to View API calls buttons, have a View Source button that will open a reader modal that lets the user scroll thru the whole actual text, starting from the cited excerpt."*
+
+## Oct 23, 2026, 20:13 CDT — Look tests: 25% chat width shared with the landing page; API window opens at the citation; reader page numbers
+**Asked:**
+- Change the conversation's growth from 50% to 25% over the original width, equally on both sides.
+- Make the landing page use the same width as the conversation, for the input box and all its text.
+- Make "View API calls" open scrolled to the response that produced the citation.
+- Fix the reader's page number being clipped by the excerpt box.
+**Came back:**
+- **One width token** (`--chat: 51.25rem`, 820 px) now sets the reading width everywhere: the conversation, the composer, and every landing block (wordmark, pitch, input, recorded-run chips, the trace figure, the fine print).
+  - It is the original content width (41rem, 656 px) plus 25%.
+  - Measured at 1440 px: landing blocks, steps, answer and composer are all 820 px wide and share one left edge.
+  - The conversation's side gutters stay outside that width, so the composer and the text above it now line up exactly. Before, the composer had been a little narrower than the text.
+- **API window** opens scrolled to the last open exchange:
+  - for a cited passage, "Claude cited it in the answer";
+  - for a discarded passage, the discard decision;
+  - otherwise, the latest exchange.
+  - On desktop the traffic column scrolls (measured at its maximum, with the citation 63 px below its top). On a phone and sideways, where the whole modal body scrolls, that body scrolls instead.
+- **Reader page numbers.**
+  - Cause of the clipping: the excerpt box extends 1.1rem into the left margin, where the page numbers sit.
+  - Margin numbers now end 1.85rem left of the text. The excerpt's own page number hangs outside its box in the same column: measured 12 px clear of the box and aligned with the other numbers.
+  - The reader keeps 5.25rem of side room on desktop so the numbers never meet the modal edge, even at 800 px wide.
+- **Checked** at 1440×900, 800×700, 393×852 and 852×393: no horizontal scroll on the landing page, conversation, sources, API window or reader.
+**Failures:** The first version of the scroll-to-citation worked on desktop only. On a phone the traffic column doesn't scroll on its own. Fixed by scrolling whichever part actually scrolls.
+**DECISION (user):** *"You understood my 50% request correctly. I changed my mind, however, I want only 25% growth overall to both sides compared to the original width now."*
+- *"I want in the landing page, the width we use to match the width we use in the chat UI, not just for the text input box but also for the text presented on this landing page."*
+- *"View API calls button after opening the modal should automatically scroll down to the response that results in the citation, which is at the bottom of the API calls stack usually."*
+- *"The view source modal is having some text clipping where you can see the number is being clipped by the drawn box."*
