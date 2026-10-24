@@ -503,3 +503,11 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - *"The idea of the tool find_citing(case, filters?) is sound on the consumption end (Claude), but I'm reading that we'd need to build the underlying infrastructure? For each case, we will need to parse and store what are the cases that it is citing?"*
 - T1.13: *"Cut the citing lookup; Claude uses keyword search on the citation string. Lock topic 9."*
+
+## Oct 24, 2026, 17:04 CDT — Phase 3: Architecture, Area 1 (the loop's system prompt, T1.14)
+
+**Asked:** Area 1, topic 10: an outline of the research loop's system prompt (the composition prompt is outlined in T1.11), and how to handle a borderline question such as an employer reading work email.
+
+**Came back:** a five-part outline (role and the division of labour; the corpus, its coverage dates from the manifest, text notes, the ID scheme and the catalog; research strategy with the tools; judgement rules; out-of-scope and borderline questions); a status line on each turn's tool results; a one-hour cache breakpoint on the fixed opening (tools, system prompt, catalog; about 12,000 tokens, estimate); the user's review of the drafted prompt text before its first paid run.
+
+**DECISION (user):** T1.14: *"Lock topic 10 as T1.14 as proposed; borderline questions like the employer email get researched (the state-action limit), not flagged out of scope."*
