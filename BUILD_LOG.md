@@ -338,3 +338,15 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - How Phase 3 runs: *"I want us to compact after each area, so how about you keep a working document for yourself somewhere of your choosing within this repo. (It's fine to have git track this document.)"*
 - Retrieval from scratch: *"Let's zoom out from the brief for a moment and discuss retrieval method from scratch here. The brief was written as a starting point only. Currently, I'm thinking of 2 parallel search stacks: 1. RAG with Reranker supported by Voyage AI. Vector search preferably not handled by our free MongoDB cluster. 2. Keyword based search. 3. Both with filtering optionalities for Claude."*
 - T1.1: *"I'm thinking 2 tools in parallel is the right choice here. For model on the RAG stack, lock voyage-law-2 and rerank-3."*
+
+## Oct 24, 2026, 14:54 CDT — Phase 3: Architecture, Area 1 (keyword fields T1.2, read-around T1.3)
+
+**Asked:** The user wanted Claude to be able to narrow a keyword search (every keyword must appear) or widen it (any of several), and asked for thoughts on letting Claude request more context around a passage on demand.
+
+**Came back:**
+- Keyword search: SQLite FTS5 supports AND, OR, NOT, phrases, nearness and prefixes. Two ways to expose it: raw search syntax written by Claude, or structured fields (`all_of`, `any_of`, `none_of`, quoted items as phrases) compiled by our code; recommended the fields (no malformed queries, plain display in the step log). Noted that the porter tokenizer matches word forms.
+- Read-around: recommended a third corpus tool reading up to about 3 units on each side of a passage, within its opinion, with the footnotes the passage cites (each paragraph records its `footnote_refs`), results keepable, on demand only.
+
+**DECISION (user):**
+- T1.2: *"I'd decide to go with Claude writing structured fields. This would be easier on the model as well. all_of, any_of, then none_of would be suitable. Our code will build the query."*
+- T1.3: *"On reading around a passage on demand, I'm thinking we should return the full requested content WITH the passage Claude has already read as well so Claude see a unified block instead of having to make the mental connection that the block it already saw is fitting into the middle of this somewhere. This is a trade off to gain more quality and accuracy while incurring a bit more cost and time."*

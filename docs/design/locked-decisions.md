@@ -345,3 +345,18 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Currently, I'm thinking of 2 parallel search stacks: 1. RAG with Reranker supported by Voyage AI. Vector search preferably not handled by our free MongoDB cluster. 2. Keyword based search. 3. Both with filtering optionalities for Claude."* Then: *"I'm thinking 2 tools in parallel is the right choice here. For model on the RAG stack, lock voyage-law-2 and rerank-3."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 14:48 CDT — Phase 3: Architecture, Area 1 (retrieval, T1.1)"
+
+### T1.2 Keyword search takes structured fields; our code builds the query
+
+- **Decision:** Claude's keyword search takes three lists, **`all_of`** (every item must appear: narrowing), **`any_of`** (at least one must appear: widening) and **`none_of`** (no item may appear). Our code compiles them into the SQLite FTS5 query; Claude never writes search syntax. Matching a quoted item as a phrase was proposed and is confirmed with topic 2. The filters both search tools share are Area 1, topic 2.
+- **User's words:** *"On keyword searches, I'd want us to offer Claude flexibilities here, including searching for sources that contain multiple keywords only (for more narrowing) or searching for sources that contain any of the set of potential keywords."* Then: *"I'd decide to go with Claude writing structured fields. This would be easier on the model as well. all_of, any_of, then none_of would be suitable. Our code will build the query."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 14:54 CDT — Phase 3: Architecture, Area 1 (keyword fields T1.2, read-around T1.3)"
+
+### T1.3 Read-around on demand returns one unified block, the passage already read included
+
+- **Decision:** Claude can ask for more context around a passage on demand. The result is the **whole requested span as one unified block, including the passage Claude has already read**, so Claude sees the passage in place rather than having to fit it into the surrounding text. The user accepts the extra tokens and time for quality and accuracy.
+- **Left open (Area 1, topic 3):** how many units before and after; staying within one opinion; whether the passage's cited footnotes come with it; how units in the block carry IDs for keeping; neighbours Claude has already seen elsewhere.
+- **User's words:** *"I'm also considering giving Claude an option to request more context around any given passage on demand."* Then: *"On reading around a passage on demand, I'm thinking we should return the full requested content WITH the passage Claude has already read as well so Claude see a unified block instead of having to make the mental connection that the block it already saw is fitting into the middle of this somewhere. This is a trade off to gain more quality and accuracy while incurring a bit more cost and time."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 14:54 CDT — Phase 3: Architecture, Area 1 (keyword fields T1.2, read-around T1.3)"
