@@ -384,3 +384,23 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Well my issue is more in principle though. See how you missed Oliver's heading II even though we technically did verify in Phase 1?"*
 - *"Run the read-only structure check on headings and footnote markers against the raw sources and report what it finds. No corpus changes."*
 - T1.5: *"Fix Oliver's missing II through the corrections table at the start of Phase 4, confirmed against the page image, with the Phase 1 checks and the structure check re-run and logged. However, don't send any subagent out again because this is a targeted fix. I also want to conserve usage as well. Push back otherwise."*
+
+## Oct 24, 2026, 15:50 CDT — Phase 3: Architecture, Area 1 (how passages reach Claude, T1.6)
+
+**Asked:** Area 1, topic 3, reviewed in full by the user: how passages reach Claude. Along the way the user asked what "plain text" results meant, how footnotes are handled, the average and median passage length, and proposed two additions: reading a passage directly by its ID, and giving Claude each case's metadata.
+
+**Came back:**
+- Result format explained: a tool result holding `search_result` blocks may hold nothing else, so loop results are text blocks, one per passage, each with a header; the composition call keeps `search_result` blocks. Untested in the probe; checked in build tests.
+- Footnotes switched to the user's intuitive way (attached inside the citing passage). Read-around reach set to 0 to 10; each passage its own marked block.
+- Direct reads merged with read-around into one `read_passages` tool, targets by ID or by case and U.S. Reports page (221 paragraphs cite "ante/post/supra, at <page>", 13 mention a Part); IDs counted from 1 (the probe's 0-based IDs made `katz-2-p1` the second paragraph). Case metadata folded into the corpus catalog (7,257 tokens, counted).
+- Section headings and footnote markers checked by script before locking (entry of 15:47 CDT).
+
+**DECISION (user):**
+- *"What you said about "Results come back as plain text." is a bit confusing to me. Can you clarify and give me more context here."*
+- *"I also need you to clarify how is footnote being handled. The intuitive way would be for us to automatically attaching footnotes to any passage that cites them, right within it, but are we deviating from it? Why?"*
+- *"Read around reach, I want to give Claude flexibility here and we trust Claude's judgement. Give it 0 to 10."*
+- *"Also, read around wouldn't just return a blob of text, we should return all the requested passages with clear markings."*
+- *"what about adding a tool that let Claude enter a passage ID directly and read that passage? … This is for example in cases of a passage mentioning another passage that is outside the read around bound."* And: *"we should also have a tool that let Claude get metadata of a case as well especially how many passages, what's the id of the first few ones and of the last few ones, or fold this data into an existing tool."*
+- On reads: *"A read always returns what Claude asked for, even if it was seen before. Claude asked deliberately."* *"An unknown ID or page comes back as an error result giving the valid range."* *"On limit per call, I'm thinking just one target per call? If Claude wants to read more passage, it can make more read_passages() tool call?"* *"ID counting from 1 for more natural IDs is good."*
+- T1.6: *"Lock."*
+- On the record: *"Don't forget we're ALWAYS keeping BUILD LOG updated with system time as well."*
