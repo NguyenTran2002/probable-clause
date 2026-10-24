@@ -27,25 +27,55 @@ def token_offsets(text: str) -> list[int]:
     return [m.start() for m in TOKEN.finditer(text.lower())]
 
 
-def official_stream(pdf: Path, labels: list[int], vocab: set) -> tuple[list[str], list[int], set, list[str]]:
-    """The official PDF's words in reading order, with each word's page label,
-    the indices of words rejoined from a line-end hyphen, and the punctuation
-    that follows each word (spaces dropped). Read from word boxes, not poppler's
-    plain text, which silently drops line-end hyphens. A broken word is rejoined
-    without its hyphen when the joined form is one the corpus uses."""
-    from corpus_pdf import read_pages
+RUNNING_HEAD = re.compile(
+    r"^(\d{1,4}|october term,? \d{4}\.?|opinion of the court\.?|syllabus\.?|per curiam\.?|cite as:.*"
+    r"|\d{1,3} u\. ?s\.?.*|.*\bv\. .*\.?|.*\bj\., (dissenting|concurring).*|.*\bdissenting\.?|.*\bconcurring.*"
+    r"|argument for .*|statement of the case\.?|appendix.*|[\d-]+ o-[\d-]+)$", re.I)
+
+
+def page_regions(lines: list[dict]) -> list[str]:
+    """Each line's region: "head" (running heads at the top of the page, which
+    scans set in body type, so size alone cannot tell), "body" or "foot"."""
+    out, top = [], lines[0]["y0"] if lines else 0
+    for i, l in enumerate(lines):
+        text = " ".join(w["t"] for w in l["words"]).strip()
+        if l.get("kind") == "header" or (i < 5 and l["y0"] <= top + 40 and RUNNING_HEAD.match(text)):
+            out.append("head")
+        else:
+            out.append("foot" if l.get("kind") == "foot" else "body")
+    return out
+
+
+def official_stream(pdf: Path, labels: list[int], vocab: set, region: str | None = None):
+    """The official PDF's words in reading order. Returns tokens, each token's page
+    label, the indices of tokens rejoined from a line-end hyphen, the punctuation
+    after each token, and each token's raw printed word with its span in it.
+
+    `region` limits the stream to "body" (running heads dropped) or "foot". Read
+    from word boxes, not poppler's plain text, which silently drops line-end
+    hyphens. A broken word is rejoined without its hyphen when the joined form is
+    a known word; otherwise the hyphen stays."""
+    from corpus_pdf import classify, read_pages
+    pages = read_pages(pdf)
+    classify(pages)
     flat = []
-    for i, lines in enumerate(read_pages(pdf)):
-        for line in lines:
+    for i, lines in enumerate(pages):
+        regions = page_regions(lines)
+        for line, reg in zip(lines, regions):
+            if reg == "head" or (region and reg != region):
+                continue
             words = [w["t"] for w in line["words"]]
             for j, w in enumerate(words):
                 flat.append((w, labels[i], j == len(words) - 1))
-    toks, pages, broken, after = [], [], set(), []
+    toks, pages_out, broken, after, raw = [], [], set(), [], []
 
-    def add(raw: str, label: int, from_break: bool):
-        low = raw.replace("\u00ad", "").lower()
+    def add(word: str, label: int, from_break: bool):
+        low = word.replace("\u00ad", "").lower()
         for k, v in LIG.items():
             low = low.replace(k, v)
+        clean = word.replace("\u00ad", "")
+        for k, v in LIG.items():
+            clean = clean.replace(k, v)
         ms = list(TOKEN.finditer(low))
         if not ms:
             if after:
@@ -57,21 +87,22 @@ def official_stream(pdf: Path, labels: list[int], vocab: set) -> tuple[list[str]
             if from_break:
                 broken.add(len(toks))
             toks.append(m.group(0))
-            pages.append(label)
+            pages_out.append(label)
             after.append(low[m.end():ms[n + 1].start()] if n + 1 < len(ms) else low[m.end():])
+            raw.append((clean, m.start(), m.end()))
 
     k = 0
     while k < len(flat):
         w, label, line_end = flat[k]
         if line_end and w.endswith(("-", "\u00ad")) and k + 1 < len(flat):
-            nxt = flat[k + 1][0]
-            joined = norm_tokens(w[:-1] + nxt)
-            add(w[:-1] + nxt if joined and all(t in vocab for t in joined) else w[:-1] + "-" + nxt, label, True)
+            joined = norm_tokens(w[:-1] + flat[k + 1][0])
+            add(w[:-1] + flat[k + 1][0] if joined and all(t in vocab for t in joined) else w[:-1] + "-" + flat[k + 1][0],
+                label, True)
             k += 2
             continue
         add(w, label, False)
         k += 1
-    return toks, pages, broken, after
+    return toks, pages_out, broken, after, raw
 
 
 def kgram_index(toks: list[str]) -> dict:

@@ -152,13 +152,17 @@ def verify(key: str) -> dict:
     pdf, labels = pdf_labels(case, key)
     units = list(corpus_units(case))
     vocab = {t for u in units for t in norm_tokens(u["text"])}
-    otoks, opages, obroken, oafter = official_stream(pdf, labels, vocab)
-    oindex = kgram_index(otoks)
+    # Body paragraphs against the official body lines, footnotes against the
+    # footnote lines, so text printed between them is never in the way.
+    streams = {}
+    for region in ("body", "foot"):
+        t, pg, br, af, _ = official_stream(pdf, labels, vocab, region)
+        streams[region] = {"toks": t, "pages": pg, "broken": br, "after": af, "index": kgram_index(t),
+                           "covered": [False] * len(t), "near": 0}
     third = third_copy(case, key)
     tindex = kgram_index(third) if third else None
     hv = harvard(key) if case["source"]["kind"] == "courtlistener-lawbox" else None
     hindex = kgram_index(hv[0]) if hv else None
-    covered = [False] * len(otoks)
 
     aligned, not_found, diffs, page_issues, harvard_pages, punct = 0, [], [], [], [], []
     interruptions, near, h_near = 0, 0, 0
@@ -166,12 +170,14 @@ def verify(key: str) -> dict:
         ptoks = norm_tokens(u["text"])
         if not ptoks:
             continue
-        hit = align(ptoks, otoks, oindex, near)
+        st = streams["body" if u["body"] else "foot"]
+        otoks, opages, obroken, oafter, covered = st["toks"], st["pages"], st["broken"], st["after"], st["covered"]
+        hit = align(ptoks, otoks, oindex := st["index"], st["near"])
         if hit is None:
             not_found.append({"where": u["where"], "text": u["text"][:200]})
             continue
         base, sm = hit
-        near = base
+        st["near"] = base
         aligned += 1
         window = otoks[base:base + len(sm.b)]
         for i in range(base, base + len(window)):
@@ -248,15 +254,17 @@ def verify(key: str) -> dict:
             diffs.append({"where": u["where"], "corpus": " ".join(c_seg), "official": " ".join(o_seg),
                           "third": " ".join(t_seg) if t_seg is not None else None, "label": label, "context": ctx})
 
-    uncovered, run = [], []
-    for i, c in enumerate(covered + [True]):
-        if not c and i < len(otoks):
-            run.append(i)
-        else:
-            if len(run) >= 15:
-                uncovered.append({"page": opages[run[0]], "words": len(run),
-                                  "text": " ".join(otoks[run[0]:run[0] + 40])})
-            run = []
+    uncovered = []
+    for region, st in streams.items():
+        run = []
+        for i, c in enumerate(st["covered"] + [True]):
+            if not c and i < len(st["toks"]):
+                run.append(i)
+            else:
+                if len(run) >= 15:
+                    uncovered.append({"region": region, "page": st["pages"][run[0]], "words": len(run),
+                                      "text": " ".join(st["toks"][run[0]:run[0] + 40])})
+                run = []
 
     report = {
         "key": key, "units": len(units), "aligned": aligned, "not_found": not_found,
@@ -264,7 +272,8 @@ def verify(key: str) -> dict:
         "page_issues": page_issues, "harvard_page_issues": harvard_pages,
         "punctuation": punct, "punctuation_kinds": dict(Counter(punct_kind(p) for p in punct)),
         "uncovered_official": uncovered, "interruptions": interruptions,
-        "official_words": len(otoks), "official_words_covered": sum(covered), "third_copy": bool(third),
+        "official_words": sum(len(st["toks"]) for st in streams.values()),
+        "official_words_covered": sum(sum(st["covered"]) for st in streams.values()), "third_copy": bool(third),
     }
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{key}.json").write_text(json.dumps(report, indent=1, ensure_ascii=False))

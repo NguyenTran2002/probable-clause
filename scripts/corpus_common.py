@@ -13,7 +13,7 @@ import unicodedata
 JUSTICE = r"(?:MR\.?|ME\.)?\s*(?:CHIEF\s+)?JUSTICE\s+[A-Z][A-Za-z'’\-]+|THE\s+CHIEF\s+JUSTICE"
 WHO = rf"(?P<who>(?:{JUSTICE})(?:(?:,? and |, )(?:{JUSTICE}))*)"
 # "with whom MR. JUSTICE X joins" contains periods, so this clause may too.
-WITH = r"(?P<with>,? (?:with whom|in which|while)[^:]{0,300}?)"
+WITH = r"(?P<with>,? (?:with whom|in which|while|after stating the (?:case|facts))[^:]{0,300}?)"
 ROLE = (
     r"delivered the opinion of the Court"
     r"|announced the judgment of the Court(?: and (?:delivered )?an opinion)?(?:,? in which[^:]{0,250}?joins?)?"

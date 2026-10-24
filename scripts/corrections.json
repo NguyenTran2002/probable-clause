@@ -1,0 +1,14 @@
+{
+ "about": "Reviewed corrections the build applies after the two-scan corrections (P1.16): errors a P1.1 verification agent confirmed against the official page image that the word-level two-scan check cannot make (punctuation, accents, lines Lawbox omits). Each entry names the case, the printed page, and the verification batch that found it. A find must occur exactly once in the case.",
+ "entries": [
+  {"case": "olmstead", "find": "its employes of the sanctities", "replace": "its employés of the sanctities", "page": 474, "source": "batch4", "reason": "printed with an acute accent"},
+  {"case": "olmstead", "find": "586. but that", "replace": "586, but that", "page": null, "source": "batch4", "reason": "comma in print and text layer (moderate confidence)"},
+  {"case": "olmstead", "find": "§ 13388, 13419", "replace": "§§ 13388, 13419", "page": 480, "source": "batch4", "reason": "double section sign printed"},
+  {"case": "lopez", "find": "his comment. \"I don't want", "replace": "his comment, \"I don't want", "page": 435, "source": "batch5", "reason": "comma in print"},
+  {"case": "lopez", "find": "Burgman v. United States 88", "replace": "Burgman v. United States, 88", "page": 448, "source": "batch5", "reason": "comma in print"},
+  {"case": "white", "insert_after": "THE WHITE HOUSE WASHINGTON", "occurrence": 1, "texts": ["May 21, 1940", "CONFIDENTIAL"], "kind": "section", "page": 766, "source": "batch3", "reason": "date and classification of Appendix I, omitted by Lawbox"},
+  {"case": "white", "insert_after": "insofar as possible to aliens.", "texts": ["[SEAL] /s/ F. D. R.", "APPENDIX II TO OPINION OF DOUGLAS, J., DISSENTING", "ADMINISTRATIVELY CONFIDENTIAL", "THE WHITE HOUSE WASHINGTON", "June 30, 1965", "MEMORANDUM FOR THE HEADS OF EXECUTIVE DEPARTMENTS AND AGENCIES"], "kind": "section", "page": 767, "source": "batch3", "reason": "Appendix I signature and the Appendix II heading, omitted by Lawbox"},
+  {"case": "white", "insert_after": "currently authorized and the reasons for them.", "texts": ["/s/ Lyndon B. Johnson"], "kind": "section", "page": 768, "source": "batch3", "reason": "Appendix II signature, omitted by Lawbox"},
+  {"case": "white", "kind_from": "I have agreed with the broad purpose of the Supreme Court", "kind_to": "currently authorized and the reasons for them.", "kind": "appendix", "source": "batch3", "reason": "the two presidential memoranda are Douglas's appendices, not his opinion text"}
+ ]
+}

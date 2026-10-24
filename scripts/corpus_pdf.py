@@ -114,7 +114,15 @@ def read_pages(pdf: Path) -> list[list[dict]]:
 
 def classify(pages: list[list[dict]]) -> tuple[float, list[dict]]:
     """Label each line header / body / foot, and find each page's label and margin."""
-    body_h = Counter(l["h"] for p in pages for l in p).most_common(1)[0][0]
+    # Body type size: the most common line height, rounded to half a point and
+    # weighted by words (a scan's body lines scatter between 16.0 and 16.2,
+    # while its footnotes may all read exactly 12.8).
+    sizes = Counter()
+    for p in pages:
+        for l in p:
+            sizes[round(l["h"] * 2) / 2] += len(l["words"])
+    top = sizes.most_common(1)[0][0]
+    body_h = Counter(l["h"] for p in pages for l in p if round(l["h"] * 2) / 2 == top).most_common(1)[0][0]
     small, sup = body_h * 0.9, body_h * 0.7
     info = []
     for lines in pages:
