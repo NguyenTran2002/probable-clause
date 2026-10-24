@@ -461,3 +461,20 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - *"Would a person asking an out of scope question get a natural response back with the current design?"*
 - T1.10: *"Lock topic 6 as T1.10 as proposed, with the out-of-scope additions: note written to the visitor, a scope note for mixed questions, personal-situation questions kept in scope."*
+
+## Oct 24, 2026, 16:46 CDT — Phase 3: Architecture, Area 1 (the composition call, T1.11)
+
+**Asked:** Area 1, topic 7: the composition call. The user set `max_tokens`, asked whether the update check should be folded into the answer, chose no length target, and asked why the answer should be held to prose.
+
+**Came back:**
+- Phase 2's answers (script): 1,142, 1,139 and 821 words; 60 to 67% of characters cited; all three used Markdown.
+- The proposal: inputs (question, scope note, coverage dates, kept passages as custom content documents in date order with metadata and the keep reason in `context`); unkept footnotes and web results left out; a composition prompt outline; synthesis worked out mechanically as uncited text; streaming; an output reserve held back from the per-run budget; the step-limit and token-ceiling fallback; no composition on an abandoned run; a failed composition shown, never retried automatically.
+- The update check, from brief §6.4 and P1.3: shown in its own band, never folded into the answer; the band's synthesis written in the loop by the Claude that read the results (mechanics in Area 2); one fixed line from our code pointing from the answer to the band when the check found something.
+- Format: prose only was recommended, then withdrawn on evidence: of 96 cited text blocks in Phase 2, none held a line break, heading or list marker; all 34 headings and list markers sat in uncited blocks; bold and italics in cited blocks were always balanced.
+
+**DECISION (user):**
+- *"Set the max tokens to 12000 just in case."*
+- *"the update check ran within the research loop, so we need to pass it on to fold it in? Or are we just showing the update check within the research loop but never within composition?"* Then: *"On the update check, I agree with your suggestions there."*
+- *"I'm thinking of not suggesting Claude with a length target and see how it goes first. We already had max token as the hard backstop."*
+- *"Why do we want to keep it to prose only? We can let Claude write naturally and render accordingly?"*
+- T1.11: *"Lock topic 7 as T1.11: Claude writes naturally in Markdown and the page renders it, with the straddle fallback; no length target; max_tokens 12,000 with a cut-off label; the update check kept out of composition; the rest as proposed."*
