@@ -448,3 +448,16 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Consider whether we can feed whole passage, and let Claude cite within them however much or however little Claude wants? Or is it something technically not possible with this Citations feature?"*
 - *"You have the same idea as mine. Send the diagnostic calls with the hardest passage."*
 - T1.9: *"Lock topic 5 as T1.9: our conservative splitter, sentence blocks sent as custom content documents with metadata and the keep reason in context, the rest as proposed."*
+
+## Oct 24, 2026, 16:32 CDT — Phase 3: Architecture, Area 1 (submit_answer and the rejection rules, T1.10)
+
+**Asked:** Area 1, topic 6: `submit_answer` and brief §5.4's rejection rules, now that the loop has two search tools, a read tool and a keep set. The user asked whether a person asking an out-of-scope question would get a natural response.
+
+**Came back:**
+- From the Phase 2 runs (script): two or three searches a turn; the update check run unprompted both times (once in the same turn as two searches); keep and submit once in the same turn; `submit_answer` repeated every kept ID; no rejection fired naturally.
+- The proposal: no kept-ID list in `submit_answer`; an optional `note` (required when out of scope or nothing kept) and an optional `update_skip_reason`; four rules in order (a submit in the same turn as a search or read is refused; no corpus search, refused and repeatable, a read alone not counting; nothing kept with no note, refused; no update check and no skip reason, refused once, then accepted and labelled, a failed attempt counting and the rule waived while the update check is unavailable); no composition call when out of scope or nothing kept.
+- Out-of-scope traced: one Sonnet call, about $0.03 to $0.04 (estimate; mostly the 7,257-token catalog), speed not measured. Three gaps found and fixed: the note written to the visitor rather than as a log line; a scope note for partly in-scope questions; personal-situation questions kept in scope (brief §5.6). A borderline case (an employer reading work email) left for the system prompt, topic 10.
+
+**DECISION (user):**
+- *"Would a person asking an out of scope question get a natural response back with the current design?"*
+- T1.10: *"Lock topic 6 as T1.10 as proposed, with the out-of-scope additions: note written to the visitor, a scope note for mixed questions, personal-situation questions kept in scope."*

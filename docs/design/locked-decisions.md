@@ -435,3 +435,20 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Thus, I want us to explore giving Claude flexibility in deciding not only what to cite but also how much to cite. Then, in the source panel, we always show the sentence within a paragraph."* *"Consider whether we can feed whole passage, and let Claude cite within them however much or however little Claude wants?"* *"Send the diagnostic calls with the hardest passage."* Then: *"Lock topic 5 as T1.9: our conservative splitter, sentence blocks sent as custom content documents with metadata and the keep reason in context, the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)"
+
+### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs")
+
+- **Decision:** Area 1, topic 6:
+  - **`submit_answer(out_of_scope, note?, update_skip_reason?)`.** No list of kept IDs: the composition call uses the kept set as it stands when the submit is accepted (T1.7). This supersedes brief §2's Termination row ("Its input lists the kept passage IDs"); the invariant stands (every citation points to a passage the viewer watched Claude keep).
+  - **`note`** is a reply **written to the visitor**, in plain language, two or three sentences. **Required** when the question is out of scope or nothing was kept; then no composition call runs and the page shows the note in the answer's place, labelled as Claude's reply with no sources, with the standard out-of-scope or nothing-found message. For an out-of-scope question it says what the corpus covers, why the question falls outside it, and where natural a related question it can answer; greetings and chit-chat are handled the same way. **On a normal answer it is an optional scope note** for a question partly outside the corpus (for example state law), shown above the answer and passed to the composition call.
+  - **`update_skip_reason`:** optional; why no update check was needed; shown as "Update check skipped: <reason>".
+  - **Rejection rules,** checked in this order, each an error result shown in the step log:
+    1. A submit **in the same turn as a search or a read** is refused (its results are unseen); the other calls run. A keep in the same turn is fine.
+    2. **No corpus search yet and not out of scope:** refused, repeatable (brief §5.4). Either search tool counts; a read alone does not.
+    3. **Nothing kept, in scope, and no `note`:** refused, asking Claude to keep the passages its answer rests on or explain in `note` why none bear on the question.
+    4. **No update check and no `update_skip_reason`:** refused once (brief §5.4); a resubmit with neither is accepted and labelled "Update check declined after reminder". A failed update attempt counts as run; the rule is waived while the update check is unavailable (P2.11; Area 2).
+  - **Questions about a person's own situation are in scope:** researched and answered with what the Court held and the factors it weighed, stopping short of applying them (brief §5.6); the system prompt says so, so the out-of-scope flag is never used to sidestep them.
+  - On acceptance the loop ends and the composition call runs over the kept set; the step limit and the token ceiling lead to the fallback (Area 1, topic 7). Every rule is triggered on purpose in Phase 5.
+- **User's words:** *"Would a person asking an out of scope question get a natural response back with the current design?"* Then: *"Lock topic 6 as T1.10 as proposed, with the out-of-scope additions: note written to the visitor, a scope note for mixed questions, personal-situation questions kept in scope."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:32 CDT — Phase 3: Architecture, Area 1 (submit_answer and the rejection rules, T1.10)"
