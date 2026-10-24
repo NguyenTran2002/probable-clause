@@ -178,3 +178,19 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Add Clinton v. Virginia: pull it, download its official PDF (approved), build and verify it."* (P1.20)
 - *"I want to apply only agent-confirmed corrections from the reviewed table; keep the two-scan check as a report of candidates, not an automatic change. Run the comma/period check and the final agent pass you described."* (P1.21)
 - *"However, we're at context limit here. I would have to compact. I want you to prep the ground and prepare for compaction first."*
+
+## Oct 23, 2026, 20:48 CDT — Frontend look tests folded in (direction chosen)
+
+**Asked:** (Frontend session, folded in by the main session from `docs/sessions/frontend-log.md`, entries from Oct 23 17:34 to 20:18.) Build art-direction look tests (P1.6); then, after the user set the first three aside, a prototype showing the machinery under the demo; then a run of polish rounds; then record the chosen direction.
+
+**Came back:**
+- Three looks (Slip opinion, Cover stock, Evidence log) were built and set aside by the user.
+- The chosen direction is the machinery prototype, `web/looktests/machinery/` as of commit badc05f: a tech demo first, legal in flavour. The landing page's question box glides down into a chat-style conversation that grows from the bottom; sources sit in a column beside it, marked kept or discarded; cited sentences are underlined in their passage's colour and hovering one lights the cited text in its paragraph; unmarked sentences are Claude's synthesis, explained by a key under the Answer heading. Each source has "View API calls" (every Messages API exchange that touched it, opening at the citation) and "View source" (a reader with the whole opinion, U.S. Reports page numbers in the margin, opened at the excerpt).
+- Palette Evergreen (OKLCH, green-grey neutrals, four source hues at equal lightness and chroma, red kept for the verifier flag), dark mode following the system; type Instrument Sans, Newsreader and JetBrains Mono (Google Fonts, SIL Open Font License); one reading width, 51.25rem.
+- Citation granularity, checked against the Citations docs: `search_result` text blocks are the minimal citable unit, so one paragraph per block gives paragraph citations and one sentence per block gives sentence citations. The prototype renders both with one path. Which one the backend sends is the main session's call (brief §5), still open.
+- Assumptions recorded for the Phase 3 interfaces contract, not locked: a passage arrives as its ordered list of text blocks and a citation as passage ID plus block range; "View source" needs each passage's full opinion text, its position and its page breaks (Phase 1 provides page breaks); "View API calls" needs every exchange that touched a passage, from the run's event stream or replay, web page text excluded (P1.3).
+- Prototype-only, to drop in the real build: the palette and theme switcher banner, the scripted run, the mock opinion text, the version query strings. Notice wording, the not-legal-advice line, the update-check label and the answer key are placeholders for the user to write.
+
+**Failures:** Recorded in the frontend log (layout grid bug at the start of a run, card-outline hairlines, smooth-scroll cancellation, stale cached assets); each fixed in that session.
+
+**DECISION (user):** *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."* Under P1.6 the direction is locked as a T-entry in Phase 3, from this record.
