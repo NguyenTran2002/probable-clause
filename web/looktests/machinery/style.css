@@ -4,10 +4,10 @@
    plus four source hues at equal lightness and chroma, so every kept passage weighs the same. */
 
 :root {
-  --h0: 262;
-  --s1: 200; --s2: 150; --s3: 80; --s4: 320;
+  --h0: 160;
+  --s1: 245; --s2: 295; --s3: 75; --s4: 350;
 }
-:root[data-palette="evergreen"] { --h0: 160; --s1: 245; --s2: 295; --s3: 75; --s4: 350; }
+:root[data-palette="cobalt"] { --h0: 262; --s1: 200; --s2: 150; --s3: 80; --s4: 320; }
 :root[data-palette="violet"] { --h0: 292; --s1: 220; --s2: 160; --s3: 75; --s4: 350; }
 
 /* light */
@@ -268,6 +268,10 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
 
 /* ---------- run view ---------- */
 #run { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; }
+/* explicit rows: on desktop the tab bar is hidden, and without these the panes would fall into its auto row */
+.bar { grid-row: 1; }
+.tabs { grid-row: 2; }
+.cols { grid-row: 3; }
 .bar { padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line); }
 .wordmark.small { font-size: 1.25rem; border: 0; background: none; padding: 0; view-transition-name: wordmark; }
 .tabs { display: none; }
@@ -389,19 +393,8 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 .cited { cursor: pointer; text-decoration: underline 2px color-mix(in oklab, var(--hue) 55%, transparent); text-underline-offset: 5px; border-radius: 4px; transition: background 0.15s; }
 .cited.lit, .cited:hover { background: color-mix(in oklab, var(--hue) var(--mix), transparent); text-decoration-color: var(--hue); }
 .cited .pill { margin-left: 0.3rem; }
-.synth { color: var(--muted); }
-.synth-tag {
-  display: inline-block;
-  margin-right: 0.4rem;
-  padding: 0 0.45em;
-  border-radius: 6px;
-  border: 1px dashed var(--muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.6;
-  vertical-align: 0.12em;
-  color: var(--muted);
-}
+.answer .key { margin: -0.6rem 0 1rem; font-size: 0.875rem; color: var(--muted); }
+.key-cited { color: var(--ink); text-decoration: underline 2px var(--h2); text-underline-offset: 4px; }
 .flagged { text-decoration: underline wavy var(--flag) 1.5px; text-underline-offset: 4px; }
 .flag-note {
   margin: -0.4rem 0 1rem;
@@ -413,19 +406,22 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 }
 .caret::after { content: ""; display: inline-block; width: 2px; height: 1.05em; background: var(--brand); vertical-align: -0.15em; margin-left: 2px; animation: pulse 0.9s step-end infinite; }
 
-/* passages. The kept stripe is the card's own left border, so it follows the rounded corners. */
+/* passages. The border is one colour all the way round, so no corner has a seam; the kept stripe is an
+   inset shadow, which follows the inner curve and thins to nothing at the corners. */
 .passages { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
 .card {
   background: var(--raise);
   border-radius: 14px;
   border: 1px solid var(--line);
-  border-left-width: 4px;
-  padding: 0.9rem 1rem;
+  padding: 0.9rem 1rem 0.9rem 1.2rem;
   transition: opacity 0.3s, box-shadow 0.2s, border-color 0.3s;
 }
-.card.kept { border-left-color: var(--hue); }
-.card.reviewing { border-left-color: var(--brand); border-left-style: dashed; }
-.card.lit { box-shadow: 0 0 0 2px var(--hue, var(--muted)); }
+.card.kept { border-color: color-mix(in oklab, var(--hue) 40%, var(--line)); box-shadow: inset 4px 0 0 var(--hue); }
+.card.reviewing { box-shadow: inset 4px 0 0 color-mix(in oklab, var(--brand) 45%, transparent); }
+/* lit: a single border, 2px with a 5px left side, and no shadows. A border plus a ring or an inset stripe
+   leaves antialiased hairlines where the shapes meet; one border in one colour is one smooth shape.
+   The padding gives back the extra width so the text does not move. */
+.card.lit { border: 2px solid var(--hue, var(--muted)); border-left-width: 5px; padding: calc(0.9rem - 1px) calc(1rem - 1px) calc(0.9rem - 1px) calc(1.2rem - 4px); box-shadow: none; }
 .card p { margin: 0; }
 .verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; font-size: 0.875rem; }
 .verdict .pid { font-weight: 700; }
@@ -460,9 +456,9 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 /* ---------- the API modal ---------- */
 /* #api outranks the browser's own dialog:modal size limits */
 #api {
-  width: min(72rem, calc(100vw - 2rem));
+  width: min(68rem, calc(100vw - 2rem));
   max-width: none;
-  max-height: calc(100dvh - 2rem);
+  max-height: min(36rem, calc(100dvh - 4rem));
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -474,30 +470,41 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 dialog::backdrop { background: oklch(0.15 0.02 var(--h0) / 0.55); backdrop-filter: blur(2px); }
 dialog[open] { animation: rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(0.985); } }
-.dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: calc(100dvh - 2rem); }
-.dlg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--line); }
-.dlg-head h2 { margin: 0; font-size: 1.125rem; }
-.dlg-head p { margin: 0.2rem 0 0; font-size: 0.875rem; color: var(--muted); }
-.dlg-body { display: grid; grid-template-columns: minmax(0, 23rem) minmax(0, 1fr); min-height: 0; }
-.dlg-body h3 { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--muted); font-weight: 600; }
-.dlg-source { padding: 1.1rem 1.25rem; background: var(--surface); overflow-y: auto; }
+.dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: min(36rem, calc(100dvh - 4rem)); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.7rem 1rem 0.7rem 1.25rem; border-bottom: 1px solid var(--line); }
+.dlg-head h2 { margin: 0; font-size: 1rem; }
+.dlg-head p { margin: 0.1rem 0 0; font-size: 0.8125rem; color: var(--muted); }
+.dlg-head .ghost { padding: 0.3rem 0.7rem; }
+.dlg-body { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); min-height: 0; }
+.dlg-body h3 { margin: 0 0 0.5rem; font-size: 0.8125rem; color: var(--muted); font-weight: 600; }
+.dlg-source { padding: 0.9rem 1rem; background: var(--surface); overflow-y: auto; }
+.dlg-source .card { padding: 0.75rem 0.85rem 0.75rem 1.05rem; }
+.dlg-source .card .text { font-size: 0.9375rem; }
 .dlg-source .card-actions { display: none; }
 .dlg-source .card.discarded { opacity: 1; }
 .dlg-source .card.discarded .body { display: block; }
-.dlg-wire { padding: 1.1rem 1.25rem 1.5rem; background: var(--code-bg); color: var(--code-ink); overflow-y: auto; }
+.dlg-wire { padding: 0.9rem 1rem 1rem; background: var(--code-bg); color: var(--code-ink); overflow-y: auto; }
 .dlg-wire h3 { color: var(--code-muted); }
-.xchg { list-style: none; margin: 0; padding: 0; counter-reset: x; display: grid; gap: 0.75rem; }
-.xchg li { counter-increment: x; border: 1px solid var(--code-line); border-radius: 12px; background: var(--code-raise); }
-.x-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--code-line); font-size: 0.875rem; }
-.x-head b { font-weight: 600; color: var(--code-ink); }
+/* each exchange is one line until opened; the citation itself opens by default */
+.xchg { list-style: none; margin: 0; padding: 0; counter-reset: x; display: grid; gap: 0.4rem; }
+.xchg li { counter-increment: x; border: 1px solid var(--code-line); border-radius: 10px; background: var(--code-raise); }
+.x-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 0.1rem 0.6rem; padding: 0.45rem 0.75rem; font-size: 0.8125rem; cursor: pointer; list-style: none; }
+.x-head::-webkit-details-marker { display: none; }
+.x-head::before { content: ""; align-self: center; border-left: 5px solid var(--code-muted); border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform 0.15s; }
+details[open] > .x-head::before { transform: rotate(90deg); }
+details[open] > .x-head { border-bottom: 1px solid var(--code-line); }
+.x-head b { font-weight: 600; color: var(--code-ink); min-width: 0; }
 .x-head b::before { content: counter(x) ". "; color: var(--code-muted); font-weight: 400; }
-.x-head span { color: var(--code-muted); font-size: 0.8125rem; }
-.x-body { padding: 0.6rem 0.85rem; }
-.x-body .path { margin: 0 0 0.3rem; font-family: var(--code); font-size: 0.6875rem; color: var(--code-muted); }
-.x-body pre + .path { margin-top: 0.7rem; }
-.x-body pre { margin: 0; font-family: var(--code); font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-.x-body pre.cite { box-shadow: inset 3px 0 0 var(--hue); padding-left: 0.7rem; }
-.x-note { margin: 0; padding: 0.6rem 0.85rem; font-size: 0.875rem; color: var(--code-muted); }
+.x-head span { color: var(--code-muted); font-size: 0.75rem; white-space: nowrap; }
+.x-preview { grid-column: 2 / -1; font-family: var(--code); font-size: 0.6875rem; color: var(--code-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+details[open] .x-preview { display: none; }
+.x-body { padding: 0.5rem 0.75rem; }
+.x-body .path { margin: 0 0 0.2rem; font-family: var(--code); font-size: 0.6875rem; color: var(--code-muted); }
+.x-body pre + .path { margin-top: 0.5rem; }
+.x-body pre { margin: 0; font-family: var(--code); font-size: 0.71875rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.x-body pre.cite { box-shadow: inset 3px 0 0 var(--hue); padding-left: 0.6rem; }
+.x-note { margin: 0; padding: 0 0.75rem 0.5rem; font-size: 0.8125rem; color: var(--code-muted); }
+.xchg > li > .x-note:only-child { padding-top: 0.5rem; }
 
 /* threads */
 .threads { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 20; overflow: visible; }

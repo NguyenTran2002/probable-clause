@@ -32,9 +32,9 @@ const ANSWER = [
   { text: 'Placeholder v. State of Example (1979) held that records a person hands to a third party fall outside that protection.', cite: { p: 'P-03', start: 0, end: 1 } },
   { text: ' Illustration v. United States (2026) treated the acquisition of stored location history as a search, narrowing the earlier rule for this kind of data.', cite: { p: 'P-05', start: 1, end: 3 } },
   { para: true },
-  { text: 'Read in date order, the line runs from a broad test, to a third-party rule, to a narrower view of that rule for location data. Some discussions also point to Phantom v. United States.', tag: true },
+  { text: 'Read in date order, the line runs from a broad test, to a third-party rule, to a narrower view of that rule for location data. Some discussions also point to Phantom v. United States.' },
   { para: true },
-  { text: 'This describes what the Court held. It does not say how the holdings apply to anyone’s situation.', tag: true },
+  { text: 'This describes what the Court held. It does not say how the holdings apply to anyone’s situation.' },
 ];
 const CITES = ANSWER.filter(b => b.cite).map(b => b.cite);
 CITES.forEach((c, k) => { c.k = k; });
@@ -64,7 +64,7 @@ function paint(src) {
 // pretty-print, keeping short objects and arrays on one line
 function pretty(v, ind = '') {
   const one = JSON.stringify(v);
-  if (v === null || typeof v !== 'object' || one.length <= 60) return one;
+  if (v === null || typeof v !== 'object' || one.length <= 84) return one;
   const pad = ind + '  ';
   if (Array.isArray(v)) return '[\n' + v.map(x => pad + pretty(x, pad)).join(',\n') + '\n' + ind + ']';
   return '{\n' + Object.entries(v).map(([k, x]) => pad + JSON.stringify(k) + ': ' + pretty(x, pad)).join(',\n') + '\n' + ind + '}';
@@ -85,7 +85,7 @@ function remember(key, value) { try { localStorage.setItem(key, value); } catch 
 function recall(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 function setPref(name, value) {
   root.dataset[name] = value;
-  remember('pc-' + name, value);
+  remember('pc2-' + name, value);
   document.querySelectorAll(`.proto-controls [data-${name}]`).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[name] === value)));
   redraw();
 }
@@ -238,6 +238,13 @@ let TRACE = {};
 function trace(ids, entry) { for (const id of ids) (TRACE[id] = TRACE[id] || []).push(typeof entry === 'function' ? entry(id) : entry); }
 
 const dlg = $('#api');
+// one line that says what an exchange carried, shown while its row is closed
+function preview(o) {
+  if (o.type === 'tool_use') return `${o.name}(${JSON.stringify(o.input)})`;
+  if (o.type === 'search_result') return `search_result: ${o.content.length} text block${o.content.length > 1 ? 's' : ''}`;
+  if (o.type === 'text' && o.citations) return JSON.stringify({ cited_text: o.citations[0].cited_text });
+  return JSON.stringify(o);
+}
 function openApi(id) {
   const p = P[id];
   $('#api-title').textContent = `${id}: the API calls behind this source`;
@@ -249,12 +256,12 @@ function openApi(id) {
   }
   $('#api-card').replaceChildren(card);
   const steps = (TRACE[id] || []).map(x => `
-    <li>
-      <div class="x-head"><b>${esc(x.title)}</b><span>${esc(x.where)}</span></div>
+    <li><details${x.open ? ' open' : ''}>
+      <summary class="x-head"><b>${esc(x.title)}</b><span>${esc(x.where)}</span><code class="x-preview">${paint(preview(x.parts[x.parts.length - 1].obj))}</code></summary>
       <div class="x-body">${x.parts.map(part => `<p class="path">${esc(part.path)}</p><pre class="${part.hue ? 'cite ' + part.hue : ''}">${json(part.obj)}</pre>`).join('')}</div>
       ${x.note ? `<p class="x-note">${esc(x.note)}</p>` : ''}
-    </li>`);
-  if (p.verdictShown === 'discarded') steps.push(`<li><div class="x-head"><b>Not sent to the composition call</b><span>no request</span></div><p class="x-note">Claude discarded this passage, so the call that writes the answer never saw it and cannot cite it.</p></li>`);
+    </details></li>`);
+  if (p.verdictShown === 'discarded') steps.push(`<li><p class="x-note">Not sent to the composition call. Claude discarded this passage, so the call that writes the answer never saw it and cannot cite it.</p></li>`);
   if (playing) steps.push(`<li><p class="x-note">The run is still working. More exchanges appear here as it goes.</p></li>`);
   $('#api-steps').innerHTML = steps.join('');
   dlg.querySelector('.dlg-wire').scrollTop = 0;
@@ -323,7 +330,7 @@ async function play(question, recorded) {
     round++; working();
     const decisions = ids.map(id => ({ passage: id, keep: P[id].keep, reason: P[id].reason }));
     const r = addStep({ title: `Reviewing ${ids.length} passages` });
-    trace(ids, id => ({ title: P[id].keep ? 'Claude kept it' : 'Claude discarded it', where: `Received, response ${req}`, parts: [{ path: `content[0].input.decisions[${ids.indexOf(id)}]  (review_passages, ${toolReview})`, obj: decisions[ids.indexOf(id)] }] }));
+    trace(ids, id => ({ open: !P[id].keep, title: P[id].keep ? 'Claude kept it' : 'Claude discarded it', where: `Received, response ${req}`, parts: [{ path: `content[0].input.decisions[${ids.indexOf(id)}]  (review_passages, ${toolReview})`, obj: decisions[ids.indexOf(id)] }] }));
     await wait(500);
     for (const id of ids) { verdict(id); await wait(450); }
     const k = ids.filter(id => P[id].keep).length;
@@ -373,13 +380,15 @@ async function play(question, recorded) {
   s = addStep({ title: `Writing the answer from ${KEPT.length} kept passages`, meta: 'No tools in this call, so the only sources Claude can cite are the kept passages.' });
   const ans = el('section', 'answer');
   ans.setAttribute('aria-label', 'Answer');
-  ans.innerHTML = '<h2>Answer</h2><p class="by">Written by Claude from the kept passages. A sample answer about fictional cases.</p><div class="prose"></div>';
+  ans.innerHTML = `<h2>Answer</h2>
+    <p class="by">Written by Claude from the kept passages. A sample answer about fictional cases.</p>
+    <p class="key"><span class="key-cited">Underlined sentences</span> rest on a passage Claude kept; hover or tap one to see the exact text it cites. Sentences without a line are Claude’s own synthesis and have no source.</p>
+    <div class="prose"></div>`;
   append(panes.thread, threadEl, ans);
   const prose = ans.querySelector('.prose');
   let para = prose.appendChild(el('p')), block = 0, newPara = false;
   for (const b of ANSWER) {
     if (b.para) { para = prose.appendChild(el('p')); newPara = true; continue; }
-    if (b.tag) para.append(el('span', 'synth-tag', 'Claude’s synthesis, no source'), ' ');
     const c = b.cite;
     const span = el('span', c ? `cited ${HUE[c.p]}` : 'synth');
     para.append(span);
@@ -395,7 +404,7 @@ async function play(question, recorded) {
     if (c) {
       span.dataset.c = c.k;
       const text = (newPara ? '\n\n' : '') + b.text;
-      trace([c.p], { title: 'Claude cited it in the answer', where: `Received, response ${req}`, parts: [{ path: `content[${i}]`, hue: HUE[c.p], obj: { type: 'text', text, citations: [{ type: 'search_result_location', source: source(c.p), title: title(c.p), cited_text: citedText(c), search_result_index: KEPT.indexOf(c.p), start_block_index: c.start, end_block_index: c.end }] } }], note: `cited_text is blocks ${c.start} to ${c.end - 1} of this passage, word for word.` });
+      trace([c.p], { open: true, title: 'Claude cited it in the answer', where: `Received, response ${req}`, parts: [{ path: `content[${i}]`, hue: HUE[c.p], obj: { type: 'text', text, citations: [{ type: 'search_result_location', source: source(c.p), title: title(c.p), cited_text: citedText(c), search_result_index: KEPT.indexOf(c.p), start_block_index: c.start, end_block_index: c.end }] } }], note: `cited_text is blocks ${c.start} to ${c.end - 1} of this passage, word for word.` });
     }
     newPara = false;
     await wait(120);
@@ -591,7 +600,7 @@ document.addEventListener('click', e => {
 });
 
 for (const name of ['palette', 'theme']) {
-  const saved = recall('pc-' + name);
+  const saved = recall('pc2-' + name);
   if (saved) setPref(name, saved);
   document.querySelectorAll(`.proto-controls [data-${name}]`).forEach(b => b.addEventListener('click', () => setPref(name, b.dataset[name])));
 }

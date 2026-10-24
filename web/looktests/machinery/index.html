@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-palette="cobalt" data-theme="auto">
+<html lang="en" data-palette="evergreen" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body data-view="landing" data-pane="thread">
 
@@ -15,8 +15,8 @@
   <p>Prototype<span class="long"> for discussion. Fictional cases, sample text, placeholder notices.</span> <a href="../index.html">Earlier looks</a></p>
   <div class="proto-controls">
     <div class="seg" role="group" aria-label="Palette">
-      <button type="button" data-palette="cobalt" aria-pressed="true">Cobalt</button>
-      <button type="button" data-palette="evergreen" aria-pressed="false">Evergreen</button>
+      <button type="button" data-palette="evergreen" aria-pressed="true">Evergreen</button>
+      <button type="button" data-palette="cobalt" aria-pressed="false">Cobalt</button>
       <button type="button" data-palette="violet" aria-pressed="false">Violet</button>
     </div>
     <div class="seg" role="group" aria-label="Theme">
@@ -129,7 +129,7 @@
     <header class="dlg-head">
       <div>
         <h2 id="api-title"></h2>
-        <p>The requests and responses that brought this passage into the run. Shapes follow the Messages API; values are sample.</p>
+        <p>Every exchange that touched this passage. Messages API shapes, sample values.</p>
       </div>
       <button type="button" class="ghost" id="api-close">Close</button>
     </header>
@@ -146,6 +146,6 @@
   </div>
 </dialog>
 
-<script src="run.js"></script>
+<script src="run.js?v=8"></script>
 </body>
 </html>

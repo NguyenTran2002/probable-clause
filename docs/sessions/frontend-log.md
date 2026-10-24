@@ -117,3 +117,37 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
 - Calling the saved-palette restore before the thread state existed would have thrown, so the restore moved to the end of the script.
 - Sideways, the first layout left the conversation 127 px tall.
 **DECISION (user):** *"This is a very good start."* Then, in the user's words: hovering a cited sentence should make *"the right hand section … scroll to the right source on hover"*; the question being *"teleported all the way to the header … can be confusing"*; *"I'd want a familiar chat UI, where things start moving up a bit by a bit as more steps are taken"*; *"getting rid of the Plain, Annotated, and API traffic toggle to declutter. Instead, for each source, there should be a clearly labeled button that will display the request and response that led to that citation, ideally in a modal"* showing *"both API traffics and the rendered source"*; *"No coherent color palette. Mock up a few options? I want automatic dark mode handling as well that follow system's settings."*; and the stripe *"protruding further than the rounded border"* is *"jarring if unfixed."* No palette picked yet.
+
+## Oct 23, 2026, 19:50 CDT — Look tests: Evergreen chosen; layout bug, outline, API window, answer key
+**Asked:** Make Evergreen the palette. Then four polish items: the lit outline was not flush with the stripe; the API window used too much vertical space; at the start of a run the Sources panel did not reach the bottom and the composer did not sit at the bottom; and the synthesis tags made the answer hard to read. Also a check that decisions are being recorded with correct times.
+**Came back:**
+- **Layout bug (found by measuring the grid):**
+  - Cause: the run view has three grid rows: header, phone tab bar, panes. On desktop the tab bar is hidden, so the panes were auto-placed into the tab bar's row, which sizes to its content. The empty third row took the rest of the screen. Measured rows: 53, 302 and 504 px, with the panes in the 302 px row. This only showed while the panes were short, at the start of a run.
+  - Fix: each part is pinned to its own row. At the start of a run the composer now ends at the viewport bottom (852 of 852 on a phone, and at the bottom on desktop), and the Sources panel runs full height.
+- **Card edges (inspected at 8× by rendering a copy of the card with CSS `zoom: 8`):**
+  - Unlit: the border is one colour all the way round, tinted with the passage's hue for kept cards, so no corner has a colour seam. The stripe is an inset shadow that follows the inner curve and thins to nothing.
+  - Lit: a single border, 2 px with a 5 px left side, and no shadows. Both tries that combined a border with a ring or an inset stripe left an antialiased hairline where the shapes met.
+  - Padding gives back the extra width: the text offset and card size measured identical lit and unlit (20.2 and 15.4 px offsets; 399 by 398.7 px).
+- **API window:**
+  - Height is capped at 36rem (it was close to the full screen), with tighter header and padding.
+  - Each exchange is a one-line row with a preview of what it carried, and opens on click. The citation opens by default; for a discarded passage, the discard decision does.
+  - JSON keeps objects up to 84 characters on one line.
+  - On a phone it stays full screen.
+- **Answer:**
+  - The "Claude's synthesis, no source" tags are gone, and synthesis is no longer greyed. The answer reads as plain prose with cited sentences underlined in their passage's colour.
+  - A key under the heading reads: "Underlined sentences rest on a passage Claude kept; hover or tap one to see the exact text it cites. Sentences without a line are Claude's own synthesis and have no source." The wording is a placeholder.
+- **Evergreen** is now the default. The palette is saved under a new storage key so everyone starts on Evergreen. Cobalt and Violet stay in the banner switcher for now.
+- **Stylesheet and script now carry a version query (`?v=8`).** Browsers had been showing a stale copy, which is why an earlier screenshot showed old content.
+- **Checked:**
+  - 1440×900, 393×852 and 852×393: no horizontal scroll on the conversation, the sources or the modal.
+  - The only element measured past the edge is a preview line clipped by its own ellipsis.
+**Failures:** Two attempts at the lit outline, a ring and then an inset stripe, each left a hairline at 8× before the single-border version.
+**Correction to earlier entries (append-only, so noted here):**
+- The 19:04 entry paraphrased, but did not quote, the user rejecting the three looks. The user's words were: *"These all looks pretty bad. (That's why I compacted to keep the context lean and less influenced by past works.)"* and *"Let's zoom out a bit and let me clarify the vision"*.
+- The decisions in the 19:04 entry were made across several turns between 17:34 and 19:04 and recorded together. Its heading time is when the entry was written, not when each decision was made.
+**DECISION (user):**
+- Palette: *"I like evergreen to help keep the eye strain down while reading thru text heavy legal docs."*
+- On the answer: *"present the answer normally, with cited sentences highlighted appropriately, where as not highlighted sentences are assumed to be Claude's synthesis. We can guide the user right underneath the Answer header which sentence is synthesis and which is supported by citation."*
+- On the outline: *"use code to investigate and ensure everything smoothes into each other perfectly."*
+- On the API window: *"The API modal is using too much vertical space, decrease it."*
+- On the layout bug: called it a *"Critical display bug"* and *"jarring"*.
