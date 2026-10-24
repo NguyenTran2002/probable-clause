@@ -79,7 +79,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 - **State:** Phases 0 to 2 done (tag `phase-2-done`). Decisions P0.1 to P2.12 locked; read `docs/design/locked-decisions.md` in full, and `docs/research/phase2-findings.md`. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
 - **Settled in Phase 2:**
-  - Model `claude-sonnet-5-5` at high effort (P2.1).
+  - Model `claude-sonnet-5-5` at high effort for the loop (P2.1); the composition call on `claude-opus-5-5` at high effort (T1.8, Phase 3).
   - Keep-only triage with a reason per kept passage (P2.3).
   - Claude cites the Phase 1 text, not the PDFs (P2.4).
   - Limits: 12 steps, 400K/20K tokens per run, 3 update searches, $10 a day, $60 a month, and no per-visitor limit (P2.6, P2.7).

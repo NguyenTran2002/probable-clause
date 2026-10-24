@@ -419,3 +419,16 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"for the synthesis call, how is context caching working here? (Defer if it's coming up in a separate topic.)"*
 - T1.7: *"Lock topic 4 as T1.7: no withdraw list; re-keeping replaces the reason; each kept passage's reason goes to the composition call; the rest as proposed."*
 - Raised, not decided: *"since the composition call is pretty independent and does not get fed the same context, so caching doesn't matter, should swap to Opus at high effort?"*
+
+## Oct 24, 2026, 16:09 CDT — Phase 3: Architecture, Area 1 (composition on Opus, T1.8)
+
+**Asked:** The user asked whether the composition call, being independent of the loop's context and cache, should run on Opus at high effort.
+
+**Came back:**
+- No technical blocker: composition is its own conversation, so the loop's cache and thinking history are untouched.
+- Priced from the Phase 2 composition tokens (script; Opus 5.5 at $4 input and $20 output per million, findings §3): composition $0.072 → $0.143 and $0.044 → $0.088; a whole run $0.238 → $0.309 and $0.144 → $0.188, about +30%; runs per $10 day 42 → 32 and 69 → 53. Opus's own output length and speed not measured.
+- Recommended keeping Sonnet under P2.1 until a side-by-side comparison with the real composition prompt, with the composition model as its own setting.
+
+**DECISION (user):**
+- *"since the composition call is pretty independent and does not get fed the same context, so caching doesn't matter, should swap to Opus at high effort?"*
+- T1.8: *"Let's switch to Opus 5.5 at high for quality and we will compare again with Sonnet 5.5 at high effort later as well."*

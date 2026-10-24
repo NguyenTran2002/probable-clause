@@ -249,7 +249,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 
 ## Phase 2: Research
 
-### P2.1 Model: Sonnet 5.5 at high effort
+### P2.1 Model: Sonnet 5.5 at high effort — AMENDED by T1.8 (the composition call runs on Opus 5.5 at high effort; the loop stays on Sonnet)
 
 - **Decision:** The model is `claude-sonnet-5-5` at high effort (brief §2, Model row). Raising the effort or considering Opus happens only on evidence that Sonnet 5.5 at high effort cannot do what the product needs, and only with the user. Phase 2 confirms how effort is set for this model in the current API.
 - **User's words:** *"For model check, let's lock Sonnet 5.5 at high effort and only increase the effort or ponder Opus if we see evidence that Sonnet 5.5 at high cannot handle what we want. My rationale being the demo has tight scope and machinery tasks, so we don't need too much frontier intelligence. (And also my wallet is not that deep as well.)"*
@@ -415,3 +415,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"On withdrawal, I'm thinking the synthesis call will simply not cite passages it doesn't need. So we will see everything in the source panel, but some of them won't be cited. Would that be a good design?"* Then: *"Lock topic 4 as T1.7: no withdraw list; re-keeping replaces the reason; each kept passage's reason goes to the composition call; the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:06 CDT — Phase 3: Architecture, Area 1 (the keep tool, T1.7)"
+
+### T1.8 The composition call runs on Opus 5.5 at high effort (amends P2.1 for composition)
+
+- **Decision:** The final composition call runs on **`claude-opus-5-5` at high effort**, for the quality of the answer the visitor reads. The research loop stays on `claude-sonnet-5-5` at high effort (P2.1). The composition model is its own setting, and **Sonnet 5.5 at high effort is compared against it later** (Phase 5, with the real composition prompt; the paid calls with the user's approval). Citations, adaptive thinking and the effort setting on Opus 5.5 are confirmed in build tests.
+- **Cost, priced from Phase 2's tokens:** a run rises about 30%, to roughly $0.19 to $0.31; the $10 daily cap then covers roughly 32 to 53 runs of that kind. P2.7's limits are unchanged.
+- **User's words:** *"since the composition call is pretty independent and does not get fed the same context, so caching doesn't matter, should swap to Opus at high effort?"* Then: *"Let's switch to Opus 5.5 at high for quality and we will compare again with Sonnet 5.5 at high effort later as well."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:09 CDT — Phase 3: Architecture, Area 1 (composition on Opus, T1.8)"
