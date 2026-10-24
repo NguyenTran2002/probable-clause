@@ -21,7 +21,7 @@
 | Area | T | Status |
 |---|---|---|
 | 1. The research loop | T1 | **Closed** Oct 24, 17:05 CDT (T1.1 to T1.14) |
-| 2. The update check (Exa wrapper) | T2 | **Next**, after the compaction |
+| 2. The update check (Exa wrapper) | T2 | **Open** (opened Oct 24, 17:12 CDT) |
 | 3. Run lifecycle and infrastructure | T3 | Not started |
 | 4. The interface | T4 | Not started |
 | 5. The user's wording and the replays | T5 | Not started |
@@ -187,14 +187,18 @@ Decisions: T1.1 to T1.14 in `locked-decisions.md`; the closing log entry is "Oct
 - Area 4: panel states (kept and cited, kept and not cited, shown and never kept, matched again); synthesis marking that skips headings and lead labels (T1.11); flags from the two checks and their summary line (T1.12); the cut-off label (T1.11); a failed composition and whether to offer "try again" (T1.11); the art direction T-entry (P1.6).
 - Area 5: wording of the check line (T1.12), the standard out-of-scope and nothing-found messages (T1.10), the cut-off and fallback labels (T1.11), plus the brief's list.
 
-## Area 2: the update check (to open after the compaction)
+## Area 2: the update check
 
-Facts in `docs/research/phase2-findings.md` §4 and decisions P1.3, P1.7, P2.2, P2.8, P2.11. Proposed topics, to confirm with the user when the area opens:
+Facts in `docs/research/phase2-findings.md` §4, the agent notes `data/verification/phase2/agent3_exa.md` (local) and the probe outputs `exa_probe_summary.json`, `exa_tools_list.json`; decisions P1.3, P1.7, P2.2, P2.8, P2.11. Resumed after the compaction at Oct 24, 2026, 17:10 CDT; topic list confirmed by the user (*"The five topics work. Open topic 1."*), reordered from the first draft (the band's summary before errors; cost joins topic 1):
 
 | # | Topic | Status | Notes |
 |---|---|---|---|
-| 1 | `search_web_updates` inputs: what Claude controls, what our server clamps | Open | Brief §6.2; MCP types only auto, lite, fast, instant (no deep); at most 10 results; 3 per run (P2.7) |
-| 2 | What a result looks like to Claude | Open | Text cap per result (2,000 characters worked; 1 MB event limit); fields; undated pages dropped by a date filter |
-| 3 | Errors and unavailability | Open | Tool errors vs protocol errors; 402 `NO_MORE_CREDITS` → unavailable until the 1st (P2.11); Exa's own retries accepted (P2.8), never ours; how the loop learns it is unavailable (rule 4's waiver, T1.10) |
-| 4 | The band's summary and links | Open | Written in the loop (T1.11); links from our code; no Exa text shown or stored (P1.3, P1.7); what replays keep |
-| 5 | The MCP client connection | Open | Per run or kept open; key in the `x-api-key` header |
+| 1 | `search_web_updates`: what Claude sets, what our server limits, what it costs | **Open** | Brief §2 Update check row ("Claude controls every search field; our server clamps cost-related fields"), §6.2; MCP types only auto, lite, fast, instant (no deep); at most 10 results; 3 per run (P2.7) |
+| 2 | What a result looks like to Claude | Open | Text cap per result (2,000 characters worked; 1 MB event limit); fields; undated pages dropped by a date filter; web text marked as data |
+| 3 | The band's summary and links | Open | Written in the loop (T1.11); links from our code; no Exa text shown or stored (P1.3, P1.7); what replays keep. **Conflict to settle:** P1.3's "Citations still mark which sentences are grounded in a web result" has nothing to run on, since loop results are plain text (T1.6) and a tool field carries no citations |
+| 4 | Errors and unavailability | Open | Tool errors vs protocol errors; 402 `NO_MORE_CREDITS` → unavailable until the 1st (P2.11); Exa's own retries accepted (P2.8), never ours; how the loop learns it is unavailable (rule 4's waiver, T1.10); timeout (Exa's tool aborts at 300 s) |
+| 5 | The MCP client connection | Open | Per run or kept open; key in the `x-api-key` header; no new Exa call while disconnected (mechanism in Area 3) |
+
+### Discussion notes
+
+- **Topic 1 opened, 17:12 CDT.** Facts gathered: the advanced tool's schema from `tools/list` (Phase 2) and the agent's reading of `webSearchAdvanced.ts`: crawl dates ignored by the API; `includeText`/`excludeText` deprecated; `additionalQueries` works only with deep types, which the tool cannot send; `fast` and `instant` legacy ("use lite instead of instant"); `lite` is cache-only (never fetches live) and refuses most optional fields; `pdf`, `github`, `tweet` categories being deprecated (changelog, Jul 23, 2026); `company` and `people` refuse date filters; summaries cost $1 per 1,000 pages and are Exa-written text; text always requested, free on `/search`. Probe (Phase 2): `auto` $0.007 and about 1.9 s server time, `lite` $0.004 and about 0.3 s; Claude's two stub calls set a query and a start date equal to the coverage date or the day after.
