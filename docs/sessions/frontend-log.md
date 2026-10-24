@@ -202,3 +202,13 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
 - *"I want in the landing page, the width we use to match the width we use in the chat UI, not just for the text input box but also for the text presented on this landing page."*
 - *"View API calls button after opening the modal should automatically scroll down to the response that results in the citation, which is at the bottom of the API calls stack usually."*
 - *"The view source modal is having some text clipping where you can see the number is being clipped by the drawn box."*
+
+## Oct 23, 2026, 20:17 CDT — Look tests: AI-disclosure sentence on its own line
+**Asked:** Always start the sentence "Answers are written by Claude, Anthropic's model, through the Claude API; check them against the opinions." on a new line.
+**Came back:**
+- That sentence, in the notice under the composer, now always starts its own line, below "Research, not legal advice. Not a citator, and not exhaustive."
+- Checked by line position at 1440×900 and 393×852 (it begins one line below the first sentence), with no horizontal scroll.
+- Unchanged: on a sideways phone the notice still shows only its first sentence, as set at 19:31.
+- The landing page's fine print words the same disclosure differently (*"You are using AI: answers are written by Claude…, so check them against the opinions."*) and was not changed, since the notice wording is the user's.
+**Failures:** None.
+**DECISION (user):** *"Good. One last polish note, the sentence "Answers are written by Claude, Anthropic's model, through the Claude API; check them against the opinions.", start it on a new line always."*

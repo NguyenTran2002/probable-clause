@@ -328,6 +328,7 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 @keyframes pulse { 50% { opacity: 0.25; } }
 .disclaimer { margin-top: 0.5rem !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
 .disclaimer p { margin: 0; }
+.disclaimer .long { display: block; } /* the AI-disclosure sentence always starts its own line */
 .disclaimer details { margin-top: 0.2rem; }
 .disclaimer summary { cursor: pointer; color: var(--brand); display: inline; }
 .disclaimer details p { margin-top: 0.3rem; text-align: left; }
