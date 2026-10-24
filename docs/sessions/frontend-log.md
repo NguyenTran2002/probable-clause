@@ -212,3 +212,34 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
 - The landing page's fine print words the same disclosure differently (*"You are using AI: answers are written by Claude…, so check them against the opinions."*) and was not changed, since the notice wording is the user's.
 **Failures:** None.
 **DECISION (user):** *"Good. One last polish note, the sentence "Answers are written by Claude, Anthropic's model, through the Claude API; check them against the opinions.", start it on a new line always."*
+
+## Oct 23, 2026, 20:18 CDT — Look tests: direction chosen (machinery prototype, Evergreen); ready to fold in
+**Asked:** Record the chosen direction and make it ready for the main session to fold in.
+**Came back:** A summary for folding in. The detail is in this log's entries from 19:04 to 20:17.
+- **The chosen direction:** `web/looktests/machinery/` (`index.html`, `style.css`, `run.js`), as of commit badc05f.
+  - A tech demo first, legal in flavour, for a technical visitor who came to see Claude and Citations.
+  - The landing page's question box glides down into a chat-style conversation that grows from the bottom.
+  - Sources sit in a column beside the conversation, marked kept or discarded.
+  - Cited sentences in the answer are underlined in their passage's colour. Hovering one brings its cited text into view, lit inside its paragraph, with a connecting line. Unmarked sentences are Claude's synthesis, explained by a key under the Answer heading.
+  - Each source has "View API calls", a modal listing every Messages API exchange that touched the passage and opening at the citation, and "View source", a reader with the whole opinion opened at the excerpt.
+- **Palette and type:**
+  - Evergreen, in OKLCH: green-grey neutrals and a deep green accent, with four source hues at equal lightness and chroma, and red kept for the verifier flag.
+  - Dark mode follows the system.
+  - Type: Instrument Sans (interface), Newsreader (court text), JetBrains Mono (API), all from Google Fonts under the SIL Open Font License.
+  - One reading width, 51.25rem, shared by the landing page and the conversation.
+- **Prototype-only, to drop in the real build:**
+  - the banner with its palette (Cobalt, Violet) and theme switchers
+  - the scripted sample run
+  - the mock opinion text
+  - the version query strings
+- **Assumptions for the Phase 3 interfaces contract (not locked decisions):**
+  1. A passage reaches the frontend as the ordered list of text blocks sent in its `search_result` content. A citation reaches it as a passage ID plus `start_block_index` and `end_block_index`, end exclusive. The frontend never splits text. (From 19:04.)
+  2. For "View source", each passage comes with the full text of its opinion or syllabus, the passage's position in it, and page breaks if Phase 1 finds them. (From 20:03.)
+  3. For "View API calls", the frontend needs each exchange that touched a passage: the search call, the tool result carrying it, the review decision, the submits, its place in the composition call, and the answer blocks that cite it. These would come from the run's event stream or replay. Web result page text stays out of it (P1.3). (Implied by the 19:31 design, stated here for the contract.)
+- **Still open:**
+  - Whether passages are sent one sentence per block (sentence-level citations) or one paragraph per block. This is the main session's call (brief §5). The prototype renders both.
+  - The final wording of the notices, the not-legal-advice line, the update-check label and the answer key. That is the user's to write; everything shown is placeholder.
+  - The frontend stack, chosen in Phase 3. The prototype uses plain JavaScript with no library and no build step.
+- `git status` shows no uncommitted frontend work.
+**Failures:** None.
+**DECISION (user):** Direction chosen: *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."*
