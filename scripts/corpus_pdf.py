@@ -22,16 +22,39 @@ Every repair and every unresolved case is listed in the case's cleaning stats.
 """
 
 import html
+import json
 import re
 import subprocess
 import unicodedata
 from collections import Counter
 from pathlib import Path
 
-from corpus_common import HEADING, PER_CURIAM, justices, opinion_type
+from corpus_common import HEADING, PER_CURIAM, SECTION, joiners, justices, opinion_type, straighten
 
 LIGATURES = {"ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl"}
 DICT_PATH = Path("/usr/share/dict/words")
+RAW_OPINIONS = Path(__file__).resolve().parent.parent / "data" / "raw" / "opinions"
+_VOCAB = None
+
+
+def vocabulary() -> set[str]:
+    """Known English words: the system word list, the GCIDE and Webster's 1913
+    lists (english-words package), and the words of the Lawbox copies in the raw
+    cache, which supply legal terms and inflected forms."""
+    global _VOCAB
+    if _VOCAB is None:
+        from english_words import get_english_words_set
+        words = get_english_words_set(["web2", "gcide"], lower=True)
+        if DICT_PATH.exists():
+            words |= {w.strip().lower() for w in DICT_PATH.read_text().splitlines()}
+        seen = Counter()
+        for f in RAW_OPINIONS.glob("*.json"):
+            lb = json.loads(f.read_text()).get("html_lawbox") or ""
+            seen.update({t.lower() for t in re.findall(r"[A-Za-z]+", re.sub(r"<[^>]+>", " ", lb))})
+        # A Lawbox word counts only if two opinions use it: a one-off may be an
+        # error of that copy ("thermalimaging").
+        _VOCAB = words | {w for w, n in seen.items() if n >= 2}
+    return _VOCAB
 WORD = re.compile(r"[A-Za-z][A-Za-z'’]*[A-Za-z]|[A-Za-z]")
 
 
@@ -58,7 +81,9 @@ def read_pages(pdf: Path) -> list[list[dict]]:
                 touching = (merged and w["x0"] - merged[-1]["x1"] < 0.8 and w["t"][:1].isalpha()
                             and merged[-1]["t"][-1:].isalpha())
                 # After small capitals, a comma can arrive as its own word ("ALITO ,").
-                stray_punct = (merged and re.fullmatch(r"[,.;:)\]’”]+", w["t"])
+                # Never a period (an ellipsis is spaced periods) or a bracket closing "[ ]".
+                stray_punct = (merged and re.fullmatch(r"[,;:)\]’”]+", w["t"])
+                               and not merged[-1]["t"].endswith("[")
                                and w["x0"] - merged[-1]["x1"] < 4 and not w["h"] < merged[-1]["h"] * 0.7
                                and not merged[-1]["h"] < w["h"] * 0.7)  # never onto a footnote marker
                 if touching or stray_punct:
@@ -124,7 +149,7 @@ def classify(pages: list[list[dict]]) -> tuple[float, list[dict]]:
 class Repairer:
     """Ligature and line-end hyphen decisions, checked against a reference copy."""
 
-    def __init__(self, reference_text: str | None, own_text: str, lossy: bool):
+    def __init__(self, reference_text: str | None, own_text: str, lossy: bool, interior_text: str = ""):
         self.lossy = lossy
         ref = reference_text or ""
         # Join the reference's own line-end hyphens for its vocabulary; keep both forms.
@@ -137,15 +162,26 @@ class Repairer:
         own = [t.lower() for t in WORD.findall(own_text)]
         self.own_vocab = Counter(own)
         self.own_hyphenated = {m.lower() for m in re.findall(r"\b\w+(?:-\w+)+\b", own_text)}
-        self.dict = {w.strip().lower() for w in DICT_PATH.read_text().splitlines()} if DICT_PATH.exists() else set()
+        # Words printed inside a line (not first or last on it): how the document
+        # itself prints a word when no line break is involved.
+        self.mid_tokens = Counter(t.lower().replace("’", "'") for t in WORD.findall(interior_text))
+        self.mid_hyphenated = Counter(m.lower().replace("’", "'")
+                                      for m in re.findall(r"\b\w+(?:-\w+)+\b", interior_text))
+        self.dict = vocabulary()
         self.log = {"ligatures_restored": [], "ligatures_unresolved": [],
-                    "hyphens_joined": 0, "hyphens_kept": [], "hyphens_unresolved": []}
+                    "hyphens_joined": 0, "hyphen_decisions": []}
 
     def known(self, w: str) -> bool:
         # Not the document's own vocabulary: in a lossy PDF the broken forms
         # ("frst") recur and would vouch for themselves.
-        w = w.lower()
-        return w in self.ref_vocab or w in self.dict
+        w = w.lower().replace("’", "'")
+        base = re.sub(r"'s$|s'$", "", w)
+        # The word list has few inflected forms: try the common endings off.
+        forms = {w, base} | {base[:-len(e)] + r for e, r in (("ies", "y"), ("es", ""), ("s", ""), ("ed", ""), ("ed", "e"),
+                                                             ("ing", ""), ("ing", "e"), ("ly", ""))
+                              if base.endswith(e) and len(base) - len(e) >= 3}
+        forms |= {f[:-1] for f in list(forms) if len(f) > 4 and f[-1] == f[-2]}  # "referr" -> "refer"
+        return any(x in self.ref_vocab or x in self.dict or x.replace("'", "’") in self.ref_vocab for x in forms)
 
     @staticmethod
     def candidates(core: str) -> set[str]:
@@ -186,40 +222,42 @@ class Repairer:
         return core
 
     def hyphen(self, left: str, right: str) -> str:
-        """Join a line-end "left-" with "right": drop the hyphen or keep it."""
-        a = re.sub(r"^\W+", "", left[:-1])
+        """Join a word broken at a line end ("left-" or "left" + soft hyphen) with
+        "right", keeping the hyphen or not. The evidence is how this document
+        prints the word inside a line; the reference copy is not used for the
+        joined form, since its own extraction may have joined line breaks."""
+        a = re.sub(r"^\W+", "", left.rstrip("-\u00ad"))
         b = re.sub(r"\W+$", "", right)
         a_core = WORD.findall(a)[-1] if WORD.findall(a) else a
         b_core = WORD.findall(b)[0] if WORD.findall(b) else b
-        joined_core = (a_core + b_core).lower()
-        hyph = f"{a_core}-{b_core}".lower()
-        joined_ok = joined_core in self.ref_vocab or self.own_vocab.get(joined_core, 0) > 0 or joined_core in self.dict
-        hyph_ok = any(hyph in h for h in self.ref_hyphenated) or any(hyph in h for h in self.own_hyphenated)
-        if self.lossy and not joined_ok:
-            # The join may also hide a dropped ligature ("signi-" + "cance").
-            fixed = self.ligature(a_core + b_core, "", "")
-            joined_ok = fixed.lower() != joined_core
-        if b_core[:1].isupper() or a_core.isdigit():
-            keep = True  # "Miami-" + "Dade", "A-" + "35": a real hyphen
-        elif hyph_ok and not joined_ok:
-            keep = True
-        elif joined_ok and not hyph_ok:
-            keep = False
-        elif joined_ok and hyph_ok:
-            # Both forms attested: follow whichever the reference uses more often.
-            n_h = sum(h.count(hyph) for h in self.ref_hyphenated) + sum(h.count(hyph) for h in self.own_hyphenated)
-            n_j = self.ref_tokens.count(joined_core)
-            keep = n_h >= n_j
-            self.log["hyphens_unresolved"].append(
-                f"{left}{right} (both forms attested: hyphenated {n_h}, joined {n_j}; {'kept' if keep else 'joined'})")
+        joined_core = (a_core + b_core).lower().replace("’", "'")
+        hyph = f"{a_core}-{b_core}".lower().replace("’", "'")
+        n_h = sum(c for h, c in self.mid_hyphenated.items() if hyph in h) + \
+            sum(1 for h in self.ref_hyphenated if hyph in h.replace("’", "'"))
+        n_j = self.mid_tokens.get(joined_core, 0) + self.mid_tokens.get(re.sub(r"'s$", "", joined_core), 0)
+        lig_join = False
+        if self.lossy and not n_j:
+            fixed = self.ligature(a_core + b_core, "", "")  # "signi-" + "cance"
+            lig_join = fixed.lower() != (a_core + b_core).lower()
+        digits = bool(re.search(r"\d", a_core + b_core))
+        if n_h > n_j:
+            keep, why = True, f"printed hyphenated {n_h}x"
+        elif n_j > n_h or lig_join:
+            keep, why = False, f"printed solid {n_j}x"
+        elif digits:
+            keep, why = True, "number"
+        elif a_core[:1].isupper() and b_core[:1].islower():
+            keep, why = False, "name broken at a line end"
+        elif self.known(joined_core):
+            keep, why = False, "dictionary word"
         else:
-            keep = False
-            self.log["hyphens_unresolved"].append(f"{left}{right} (neither form attested; joined)")
+            keep, why = True, "joined form unattested"
+        self.log["hyphen_decisions"].append(f"{a_core}-|{b_core} -> {'kept' if keep else 'joined'} ({why})")
         if keep:
-            self.log["hyphens_kept"].append(f"{left}{right}")
-            return left + right
+            self.log["hyphens_kept_count"] = self.log.get("hyphens_kept_count", 0) + 1
+            return left.rstrip("\u00ad").rstrip("-") + "-" + right
         self.log["hyphens_joined"] += 1
-        return left[:-1] + right
+        return left.rstrip("\u00ad").rstrip("-") + right
 
 
 def lines_to_stream(pages, info, first_page: int, slip: bool):
@@ -239,13 +277,19 @@ def lines_to_stream(pages, info, first_page: int, slip: bool):
     return stream
 
 
+RULE = re.compile(r"^[—_\-–\s]{4,}$")  # a footnote separator rule
+URLISH = re.compile(r"(https?://|www\.)\S*$")
+
+
 def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | None,
                    slip: bool, source: dict) -> dict:
     pages = read_pages(pdf)
     body_h, info = classify(pages)
-    lossy = not any(w["t"].endswith("\u00ad") for p in pages for l in p for w in l["words"]) and not slip
+    lossy = not any(w["t"].endswith("­") for p in pages for l in p for w in l["words"]) and not slip
     own_text = " ".join(w["t"] for p in pages for l in p for w in l["words"])
-    rep = Repairer(reference_text, own_text, lossy=lossy and reference_text is not None)
+    interior = " ".join(w["t"] for p in pages for l in p if l["kind"] != "header"
+                        for w in l["words"][1:-1] if not w.get("sup"))
+    rep = Repairer(reference_text, own_text, lossy=lossy and reference_text is not None, interior_text=interior)
     if slip:
         rep.lossy = False  # the slip PDF keeps its ligatures; only hyphens need deciding
     stream = lines_to_stream(pages, info, first_page, slip)
@@ -254,10 +298,9 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
     decided = re.search(r"Decided\s+([A-Z][a-z]+ \d{1,2}, \d{4})", first_text)
     argued = re.search(r"Argued\s+([A-Z][a-z]+ \d{1,2}, \d{4})", first_text)
 
-    # Paragraphs, separately for body and footnotes, in reading order.
     body_paras, foot_items = [], []
     cur_body = cur_foot = None
-    in_caption = False
+    in_caption = in_appendix = False
 
     def new_para(kind, line):
         return {"text": "", "kind": kind, "page_start": line["page"], "page_breaks": [],
@@ -266,57 +309,76 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
     def append_words(para, words, line):
         pending_page = line["page"] if para["last_page"] != line["page"] and para["text"] else None
         para["last_page"] = line["page"]
-        for idx, w in enumerate(words):
+        for w in words:
             t = w["t"]
-            if w.get("sup") and para["kind"] != "foot-label":
-                para["footnote_refs"].append({"offset": len(para["text"].rstrip("\u00ad")), "label": t})
-                continue
-            if not para["text"]:
-                para["text"] = t
+            if w.get("sup"):
+                para["footnote_refs"].append({"offset": len(para["text"]), "label": t})
                 continue
             prev = para["text"]
-            if prev.endswith("\u00ad"):
-                para["text"] = prev[:-1] + t
-            elif prev.endswith("-") and w is words[0] and para.get("_line_end"):
-                if rep.lossy or slip:
-                    head = prev.rsplit(" ", 1)
-                    joined = rep.hyphen(head[-1], t)
-                    para["text"] = (head[0] + " " if len(head) == 2 else "") + joined
+            first_on_line = w is words[0] and para.get("_line_end")
+            if not prev:
+                para["text"] = t
+            elif first_on_line and prev.endswith(("-", "­")) and not prev.endswith("--"):
+                # A word broken at the line end: soft hyphens mark real compound
+                # hyphens too, so every break is decided the same way.
+                head = prev.rsplit(" ", 1)
+                if URLISH.search(head[-1]):
+                    joined = head[-1].rstrip("­") + t
                 else:
-                    para["text"] = prev + t  # a hard hyphen in a soft-hyphen PDF is real
-            elif prev.endswith(("—", "–")) and w is words[0] and para.get("_line_end"):
-                para["text"] = prev + t
+                    joined = rep.hyphen(head[-1], t)
+                para["text"] = (head[0] + " " if len(head) == 2 else "") + joined
+            elif first_on_line and (prev.endswith(("—", "–", "/")) or URLISH.search(prev.rsplit(" ", 1)[-1] or "")
+                                    and not prev.endswith((".", ",", ")"))):
+                para["text"] = prev + t  # closed-up dash, or a URL broken at the line end
+            elif (re.fullmatch(r"[,;:)\]]+", t) and not prev.endswith("[")) or t.startswith("—") or prev.endswith("—"):
+                para["text"] = prev + t  # no space before closing punctuation or around an em dash
             else:
                 para["text"] = prev + " " + t
             if pending_page is not None:
                 # The break falls where this word starts (inside it, if hyphen-joined).
-                para["page_breaks"].append({"offset": len(para["text"]) - len(t), "page": pending_page})
+                para["page_breaks"].append({"offset": max(0, len(para["text"]) - len(t)), "page": pending_page})
                 pending_page = None
         para["_line_end"] = True
 
-    for li, line in enumerate(stream):
+    for line in stream:
         words = line["words"]
-        text = " ".join(w["t"] for w in words if not w.get("sup"))
+        text = " ".join(w["t"] for w in words if not w.get("sup")).strip()
         margin = line["margin"] or line["x0"]
         indent = line["x0"] - margin
         if slip:
             # Each slip opinion opens with the Court's caption; drop it.
-            if line["kind"] == "body" and text.strip() == "SUPREME COURT OF THE UNITED STATES":
+            if line["kind"] == "body" and text == "SUPREME COURT OF THE UNITED STATES":
                 in_caption = True
             if in_caption:
-                if re.fullmatch(r"\[[A-Z][a-z]+ \d{1,2}, \d{4}\]", text.strip()):
+                if re.fullmatch(r"\[[A-Z][a-z]+ \d{1,2}, \d{4}\]", text):
                     in_caption = False
                 continue
-        if line["kind"] == "body":
+        if RULE.fullmatch(text):
+            continue  # the rule printed above footnotes
+        appendix_title = line["kind"] == "body" and bool(re.match(r"APPENDIX\b", text, re.I)) and len(text) < 120
+        if appendix_title:
+            in_appendix = True  # an appendix's captions are small type, not footnotes
+        elif line["kind"] == "body" and HEADING.match(text):
+            in_appendix = False  # the next opinion begins
+        labelled = line["kind"] == "foot" and words[0].get("sup")
+        if line["kind"] == "body" or (in_appendix and not labelled):
             centered = line["x0"] - margin > 40 and (line["right"] or line["x1"]) - line["x1"] > 40
-            heading_line = line["h"] < body_h * 0.97
+            section = centered and bool(SECTION.match(text))
+            # A line of small capitals ("Justice Kennedy, Justice Alito") is small
+            # too; a heading line is indented and opens like a heading.
+            heading_line = (line["h"] < body_h * 0.97 and line["kind"] == "body" and (6 <= indent <= 16 or centered)
+                            and bool(re.match(r"(MR\.? |THE CHIEF|CHIEF JUSTICE|JUSTICE|PER CURIAM)", text, re.I)))
             starts = (cur_body is None or centered or 6 <= indent <= 16
                       or (heading_line and not (cur_body and cur_body["heading_size"]))
                       or (cur_body and cur_body["heading_size"] and not heading_line
                           and cur_body["text"].rstrip().endswith((".", ":")))
-                      or (cur_body and cur_body["kind"] == "section"))
+                      or (cur_body and cur_body["kind"] in ("section", "centered")))
+            if line["kind"] == "foot" and cur_body and cur_body["kind"] == "appendix" and not (6 <= indent <= 16):
+                starts = False
+            starts = starts or appendix_title
             if starts:
-                cur_body = new_para("section" if centered else "text", line)
+                kind = "section" if section else ("appendix" if in_appendix else ("centered" if centered else "text"))
+                cur_body = new_para(kind, line)
                 body_paras.append(cur_body)
             append_words(cur_body, words, line)
         else:
@@ -334,6 +396,19 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
                     para = new_para("foot", line)
                     cur_foot["paras"].append(para)
                 append_words(para, words, line)
+
+    # "* * *" arrives as three centered lines; a centered non-section line is
+    # its own paragraph (as "It is so ordered." can be).
+    merged = []
+    for p in body_paras:
+        if merged and p["kind"] == "section" and re.fullmatch(r"\*( \*)*", p["text"]) \
+                and merged[-1]["kind"] == "section" and re.fullmatch(r"\*( \*)*", merged[-1]["text"]):
+            merged[-1]["text"] += " " + p["text"]
+            continue
+        if p["kind"] == "centered":
+            p["kind"] = "text"
+        merged.append(p)
+    body_paras = merged
 
     # Ligature repair, word by word with context, before offsets are final.
     def fix_para(p):
@@ -374,9 +449,9 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
 
     # Split into opinions on the Court's headings; everything before the first
     # heading (syllabus, lineup, counsel) is not opinion text.
-    opinions, current, header_refs = [], None, []
-    marker_queue = []
-    for p in body_paras:
+    opinions, current, marker_queue = [], None, []
+    first_heading = None
+    for i, p in enumerate(body_paras):
         text = p["text"].strip()
         h = HEADING.match(text)
         pc = PER_CURIAM.match(text) if not opinions else None
@@ -384,44 +459,36 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
             otype = opinion_type(h.group("role")) if h else "majority"
             if otype == "note":
                 continue
-            heading = text[:(h or pc).end()]
-            current = {"heading": heading, "type": otype,
+            first_heading = i if first_heading is None else first_heading
+            names, note = joiners(h.group("who"), h.group("with"), h.group("role")) if h else ([], None)
+            current = {"heading": text[:(h or pc).end()], "type": otype,
                        "author": justices(h.group("who")) if h else ["Per Curiam"],
-                       "joined_by": justices(h.group("with") or "") if h else [],
+                       "joined_by": names, "joined_by_note": note,
                        "statement": False, "typed_by_table": False,
                        "paragraphs": [], "footnotes": []}
             opinions.append(current)
             rest = text[(h or pc).end():].strip()
             if not rest:
-                header_refs += [(r["label"], p["page_start"]) for r in p["footnote_refs"]]
                 continue
             shift = len(text) - len(rest)
             p = {**p, "text": rest,
                  "page_breaks": [{**b, "offset": max(0, b["offset"] - shift)} for b in p["page_breaks"]],
                  "footnote_refs": [{**r, "offset": max(0, r["offset"] - shift)} for r in p["footnote_refs"]]}
         if current is None:
-            header_refs += [(r["label"], p["page_start"]) for r in p["footnote_refs"]]
             continue
-        para = {k: p[k] for k in ("text", "kind", "page_start", "page_breaks", "footnote_refs")}
-        current["paragraphs"].append(para)
+        current["paragraphs"].append({k: p[k] for k in ("text", "kind", "page_start", "page_breaks", "footnote_refs")})
         for r in p["footnote_refs"]:
             marker_queue.append((r["label"], len(opinions) - 1))
 
     # Footnotes printed before the first opinion heading belong to the caption,
     # counsel or syllabus (their markers may sit in lines that are not body text).
-    first_heading = next((i for i, p in enumerate(body_paras)
-                          if HEADING.match(p["text"].strip()) and (p["heading_size"] or len(p["text"]) < 400)), 0)
-    header_items = [f for f in foot_items if f["after_para"] <= first_heading]
+    first_heading = first_heading or 0
+    header_count = sum(1 for f in foot_items if f["after_para"] <= first_heading)
     foot_items = [f for f in foot_items if f["after_para"] > first_heading]
-    header_refs = []  # handled by position above
 
-    # Footnotes: matched to markers in reading order, label by label.
     by_label = {}
     for f in foot_items:
         by_label.setdefault(f["label"], []).append(f)
-    for label, _ in header_refs:
-        if by_label.get(label):
-            by_label[label].pop(0)
     unmatched_markers = []
     for label, op_i in marker_queue:
         q = by_label.get(label)
@@ -430,10 +497,18 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
             opinions[op_i]["footnotes"].append({
                 "label": label, "page": f["page"],
                 "paragraphs": [x["text"] for x in f["paras"]],
+                "page_starts": [x["page_start"] for x in f["paras"]],
                 "page_breaks": [x["page_breaks"] for x in f["paras"]],
             })
         else:
             unmatched_markers.append(label)
+
+    for op in opinions:  # P1.17
+        op["heading"] = straighten(op["heading"])
+        for p in op["paragraphs"]:
+            p["text"] = straighten(p["text"])
+        for f in op["footnotes"]:
+            f["paragraphs"] = [straighten(x) for x in f["paragraphs"]]
 
     return {
         "key": key,
@@ -441,7 +516,7 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
         "decided_text": decided.group(1) if decided else None,
         "argued_text": argued.group(1) if argued else None,
         "notes": [],
-        "header_footnotes": [[x["text"] for x in f["paras"]] for f in header_items],
+        "header_footnotes_dropped": header_count,
         "opinions": opinions,
         "cleaning": {
             "body_type_size": body_h,

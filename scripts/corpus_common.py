@@ -32,7 +32,7 @@ PER_CURIAM = re.compile(r"^PER CURIAM\.?(?=\s|$)", re.I)
 # P1.1 verification against the official text and SCDB's vote counts.
 ROLELESS = {
     ("olmstead", "Holmes"): "dissent",  # "I am not prepared to say ... I think it a less evil"
-    ("goldman", "Stone"): "concurrence",  # would overrule Olmstead, but do not dissent
+    ("goldman", "Stone"): "concurrence in the judgment",  # would overrule Olmstead, but do not dissent (P1.19)
 }
 # Statements written as a sentence about a Justice, not as a heading. Keyed by
 # case and the statement's opening words.
@@ -48,6 +48,28 @@ def text_of(fragment: str) -> str:
     t = html.unescape(re.sub(r"<[^>]+>", "", fragment))
     t = re.sub(r"[ \t\n]*\x97[ \t\n]*", "\u2014", t)
     return unicodedata.normalize("NFC", re.sub(r"\s+", " ", t)).strip()
+
+
+QUOTES = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201a": "'", "\u201b": "'", "`": "'",
+                        "\u201c": '"', "\u201d": '"', "\u201e": '"', "\u201f": '"'})
+
+# A centered line that is a section marker: a Part numeral or letter, "* * *".
+SECTION = re.compile(r"^(?:[IVXL]+(?:[–-][A-Z0-9]+)*\.?|[A-Z]\.?|\d{1,2}\.?|\([a-z0-9]{1,3}\)|\*(?: \*)*)$")
+
+
+def straighten(text: str) -> str:
+    """Quotation marks and apostrophes as straight ASCII (P1.17). One character
+    for one, so recorded offsets stay valid."""
+    return text.translate(QUOTES)
+
+
+def joiners(who: str, with_clause: str | None, role: str) -> tuple[list[str], str | None]:
+    """Justices joining an opinion, from its heading: the "with whom ... join"
+    clause, or a plurality's "in which ... join". Partial joins are noted."""
+    clause = (with_clause or "") + (" " + role if "in which" in role.lower() else "")
+    names = [n for n in justices(clause) if n not in justices(who)]
+    note = clause.strip(" ,") if re.search(r"\bas to\b|\bPart", clause) else None
+    return names, note
 
 
 def opinion_type(role: str) -> str:

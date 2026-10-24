@@ -6,3 +6,8 @@ requires-python = ">=3.13"
 dependencies = [
     "anthropic>=2.3.0",
 ]
+
+[dependency-groups]
+dev = [
+    "english-words>=2.0.2",
+]
