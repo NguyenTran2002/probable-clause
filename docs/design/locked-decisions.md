@@ -400,3 +400,18 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Read around reach, I want to give Claude flexibility here and we trust Claude's judgement. Give it 0 to 10."* *"Also, read around wouldn't just return a blob of text, we should return all the requested passages with clear markings."* *"The intuitive way would be for us to automatically attaching footnotes to any passage that cites them, right within it"*. *"A read always returns what Claude asked for, even if it was seen before. Claude asked deliberately."* *"An unknown ID or page comes back as an error result giving the valid range."* *"just one target per call"*. *"ID counting from 1 for more natural IDs is good."* Then: *"Lock."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 15:50 CDT — Phase 3: Architecture, Area 1 (how passages reach Claude, T1.6)"
+
+### T1.7 The keep tool: batched keeps with reasons, no withdraw list
+
+- **Decision:** Area 1, topic 4, as reviewed by the user:
+  - **`keep_passages(keep: [{id, reason}])`,** batched. The system prompt asks Claude to keep passages as soon as it has judged them, in the same turn as its next searches, so the sources panel fills in during the run.
+  - **No withdraw list.** The composition call does not cite passages it doesn't need; the sources panel shows every kept passage, some of them uncited. **Re-keeping a passage replaces its reason,** and **each kept passage's reason goes to the composition call** (in its search result's header), so a correction Claude makes in the loop reaches the writer.
+  - **Only passages already shown** in an earlier search or read result can be kept; an unseen or guessed ID is refused.
+  - **Reasons:** one sentence on why the passage bears on the question; over 300 characters (a placeholder) is refused with an error, never cut short.
+  - **Result:** a short confirmation with the running kept count; valid items applied, invalid IDs listed with what was wrong; an error result only if nothing could be applied.
+  - **A cap of 40 kept passages** at a time (a placeholder, measured in Phase 5); a keep beyond it is refused with a message saying so.
+  - **Footnotes are kept on their own:** keeping a paragraph does not keep its attached footnotes (T1.6).
+  - **Handed on:** whether `submit_answer` still lists kept IDs (topic 6); whether composition sees a kept paragraph's footnotes as uncitable context (topic 7); how the panel shows kept and cited, kept and not cited, and shown but never kept (Area 4).
+- **User's words:** *"On withdrawal, I'm thinking the synthesis call will simply not cite passages it doesn't need. So we will see everything in the source panel, but some of them won't be cited. Would that be a good design?"* Then: *"Lock topic 4 as T1.7: no withdraw list; re-keeping replaces the reason; each kept passage's reason goes to the composition call; the rest as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:06 CDT — Phase 3: Architecture, Area 1 (the keep tool, T1.7)"

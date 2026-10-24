@@ -404,3 +404,18 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - On reads: *"A read always returns what Claude asked for, even if it was seen before. Claude asked deliberately."* *"An unknown ID or page comes back as an error result giving the valid range."* *"On limit per call, I'm thinking just one target per call? If Claude wants to read more passage, it can make more read_passages() tool call?"* *"ID counting from 1 for more natural IDs is good."*
 - T1.6: *"Lock."*
 - On the record: *"Don't forget we're ALWAYS keeping BUILD LOG updated with system time as well."*
+
+## Oct 24, 2026, 16:06 CDT — Phase 3: Architecture, Area 1 (the keep tool, T1.7)
+
+**Asked:** Area 1, topic 4, reviewed in full by the user: the keep tool's shape. The user proposed leaving out a way to withdraw a keep, letting the composition call simply not cite passages it doesn't need, and asked how caching works for the composition call.
+
+**Came back:**
+- From the Phase 2 runs (script): one keep call per run, at the end (30 and 14 passages at once); reasons median 53 and 75 characters, longest 132; `submit_answer` repeated every kept ID. Composition already leaves kept passages uncited: 29 of 30, 25 of 30, 14 of 14 cited.
+- The proposal: batched keeps, made as Claude goes alongside its next searches; only passages already shown can be kept; one-sentence reasons, refused over 300 characters; re-keeping replaces the reason; partial success reported with the running total; a cap of 40 kept passages (placeholder); footnotes kept separately. A `withdraw` list was proposed, then dropped for the user's design, on one condition: the composition call starts fresh, so each kept passage's reason must reach it, carrying any correction made in the loop.
+- Caching: the composition call is a new prompt (own system prompt, no tools, only the kept passages), so the loop's cache cannot apply without continuing the loop conversation, which would put every unkept passage before the writer. Its input is about $0.02 to $0.04 a run; output costs more. Details in topic 7.
+
+**DECISION (user):**
+- *"On withdrawal, I'm thinking the synthesis call will simply not cite passages it doesn't need. So we will see everything in the source panel, but some of them won't be cited. Would that be a good design?"*
+- *"for the synthesis call, how is context caching working here? (Defer if it's coming up in a separate topic.)"*
+- T1.7: *"Lock topic 4 as T1.7: no withdraw list; re-keeping replaces the reason; each kept passage's reason goes to the composition call; the rest as proposed."*
+- Raised, not decided: *"since the composition call is pretty independent and does not get fed the same context, so caching doesn't matter, should swap to Opus at high effort?"*
