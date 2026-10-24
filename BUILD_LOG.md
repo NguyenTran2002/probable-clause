@@ -607,3 +607,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T2.4 locked: see `docs/design/locked-decisions.md`.
 **DECISION (user):**
 - T2.4: *"Lock topic 4 as T2.4 as proposed."*
+
+## Oct 24, 2026, 17:46 CDT — Phase 3: Architecture, Area 2 (the MCP connection, T2.5)
+**Asked:** Area 2, topic 5: how our backend holds its connection to Exa's hosted MCP server.
+**Came back:**
+- Facts: Exa's hosted server is stateless (a fresh handler per request, from its source) over streamable HTTP; the Phase 2 probe used the official `mcp` package (2.3.0) with the key in the `x-api-key` header and one session for several calls; the handshake was not timed.
+- Three options: a session per search, per run, or one kept open for the instance. Recommended per search: a stateless server gains only the handshake from a held session, a held session can go stale while the instance idles or is throttled, and per-search keeps one run's failures from another's.
+- T2.5 locked: see `docs/design/locked-decisions.md`.
+**DECISION (user):**
+- T2.5: *"Lock topic 5 as T2.5: a session per search, the rest as proposed."*

@@ -565,3 +565,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 4 as T2.4 as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:43 CDT — Phase 3: Architecture, Area 2 (errors and unavailability, T2.4)"
+
+### T2.5 The connection to Exa's MCP server: a session per search
+
+- **Decision:** Area 2, topic 5:
+  - **A session per update search:** our backend opens an MCP session to Exa's hosted server, initializes it, calls the tool once and closes it. Nothing is held open between searches or between runs. The official `mcp` Python package (2.3.0, already in `uv.lock`) is the client.
+  - **Address and key:** `https://mcp.exa.ai/mcp?tools=web_search_advanced_exa`; the key only in the `x-api-key` header, never in a URL or a log (brief §6.1). How the key reaches Cloud Run is Area 3.
+  - **The 30 s timeout** (T2.4) covers the whole search, handshake included.
+  - **The out-of-credit flag** (T2.4) is checked before a session is opened.
+  - **Schema check:** our code lists Exa's tool (free) on an instance's first update search, in the Phase 5 tests and in the check after each deploy, and compares it with every field and value we send (T2.1); a mismatch is logged as a warning and does not block, since the failures it causes are handled by T2.4.
+  - **Considered:** a session per run (saves a handshake only for runs with 2 or 3 searches; a break mid-run needs reopening); one session for the instance (can go stale while the instance idles or its CPU is limited between requests; concurrent runs would share its failures). The handshake's time is measured in Phase 5.
+- **User's words:** *"Lock topic 5 as T2.5: a session per search, the rest as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:46 CDT — Phase 3: Architecture, Area 2 (the MCP connection, T2.5)"
