@@ -299,7 +299,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 13:59 CDT — Phase 2: Research"
 
-### P2.8 Exa's server-side retries are accepted
+### P2.8 Exa's server-side retries are accepted — AMENDED by T3.3 (our code retries Anthropic and Voyage calls, visibly; Exa still never)
 
 - **Decision:** Exa's hosted MCP server retries Exa's own 500, 502, 503 and 504 responses twice, and this cannot be turned off (`docs/research/phase2-findings.md` §4). That is accepted as an exception to brief §10.7's "a paid request is never retried automatically", which still binds our own code: our backend never retries a Claude or Exa call itself.
 - **User's words:** *"Exa's server-side retries are allowed."*
@@ -453,7 +453,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:32 CDT — Phase 3: Architecture, Area 1 (submit_answer and the rejection rules, T1.10)"
 
-### T1.11 The composition call
+### T1.11 The composition call — AMENDED by T3.3 (a composition that fails before its first block is retried up to twice)
 
 - **Decision:** Area 1, topic 7 (model and inputs also under T1.8 and T1.9):
   - **Inputs:** the question; the scope note if any (T1.10); the three coverage dates; the kept passages, one custom content document each (T1.9), **in order of decision date, then opinion, then position**, each titled with a short label ("Katz v. United States (1967), Harlan, concurring") and carrying in `context` its ID, citation, date, exact opinion type, author, joiners, section, pages and keep reason. **Left out:** footnotes that were not kept (Claude saw them in the loop and could keep them or name them in a keep reason), and the web results.
@@ -614,3 +614,21 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock option A. Proceed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:58 CDT — Phase 3: Architecture, Area 3 (disconnect detection and the grace window, T3.2)"
+
+### T3.3 The paid calls during a run: streamed, visible retries for Anthropic and Voyage (supersedes brief §10.7's no-retry rule for these calls; amends P2.8 and T1.11)
+
+- **Decision:** Area 3, topic 3:
+  - **Claude calls are streamed** (the SDK's stream, the final message assembled), with the SDK's own retries off (`max_retries=0`, so no hidden retry sits inside a measured time, brief §10.7) and our own deadline per call: 120 s for a loop call, 300 s for composition (placeholders until measured).
+  - **Budget:** the per-run ceiling (P2.7) counts every kind of input token (uncached, cache writes, cache reads), as it was measured in Phase 2. With T1.11's reserve held back, the loop has 370,000 input and 8,000 output tokens. Before each loop call our code estimates its input and, if it would cross 370,000, goes to composition with the token-ceiling label; each loop call's `max_tokens` is what remains of the 8,000; a loop call stopped by `max_tokens` goes to composition with the same label.
+  - **Caching** as T1.14 (a one-hour breakpoint on tools, system prompt and catalog; automatic caching for the growing conversation); composition uncached (T1.11).
+  - **Retries by our own code**, each shown as a step, logged and counted:
+    - **Anthropic:** up to 2 retries on a rate-limit 429, 500, 504, 529, a connection failure, or an error after a loop call's stream began; waits honour `retry-after`, else 2 s then 8 s (placeholders). **Never retried:** 400, 401, 403, 404, 413, the usage tier's spend-cap 429, a `refusal` stop reason, or our own deadline (the call may still be generating and billed, Anthropic support page). A failed loop call appends nothing to the history, so its retry is the same request (cache and thinking blocks unaffected).
+    - **Composition** is retried only if it fails before its first block arrives; after that, the blocks already shown stay, labelled incomplete, and the two checks (T1.12) run on what arrived.
+    - **Before every attempt**, the heartbeat (T3.2) and the spend caps (topic 4) are checked; every attempt's usage counts toward the caps.
+  - **Errors after retries:** our fault or the account's (400, 401, 403, 404, 413, a spend-limit 400) ends the run with no further calls and is logged; a spend limit also pauses live research (topic 4). **Transient failures in the loop, once retries run out, go to composition from what was kept, labelled as stopped by an error**; with nothing kept the run ends failed. A `refusal` ends the run like a failure, with its own message.
+  - **Spend for a failed attempt** is the usage its stream reported, or an estimate of its input at the uncached price when none was reported (how it counts, topic 4).
+  - **Voyage** (embed the query, then rerank, per meaning search): 10 s per request (placeholder), up to 2 retries at 1 s then 3 s (placeholders), client retries off. If the rerank still fails, the search returns the embedding order, marked "not reranked" for Claude; if the embed fails, Claude gets an error result saying keyword search still works; a 401 marks meaning search unavailable for the run and is logged as our configuration fault. **Either failure flags the run, and the page warns that meaning search was degraded or unavailable for part of this research** (wording Area 5; not "quality is affected", since the effect on the answer is not measured).
+  - **Unchanged:** Exa keeps T2.4 (no retries by our code; Exa's own, P2.8). The live-run request to our API is never retried (brief §8.5 rule 2).
+- **User's words:** *"I'm leaning allowing retries for both Anthropic and Voyage. Especially when Voyage fails, I want to display a warning to user that quality of this response is affected due to this."* Then: *"Lock topic 3 as T3.3 with retries as revised; compose from what was kept after retries run out."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:04 CDT — Phase 3: Architecture, Area 3 (the paid calls during a run, T3.3)"

@@ -658,3 +658,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **Failures:** In the working doc I wrote topic 2's opening time as 17:59 CDT before running `date`, which then read 17:57. Corrected in the working doc (commit `8b27450`); no log heading was affected.
 **DECISION (user):**
 - T3.2: *"Lock option A. Proceed."*
+
+## Oct 24, 2026, 18:04 CDT — Phase 3: Architecture, Area 3 (the paid calls during a run, T3.3)
+**Asked:** Area 3, topic 3: how the Claude and Voyage calls behave during a run (timeouts, errors, budgets, caching). The user then directed retries: *"I'm leaning allowing retries for both Anthropic and Voyage. Especially when Voyage fails, I want to display a warning to user that quality of this response is affected due to this."*
+**Came back:**
+- Facts: Anthropic's errors page (a spend-limit 400; rate-limit and spend-cap 429s; 500, 504, 529; errors after a stream has started; retry 500 and 529 with backoff); the loop's share of the per-run budget is 8,000 output and 370,000 input tokens once T1.11's composition reserve is held back (Phase 2 loops used 2,906 and 1,622 output tokens); Voyage's limits are per minute and per organisation, a free-trial organisation moves to Tier 1 by adding a payment method, and the free-trial figures are not on the cached pages.
+- First proposal: streamed Claude calls with no retries; on a transient loop failure, compose from what was kept. Revised at the user's direction: visible retries by our own code for Anthropic and Voyage, with four cautions (no retry on our own deadline, which may pay twice; none on the spend-cap 429; composition retried only before its first block; the SDK's hidden retries stay off); Voyage degrades to unreranked results or points Claude to keyword search, and the page warns. Wording "quality is affected" narrowed to "meaning search was degraded or unavailable", since the effect on the answer is not measured (final wording Area 5).
+- T3.3 locked: see `docs/design/locked-decisions.md`. Supersedes brief §10.7's "a paid request is never retried automatically" for Anthropic and Voyage calls; amends P2.8 and T1.11. Exa keeps T2.4 (no retries by our code). The live-run request stays never retried (brief §8.5).
+- Pending with the user: the Voyage organisation's tier and per-minute limits, read from the Atlas console.
+**DECISION (user):**
+- Retries: *"I'm leaning allowing retries for both Anthropic and Voyage. Especially when Voyage fails, I want to display a warning to user that quality of this response is affected due to this."*
+- T3.3: *"Lock topic 3 as T3.3 with retries as revised; compose from what was kept after retries run out."*
