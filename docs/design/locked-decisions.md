@@ -338,7 +338,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 
 ## Phase 3: Architecture
 
-### T1.1 Retrieval: two search tools in parallel, semantic (Voyage) and keyword
+### T1.1 Retrieval: two search tools in parallel, semantic (Voyage) and keyword — open points settled by T3.6 (vectors in memory; a header on the embedded text)
 
 - **Decision:** Claude searches the corpus with **two tools it chooses between** during the loop: a **semantic search** and a **keyword search**. The semantic stack embeds with Voyage **`voyage-law-2`** and reranks with Voyage **`rerank-3`**. Its vectors are not held in the user's free MongoDB cluster. Both tools get filtering options for Claude (Area 1, topic 2). This replaces brief §5.2's single `search_corpus` and settles brief §5.3's open choice of retrieval method; the brief was treated as a starting point only.
 - **Left open:** how keyword queries combine terms, the filters, and how results reach Claude (Area 1, topics 2 and 3); where the vectors are held (proposed: in memory in the API container).
@@ -669,3 +669,19 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"You're clear to read goodnight's nginx.conf and its Cloud Run settings. Don't bring any of its code over here though--contamination."* *"Atlas cluster is opened to all IPs, so with the URI you're covered."* *"Cluster is in GCP / Iowa (us-central1). I already set up a new empty database in the cluster for you, named Probable_Clause"* *"Good on both notes."* *"URI is limited to readWrite only on Probable_Clause."* *"I've added a new db Probable_Clause_test to the MongoDB cluster, and your URI now also has readWrite against that db too for you to test."* *"probable-clause (id) project created on GCP. Project number 1066460440617."* Then: *"Lock otherwise."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:26 CDT — Phase 3: Architecture, Area 3 (Cloud Run and the gateway, T3.5)"
+
+### T3.6 Start-up and the wake protocol (settles T1.1's open points)
+
+- **Decision:** Area 3, topic 6:
+  - **Vectors in memory** in the API container: the 2,748 units' voyage-law-2 vectors (1,024 dimensions, 11.3 MB as float32), scored by brute-force dot product, with the T1.4 filters applied in memory. No vector search in Atlas.
+  - **The vectors file** is built once in Phase 4 by script and **committed beside the corpus**, with a manifest (model, dimension, date, and a hash of each unit's embedded text), checked at start. The image build makes no Voyage call. The one-time embedding paces its requests under Voyage's Tier 1 limits.
+  - **A one-line header is prepended to the text Voyage embeds** (case, year, exact opinion type and author, section), never to the citable text.
+  - **The keyword index** (FTS5) is built at start from the corpus (0.04 s measured in Phase 2); no index file. FTS5's presence in the image's Python is checked in the build.
+  - **Everything loads before the port opens** (corpus, catalog, sentence offsets, vectors, index), each step timed and logged with the time since the process started, so the app's start is read apart from the container's in Cloud Run's logs (brief §8.1).
+  - **`/health`** answers 200 JSON only when the app is ready, carrying T3.4's status (live research open or paused, update check available; Atlas read with a short timeout).
+  - **The page follows brief §8.5's wake protocol:** one check on landing (wake on landing, brief §2); any response that is not our JSON, whether Cloud Run's plain text or goodnight's HTML, means still starting and leads to the next serial check; a fresh `/health` right before `POST /runs` (instant when warm; catches an instance that shut down since landing); a stream that cannot reconnect runs the wake protocol before reattaching (T3.1).
+  - **The long wait** (placeholders): the page shows the time elapsed since the wake began; after 90 s (about twice the longest start measured by the previous build) it says this is taking longer than usual and points to the recorded runs; after 5 minutes it stops checking and offers a button to try again, which starts a fresh check, never a run. A typical range is stated only after this build has measured one (brief §7.2). Wording Area 5; layout Area 4.
+  - **Measurement** as brief §8.5: a first sample after the first deploy (Phase 4); in Phase 5 the wake protocol against a cold API and a sample after hours of quiet, with idle time, caller-side time and Cloud Run's logged times recorded together; every scaling change on the user's green light.
+- **User's words:** *"Lock topic 6 as T3.6: vectors in memory, the vectors file committed, the header on embedded text, the rest as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:28 CDT — Phase 3: Architecture, Area 3 (start-up and the wake protocol, T3.6)"

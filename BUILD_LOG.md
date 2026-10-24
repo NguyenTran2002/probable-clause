@@ -694,3 +694,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Atlas and the IP: *"Atlas cluster is opened to all IPs, so with the URI you're covered."* *"Cluster is in GCP / Iowa (us-central1). I already set up a new empty database in the cluster for you, named Probable_Clause"* *"Good on both notes."*
 - Database user, test database, project: *"URI is limited to readWrite only on Probable_Clause."* *"I've added a new db Probable_Clause_test to the MongoDB cluster, and your URI now also has readWrite against that db too for you to test."* *"probable-clause (id) project created on GCP. Project number 1066460440617."*
 - T3.5: *"Lock otherwise."*
+
+## Oct 24, 2026, 18:28 CDT — Phase 3: Architecture, Area 3 (start-up and the wake protocol, T3.6)
+**Asked:** Area 3, topic 6: what the API loads at start, how its start is timed, and how the page wakes it (brief §8.1, §8.5), with T1.1's two open points (vectors in memory; a header on the embedded text).
+**Came back:**
+- Facts: brief §8.5's protocol and the previous build's measured starts (12.6 to 32.4 s after deploys, 21.5 to 49.5 s after idle, app ready 1 to 5 s after its process started); Cloud Run holds a request during a start for at least 10 s, then 429 or 500 (findings §6); goodnight also scales to zero (T3.5); voyage-law-2's 1,024 dimensions make the vectors 11.3 MB as float32 (arithmetic); FTS5 indexes the corpus in 0.04 s; uvicorn opens its port after the app's startup (inferred from its log order).
+- Proposal: vectors in memory; the vectors file built once and committed with a manifest; the keyword index built at start; everything loaded and timed before the port opens; `/health` ready-only with T3.4's status; the page's wake handling, a fresh check before each run, and the long-wait states (90 s, 5 minutes; placeholders); measurement as brief §8.5; a one-line header on the text Voyage embeds.
+- T3.6 locked: see `docs/design/locked-decisions.md`. T1.1's open points are settled.
+**DECISION (user):**
+- T3.6: *"Lock topic 6 as T3.6: vectors in memory, the vectors file committed, the header on embedded text, the rest as proposed."*
