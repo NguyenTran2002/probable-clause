@@ -35,6 +35,9 @@ LAWBOX = {
     "lopez": 106622, "berger": 107483, "katz": 107564, "white": 108304,
     "miller": 109433, "smith": 110118, "knotts": 110882, "karo": 111257,
     "ciraolo": 111666, "dow": 111667, "florida_v_riley": 112175,
+    # Filter-check additions (P1.14).
+    "ex_parte_jackson": 89759, "boyd": 91573, "hester": 100413, "lee": 101118,
+    "shultz": 109005, "jacobsen": 111143, "oliver": 111146, "dunn": 111833, "greenwood": 112067,
 }
 
 # Official PDFs (P1.11): file, first U.S. page, the CourtListener cluster whose
