@@ -282,3 +282,9 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** Cloud Run does not pass a browser's disconnect to the container over HTTP/1.1 (`docs/research/phase2-findings.md` §6), so the §2 Browser disconnect rule needs an explicit way to know a browser is still connected (for example a heartbeat from the page, or end-to-end HTTP/2). The rule stands; the mechanism is settled in the Phase 3 architecture conversation.
 - **User's words:** *"I'm open to carrying the disconnect detection into Phase 3, unless you'd want to discuss it now."*
 - **Date:** Oct 24, 2026
+
+### P2.11 No keyless fallback when the Exa credit runs out
+
+- **Decision:** When the monthly Exa credit is exhausted (HTTP 402, `NO_MORE_CREDITS`), the update check shows as unavailable (brief §6.4) until the credit resets on the 1st of the month. The backend never falls back to keyless calls to the hosted server to get past the account's limit (Exa's Terms §4.2(i) and (n); the keyless tier is also limited per IP, which Cloud Run's shared outbound addresses make unreliable).
+- **User's words:** *"Agreed: no keyless fallback. When the credit runs out the update check shows as unavailable until the 1st."*
+- **Date:** Oct 24, 2026
