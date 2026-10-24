@@ -478,3 +478,15 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"I'm thinking of not suggesting Claude with a length target and see how it goes first. We already had max token as the hard backstop."*
 - *"Why do we want to keep it to prose only? We can let Claude write naturally and render accordingly?"*
 - T1.11: *"Lock topic 7 as T1.11: Claude writes naturally in Markdown and the page renders it, with the straddle fallback; no length target; max_tokens 12,000 with a cut-off label; the update check kept out of composition; the rest as proposed."*
+
+## Oct 24, 2026, 16:51 CDT — Phase 3: Architecture, Area 1 (answer checks, T1.12)
+
+**Asked:** Area 1, topic 8 (the user's addition): whether the deterministic case-name verifier can recognise case names in Claude's answer reliably without structured output, and whether to offer it at all, weighed together with a quotation check.
+
+**Came back:** a trial of both checks on the three Phase 2 answers (scratchpad script):
+- Case names: full "X v. Y" names (3, 1 and 3) and italic spans all resolved to the corpus, but one answer italicised nothing. A name *outside* the corpus can be found only as a full "X v. Y" name or a U.S. Reports citation; a short form cannot be told from a word or a person's name ("Riley" is two corpus cases; "White" and "Miller" are cases and Justices). The brief's "every case name resolves" cannot be checked reliably.
+- Quotations: 31 of four or more words. A first pass flagged 5; all 5 were verbatim, the flags coming from legal quoting conventions (punctuation inside the closing quote, nested quotes turned single, an ellipsis, a source's own "[ ]"). With those handled, 31 of 31 matched. The check closes a gap the API leaves open: `cited_text` is verbatim, but words Claude quotes in its own sentence are not guaranteed.
+
+**DECISION (user):**
+- The concern that opened the topic: *"I'm concerned of the fragile deterministic case-name verifier, particularly how do we recognize robustly what is a case name to check within Claude's answer without requesting Claude to write it as structured output (which breaks Citations feature). I'm considering not offering this if it's something we cannot check reliably. The response is covered under the AI disclosure already, and adding a check that isn't reliable might give false confidence to user."*
+- T1.12: *"Drop the general case-name verifier. Keep the quotation check and the narrow full-citation check, each worded exactly. Lock topic 8."*

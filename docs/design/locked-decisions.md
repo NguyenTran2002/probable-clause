@@ -137,7 +137,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 23, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 23, 2026, 17:42 CDT — Phase 1: Corpus (inclusion rule and scope)"
 
-### P1.10 Case-name verifier: "not in this corpus", never "does not exist"
+### P1.10 Case-name verifier: "not in this corpus", never "does not exist" — AMENDED by T1.12 (the general verifier is dropped; the wording applies to the full-citation check)
 
 - **Decision:** A case name the verifier (brief §5.8) cannot resolve is flagged on screen as **not in this corpus**, never as nonexistent or fabricated, since a real case outside the corpus must read differently from an invented one. The system prompt tells Claude to name only cases it cites from the corpus. Exact wording is settled in Phase 3.
 - **User's words:** *"Thanks for incorporating my suggestions. We can lock here."*
@@ -467,3 +467,15 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Set the max tokens to 12000 just in case."* *"On the update check, I agree with your suggestions there."* *"I'm thinking of not suggesting Claude with a length target and see how it goes first. We already had max token as the hard backstop."* *"Why do we want to keep it to prose only? We can let Claude write naturally and render accordingly?"* Then: *"Lock topic 7 as T1.11: Claude writes naturally in Markdown and the page renders it, with the straddle fallback; no length target; max_tokens 12,000 with a cut-off label; the update check kept out of composition; the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:46 CDT — Phase 3: Architecture, Area 1 (the composition call, T1.11)"
+
+### T1.12 Answer checks: a quotation check and a narrow full-citation check; the general case-name verifier dropped (supersedes brief §2's Case-name verifier row and §5.8; amends P1.10)
+
+- **Decision:** Area 1, topic 8 (the user's addition):
+  - **The general case-name verifier is dropped.** Brief §2 ("Every case name in the answer must resolve to a document in the corpus, or it is flagged on screen"; "In the minimum demo") and §5.8 are superseded: a case name outside the corpus cannot be found reliably in free text without structured output, which Citations rules out, and a check that claimed it would give false confidence.
+  - **Quotation check:** every quotation of four or more words in the answer (a placeholder minimum) must appear in the kept passages, allowing standard legal quoting conventions (punctuation inside the closing quote mark, nested quotes changed between double and single, ellipses for omitted words, bracketed alterations, including those already in the source); otherwise it is flagged on screen. It closes a gap the API leaves: `cited_text` is verbatim, but Claude's own quoted words are not guaranteed.
+  - **Full-citation check:** every full "X v. Y" case name and every U.S. Reports citation ("389 U. S. 347") in the answer must resolve to the corpus manifest, or it is flagged **"not in this corpus"** (P1.10), never as fabricated. It does not catch short-form names, and says so. A real case named in a passage (for example *Entick v. Carrington*) is flagged "not in this corpus", which is accurate.
+  - **Each check is worded exactly as what it checks.** Both run when the answer finishes streaming; the results appear in one line under the answer (for example "Checked: 12 quotations found word for word in the cited passages · 4 full case names and citations found in the corpus · 1 not in this corpus: *Entick v. Carrington*"), and each flag marks its spot in the answer. Tested in Phase 5 with fabricated names and citations, near-misses, real cases outside the corpus, and altered quotations.
+  - **P1.10 amended:** its "not in this corpus" wording now applies to the full-citation check; the system prompt still tells Claude to name only cases it cites from the corpus.
+- **User's words:** *"I'm considering not offering this if it's something we cannot check reliably. The response is covered under the AI disclosure already, and adding a check that isn't reliable might give false confidence to user."* Then: *"Drop the general case-name verifier. Keep the quotation check and the narrow full-citation check, each worded exactly. Lock topic 8."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:51 CDT — Phase 3: Architecture, Area 1 (answer checks, T1.12)"
