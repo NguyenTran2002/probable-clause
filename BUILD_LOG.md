@@ -308,3 +308,18 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Name, P2.9: *"Probable Clause as a name is fine."* The repository is reserved, and the frontend will be served at nguyennhattran.com/probable-clause.
 - Disconnect detection, P2.10: carried to Phase 3.
 - No keyless fallback, P2.11: *"Agreed: no keyless fallback. When the credit runs out the update check shows as unavailable until the 1st. Close Phase 2."*
+
+## Oct 24, 2026, 14:02 CDT — Records: BUILD_LOG first, locked-decisions as its index
+
+**Asked:** The user made this log the authoritative record of decisions. They asked whether to retire `docs/design/locked-decisions.md` or keep it alongside the log.
+
+**Came back:**
+- The proposal: keep `locked-decisions.md` as the index of decisions in force, ranked under this log. The order is this log first, the decisions file second, the brief third.
+- A conflict is fixed by a superseding entry in the decisions file, never by editing the log. Each decisions entry names the log entry that records it.
+- New decisions are written to both files in the same commit.
+- Applied:
+  - Each existing entry, P0.1 to P2.11, gained a **Log** line naming its log entry: the entry where the decision was made, found by matching the user's quoted words.
+  - The decisions file's header and the CLAUDE.md rule lines were updated to the new order.
+  - The decision is recorded as P2.12. It came after the `phase-2-done` tag; Phase 3 has not started.
+
+**DECISION (user):** *"Keep locked-decisions.md as the index of decisions in force, under BUILD_LOG: the log wins on any conflict, and each entry names its log entry. Lock it."* (P2.12)

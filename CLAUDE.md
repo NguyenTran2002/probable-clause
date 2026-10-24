@@ -6,6 +6,7 @@ Working file for the agent. The spec is `PROBABLE_CLAUSE_KICKOFF.md` (the brief)
 
 - At the end of each phase or session, append an entry to `BUILD_LOG.md`.
 - This brief is frozen. `docs/design/locked-decisions.md` holds every later decision and wins over the brief.
+- **`BUILD_LOG.md` is the authoritative record of decisions and wins over `locked-decisions.md`**, which is the index of decisions in force (P2.12). Write each new decision to both in the same commit; each decisions entry gets a **Log** line naming its log entry. Fix a conflict with a superseding decisions entry, never by editing the log.
 - Every time written anywhere comes from `date`, run immediately before writing it. Never estimate a time.
 - Before a planned compaction, update "Current state and next step".
 
@@ -30,8 +31,8 @@ More, each from the brief:
 ## Layout
 
 - `PROBABLE_CLAUSE_KICKOFF.md`: the brief, frozen.
-- `BUILD_LOG.md`: the raw record, append-only. Written by the main session only.
-- `docs/design/locked-decisions.md`: every decision after the brief. Written by the main session only.
+- `BUILD_LOG.md`: the raw record and the authoritative record of decisions, append-only. Written by the main session only.
+- `docs/design/locked-decisions.md`: the index of decisions in force, under the log and over the brief (P2.12). Written by the main session only.
 - `docs/research/licensing.md`: licences and terms of every source, with each quote string-matched against its page.
 - `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
@@ -74,7 +75,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 *Updated Oct 24, 2026, 13:59 CDT, at the end of Phase 2.*
 
-- **State:** Phases 0 to 2 done (tag `phase-2-done`). Decisions P0.1 to P2.11 locked; read `docs/design/locked-decisions.md` in full, and `docs/research/phase2-findings.md`. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
+- **State:** Phases 0 to 2 done (tag `phase-2-done`). Decisions P0.1 to P2.12 locked; read `docs/design/locked-decisions.md` in full, and `docs/research/phase2-findings.md`. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
 - **Settled in Phase 2:**
   - Model `claude-sonnet-5-5` at high effort (P2.1).
   - Keep-only triage with a reason per kept passage (P2.3).
@@ -91,7 +92,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - The Exa wrapper: a text cap per result, the search types allowed, error handling (findings §4).
   - The art direction as a T-entry (P1.6).
   - The user's wording: the disclaimer, the update-check label, the replay questions.
-- **Open with the user:** whether `docs/design/locked-decisions.md` stays alongside `BUILD_LOG.md` now that the user has made the log the authoritative record of decisions (Oct 24, 2026).
+- **Records (P2.12, after the tag):** `BUILD_LOG.md` is the authoritative record; `locked-decisions.md` stays as its index of decisions in force, each entry with a **Log** line.
 - **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py` (resumes from cache), `fetch_official_pdfs.py` (33 approved PDFs), `build_corpus.py` (`CORPUS_OUT=<dir>` to build elsewhere), `verify_corpus.py` (`VERIFY_OUT=<dir>`; includes the comma and period report), `verify_lineup.py`, `build_manifest.py` (token counts, free endpoint), `filter_check.py` (done).
 - **Verification record** (local, gitignored): `data/verification/text/` (script reports), `data/verification/agents/` (briefs `BRIEF.md`, `BRIEF_ROUND2.md`, `BRIEF_FINAL.md`; findings `batch1-10`, `r2_batch1-6`, `final_a`-`final_d`, `final_case`, `final_pages2`; `final_checklist.json`). `docs/sessions/phase1-handoff.md` is the round-2 handoff, now historical.
 - **Frontend session:** the look-test conversation has concluded. Its direction (machinery prototype, Evergreen) and the user's directions along the way are folded into `BUILD_LOG.md` (Oct 23, 20:48 and Oct 24 supplement); the direction is locked as a T-entry in Phase 3 (P1.6).
