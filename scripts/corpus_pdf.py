@@ -50,7 +50,9 @@ def vocabulary() -> set[str]:
         seen = Counter()
         for f in RAW_OPINIONS.glob("*.json"):
             lb = json.loads(f.read_text()).get("html_lawbox") or ""
-            seen.update({t.lower() for t in re.findall(r"[A-Za-z]+", re.sub(r"<[^>]+>", " ", lb))})
+            # Whole words only: "4th" must not contribute "th".
+            seen.update({t.lower() for t in re.findall(r"(?<![A-Za-z0-9])[A-Za-z]+(?![A-Za-z0-9])",
+                                                     re.sub(r"<[^>]+>", " ", lb))})
         # A Lawbox word counts only if two opinions use it: a one-off may be an
         # error of that copy ("thermalimaging").
         _VOCAB = words | {w for w, n in seen.items() if n >= 2}
@@ -84,6 +86,7 @@ def read_pages(pdf: Path) -> list[list[dict]]:
                 # Never a period (an ellipsis is spaced periods) or a bracket closing "[ ]".
                 stray_punct = (merged and re.fullmatch(r"[,;:)\]’”]+", w["t"])
                                and not merged[-1]["t"].endswith("[")
+                               and merged[-1]["t"] != "."  # ". . . ”": the print spaces an ellipsis from its quote
                                and w["x0"] - merged[-1]["x1"] < 4 and not w["h"] < merged[-1]["h"] * 0.7
                                and not merged[-1]["h"] < w["h"] * 0.7)  # never onto a footnote marker
                 if touching or stray_punct:
@@ -335,10 +338,11 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
                 else:
                     joined = rep.hyphen(head[-1], t)
                 para["text"] = (head[0] + " " if len(head) == 2 else "") + joined
-            elif first_on_line and (prev.endswith(("—", "–", "/")) or URLISH.search(prev.rsplit(" ", 1)[-1] or "")
+            elif first_on_line and (prev.endswith(("—", "–", "/", "www.")) or URLISH.search(prev.rsplit(" ", 1)[-1] or "")
                                     and not prev.endswith((".", ",", ")"))):
                 para["text"] = prev + t  # closed-up dash, or a URL broken at the line end
-            elif (re.fullmatch(r"[,;:)\]]+", t) and not prev.endswith("[")) or t.startswith("—") or prev.endswith("—"):
+            elif ((re.fullmatch(r"[,;:)\]]+", t) and not prev.endswith("[")) or prev.endswith("—")
+                  or (t.startswith("—") and not prev.endswith(". . ."))):  # ". . . —was" keeps its space
                 para["text"] = prev + t  # no space before closing punctuation or around an em dash
             else:
                 para["text"] = prev + " " + t
@@ -422,6 +426,17 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
     def fix_para(p):
         if not rep.lossy:
             return
+        # A letter-spaced word the text layer split ("af ter"): two non-words that
+        # make a known word together are one word, not a dropped ligature.
+        for m in reversed(list(re.finditer(r"\b([A-Za-z]{1,6}) ([A-Za-z]{1,8})\b", p["text"]))):
+            a, b = m.group(1), m.group(2)
+            if not rep.known(a) and not rep.known(b) and rep.known(a + b):
+                at = m.start(2) - 1
+                p["text"] = p["text"][:at] + p["text"][at + 1:]
+                for key_ in ("page_breaks", "footnote_refs"):
+                    for item in p[key_]:
+                        item["offset"] -= 1 if item["offset"] > at else 0
+                rep.log.setdefault("split_words_joined", []).append(a + "|" + b)
         tokens = list(re.finditer(r"\S+", p["text"]))
         out, shift_points = [], []
         pos = 0

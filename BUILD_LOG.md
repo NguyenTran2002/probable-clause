@@ -160,3 +160,21 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Approve your recommended additions (the five squarely in the rule, plus Greenwood, Ex parte Jackson, Shultz, Berger and Boyd; leave out Quon and the rest). Also switch Kyllo to its official PDF."* (P1.14, P1.15)
 - *"Approved: download the nine official GovInfo PDFs listed."*
 - *"Take your recommendations on all four: correct Lawbox where both scans agree and have agents review every correction; straight quotation marks throughout; majority joiners from the Reporter's lineup where printed; Goldman's Stone and Frankfurter statement as concurrence in the judgment."* (P1.16 to P1.19)
+
+## Oct 23, 2026, 20:14 CDT — Phase 1: Corpus (verification round 2; Clinton added; corrections policy changed)
+
+**Asked:** Add *Clinton v. Virginia* (pull, official PDF, build, verify). Then, after round 2: apply only agent-confirmed corrections, keep the two-scan check as a report, run a comma and period check and a final agent pass. Then prepare for compaction.
+
+**Came back:**
+- *Clinton v. Virginia* (377 U.S. 158) pulled (6 requests), official PDF downloaded (33 official PDFs in all), built; its verification agent found no errors. Corpus: 32 cases.
+- Verification round 2: ten Opus agents. Six re-checked the 21 original cases against round 1 (`BRIEF_ROUND2.md`); three verified the ten earlier additions in full; one verified *Clinton*. Structure and metadata were right in every case (headings, types, authors, joiners including lineup joiners and partial joins, boundaries, footnotes, sections, dates, votes). Nearly every round-1 error was fixed. Clean: *Kyllo*, *Grady*, *Jacobsen*, *Hester*, *Clinton*.
+- Found in round 2: about half the automatic two-scan corrections were wrong (roughly 26 right, 22 wrong; shared OCR misreadings); about 25 comma and period errors in the Lawbox copies, which the scripts did not compare; about 12 page breaks one word off or matched to a citation in a later opinion; more Lawbox encodings (Windows-1252 bytes for "œ" and "†", a double-escaped entity, closed ellipses); a few PDF spacing faults. Every open item is listed in `docs/sessions/phase1-handoff.md`.
+- Fixes written and committed untested (see the handoff file); the corpus in `data/corpus/` is still the pre-fix build.
+- Locked P1.20 (*Clinton*) and P1.21 (only agent-confirmed corrections change the text; amends P1.16).
+
+**Failures:** The two-scan rule (P1.16) proved unreliable in practice: two independent OCRs of the same page often make the same mistake. Replaced by P1.21.
+
+**DECISION (user):**
+- *"Add Clinton v. Virginia: pull it, download its official PDF (approved), build and verify it."* (P1.20)
+- *"I want to apply only agent-confirmed corrections from the reviewed table; keep the two-scan check as a report of candidates, not an automatic change. Run the comma/period check and the final agent pass you described."* (P1.21)
+- *"However, we're at context limit here. I would have to compact. I want you to prep the ground and prepare for compaction first."*

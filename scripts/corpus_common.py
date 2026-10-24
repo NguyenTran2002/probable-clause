@@ -45,8 +45,11 @@ def text_of(fragment: str) -> str:
     """Plain text of an HTML fragment. Also repairs Lawbox's encoding: its em
     dashes are the Windows-1252 byte 0x97 read as a Unicode control character,
     with a stray space beside it (the U.S. Reports set em dashes closed up)."""
-    t = html.unescape(re.sub(r"<[^>]+>", "", fragment))
+    t = html.unescape(html.unescape(re.sub(r"<[^>]+>", "", fragment)))  # Lawbox double-escapes some ("&amp;mdash;")
+    t = re.sub(r"\s*&mdash\b;?\s*", "\u2014", t).replace("&ndash;", "\u2013")
     t = re.sub(r"[ \t\n]*\x97[ \t\n]*", "\u2014", t)
+    # Other Windows-1252 bytes read as control characters (0x9C "œ", 0x86 "†").
+    t = re.sub(r"[\x80-\x9f]", lambda m: bytes([ord(m.group(0))]).decode("cp1252", "replace"), t)
     return unicodedata.normalize("NFC", re.sub(r"\s+", " ", t)).strip()
 
 

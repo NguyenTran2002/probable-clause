@@ -70,18 +70,11 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 23, 2026, 19:53 CDT, during verification round 2.*
+*Updated Oct 23, 2026, 20:14 CDT, before a planned compaction.*
 
-- **State:** Phase 0 done. Phase 1 decisions P1.1 to P1.19 locked (read `locked-decisions.md` in full). The corpus is 31 core cases (21 original plus 10 from the filter check, P1.14), 99 opinions, 598,889 tokens (`claude-sonnet-5-5`). Built, never committed: `data/corpus/cases/*.json` and `data/corpus/manifest.json` (gitignored until the freeze).
-- **How the corpus is built** (all re-runnable, in this order):
-  1. `uv run python scripts/pull_courtlistener.py` (raw cache; resumes from cache)
-  2. `uv run python scripts/fetch_official_pdfs.py` (32 official PDFs, approved by the user)
-  3. `uv run python scripts/build_corpus.py` (Lawbox adapter for the older cases with two-scan corrections and pages from the official PDF; official-PDF adapter for Kyllo, Quon-era and later cases; Chatrie from the slip PDF; then `scripts/corrections.json`, lineup joiners, Chief Justice by date)
-  4. `uv run python scripts/verify_corpus.py` and `scripts/verify_lineup.py` (reports in `data/verification/`)
-  5. `uv run python scripts/build_manifest.py` (coverage dates, token counts; free endpoint)
-  6. `uv run python scripts/filter_check.py` (done; P1.14 decided)
-- **Verification (P1.1):** round 1 (six Opus agents, `data/verification/agents/batch1-6.json`) found Lawbox wording errors and cleaning faults; the rework fixed them. Round 2 is running: `r2_batch1-6` re-check the 21 original cases (`BRIEF_ROUND2.md`); `batch7-9` verify the 10 new cases in full (`BRIEF.md`). Independent case list: `independent_list.json`.
-- **Next:**
-  1. Fold round-2 findings into code or `scripts/corrections.json`; rebuild; re-verify by script.
-  2. Report to the user: what verification found and fixed, what remains, the *Ex parte Jackson* date (CourtListener's, the volume prints none), and *Clinton v. Virginia* (proposed by the independent agent after P1.14).
-  3. The user approves the corpus. Then: decide whether the cleaned text is committed (brief default 3; licensing notes say public domain), freeze, log, update this section, commit, tag `phase-1-done` (check `git status` for the frontend session's work first).
+- **State:** Phase 0 done. Phase 1 decisions P1.1 to P1.21 locked; read `docs/design/locked-decisions.md` in full (P1.21 replaces P1.16's automatic corrections). The corpus is 32 core cases (21 original, 10 from the filter check, *Clinton*). Built, never committed: `data/corpus/cases/*.json`, `data/corpus/manifest.json` (gitignored until the freeze). The built files are the pre-fix build; fixes from verification round 2 are written in the scripts (committed, untested) but not yet applied.
+- **Read next: `docs/sessions/phase1-handoff.md`.** It lists every open finding from verification rounds 1 and 2 and the next steps in order: make two-scan report-only (P1.21); move all agent-confirmed corrections into `scripts/corrections.json` (new entry types for page breaks and notes); finish the generic fixes; add the comma and period check; rebuild and re-verify by script; run the final agent pass; report to the user for approval; then freeze, log, commit, tag.
+- **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py` (resumes from cache), `fetch_official_pdfs.py` (33 approved PDFs), `build_corpus.py` (`CORPUS_OUT=<dir>` to test elsewhere), `verify_corpus.py`, `verify_lineup.py`, `build_manifest.py` (token counts, free endpoint), `filter_check.py` (done).
+- **Verification agents' findings** are in `data/verification/agents/` (gitignored): round 1 `batch1-6.json`, round 2 `r2_batch1-6.json`, new cases `batch7-10.json`, the independent case list `independent_list.json`; briefs `BRIEF.md` (updated for P1.17 to P1.18 conventions) and `BRIEF_ROUND2.md`. Agents run on Opus and are never told the main session's conclusions.
+- **Frontend session:** it has uncommitted work in `web/looktests/machinery/`. Never touch it; before tagging, ask the user.
+- **Open for the user:** *Boyd*'s quoted caption on p.618 (include or not); at the freeze, whether to commit the cleaned corpus (brief default 3).

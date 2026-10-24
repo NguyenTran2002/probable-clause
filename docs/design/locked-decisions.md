@@ -200,3 +200,9 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** *Clinton v. Virginia*, 377 U.S. 158 (1964) (per curiam: a listening device stuck into a wall is a search, under *Silverman*), proposed by the independent case-list agent (P1.1) after P1.14, joins the corpus as a core case. Its official PDF is downloaded with the user's approval, and it is verified like the other additions.
 - **User's words:** *"Add Clinton v. Virginia: pull it, download its official PDF (approved), build and verify it."*
 - **Date:** Oct 23, 2026
+
+### P1.21 Only agent-confirmed corrections change the text (amends P1.16)
+
+- **Decision:** The automatic two-scan correction of P1.16 no longer changes the corpus. Verification round 2 found about half of its corrections wrong (roughly 26 right, 22 wrong): the official text layer and the Harvard scan often share a misreading (O read as 0, A1 as Al, III as Ill, Amdt. as Arndt, accents and "œ" dropped, a paragraph-opening "I" deleted, small capitals and line-end hyphens split). The build applies only the reviewed corrections table (`scripts/corrections.json`), and every entry in it is a correction a verification agent confirmed against the page image. The two-scan check stays as a report of candidates. A scripted comma and period check (Lawbox against the official text and Harvard) is added as a report, and a final agent pass reviews what changed.
+- **User's words:** *"I want to apply only agent-confirmed corrections from the reviewed table; keep the two-scan check as a report of candidates, not an automatic change. Run the comma/period check and the final agent pass you described."*
+- **Date:** Oct 23, 2026

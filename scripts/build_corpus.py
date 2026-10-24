@@ -18,6 +18,7 @@ Usage:
 
 import html
 import json
+import os
 import re
 import subprocess
 import sys
@@ -32,7 +33,7 @@ from corpus_common import (BARE, HEADING, PER_CURIAM, ROLELESS, STATEMENT, STATE
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
-OUT = ROOT / "data" / "corpus" / "cases"
+OUT = Path(os.environ.get("CORPUS_OUT", ROOT / "data" / "corpus" / "cases"))
 
 # Text source of record per case (P1.11). Lawbox: CourtListener's Lawbox copy.
 LAWBOX = {
@@ -77,6 +78,10 @@ def lawbox_text(fragment: str) -> str:
     t = re.sub(r"_{3,}", "\u2014\u2014", t)
     t = re.sub(r"(?<![.\w])\.\.\.\.\.(?!\.)", ". . . . .", t)
     t = t.replace(".. . .", ". . . .")
+    t = re.sub(r"(?<!\.)\.\.\.(?!\.)", ". . .", t)  # Lawbox's closed "..." for the printed ". . ."
+    # Lawbox attaches a three-dot ellipsis to the word before it ("clear. . .
+    # that"); the print spaces it. Four dots (a period, then the ellipsis) stay.
+    t = re.sub(r"(?<=[^\s.(\[])(\. \. \.)(?! \.)", r" \1", t)
     for _ in range(3):
         t = re.sub(r"\b([A-Z])\.(?=(?:[A-Z]\.|\d))", r"\1. ", t)
     t = re.sub(r"\b(MR|MRS|MESSRS|DR)\.(?=[A-Z])", r"\1. ", t)
@@ -135,6 +140,15 @@ def lawbox_case(key: str, cluster_id: int) -> dict:
         text = lawbox_text(para)
         if not text:
             continue
+        # Lawbox sets a marker hard against the next word ('."<sup>[8]</sup>Oliver');
+        # the print has a space there.
+        for r in sorted(refs, key=lambda r: -r["offset"]):
+            o = r["offset"]
+            if 0 < o < len(text) and not text[o - 1].isspace() and re.match(r'''[A-Za-z0-9(\["']''', text[o]) \
+                    and not text[o - 1].isalnum():
+                text = text[:o] + " " + text[o:]
+                for b in breaks:
+                    b["offset"] += 1 if b["offset"] >= o else 0
         if kind == "h2":
             if current is not None:
                 current["paragraphs"].append({"text": text, "kind": "section", "page_start": page_at_start(breaks, page),
@@ -262,24 +276,50 @@ def snap(text: str, offset: int) -> int:
     return offset
 
 
-def pages_from(text: str, otoks: list, opages: list, oindex: dict, near: int):
+def pages_from(text: str, otoks: list, opages: list, oindex: dict, near: int, harvard=None):
     """Align one paragraph with an official stream; return (start page, breaks,
-    stream position), or None."""
+    stream position), or None.
+
+    A match that jumps far ahead in the stream (the paragraph's last citation
+    found again in a later opinion) is dropped. Where words at a page turn did
+    not match, Harvard's page markers decide when given; otherwise the break goes
+    right after the last word matched on the earlier page."""
     ptoks = norm_tokens(text)
     hit = align(ptoks, otoks, oindex, near) if ptoks else None
     if hit is None:
         return None
-    pages = word_pages(ptoks, hit[0], hit[1], opages)
+    base, sm = hit
+    pages = [None] * len(ptoks)
+    prev_b, prev_a = None, None
+    for b in sm.get_matching_blocks():
+        if not b.size:
+            continue
+        if prev_b is not None and b.b - prev_b > 40 and b.a - prev_a < 6:
+            break  # far jump with little corpus text between: a match elsewhere
+        for i in range(b.size):
+            pages[b.a + i] = opages[base + b.b + i]
+        prev_b, prev_a = b.b + b.size, b.a + b.size
+    if harvard:
+        hpg = harvard(ptoks)
+        if hpg:
+            pages = [hp if (pg is None and hp is not None) else pg for pg, hp in zip(pages, hpg)]
     known = [pg for pg in pages if pg is not None]
     if not known:
         return None
-    last = known[0]
-    for i, pg in enumerate(pages):  # unmatched words take the page before; never go back
-        last = pg if pg is not None and pg >= last else last
-        pages[i] = last
+    first = known[0]
+    # Unmatched words at a page turn belong to the later page (the break is
+    # placed right after the last word matched on the earlier page).
+    out, nxt = [None] * len(pages), None
+    for i in range(len(pages) - 1, -1, -1):
+        nxt = pages[i] if pages[i] is not None else nxt
+        out[i] = nxt if nxt is not None else first
+    last = first
+    for i, pg in enumerate(out):  # never go back
+        last = max(last, pg)
+        out[i] = last
     offs = token_offsets(text)
-    breaks = [{"offset": snap(text, offs[i]), "page": pages[i]} for i in range(1, len(pages)) if pages[i] != pages[i - 1]]
-    return pages[0], breaks, hit[0]
+    breaks = [{"offset": snap(text, offs[i]), "page": out[i]} for i in range(1, len(out)) if out[i] != out[i - 1]]
+    return out[0], breaks, base
 
 
 def reanchor_pages(case: dict, key: str) -> None:
@@ -350,6 +390,32 @@ def harvard_tokens(key: str) -> list[str]:
     return norm_tokens(" ".join(parts))
 
 
+CONFUSABLE = str.maketrans({"0": "o", "1": "l", "i": "l", "5": "s", "8": "b"})
+
+
+def refuse(c_seg: list[str], o_seg: list[str], c_span: str) -> str | None:
+    """Why a two-scan correction must not be made, or None. Verification found
+    the two OCRs share misreadings: O read as 0, 1 as l, III as Ill, m as rn,
+    accents dropped, small capitals split, line-end hyphens dropped."""
+    from corpus_pdf import vocabulary
+    words = vocabulary()
+    c, o = " ".join(c_seg), " ".join(o_seg)
+    if c and c.translate(CONFUSABLE).replace("rn", "m") == o.translate(CONFUSABLE).replace("rn", "m"):
+        return "OCR-confusable characters"
+    if re.search(r"[^\x00-\x7f]", c_span):
+        return "accented letter in Lawbox (OCR drops accents)"
+    if c_seg and o_seg and "".join(c_seg) == "".join(o_seg):
+        joined = "".join(c_seg)
+        if not ("-" in c_span and len(o_seg) == 1 and joined in words and not re.search(r"-[A-Z]", c_span)):
+            return "word division only"
+    for cw, ow in zip(c_seg, o_seg):
+        if cw != ow and cw in words and ow not in words and not ow.isdigit():
+            return "Lawbox has a word where the scans have a non-word"
+    if len(o_seg) > len(c_seg) and any(w not in words and not w.isdigit() for w in o_seg):
+        return "the scans split a word into fragments"
+    return None
+
+
 def two_scan_corrections(case: dict, key: str) -> None:
     """P1.16: correct Lawbox where two independent scans of the print agree.
 
@@ -373,7 +439,7 @@ def two_scan_corrections(case: dict, key: str) -> None:
             return False
         return any(htoks[i:i + len(seq)] == seq for i in h4.get(tuple(seq[:4]), ()))
 
-    log = []
+    log, refused = [], []
     streams = {}
     for region in ("body", "foot"):
         t, pg, _, _, raw = official_stream(pdf, labels, vocab, region)
@@ -394,6 +460,11 @@ def two_scan_corrections(case: dict, key: str) -> None:
             c_seg, o_seg = ptoks[a0:a1], otoks[base + b0:base + b1]
             left, right = ptoks[max(0, a0 - 4):a0], ptoks[a1:a1 + 4]
             if not (in_harvard(left + o_seg + right) and not in_harvard(left + c_seg + right)):
+                continue
+            c_span = text[offs[a0][0]:offs[a1 - 1][1]] if c_seg else ""
+            why = refuse(c_seg, o_seg, c_span)
+            if why:
+                refused.append({"where": where, "lawbox": c_span or "(nothing)", "scans": " ".join(o_seg), "why": why})
                 continue
             # The official words as printed, from the first token's start to the last's end.
             words, last = [], None
@@ -455,6 +526,7 @@ def two_scan_corrections(case: dict, key: str) -> None:
             f["paragraphs"] = [correct(x, "foot", f"op{oi}.fn{f['label']}.{qi}")[0]
                                for qi, x in enumerate(f["paragraphs"])]
     case["cleaning"]["two_scan_corrections"] = log
+    case["cleaning"]["two_scan_refused"] = refused
 
 
 CORRECTIONS = Path(__file__).resolve().parent / "corrections.json"
