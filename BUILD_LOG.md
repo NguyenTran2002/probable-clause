@@ -214,3 +214,35 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - A script meant to find divided words at page turns misread *Shultz*'s ("re-|quired" taken as "report"); the confirming agent caught it.
 
 **DECISION (user):** *"Approved. Include Boyd's p.618 caption as a quote paragraph, commit the cleaned corpus with attribution (default 3), and accept the two smaller points as recommended. Go ahead with the freeze."* (P1.22)
+
+## Oct 24, 2026, 13:59 CDT — Frontend look tests: the user's directions along the way (supplement)
+
+**Asked:** The user asked that `BUILD_LOG.md` hold every decision now that the frontend look-test conversation has concluded. The fold-in of Oct 23, 20:48 CDT recorded only the final choice of direction. This entry carries the user's directions from the frontend session's own log (`docs/sessions/frontend-log.md`, entries of Oct 23, 17:34 to 20:18 CDT), quoted from its DECISION lines. That log had no later entries, and the frontend session has nothing uncommitted.
+
+**Came back:**
+- 17:34, three looks: *"Build the three looks as proposed."* No direction picked.
+- 19:04, the machinery prototype:
+  - The vision: *"The demo is legal flavor, but it's a TECH demo foremost."* *"I want sleek, modern, easy to follow and catchy, all the good UXUI principles that will hold a person's attention to see the tech in action."* *"We would want a very intuitive and impressive landing page that transitions into the research UXUI after a natural language request is typed in, or an user clicking a chip of a recorded request."*
+  - The audience: *"most likely a technical person, looking to see Claude and Claude Citations in action."* When the answer finishes, *"they should be thinking that Claude Citation is a really neat feature that can be easily and effectively incorporated into my systems."*
+  - The machinery: *"Showing the raw API and underneath machinery might actually be a great thing. Let's prototype it up first because it would be hard to find the right balance without seeing it visually."*
+  - Granularity: sentence blocks are *"Not yet on the backend; that's the main session's call. But build the prototype to handle both"*. *"Record this shape as an assumption for the Phase 3 interfaces contract, not a locked decision."*
+- 19:31, polish:
+  - *"This is a very good start."*
+  - Hovering a cited sentence should make *"the right hand section … scroll to the right source on hover"*.
+  - The question being *"teleported all the way to the header … can be confusing"*; *"I'd want a familiar chat UI, where things start moving up a bit by a bit as more steps are taken"*.
+  - *"getting rid of the Plain, Annotated, and API traffic toggle to declutter. Instead, for each source, there should be a clearly labeled button that will display the request and response that led to that citation, ideally in a modal"*, showing *"both API traffics and the rendered source"*.
+  - *"No coherent color palette. Mock up a few options? I want automatic dark mode handling as well that follow system's settings."*
+  - The stripe *"protruding further than the rounded border"* is *"jarring if unfixed."*
+- 19:50, Evergreen chosen:
+  - *"I like evergreen to help keep the eye strain down while reading thru text heavy legal docs."*
+  - The answer: *"present the answer normally, with cited sentences highlighted appropriately, where as not highlighted sentences are assumed to be Claude's synthesis. We can guide the user right underneath the Answer header which sentence is synthesis and which is supported by citation."*
+  - The outline: *"use code to investigate and ensure everything smoothes into each other perfectly."*
+  - The API window: *"The API modal is using too much vertical space, decrease it."* The layout bug: a *"Critical display bug"*, *"jarring"*.
+- 20:03, wider conversation and source reader:
+  - *"Good improvements."* *"On desktop, increase the amount of width that the chat interface uses by 50% to both sizes."*
+  - *"For each source, next to View API calls buttons, have a View Source button that will open a reader modal that lets the user scroll thru the whole actual text, starting from the cited excerpt."*
+- 20:13, width revised: *"You understood my 50% request correctly. I changed my mind, however, I want only 25% growth overall to both sides compared to the original width now."*
+- 20:17, disclosure line: *"Good. One last polish note, the sentence "Answers are written by Claude, Anthropic's model, through the Claude API; check them against the opinions.", start it on a new line always."*
+- 20:18, the direction: *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."* (Folded in at 20:48; locked as a T-entry in Phase 3 under P1.6.)
+
+**DECISION (user):** That this log is where every decision is kept: *"BUILD LOG is our authoritative and final source of updating decision now that the front end parallel conversation has concluded. Make sure it's up to date."*
