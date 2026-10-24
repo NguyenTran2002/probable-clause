@@ -21,7 +21,11 @@ printed does not matter) and aligned word by word. Reported per case:
     markers (an independent source); for every case, each paragraph's first
     word is checked against the official PDF's page;
   - official text covered by no corpus paragraph, in runs of 15+ words
-    (expected: syllabus, counsel, running heads; anything else is missing text).
+    (expected: syllabus, counsel, running heads; anything else is missing text);
+  - commas and periods (P1.21), for the Lawbox cases: every gap between two
+    words where the official text layer and Harvard's scan agree on the commas,
+    periods, semicolons and colons and the corpus differs. A report of
+    candidates for agent review; nothing is changed.
 
 Usage:
     uv run python scripts/verify_corpus.py [case_key ...]
@@ -31,6 +35,7 @@ Writes data/verification/text/<case>.json and prints a summary.
 import difflib
 import html
 import json
+import os
 import re
 import sys
 from collections import Counter
@@ -42,8 +47,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from corpus_align import K, align, kgram_index, locate, norm_tokens, official_stream, token_offsets, word_pages  # noqa: E402
 
 RAW = ROOT / "data" / "raw"
-CASES = ROOT / "data" / "corpus" / "cases"
-OUT = ROOT / "data" / "verification" / "text"
+CASES = Path(os.environ.get("CORPUS_OUT", ROOT / "data" / "corpus" / "cases"))  # as in build_corpus.py
+OUT = Path(os.environ.get("VERIFY_OUT", ROOT / "data" / "verification" / "text"))
 INTERRUPTION = 8  # official-only runs this long inside a paragraph are page furniture
 
 
@@ -113,6 +118,29 @@ def harvard_all(key: str) -> list[str] | None:
     return norm_tokens(" ".join(parts)) if parts else None
 
 
+def harvard_gaps(key: str) -> tuple[list[str], list[str]] | None:
+    """Harvard's whole scan (body and footnotes) as tokens and the text after
+    each token, for comparing punctuation."""
+    parts = []
+    for op in opinions_of(key):
+        if op.get("xml_harvard") and op.get("type") != "010combined":
+            x = re.sub(r"<page-number[^>]*>.*?</page-number>|<footnotemark>.*?</footnotemark>", " ", op["xml_harvard"], flags=re.S)
+            parts.append(html.unescape(re.sub(r"<[^>]+>", " ", x)))
+    if not parts:
+        return None
+    text = " ".join(parts).replace("\u00ad", "").lower()
+    ms = list(re.finditer(r"[a-z0-9]+", text))
+    return [m.group(0) for m in ms], [text[m.end():ms[i + 1].start()] if i + 1 < len(ms) else "" for i, m in enumerate(ms)]
+
+
+CP = ",.;:"
+
+
+def cp_key(gap: str) -> str:
+    """Commas, periods, semicolons and colons in a gap between words, in order."""
+    return "".join(ch for ch in gap if ch in CP)
+
+
 def corpus_units(case: dict):
     for oi, op in enumerate(case["opinions"]):
         for pi, p in enumerate(op["paragraphs"]):
@@ -163,6 +191,9 @@ def verify(key: str) -> dict:
     tindex = kgram_index(third) if third else None
     hv = harvard(key) if case["source"]["kind"] == "courtlistener-lawbox" else None
     hindex = kgram_index(hv[0]) if hv else None
+    hg = harvard_gaps(key) if case["source"]["kind"] == "courtlistener-lawbox" else None
+    hgindex = kgram_index(hg[0]) if hg else None
+    comma_period, hg_near = [], 0
 
     aligned, not_found, diffs, page_issues, harvard_pages, punct = 0, [], [], [], [], []
     interruptions, near, h_near = 0, 0, 0
@@ -211,6 +242,26 @@ def verify(key: str) -> dict:
                 if ck != ok:
                     punct.append({"where": u["where"], "corpus": cg.strip(), "official": og.strip(),
                                   "context": " ".join(ptoks[max(0, ci - 4):ci + 5])})
+        # Commas and periods where the official text and Harvard agree and the
+        # corpus differs (P1.21): word pairs matched in all three copies.
+        if hg:
+            h = align(ptoks, hg[0], hgindex, hg_near)
+            if h:
+                hg_near = h[0]
+                hmap = {blk.a + i: h[0] + blk.b + i for blk in h[1].get_matching_blocks() for i in range(blk.size)}
+                for blk in sm.get_matching_blocks():
+                    for i in range(blk.size - 1):
+                        ci, oj = blk.a + i, base + blk.b + i
+                        hj = hmap.get(ci)
+                        if hj is None or hmap.get(ci + 1) != hj + 1:
+                            continue
+                        cg = u["text"][offs[ci]:starts[ci + 1]]
+                        ok, hk = cp_key(oafter[oj]), cp_key(hg[1][hj])
+                        if ok == hk and cp_key(cg) != ok:
+                            comma_period.append({"where": u["where"], "page": opages[oj],
+                                                 "between": f"{ptoks[ci]} | {ptoks[ci + 1]}", "corpus": cg.strip(),
+                                                 "official_and_harvard": oafter[oj].strip(),
+                                                 "context": u["text"][max(0, offs[ci] - 50):starts[ci + 1] + 40]})
         for tag, a0, a1, b0, b1 in sm.get_opcodes():
             if tag == "equal":
                 continue
@@ -271,6 +322,7 @@ def verify(key: str) -> dict:
         "diffs": diffs, "diff_labels": dict(Counter(d["label"] for d in diffs)),
         "page_issues": page_issues, "harvard_page_issues": harvard_pages,
         "punctuation": punct, "punctuation_kinds": dict(Counter(punct_kind(p) for p in punct)),
+        "comma_period": comma_period,
         "uncovered_official": uncovered, "interruptions": interruptions,
         "official_words": sum(len(st["toks"]) for st in streams.values()),
         "official_words_covered": sum(sum(st["covered"]) for st in streams.values()), "third_copy": bool(third),
@@ -313,12 +365,13 @@ def split_across(c_seg: list[str], o_seg: list[str]) -> bool:
 def main() -> int:
     keys = sys.argv[1:] or sorted(p.stem for p in CASES.glob("*.json"))
     total = Counter()
-    print(f"{'case':16} {'units':>5} {'missing':>7} {'diffs':>5} {'pg-off':>6} {'pg-harv':>7} {'uncov':>5} punct")
+    print(f"{'case':16} {'units':>5} {'missing':>7} {'diffs':>5} {'pg-off':>6} {'pg-harv':>7} {'uncov':>5} {',.':>3} punct")
     for key in keys:
         r = verify(key)
         total.update(r["diff_labels"])
         print(f"{key:16} {r['units']:>5} {len(r['not_found']):>7} {len(r['diffs']):>5} {len(r['page_issues']):>6} "
-              f"{len(r['harvard_page_issues']):>7} {len(r['uncovered_official']):>5} {r['punctuation_kinds']}")
+              f"{len(r['harvard_page_issues']):>7} {len(r['uncovered_official']):>5} {len(r['comma_period']):>3} "
+              f"{r['punctuation_kinds']}")
     print(dict(total), sum(total.values()))
     return 0
 

@@ -11,11 +11,15 @@ offsets), removing running heads, page numbers and print-job lines, rejoining
 words broken across lines, restoring ligature letters the PDF's font map drops
 (only where another copy of the same case confirms the word), and normalising
 whitespace. Every change is counted per opinion in the case's "cleaning" stats.
+Beyond that, the only changes to the words are the reviewed corrections table
+(scripts/corrections.json), each entry confirmed by a verification agent against
+the page image (P1.21); the two-scan check lists candidates and changes nothing.
 
 Usage:
     uv run python scripts/build_corpus.py [case_key ...]
 """
 
+import difflib
 import html
 import json
 import os
@@ -76,12 +80,13 @@ def lawbox_text(fragment: str) -> str:
     t = text_of(fragment)
     t = re.sub(r"(?<![\d/])([123])/([234])(?![\d/])", lambda m: FRACTIONS.get(m.group(0), m.group(0)), t)
     t = re.sub(r"_{3,}", "\u2014\u2014", t)
+    t = re.sub(r"(?<=\d) (?=[\u00bd\u00bc\u00be\u2153\u2154])", "", t)  # "1 ½" for the printed "1½"
     t = re.sub(r"(?<![.\w])\.\.\.\.\.(?!\.)", ". . . . .", t)
     t = t.replace(".. . .", ". . . .")
     t = re.sub(r"(?<!\.)\.\.\.(?!\.)", ". . .", t)  # Lawbox's closed "..." for the printed ". . ."
     # Lawbox attaches a three-dot ellipsis to the word before it ("clear. . .
     # that"); the print spaces it. Four dots (a period, then the ellipsis) stay.
-    t = re.sub(r"(?<=[^\s.(\[])(\. \. \.)(?! \.)", r" \1", t)
+    t = re.sub(r"(?<=[^\s.(\[\"'\u201c\u2018\u2014])(\. \. \.)(?! \.)", r" \1", t)
     for _ in range(3):
         t = re.sub(r"\b([A-Z])\.(?=(?:[A-Z]\.|\d))", r"\1. ", t)
     t = re.sub(r"\b(MR|MRS|MESSRS|DR)\.(?=[A-Z])", r"\1. ", t)
@@ -114,6 +119,8 @@ def lawbox_case(key: str, cluster_id: int) -> dict:
     header_text = text_of(body.split("<p", 1)[0]) if body else ""
     decided = re.search(r"Decided ([A-Z][a-z]+ \d{1,2}, \d{4})", text_of(body[:4000]))
     argued = re.search(r"Argued ([^.]*?\d{4})", text_of(body[:4000]))
+    reargued = re.search(r"Reargued ([^.]*?\d{4})", text_of(body[:4000]))
+    submitted = re.search(r"Submitted ([^.]*?\d{4})", text_of(body[:4000]))
 
     page = int(cluster_cite_page(cluster))
     opinions, notes_for_case, current = [], [], None
@@ -134,7 +141,7 @@ def lawbox_case(key: str, cluster_id: int) -> dict:
                 breaks.append({"offset": clean_len, "page": page})
                 stats["page_markers"] += 1
             else:
-                refs.append({"offset": clean_len, "label": m.group(2) or m.group(3)})
+                refs.append({"offset": clean_len, "label": text_of(m.group(2) or m.group(3))})  # "\x86" is "†"
                 stats["footnote_markers"] += 1
         para += inner[pos:]
         text = lawbox_text(para)
@@ -245,7 +252,8 @@ def lawbox_case(key: str, cluster_id: int) -> dict:
         "key": key,
         "source": {"kind": "courtlistener-lawbox", "cluster": cluster_id, "opinion": combined["id"]},
         "decided_text": decided.group(1) if decided else None,
-        "argued_text": argued.group(1) if argued else None,
+        "argued_text": (argued.group(1) + (f"; reargued {reargued.group(1)}" if reargued else "") if argued
+                        else f"submitted {submitted.group(1)}" if submitted else None),
         "notes": notes_for_case,
         "header_footnotes_dropped": len(header_notes),
         "opinions": opinions,
@@ -268,9 +276,13 @@ def case_vocab(case: dict) -> set:
 
 
 def snap(text: str, offset: int) -> int:
-    """A page break that falls inside a printed word ("petitioner'|s") moves to
-    the start of the next word."""
+    """A page break at a word's first letter goes before any punctuation that
+    opens the word ('"general', "(1959)"); one that falls inside a printed word
+    ("petitioner'|s") moves to the start of the next word."""
     if 0 < offset < len(text) and not text[offset - 1].isspace():
+        start = text.rfind(" ", 0, offset) + 1
+        if not any(ch.isalnum() for ch in text[start:offset]):
+            return start
         nxt = text.find(" ", offset)
         return nxt + 1 if nxt != -1 else offset
     return offset
@@ -322,24 +334,41 @@ def pages_from(text: str, otoks: list, opages: list, oindex: dict, near: int, ha
     return out[0], breaks, base
 
 
+def wholly_on(ftext: list[str], here: list[str]) -> bool:
+    """Whether a footnote's words occur as one run on this page's footnote lines:
+    a window of its length matching at least 80% of its words and ending with
+    its last word."""
+    n = len(ftext)
+    if not n or len(here) < n:
+        return False
+    firsts = set(ftext[:3])
+    for i in range(len(here) - n + 1):
+        window = here[i:i + n]
+        if here[i] in firsts and window[-1] == ftext[-1] and \
+                difflib.SequenceMatcher(None, ftext, window, autojunk=False).ratio() >= 0.8:
+            return True
+    return False
+
+
 def reanchor_pages(case: dict, key: str) -> None:
     """Take a Lawbox case's page breaks from the official PDF. Lawbox moves its
     page markers to nearby sentence ends and gives footnotes no page. Body text
     is aligned with the PDF's body lines only (running heads such as "GOLDMAN v.
     UNITED STATES" would otherwise capture nearby words), and each footnote with
-    the footnote lines of its marker's page and the next."""
+    the footnote lines of its marker's page (and the next two, if it runs on)."""
     pdf, labels = official_pdf(key)
     vocab = case_vocab(case)
     btoks, bpages, *_ = official_stream(pdf, labels, vocab, "body")
     ftoks, fpages, *_ = official_stream(pdf, labels, vocab, "foot")
     bindex = kgram_index(btoks)
+    harvard = harvard_pager(key)
     stats = {"paragraphs_reanchored": 0, "paragraphs_not_found": 0, "breaks_changed": 0}
     near = 0
     for op in case["opinions"]:
         for p in op["paragraphs"]:
             if p["kind"] == "section":
                 continue
-            got = pages_from(p["text"], btoks, bpages, bindex, near)
+            got = pages_from(p["text"], btoks, bpages, bindex, near, harvard)
             if not got:
                 stats["paragraphs_not_found"] += 1
                 continue
@@ -360,7 +389,16 @@ def reanchor_pages(case: dict, key: str) -> None:
                 for b in para["page_breaks"]:
                     if b["offset"] <= off:
                         mpage = b["page"]
-            idx = [i for i, pg in enumerate(fpages) if mpage <= pg <= mpage + 1]
+            # A footnote wholly on its marker's page is looked for there alone,
+            # so an identical note on the next page ("Gouled v. United States,
+            # 255 U. S. 298.") cannot claim it; otherwise the page and the next
+            # two (Olmstead's note 13 runs from page 479 to 481).
+            # Wholly here: most of its words found on the page, its last words
+            # among them. OCR misreads a word or two ("Gouled n. United States").
+            here = [ftoks[i] for i, pg in enumerate(fpages) if pg == mpage]
+            ftext = norm_tokens(" ".join(f["paragraphs"]))
+            alone = wholly_on(ftext, here)
+            idx = [i for i, pg in enumerate(fpages) if mpage <= pg <= mpage + (0 if alone else 2)]
             sub_t = [ftoks[i] for i in idx]
             sub_p = [fpages[i] for i in idx]
             sub_index = kgram_index(sub_t)
@@ -390,6 +428,49 @@ def harvard_tokens(key: str) -> list[str]:
     return norm_tokens(" ".join(parts))
 
 
+def harvard_pages(key: str):
+    """Harvard's scan of the body text as (tokens, page of each token), from its
+    own page markers ("*475"); footnotes left out. Text before an opinion's
+    first marker is on the page before it."""
+    idx = json.loads((RAW / "pull_index.json").read_text())
+    cluster = json.loads((RAW / "clusters" / f"{idx[key]['cluster']}.json").read_text())
+    toks, pages = [], []
+    for u in cluster["sub_opinions"]:
+        op = json.loads((RAW / "opinions" / f"{u.rstrip('/').rsplit('/', 1)[-1]}.json").read_text())
+        if not op.get("xml_harvard") or op["type"] == "010combined":
+            continue
+        x = re.sub(r"<footnote\b.*?</footnote>|<footnotemark>.*?</footnotemark>", " ", op["xml_harvard"], flags=re.S)
+        parts = re.split(r'<page-number[^>]*label="(\d+)"[^>]*>.*?</page-number>', x)
+        labels = [int(v) for v in parts[1::2]]
+        if not labels:
+            continue
+        page = labels[0] - 1
+        for i, chunk in enumerate(parts[::2]):
+            words = norm_tokens(html.unescape(re.sub(r"<[^>]+>", " ", chunk)))
+            toks += words
+            pages += [page] * len(words)
+            page = labels[i] if i < len(labels) else page
+    return toks, pages
+
+
+def harvard_pager(key: str):
+    """A callback for pages_from: each paragraph word's page in Harvard's scan,
+    or None where it did not match. Paragraphs are looked up in order."""
+    toks, pages = harvard_pages(key)
+    if not toks:
+        return None
+    index, state = kgram_index(toks), {"near": 0}
+
+    def pager(ptoks: list[str]):
+        hit = align(ptoks, toks, index, state["near"])
+        if hit is None:
+            return None
+        base, sm = hit
+        state["near"] = base
+        return word_pages(ptoks, base, sm, pages)
+    return pager
+
+
 CONFUSABLE = str.maketrans({"0": "o", "1": "l", "i": "l", "5": "s", "8": "b"})
 
 
@@ -416,19 +497,22 @@ def refuse(c_seg: list[str], o_seg: list[str], c_span: str) -> str | None:
     return None
 
 
-def two_scan_corrections(case: dict, key: str) -> None:
-    """P1.16: correct Lawbox where two independent scans of the print agree.
+def two_scan_candidates(case: dict, key: str) -> None:
+    """P1.16 as amended by P1.21: list candidate corrections where two
+    independent scans of the print agree against Lawbox. The text is not changed;
+    only the reviewed table (apply_corrections) changes it.
 
     Each paragraph and footnote is aligned with the official PDF's text layer.
     At every short difference (up to 6 words on either side), the official
-    reading replaces Lawbox's only if Harvard's scan has the official reading in
-    the same context and not Lawbox's. The replacement is the official words as
-    printed, quotation marks straightened. Every correction is logged."""
+    reading is a candidate if Harvard's scan has the official reading in the
+    same context and not Lawbox's. A candidate is the official words as printed,
+    quotation marks straightened. Candidates the refusal filters reject (shared
+    OCR misreadings) are listed separately."""
     pdf, labels = official_pdf(key)
     vocab = case_vocab(case)
     htoks = harvard_tokens(key)
     if not htoks:
-        case["cleaning"]["two_scan_corrections"] = []
+        case["cleaning"]["two_scan_candidates"] = []
         return
     h4 = defaultdict(list)
     for i in range(len(htoks) - 3):
@@ -445,12 +529,12 @@ def two_scan_corrections(case: dict, key: str) -> None:
         t, pg, _, _, raw = official_stream(pdf, labels, vocab, region)
         streams[region] = (t, pg, raw, kgram_index(t))
 
-    def correct(text: str, region: str, where: str) -> tuple[str, list]:
+    def correct(text: str, region: str, where: str) -> None:
         otoks, opages, oraw, oindex = streams[region]
         ptoks = norm_tokens(text)
         hit = align(ptoks, otoks, oindex, 0) if len(ptoks) >= 3 else None
         if hit is None:
-            return text, []
+            return
         base, sm = hit
         offs = [(m.start(), m.end()) for m in re.finditer(r"[a-z0-9]+", text.lower())]
         edits = []
@@ -494,38 +578,17 @@ def two_scan_corrections(case: dict, key: str) -> None:
                 printed = ""
             page = opages[base + b0] if b1 > b0 else opages[base + max(0, b0 - 1)]
             edits.append((start, stop, printed, text[start:stop], page))
-        for start, stop, printed, before, page in sorted(edits, reverse=True):
-            text = text[:start] + printed + text[stop:]
         for start, stop, printed, before, page in sorted(edits):
-            log.append({"where": where, "page": page, "lawbox": before, "corrected": printed})
-        return text, sorted(edits)
-
-    def shift_refs(refs, edits):
-        for start, stop, printed, before, page in sorted(edits, reverse=True):
-            delta = len(printed) - (stop - start)
-            for r in refs:
-                if r["offset"] >= stop:
-                    r["offset"] += delta
-                elif r["offset"] > start:
-                    r["offset"] = start + len(printed)
+            log.append({"where": where, "page": page, "lawbox": before, "candidate": printed})
 
     for oi, op in enumerate(case["opinions"]):
         for pi, p in enumerate(op["paragraphs"]):
-            if p["kind"] == "section":
-                continue
-            p["text"], edits = correct(p["text"], "body", f"op{oi}.p{pi}")
-            shift_refs(p["footnote_refs"], edits)
-            shift_refs(p["page_breaks"], edits)
-            # footnote markers recorded against this paragraph move too
-            for f in op["footnotes"]:
-                if f.get("marker") and f["marker"][0] == pi:
-                    tmp = [{"offset": f["marker"][1]}]
-                    shift_refs(tmp, edits)
-                    f["marker"] = (pi, tmp[0]["offset"])
+            if p["kind"] != "section":
+                correct(p["text"], "body", f"op{oi}.p{pi}")
         for f in op["footnotes"]:
-            f["paragraphs"] = [correct(x, "foot", f"op{oi}.fn{f['label']}.{qi}")[0]
-                               for qi, x in enumerate(f["paragraphs"])]
-    case["cleaning"]["two_scan_corrections"] = log
+            for qi, x in enumerate(f["paragraphs"]):
+                correct(x, "foot", f"op{oi}.fn{f['label']}.{qi}")
+    case["cleaning"]["two_scan_candidates"] = log
     case["cleaning"]["two_scan_refused"] = refused
 
 
@@ -533,35 +596,40 @@ CORRECTIONS = Path(__file__).resolve().parent / "corrections.json"
 
 
 def apply_corrections(case: dict, key: str) -> None:
-    """The reviewed corrections table (scripts/corrections.json, P1.16): replace
-    an exact string, insert printed lines after a paragraph, or set paragraphs'
-    kind. Every entry must apply exactly once, or the build stops."""
+    """The reviewed corrections table (scripts/corrections.json, P1.16 as
+    amended by P1.21): replace an exact string, insert printed lines after a
+    paragraph, set paragraphs' kind, set an opinion's joined_by_note, or fix a
+    page break. Every entry must apply exactly once, or the build stops."""
     entries = [e for e in json.loads(CORRECTIONS.read_text())["entries"] if e["case"] == key]
     log = []
 
     def units():
+        """Each paragraph, and each footnote paragraph, with its text and its
+        page breaks (offsets into that text)."""
         for op in case["opinions"]:
             for p in op["paragraphs"]:
-                yield op, p, None
+                yield p, None, p["text"], p["page_breaks"]
             for f in op["footnotes"]:
-                for qi in range(len(f["paragraphs"])):
-                    yield op, f, qi
+                for qi, x in enumerate(f["paragraphs"]):
+                    yield f, qi, x, f["page_breaks"][qi] if f.get("page_breaks") else []
+
+    def unique(text: str):
+        hits = [(u, qi, t, breaks) for u, qi, t, breaks in units() if text in t]
+        total = sum(t.count(text) for _, _, t, _ in hits)
+        if total != 1:
+            sys.exit(f"{key}: correction text {text!r} found {total} times")
+        return hits[0]
 
     for e in entries:
         if "find" in e:
-            hits = [(op, u, qi) for op, u, qi in units()
-                    if (u["text"] if qi is None else u["paragraphs"][qi]).count(e["find"])]
-            total = sum((u["text"] if qi is None else u["paragraphs"][qi]).count(e["find"]) for _, u, qi in hits)
-            if total != 1:
-                sys.exit(f"{key}: correction {e['find']!r} found {total} times")
-            op, u, qi = hits[0]
-            text = u["text"] if qi is None else u["paragraphs"][qi]
+            u, qi, text, breaks = unique(e["find"])
             at, delta = text.index(e["find"]), len(e["replace"]) - len(e["find"])
             text = text.replace(e["find"], e["replace"])
+            moved = breaks + (u["footnote_refs"] if qi is None else [])
+            for item in moved:
+                item["offset"] += delta if item["offset"] > at else 0
             if qi is None:
                 u["text"] = text
-                for item in u["footnote_refs"] + u["page_breaks"]:
-                    item["offset"] += delta if item["offset"] > at else 0
             else:
                 u["paragraphs"][qi] = text
             log.append({"replaced": e["find"], "with": e["replace"], "source": e["source"]})
@@ -587,6 +655,44 @@ def apply_corrections(case: dict, key: str) -> None:
                     break
             else:
                 sys.exit(f"{key}: kind range {e['kind_from']!r} not found")
+        elif "set_note" in e:
+            ops = [op for op in case["opinions"] if op["author"][0] == e["set_note"] and op["type"] == e["type"]]
+            if len(ops) != 1:
+                sys.exit(f"{key}: {len(ops)} opinions match {e['set_note']} {e['type']}")
+            ops[0]["joined_by_note"] = e["note"]
+            log.append({"note": e["note"], "opinion": f"{e['set_note']} {e['type']}", "source": e["source"]})
+        elif "page_starts_at" in e:
+            # The printed page begins at this text: one break to it, here.
+            u, qi, text, breaks = unique(e["page_starts_at"])
+            at, page = snap(text, text.index(e["page_starts_at"])), e["page"]
+            kept = [b for b in breaks if b["page"] != page]
+            if at == 0:
+                if qi is None:
+                    u["page_start"] = page
+                else:
+                    u["page_starts"][qi] = page
+                    u["page"] = u["page_starts"][0]
+            else:
+                kept.append({"offset": at, "page": page})
+            breaks[:] = sorted(kept, key=lambda b: b["offset"])
+            log.append({"page_starts_at": e["page_starts_at"], "page": page, "source": e["source"]})
+        elif "remove_break" in e:
+            # A spurious break: the paragraph or footnote holding the text stays
+            # on the page before. Footnote paragraphs after it that were put on
+            # that page move back too.
+            u, qi, text, breaks = unique(e["remove_break"])
+            page = e["page"]
+            if not any(b["page"] == page for b in breaks) and not (qi is not None and page in u["page_starts"][qi + 1:]):
+                sys.exit(f"{key}: no break to {page} at {e['remove_break']!r}")
+            breaks[:] = [b for b in breaks if b["page"] != page]
+            if qi is not None:
+                for j in range(qi + 1, len(u["paragraphs"])):
+                    if u["page_starts"][j] == page:
+                        u["page_starts"][j] = page - 1
+                        u["page_breaks"][j] = [b for b in u["page_breaks"][j] if b["page"] != page]
+            log.append({"remove_break": e["remove_break"], "page": page, "source": e["source"]})
+        else:
+            sys.exit(f"{key}: unknown correction entry {e}")
     case["cleaning"]["reviewed_corrections"] = log
 
 
@@ -710,7 +816,7 @@ def main() -> int:
     for key in keys:
         if key in LAWBOX:
             case = lawbox_case(key, LAWBOX[key])
-            two_scan_corrections(case, key)
+            two_scan_candidates(case, key)
             reanchor_pages(case, key)
         elif key in PDF_CASES:
             name, first, ref_op, slip = PDF_CASES[key]
@@ -720,8 +826,8 @@ def main() -> int:
         else:
             print(f"{key}: no adapter yet")
             continue
-        apply_corrections(case, key)
         lineup_joiners(case, key)
+        apply_corrections(case, key)  # after the lineup, so a table note wins
         if not case.get("decided_text"):
             # The early U.S. Reports print the Term, not the decision date.
             idx = json.loads((RAW / "pull_index.json").read_text())

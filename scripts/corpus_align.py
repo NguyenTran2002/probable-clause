@@ -118,9 +118,12 @@ def locate(ptoks: list[str], index: dict, near: int | None = None) -> int | None
     Each matching run of K words votes for an implied start. Runs that occur
     elsewhere too (a syllabus repeating the facts, a phrase used twice) give
     stray votes, so a candidate needs real support, and positions after the
-    previous paragraph (`near`) are preferred. Text printed inside a paragraph
-    (a running head, a footnote) shifts the implied start of everything after
-    it, so the earliest well-supported start close to the best one wins."""
+    previous paragraph (`near`) are preferred: among forward candidates with
+    nearly the best support, the nearest wins (a statute quoted word for word in
+    a later opinion matches as well as the first quotation). Text printed inside
+    a paragraph (a running head, a footnote) shifts the implied start of
+    everything after it, so the earliest well-supported start close to the
+    chosen one wins."""
     votes = Counter()
     for j in range(0, max(1, len(ptoks) - K + 1)):
         for pos in index.get(tuple(ptoks[j:j + K]), ()):
@@ -129,10 +132,12 @@ def locate(ptoks: list[str], index: dict, near: int | None = None) -> int | None
         return None
     top = max(votes.values())
     strong = {v for v, c in votes.items() if c >= min(top, max(3, 0.2 * top))}
+    best = max(strong, key=lambda v: (votes[v], -v))
     if near is not None:
         forward = {v for v in strong if v >= near - 50}
         strong = forward or strong
-    best = max(strong, key=lambda v: (votes[v], -v))
+        top = max(votes[v] for v in strong)
+        best = min((v for v in strong if votes[v] >= 0.8 * top), key=lambda v: abs(v - near))
     return min(v for v in strong if best - 2 * len(ptoks) - 600 <= v <= best)
 
 

@@ -111,7 +111,21 @@ def read_pages(pdf: Path) -> list[list[dict]]:
                 lines.append({"words": words, "x0": words[0]["x0"], "x1": words[-1]["x1"],
                               "y0": min(w["y0"] for w in words),
                               "h": Counter(round(w["h"], 1) for w in words).most_common(1)[0][0]})
-        pages.append(sorted(lines, key=lambda l: (round(l["y0"]), l["x0"])))
+        lines.sort(key=lambda l: (round(l["y0"]), l["x0"]))
+        # A justified line with wide gaps can arrive as pieces at the same height
+        # ("latitude/longitude" | "coordinate" | "and"): one line. A page number
+        # standing alone stays its own line (classify reads the page label from it).
+        joined = []
+        for l in lines:
+            prev = joined[-1] if joined else None
+            if (prev and abs(l["y0"] - prev["y0"]) < 2 and 0 <= l["x0"] - prev["x1"] < 40  # body gaps measured to 22
+                    # pt; running-head pieces stand 79+ pt apart
+                    and not any(len(x["words"]) == 1 and re.fullmatch(r"\d+", x["words"][0]["t"]) for x in (prev, l))):
+                joined[-1] = {**prev, "words": prev["words"] + l["words"], "x1": l["x1"],
+                              "h": Counter(round(w["h"], 1) for w in prev["words"] + l["words"]).most_common(1)[0][0]}
+            else:
+                joined.append(l)
+        pages.append(joined)
     return pages
 
 
@@ -173,8 +187,8 @@ class Repairer:
         own = [t.lower() for t in WORD.findall(own_text)]
         self.own_vocab = Counter(own)
         self.own_hyphenated = {m.lower() for m in re.findall(r"\b\w+(?:-\w+)+\b", own_text)}
-        # Words printed inside a line (not first or last on it): how the document
-        # itself prints a word when no line break is involved.
+        # Words printed with no line break involved (see build_pdf_case): how the
+        # document itself prints a word.
         self.mid_tokens = Counter(t.lower().replace("’", "'") for t in WORD.findall(interior_text))
         self.mid_hyphenated = Counter(m.lower().replace("’", "'")
                                       for m in re.findall(r"\b\w+(?:-\w+)+\b", interior_text))
@@ -298,8 +312,21 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
     body_h, info = classify(pages)
     lossy = not any(w["t"].endswith("­") for p in pages for l in p for w in l["words"]) and not slip
     own_text = " ".join(w["t"] for p in pages for l in p for w in l["words"])
-    interior = " ".join(w["t"] for p in pages for l in p if l["kind"] != "header"
-                        for w in l["words"][1:-1] if not w.get("sup"))
+    # How the document prints words when no line break is involved: every word
+    # but a line's last if it ends in a hyphen, and a line's first if the line
+    # before ended in one ("byproduct" printed solid mid-line or line-final).
+    kept, broke = [], False
+    for p in pages:
+        for l in p:
+            if l["kind"] == "header":
+                continue
+            ws = [w["t"] for w in l["words"] if not w.get("sup")]
+            if not ws:
+                continue
+            ends = ws[-1].endswith(("-", "\u00ad"))
+            kept += ws[1 if broke else 0:len(ws) - 1 if ends else len(ws)]
+            broke = ends
+    interior = " ".join(kept)
     rep = Repairer(reference_text, own_text, lossy=lossy and reference_text is not None, interior_text=interior)
     if slip:
         rep.lossy = False  # the slip PDF keeps its ligatures; only hyphens need deciding
@@ -339,11 +366,14 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
                     joined = rep.hyphen(head[-1], t)
                 para["text"] = (head[0] + " " if len(head) == 2 else "") + joined
             elif first_on_line and (prev.endswith(("—", "–", "/", "www.")) or URLISH.search(prev.rsplit(" ", 1)[-1] or "")
-                                    and not prev.endswith((".", ",", ")"))):
+                                    and (not prev.endswith((".", ",", ")"))
+                                         or prev.endswith(".") and t[:1].islower())):  # "services.google." + "com/fh"
                 para["text"] = prev + t  # closed-up dash, or a URL broken at the line end
-            elif ((re.fullmatch(r"[,;:)\]]+", t) and not prev.endswith("[")) or prev.endswith("—")
-                  or (t.startswith("—") and not prev.endswith(". . ."))):  # ". . . —was" keeps its space
-                para["text"] = prev + t  # no space before closing punctuation or around an em dash
+            elif ((re.fullmatch(r"[,;:)\]][,;:)\].]*", t) and not prev.endswith("[")) or prev.endswith("—")
+                  or (t.startswith("—") and not prev.endswith(". . ."))  # ". . . —was" keeps its space
+                  or (re.fullmatch(r"[“‘`]+", prev.rsplit(" ", 1)[-1]) and t[:1] in "“‘`")):  # nested opening quotes
+                para["text"] = prev + t  # no space before closing punctuation ("Brief)."), around an em dash,
+                # or between opening quotes
             else:
                 para["text"] = prev + " " + t
             if pending_page is not None:
