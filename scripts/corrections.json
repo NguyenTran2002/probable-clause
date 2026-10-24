@@ -74,8 +74,8 @@
   {"case": "berger", "page_starts_at": "question under the Fourth Amendment", "page": 55, "source": "final_a", "reason": "\"probable-|cause\": a word divided across the page turn is on the page where it begins"},
   {"case": "olmstead", "page_starts_at": "It involved the employment", "page": 456, "source": "final_a", "reason": "\"unlaw-|fully\": a word divided across the page turn is on the page where it begins"},
   {"case": "katz", "page_starts_at": "to the problems presented by", "page": 356, "source": "final_b", "reason": "\"rele-|vant\": a word divided across the page turn is on the page where it begins"},
-  {"case": "dow", "page_starts_at": "Working with pers", "page": 242, "source": "script", "reason": "a line-end hyphen ends p. 241's body text; a word divided across the page turn is on the page where it begins"},
-  {"case": "dow", "page_starts_at": "warrantless inspections may be permitted", "page": 246, "source": "script", "reason": "a line-end hyphen ends p. 245's body text; a word divided across the page turn is on the page where it begins"},
-  {"case": "shultz", "page_starts_at": "or the filing of a false", "page": 41, "source": "script", "reason": "a line-end hyphen ends p. 40's body text; a word divided across the page turn is on the page where it begins"}
+  {"case": "dow", "page_starts_at": "Working with pers", "page": 242, "source": "final_pages2", "reason": "\"de-|scription\": a word divided across the page turn is on the page where it begins"},
+  {"case": "dow", "page_starts_at": "warrantless inspections may be permitted", "page": 246, "source": "final_pages2", "reason": "\"in-|spections\": a word divided across the page turn is on the page where it begins"},
+  {"case": "shultz", "page_starts_at": "report or the filing of a false", "page": 41, "source": "final_pages2", "reason": "\"re-|quired\": a word divided across the page turn is on the page where it begins"}
  ]
 }
