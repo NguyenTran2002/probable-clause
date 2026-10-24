@@ -669,3 +669,16 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - Retries: *"I'm leaning allowing retries for both Anthropic and Voyage. Especially when Voyage fails, I want to display a warning to user that quality of this response is affected due to this."*
 - T3.3: *"Lock topic 3 as T3.3 with retries as revised; compose from what was kept after retries run out."*
+
+## Oct 24, 2026, 18:13 CDT — Phase 3: Architecture, Area 3 (spend counters and caps, T3.4)
+**Asked:** Area 3, topic 4: how spend is counted and the $10 daily and $60 monthly caps enforced (P2.6, P2.7, brief §8.1, §8.4). Before it, the user stated the Voyage tier: *"I'm on Usage tier 1 for Voyage. Practically, we will never hit any limit. It's only during initial processing where we process every passage that we're at risk."*
+**Came back:**
+- The cache-read price conflict settled from Anthropic's pricing page (cached Oct 24, 13:29 CDT): Sonnet 5.5 $0.10 per million, Opus 5.5 $0.20; the claude-api skill's $0.20 for Sonnet is wrong, findings §3 stands.
+- Worst-case run cost from the T3.3 budget, by arithmetic: about $1.67 (loop input $0.943, loop output $0.08, composition $0.36, two composition attempts failing before their first block $0.24, Exa $0.021, Voyage under $0.03).
+- Three options: check at the start only; reserve the worst case at the start (B1); reserve a typical amount and extend during the run (B2). Recommended B1: one Atlas document per Chicago month, so the check and the reservation are one atomic update and the caps are never overshot however many instances run.
+- At the user's direction, every budget stop is recorded in Atlas (counts per day and a record per refusal) with a read-only report script.
+- T3.4 locked: see `docs/design/locked-decisions.md`.
+**Failures:** In the working doc I wrote topic 4's opening time as 18:08 CDT; the clock read 18:09. Corrected in the working doc (commit `f21948f`). From here on `date` runs in its own step before any time is written.
+**DECISION (user):**
+- B1 and the budget log: *"B1 is good, but I'd also want it logged in our database how many times have a run failed due to budget as well. This is for me to keep an eye on usage and refusal just in case."*
+- T3.4: *"Record everything stopped due to budget regardless of how as long as it's a budget concern. Lock otherwise."*
