@@ -153,3 +153,20 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The Reporter of Decisions' syllabus is left out of the citable corpus entirely, for every case, since it is not the Court's text ("no part of the opinion of the Court"). Only opinions (majority, plurality, concurrences, dissents, and Justices' statements) are citable. This supersedes the plan, in `docs/research/licensing.md` and the frontend brief, to keep the syllabus as a labelled passage.
 - **User's words:** *"Syllabus -> Strictly leave out of the citable corpus because they aren't from the Court."*
 - **Date:** Oct 23, 2026
+
+### P1.14 Filter-check additions
+
+- **Decision:** From the two-way filter check (brief §4.7, P1.9; `scripts/filter_check.py`), ten cases join the corpus as core cases:
+  - within the rule: *United States v. Lee*, 274 U.S. 559 (1927); *Hester v. United States*, 265 U.S. 57 (1924); *Oliver v. United States*, 466 U.S. 170 (1984); *United States v. Dunn*, 480 U.S. 294 (1987); *United States v. Jacobsen*, 466 U.S. 109 (1984);
+  - borderline, included on "extra over missing": *California v. Greenwood*, 486 U.S. 35 (1988); *Ex parte Jackson*, 96 U.S. 727 (1878); *California Bankers Assn. v. Shultz*, 416 U.S. 21 (1974); *Berger v. New York*, 388 U.S. 41 (1967);
+  - foundational, outside the rule's text: *Boyd v. United States*, 116 U.S. 616 (1886), cited by 17 of the 21 core cases.
+
+  Left out: *City of Ontario v. Quon* and every other candidate (among them *Hoffa*, *Lewis*, *Keith*, *Osborn*, the dog-sniff cases *Place* and *Caballes*, *Patel*, and the exclusionary-rule, standing and general warrant cases). *Quon* stays in the raw cache only. The independent case-list agent (P1.1) also proposed *Clinton v. Virginia*, 377 U.S. 158 (1964), after this decision was offered; it is not included.
+- **User's words:** *"Approve your recommended additions (the five squarely in the rule, plus Greenwood, Ex parte Jackson, Shultz, Berger and Boyd; leave out Quon and the rest)."*
+- **Date:** Oct 23, 2026
+
+### P1.15 *Kyllo* takes its text from the official PDF (amends P1.11)
+
+- **Decision:** *Kyllo*'s official GovInfo PDF is born-digital, so, by P1.12's reasoning, it replaces the Lawbox copy as the text of record. The Lawbox copy serves as the reference copy for repairs.
+- **User's words:** *"Also switch Kyllo to its official PDF."*
+- **Date:** Oct 23, 2026
