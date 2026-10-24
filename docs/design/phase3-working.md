@@ -302,7 +302,7 @@ Facts in brief §7, the frontend direction folded into `BUILD_LOG.md` (Oct 23, 2
 
 | # | Topic | Status | Notes |
 |---|---|---|---|
-| 1 | Record the lock | Open | The art-direction T-entry from the fold-ins (P1.6); no discussion, the user's sign-off |
+| 1 | Record the lock | **Locked T4.1** | The art-direction T-entry from the fold-ins (P1.6); no discussion, the user's sign-off |
 | 2 | The frontend stack | Open | Brief §2 default 1; the prototype is plain JavaScript, no library, no build step; served static by the web service (T3.5) |
 | 3 | Where Areas 1 to 3 change the prototype | Open | "Discarded" cards (P2.3: shown, never kept); the band's draft label vs T2.3's findings, overview and links; the red verifier flag vs T1.12's two checks and their line; "View source" needs the whole opinion vs T3.1's passage-only events; "View API calls" contents incl. composition and custom documents (T1.9); the contract assumption of `search_result` blocks (T1.9) |
 | 4 | New pieces in the prototype's style | Open | Waking and the long wait (T3.6), paused by a cap (T3.4), reconnecting, interrupted, abandoned (T3.2), the Voyage warning (T3.3), replay labels (brief §7.4), one question per run (T3.7); retries and pauses in the step log (T3.3, T3.2); cut-off, incomplete, error-stopped and time-limit answers (T1.11, T3.3, T3.5) |
@@ -311,3 +311,4 @@ Facts in brief §7, the frontend direction folded into `BUILD_LOG.md` (Oct 23, 2
 ### Discussion notes
 
 - **Topic 1 opened, 18:49 CDT.** Draft entry shown for the user's sign-off, from the fold-ins of Oct 23, 20:48 and Oct 24, 13:59 and the frontend log 19:04 to 20:18; checked in the prototype: the wordmark's "l" in its own span (brief §2), Google Fonts link for the three faces, `prefers-color-scheme` dark mode, `--chat: 51.25rem`.
+- **Locked T4.1**, 18:50 CDT (log entry of that time), as drafted. **Next: topic 2, the frontend stack.**

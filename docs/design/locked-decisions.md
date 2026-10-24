@@ -704,3 +704,25 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 7 as T3.7 with run events kept 24 hours, the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 (protections and retention, T3.7)"
+
+### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6)
+
+- **Decision:** Area 4, topic 1. The prototype at `web/looktests/machinery/` as of commit badc05f is the art direction and **the baseline for the build**: what it shows stays, except where Area 4's topic 3 changes it to match Areas 1 to 3 or topic 4 adds to it.
+  - **Character:** a tech demo first, legal in flavour, for a technical visitor who came to see Claude and Citations.
+  - **Flow:** the landing page's question box glides down into a chat-style conversation that grows from the bottom; a recorded-run chip starts a replay the same way.
+  - **Sources:** a column beside the conversation, each card showing its state.
+  - **The answer:** plain prose; cited sentences underlined in their passage's colour; hovering or tapping one scrolls its source into view and lights the cited text inside its paragraph, with a connecting line; sentences without a line are Claude's synthesis, explained by a key under the Answer heading.
+  - **"View API calls":** a modal of every Messages API exchange that touched the passage, one row each that opens on click, opening at the response behind the citation; capped at 36rem tall on desktop, full screen on a phone.
+  - **"View source":** a reader with the whole opinion, U.S. Reports page numbers in the margin, opening with the excerpt centred and the cited sentences lit, with "Back to the excerpt"; full screen on a phone, each page number above its paragraph.
+  - **Wordmark:** *Probable C**l**ause*, the "l" in the project's accent colour (brief §2).
+  - **Palette Evergreen**, in OKLCH: green-grey neutrals, a deep green accent, four source hues at equal lightness and chroma, red reserved for flags. **Dark mode follows the system.**
+  - **Type:** Instrument Sans (interface), Newsreader (the Court's text), JetBrains Mono (API traffic), from Google Fonts under the SIL Open Font License.
+  - **One reading width, 51.25rem**, shared by the landing page and the conversation.
+  - **The AI-disclosure sentence always starts its own line.**
+  - **Sizes:** every view checked at 1440×900, 393×852 and 852×393 (the iPhone 15 Pro upright and sideways), with no horizontal scroll, measured by element rectangles (brief §7.3).
+  - **Dropped in the real build:** the palette (Cobalt, Violet) and theme switcher banner, the scripted run, the mock opinion text, the version query strings.
+  - **Placeholders:** every piece of wording shown (notices, the not-legal-advice line, the answer key, the update-check label), settled in Area 5.
+  - **Not settled here:** the frontend stack (topic 2); the prototype's contract assumptions, such as citations as `search_result` block ranges, which T1.9 replaced with custom content documents (topic 3).
+- **User's words:** *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."* (Oct 23, 2026, frontend session.) *"Wait, the frontend prototype is done and locked. What will that change about this area?"* Then: *"Lock topic 1 as T4.1 as drafted."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:50 CDT — Phase 3: Architecture, Area 4 (art direction, T4.1)"

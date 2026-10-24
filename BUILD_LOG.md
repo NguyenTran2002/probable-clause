@@ -739,3 +739,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T3.5: Atlas open to all addresses, in us-central1, database `Probable_Clause`; client IP dropped and Secret Manager (*"Good on both notes."*); the URI's user readWrite on `Probable_Clause` and `Probable_Clause_test`; the GCP project `probable-clause` (1066460440617); *"Lock otherwise."*
 - T3.6: *"Lock topic 6 as T3.6: vectors in memory, the vectors file committed, the header on embedded text, the rest as proposed."*
 - T3.7: *"Lock topic 7 as T3.7 with run events kept 24 hours, the rest as proposed."*
+
+## Oct 24, 2026, 18:50 CDT — Phase 3: Architecture, Area 4 (art direction, T4.1)
+
+**Asked:** Open Area 4 (the interface) after the compaction. On the first draft of nine topics, the user pointed out that the frontend prototype is done and locked, and asked what that changes about the area. Then, with five topics confirmed, record the art-direction T-entry (P1.6) for the user's sign-off.
+
+**Came back:**
+- Area 4 re-scoped: the prototype (`web/looktests/machinery/`, commit badc05f) is the baseline, and what it shows stays. The area covers only what it leaves open, what Areas 1 to 3 force on it, and what it never built. Five topics: (1) record the lock; (2) the frontend stack; (3) where Areas 1 to 3 change the prototype ("discarded" cards against P2.3, the band's draft label against T2.3, the red verifier flag against T1.12, "View source" needing the whole opinion against T3.1, "View API calls" contents with composition and custom documents, T1.9); (4) new pieces in the prototype's style (states outside a normal run, retries and pauses, the answer's stop labels); (5) whether each call's cost is shown.
+- T4.1 drafted from the fold-ins (Oct 23, 20:48; Oct 24, 13:59) and the frontend log (19:04 to 20:18), each point checked in the prototype's code (the wordmark's "l" in its own span, the Google Fonts link, `prefers-color-scheme`, `--chat: 51.25rem`). Locked as T4.1.
+
+**DECISION (user):** *"Wait, the frontend prototype is done and locked. What will that change about this area?"* *"The five topics work. Open topic 1."* Then: *"Lock topic 1 as T4.1 as drafted."*
