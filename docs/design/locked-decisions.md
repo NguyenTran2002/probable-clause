@@ -726,3 +726,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."* (Oct 23, 2026, frontend session.) *"Wait, the frontend prototype is done and locked. What will that change about this area?"* Then: *"Lock topic 1 as T4.1 as drafted."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:50 CDT — Phase 3: Architecture, Area 4 (art direction, T4.1)"
+
+### T4.2 The frontend stack: plain JavaScript modules, no build step (settles brief §2 default 1)
+
+- **Decision:** Area 4, topic 2, option A:
+  - **Plain JavaScript as ES modules, no build step**, carried forward from the prototype (T4.1) and split by concern (for example the stream client, the renderer, the panels, the modals). What is committed under `web/` is exactly what is served.
+  - **One dependency: markdown-it**, vendored into `web/` at an exact version with its licence file; raw HTML off and links off in the answer (T3.7: links only from Exa results, built by our code).
+  - **Text inserted as text:** the build creates elements and sets their text, instead of the prototype's markup strings with an escape helper (T3.7).
+  - **The web service** (T3.5) is an nginx container on an exact pinned version, written here from scratch (no goodnight code, T3.5). Every response carries `Cache-Control: no-cache`, so each load revalidates by ETag; this replaces the prototype's `?v=` query strings.
+  - **Tests:** Node's built-in test runner, no dependencies, for the renderer and the straddle-fallback fixture (T1.11); mock fixtures checked against the event schema by the Python tests (P0.3); layout measured in the browser by element rectangles (brief §7.3).
+  - **Considered:** Vite with TypeScript (types against the contract and a dev server, for a build step and a Node toolchain in `web/`); a component framework (good with streaming state, but a rewrite of the locked prototype).
+- **User's words:** *"Lock topic 2 as T4.2: option A as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:52 CDT — Phase 3: Architecture, Area 4 (the frontend stack, T4.2)"

@@ -749,3 +749,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T4.1 drafted from the fold-ins (Oct 23, 20:48; Oct 24, 13:59) and the frontend log (19:04 to 20:18), each point checked in the prototype's code (the wordmark's "l" in its own span, the Google Fonts link, `prefers-color-scheme`, `--chat: 51.25rem`). Locked as T4.1.
 
 **DECISION (user):** *"Wait, the frontend prototype is done and locked. What will that change about this area?"* *"The five topics work. Open topic 1."* Then: *"Lock topic 1 as T4.1 as drafted."*
+
+## Oct 24, 2026, 18:52 CDT — Phase 3: Architecture, Area 4 (the frontend stack, T4.2)
+
+**Asked:** Area 4, topic 2: choose the frontend stack (brief §2 default 1, "Frontend chosen in Phase 3").
+
+**Came back:**
+- Facts: the prototype is three files (about 1,470 lines), plain JavaScript, no library, no build step, building markup with `innerHTML` and an escape helper; its stale-cache trouble was handled with `?v=` query strings, which T4.1 drops. Node 26.8.1 and npm 11.7.0 are on this machine.
+- Options laid out: (A) plain JavaScript as ES modules, no build step, one vendored Markdown library; (B) Vite with plain TypeScript; (C) a component framework, a rewrite of the locked prototype. Recommended A. Locked as T4.2.
+
+**DECISION (user):** *"Lock topic 2 as T4.2: option A as proposed."*
