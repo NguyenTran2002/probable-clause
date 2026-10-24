@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probable Clause prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-view="landing" data-mode="plain" data-pane="research">
+
+<p class="proto">Prototype for discussion. Fictional cases, sample text, placeholder notices. <a href="../index.html">Earlier looks</a></p>
+
+<section id="landing" aria-label="Start">
+  <div class="hero">
+    <h1 class="wordmark">Probable C<span class="l">l</span>ause</h1>
+    <p class="pitch">Ask about the Fourth Amendment and digital technology. Claude searches Supreme Court opinions, decides which passages to keep, and writes an answer whose every citation you can trace back to its source.</p>
+
+    <form id="ask" class="field">
+      <label class="sr" for="q">Your question</label>
+      <textarea id="q" rows="2" placeholder="Is reading a phone's stored location history a search?"></textarea>
+      <button type="submit">Research</button>
+    </form>
+
+    <div class="recorded">
+      <p>Or watch a recorded run</p>
+      <ul>
+        <li><button type="button" class="chip" data-q="Is reading a phone's stored location history a Fourth Amendment search?">Is reading a phone's stored location history a Fourth Amendment search?</button></li>
+        <li><button type="button" class="chip" data-q="When does the third-party records rule stop applying?">When does the third-party records rule stop applying?</button></li>
+        <li><button type="button" class="chip" data-q="Can police attach a GPS tracker to a car without a warrant?">Can police attach a GPS tracker to a car without a warrant?</button></li>
+      </ul>
+    </div>
+  </div>
+
+  <figure class="trace">
+    <div class="trace-row">
+      <div class="t-card t-answer">
+        <p class="t-where">In the answer</p>
+        <p><span class="t-cited">The majority set out the test the later cases apply.</span> <span class="pill h1">P-01</span></p>
+      </div>
+      <span class="t-link" aria-hidden="true"></span>
+      <div class="t-card t-source h1">
+        <p class="t-where">In the passages Claude kept</p>
+        <p class="t-case"><i>Exemplar v. United States</i>, majority</p>
+        <p class="t-text"><span class="dim">[Sample sentence before.]</span> <span class="hit">[Sample sentence stating the test.]</span> <span class="dim">[Sample sentence after.]</span></p>
+      </div>
+      <span class="t-link" aria-hidden="true"></span>
+      <div class="t-card t-wire">
+        <p class="t-where">In the API response</p>
+<pre><span class="k">"type"</span>: <span class="s">"search_result_location"</span>,
+<span class="k">"cited_text"</span>: <span class="s">"[Sample sentence stating the test.]"</span>,
+<span class="k">"start_block_index"</span>: <span class="n">1</span>,
+<span class="k">"end_block_index"</span>: <span class="n">2</span></pre>
+      </div>
+    </div>
+    <figcaption>Each cited sentence carries a citation the Claude API returned: a passage and the exact range of text it rests on. Follow one from the answer, to that range in the passage Claude kept, to the block in the response that links them.</figcaption>
+  </figure>
+
+  <footer class="fine">
+    <p>Research, not legal advice. Not a citator, and not exhaustive. You are using AI: answers are written by Claude, Anthropic's model, through the Claude API, so check them against the opinions. Corpus covers decisions through June 30, 2026, pulled Oct 23, 2026.</p>
+    <p>Independent project. Not affiliated with Anthropic.</p>
+  </footer>
+</section>
+
+<section id="run" aria-label="Research">
+  <header class="bar">
+    <button type="button" class="wordmark small" id="home" aria-label="Probable Clause, back to the start">Probable C<span class="l">l</span>ause</button>
+    <div class="asked">
+      <p id="asked-q"></p>
+      <p id="run-label"></p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="How much of the machinery to show">
+        <button type="button" data-mode="plain" aria-pressed="true">Plain</button>
+        <button type="button" data-mode="annotated" aria-pressed="false">Annotated</button>
+        <button type="button" data-mode="api" aria-pressed="false">API traffic</button>
+      </div>
+      <button type="button" class="ghost" id="skip">Skip to the end</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Panes">
+    <button type="button" data-pane="research">Research</button>
+    <button type="button" data-pane="sources">Sources <span class="count" id="tab-count"></span></button>
+    <button type="button" data-pane="wire" class="api-only">API</button>
+  </nav>
+
+  <div class="cols">
+    <section class="col" id="pane-research" aria-label="Steps and answer">
+      <p class="status" id="status"></p>
+      <ol class="steps" id="steps"></ol>
+      <section class="update" id="update" aria-label="Update check"></section>
+      <section class="answer" id="answer" aria-label="Answer"></section>
+      <div class="after" id="after">
+        <button type="button" id="replay">Play again</button>
+        <button type="button" class="ghost" id="again">Ask another question</button>
+      </div>
+      <footer class="fine">
+        <p>Research, not legal advice. Not a citator, and not exhaustive. Answers are written by Claude, Anthropic's model, through the Claude API; check every factual assertion against the opinions.</p>
+        <p>Opinion text comes from the U.S. Reports and Supreme Court opinions, via CourtListener, from Free Law Project. Free Law Project did not produce, review or endorse this analysis. The text is normalised from the official opinions and is unofficial; the official text is the U.S. Reports.</p>
+        <p>Corpus covers decisions through June 30, 2026, pulled Oct 23, 2026. Independent project. Not affiliated with Anthropic.</p>
+      </footer>
+    </section>
+
+    <aside class="col" id="pane-sources" aria-label="Sources">
+      <header class="col-head">
+        <h2>Sources</h2>
+        <p id="src-count">Passages appear here as Claude finds them.</p>
+        <div class="mid-switch api-only"><button type="button" data-pane="sources">Sources</button><button type="button" data-pane="wire">API</button></div>
+      </header>
+      <ol class="passages" id="passages"></ol>
+    </aside>
+
+    <aside class="col api-only" id="pane-wire" aria-label="API traffic">
+      <header class="col-head">
+        <h2>API traffic</h2>
+        <p>Every request and response in this run. Shapes follow the Messages API; values are sample.</p>
+        <div class="mid-switch"><button type="button" data-pane="sources">Sources</button><button type="button" data-pane="wire">API</button></div>
+      </header>
+      <ol class="wire" id="wire"></ol>
+    </aside>
+  </div>
+
+  <svg class="threads" id="threads" aria-hidden="true"></svg>
+</section>
+
+<script src="run.js"></script>
+</body>
+</html>

@@ -30,3 +30,46 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
 - Old Standard TT rendered bold italic case names as synthesized until weight 1,700 was requested.
 - In look 3, a `.tag` class name clashed with the synthesis label; renamed to `.synth-label` before anything rendered wrong.
 **DECISION (user):** Approved the proposal as made: *"Build the three looks as proposed."* No direction picked yet.
+
+## Oct 23, 2026, 19:04 CDT — Look tests: the machinery prototype
+**Asked:**
+- The user set the three looks aside and restated the vision: a tech demo first, legal in flavour. The audience is technical people coming to see Claude and Citations at work. It should be sleek, modern, easy to follow and catchy, with a landing page that turns into the research view when a question is typed or a recorded-run chip is clicked.
+- After discussion, the user asked for a prototype that shows the raw API and the machinery underneath, to find the right balance by seeing it.
+- Then the user asked me to check the Citations docs on citation granularity, and to make the prototype handle both paragraph and sentence citations.
+**Came back:**
+- `web/looktests/machinery/` (`index.html`, `style.css`, `run.js`), a throwaway prototype, linked from `web/looktests/index.html`:
+  - **Landing page:** the wordmark, one line on what the demo does, a question box, three recorded-run chips, and a small figure following one citation from the answer, to the cited text in a kept passage, to the block in the API response.
+  - **The transition:** submitting a question or clicking a chip moves the question box into the run view's header, using the View Transitions API, which falls back to an instant swap.
+  - **The run:** a scripted sample plays out live. Steps appear with Claude's own words between tool calls. Passages arrive, then are marked kept or discarded. The rejected submit, the web update check with every parameter, the accepted submit, and the answer streaming word by word. Then our case-name check flags *Phantom v. United States*. There is a "Skip to the end" button.
+  - **A switch between three views:**
+    - **Plain:** the product alone.
+    - **Annotated:** adds each tool call as a line of code, which block of the answer each sentence is, and block numbers inside passages.
+    - **API traffic:** adds a dark third column with every request and response, in Messages API shapes with sample values. Each request shows only the message new to it. Web result page text is withheld from the column (P1.3).
+  - **Each kept passage has its own colour.** Clicking or hovering a cited sentence draws a thread in that colour, from the sentence, to the cited text in the passage, to its citation block in the response.
+  - **Type:** Instrument Sans for the product, Newsreader for court text, JetBrains Mono for the API. All three are from Google Fonts under the SIL Open Font License.
+  - **Script:** plain JavaScript, no library and no build step. The brief asks for as little as possible; a live run and the transition can't be done without some.
+- **Citation granularity, checked against the docs on Oct 23, 2026:**
+  - The Citations page says plain text and PDF documents are chunked into sentences ("sentence chunking lets Claude cite a single sentence or chain together multiple consecutive sentences"). Custom content documents use the provided blocks "as-is".
+  - The search results page says of `search_result` blocks, which the brief's `search_corpus` returns: "The text block is the minimal citable unit: Claude cites whole blocks, not substrings within a block. To get finer-grained citations, split your search result content into smaller blocks." `cited_text` is "The full text of the cited block(s), concatenated."
+  - So with one paragraph per text block, as the brief has it, citations are whole paragraphs. Splitting a passage into one block per sentence would give sentence citations and keep everything else. That choice is the backend's.
+- **The prototype now handles both, with one rendering path:**
+  - Each passage is a list of text blocks. Each citation is a passage ID plus a block range `[start, end)`, as `search_result_location` reports it.
+  - The cited range is highlighted inside its paragraph, with the rest dimmed but readable.
+  - The mock data has both kinds. P-01, P-05 and P-07 are sentence blocks: one citation is a single sentence, another chains two sentences. P-02, P-03, P-04 and P-06 are single paragraph blocks.
+  - The frontend splits no sentences.
+- **ASSUMPTION for the Phase 3 interfaces contract (not a locked decision):** a passage reaches the frontend as an ordered list of text blocks, exactly as sent in the `search_result`'s `content`, so that concatenating them reproduces the passage. A citation reaches it as a passage ID plus `start_block_index` and `end_block_index`, end exclusive. Paragraph mode is one block per passage. The frontend never splits text itself.
+- **Checked** with element rectangles at 1440×900, 393×852 and 852×393, in every view and pane:
+  - No horizontal scroll, and no element outside the viewport.
+  - On a phone, tapping a cited sentence opens Sources with the cited range in view.
+- Wording grep is clean: none of the banned words, no em dashes, no absolute paths.
+**Failures:**
+- Chrome cancelled one of two smooth `scrollIntoView` calls made at once on different panes, so the passage never scrolled into view. Replaced with a per-pane scroll.
+- Switching panes on a phone replayed every entry animation. Now only newly arrived content animates.
+- The citation list was defined before the answer data, which stopped the script loading. Moved it after the data.
+- The thread's endpoint landed under a sticky column header. It is now clamped below the header.
+**DECISION (user):**
+- The vision, in the user's words: *"The demo is legal flavor, but it's a TECH demo foremost."* *"I want sleek, modern, easy to follow and catchy, all the good UXUI principles that will hold a person's attention to see the tech in action."* *"We would want a very intuitive and impressive landing page that transitions into the research UXUI after a natural language request is typed in, or an user clicking a chip of a recorded request."*
+- The audience: *"most likely a technical person, looking to see Claude and Claude Citations in action."* When the answer finishes, *"they should be thinking that Claude Citation is a really neat feature that can be easily and effectively incorporated into my systems."*
+- On showing the machinery: *"Showing the raw API and underneath machinery might actually be a great thing. Let's prototype it up first because it would be hard to find the right balance without seeing it visually."*
+- On granularity: sentence blocks are *"Not yet on the backend; that's the main session's call. But build the prototype to handle both"*. One rendering path with no mode switch, the cited range highlighted in context, no sentence splitting in the frontend, mock passages of both kinds. *"Record this shape as an assumption for the Phase 3 interfaces contract, not a locked decision."*
+- No direction picked yet. The user has not yet said which of Plain, Annotated and API traffic is closest to right.
