@@ -34,7 +34,7 @@ LAWBOX = {
     "olmstead": 101320, "goldman": 2443377, "on_lee": 105021, "silverman": 106187,
     "lopez": 106622, "berger": 107483, "katz": 107564, "white": 108304,
     "miller": 109433, "smith": 110118, "knotts": 110882, "karo": 111257,
-    "ciraolo": 111666, "dow": 111667, "florida_v_riley": 112175, "kyllo": 118443,
+    "ciraolo": 111666, "dow": 111667, "florida_v_riley": 112175,
 }
 
 # Official PDFs (P1.11): file, first U.S. page, the CourtListener cluster whose
@@ -46,7 +46,7 @@ PDF_CASES = {
     "grady": ("USREPORTS-575-306.pdf", 306, 2789928, False),
     "carpenter": ("USREPORTS-585-296.pdf", 296, 4510032, False),
     "jones": ("USREPORTS-565-400.pdf", 400, 622304, False),  # P1.12
-    "quon": ("USREPORTS-560-746.pdf", 746, 148797, False),  # P1.12, filter-check candidate
+    "kyllo": ("USREPORTS-533-27.pdf", 27, 118443, False),  # P1.15
     "chatrie": ("25-112_0am4.pdf", 1, None, True),
 }
 
@@ -257,12 +257,17 @@ def reanchor_pages(case: dict, key: str) -> None:
 
 
 def slip_text(cluster_id: int) -> str | None:
-    """The Court's slip opinion text as CourtListener holds it, for one cluster."""
+    """A reference copy of the same case for repairs: the Court's slip opinion
+    text as CourtListener holds it, or else its Lawbox copy."""
     cluster = json.loads((RAW / "clusters" / f"{cluster_id}.json").read_text())
-    for url in cluster["sub_opinions"]:
-        op = json.loads((RAW / "opinions" / f"{url.rstrip('/').rsplit('/', 1)[-1]}.json").read_text())
+    ops = [json.loads((RAW / "opinions" / f"{u.rstrip('/').rsplit('/', 1)[-1]}.json").read_text())
+           for u in cluster["sub_opinions"]]
+    for op in ops:
         if op.get("plain_text"):
             return op["plain_text"]
+    for op in ops:
+        if op.get("html_lawbox"):
+            return text_of(op["html_lawbox"].replace("</p>", "\n"))
     return None
 
 

@@ -101,7 +101,7 @@ def third_copy(case: dict, key: str) -> list[str] | None:
     for op in opinions_of(key) if key in json.loads((RAW / "pull_index.json").read_text()) else []:
         if op.get("plain_text"):
             return norm_tokens(re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", op["plain_text"]))
-    return None
+    return harvard_all(key)
 
 
 def harvard_all(key: str) -> list[str] | None:

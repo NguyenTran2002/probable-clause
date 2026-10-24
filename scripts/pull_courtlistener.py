@@ -53,8 +53,19 @@ CASES = [
     ("riley", "Riley v. California", "573 U.S. 373", "134 S. Ct. 2473", "core"),
     ("grady", "Grady v. North Carolina", "575 U.S. 306", "135 S. Ct. 1368", "core"),
     ("carpenter", "Carpenter v. United States", "585 U.S. 296", "138 S. Ct. 2206", "core"),
-    ("berger", "Berger v. New York", "388 U.S. 41", None, "filter-check"),
-    ("quon", "City of Ontario v. Quon", "560 U.S. 746", "130 S. Ct. 2619", "filter-check"),
+    # Filter-check additions (P1.14).
+    ("berger", "Berger v. New York", "388 U.S. 41", None, "core"),
+    ("ex_parte_jackson", "Ex parte Jackson", "96 U.S. 727", None, "core"),
+    ("boyd", "Boyd v. United States", "116 U.S. 616", None, "core"),
+    ("hester", "Hester v. United States", "265 U.S. 57", None, "core"),
+    ("lee", "United States v. Lee", "274 U.S. 559", None, "core"),
+    ("shultz", "California Bankers Assn. v. Shultz", "416 U.S. 21", None, "core"),
+    ("jacobsen", "United States v. Jacobsen", "466 U.S. 109", None, "core"),
+    ("oliver", "Oliver v. United States", "466 U.S. 170", None, "core"),
+    ("dunn", "United States v. Dunn", "480 U.S. 294", None, "core"),
+    ("greenwood", "California v. Greenwood", "486 U.S. 35", None, "core"),
+    # Considered at the filter check and left out (P1.14); raw cache only.
+    ("quon", "City of Ontario v. Quon", "560 U.S. 746", "130 S. Ct. 2619", "excluded"),
 ]
 # Choice among duplicate clusters, made after reading both (filled in by hand,
 # with the reason logged in BUILD_LOG.md).
@@ -98,7 +109,17 @@ def cached(kind: str, obj_id: int | str, url: str) -> dict:
 
 
 def lookup() -> list:
+    """One lookup for every case not yet looked up; earlier lookups are cached."""
     path = RAW / "citation_lookup.json"
+    extra = RAW / "citation_lookup_2.json"
+    if path.exists():
+        done = json.loads(path.read_text(encoding="utf-8"))
+        have = {r["citation"] for r in done}
+        missing = [us for _, _, us, _, _ in CASES if us not in have]
+        if missing and not extra.exists():
+            data = call(f"{API}/citation-lookup/", {"text": "; ".join(missing)})
+            extra.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+        return done + (json.loads(extra.read_text(encoding="utf-8")) if extra.exists() else [])
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     cites = [c for _, _, us, sct, _ in CASES for c in (us, sct) if c]
