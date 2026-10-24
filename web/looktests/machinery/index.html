@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-palette="cobalt" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,9 +9,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body data-view="landing" data-mode="plain" data-pane="research">
+<body data-view="landing" data-pane="thread">
 
-<p class="proto">Prototype for discussion. Fictional cases, sample text, placeholder notices. <a href="../index.html">Earlier looks</a></p>
+<div class="proto">
+  <p>Prototype<span class="long"> for discussion. Fictional cases, sample text, placeholder notices.</span> <a href="../index.html">Earlier looks</a></p>
+  <div class="proto-controls">
+    <div class="seg" role="group" aria-label="Palette">
+      <button type="button" data-palette="cobalt" aria-pressed="true">Cobalt</button>
+      <button type="button" data-palette="evergreen" aria-pressed="false">Evergreen</button>
+      <button type="button" data-palette="violet" aria-pressed="false">Violet</button>
+    </div>
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-theme="auto" aria-pressed="true">System</button>
+      <button type="button" data-theme="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+</div>
 
 <section id="landing" aria-label="Start">
   <div class="hero">
@@ -21,7 +35,7 @@
     <form id="ask" class="field">
       <label class="sr" for="q">Your question</label>
       <textarea id="q" rows="2" placeholder="Is reading a phone's stored location history a search?"></textarea>
-      <button type="submit">Research</button>
+      <button type="submit" class="primary">Research</button>
     </form>
 
     <div class="recorded">
@@ -36,7 +50,7 @@
 
   <figure class="trace">
     <div class="trace-row">
-      <div class="t-card t-answer">
+      <div class="t-card">
         <p class="t-where">In the answer</p>
         <p><span class="t-cited">The majority set out the test the later cases apply.</span> <span class="pill h1">P-01</span></p>
       </div>
@@ -67,64 +81,70 @@
 <section id="run" aria-label="Research">
   <header class="bar">
     <button type="button" class="wordmark small" id="home" aria-label="Probable Clause, back to the start">Probable C<span class="l">l</span>ause</button>
-    <div class="asked">
-      <p id="asked-q"></p>
-      <p id="run-label"></p>
-    </div>
-    <div class="controls">
-      <div class="seg" role="group" aria-label="How much of the machinery to show">
-        <button type="button" data-mode="plain" aria-pressed="true">Plain</button>
-        <button type="button" data-mode="annotated" aria-pressed="false">Annotated</button>
-        <button type="button" data-mode="api" aria-pressed="false">API traffic</button>
-      </div>
-      <button type="button" class="ghost" id="skip">Skip to the end</button>
-    </div>
   </header>
 
   <nav class="tabs" aria-label="Panes">
-    <button type="button" data-pane="research">Research</button>
+    <button type="button" data-pane="thread">Conversation</button>
     <button type="button" data-pane="sources">Sources <span class="count" id="tab-count"></span></button>
-    <button type="button" data-pane="wire" class="api-only">API</button>
   </nav>
 
   <div class="cols">
-    <section class="col" id="pane-research" aria-label="Steps and answer">
-      <p class="status" id="status"></p>
-      <ol class="steps" id="steps"></ol>
-      <section class="update" id="update" aria-label="Update check"></section>
-      <section class="answer" id="answer" aria-label="Answer"></section>
-      <div class="after" id="after">
-        <button type="button" id="replay">Play again</button>
-        <button type="button" class="ghost" id="again">Ask another question</button>
+    <section class="col" id="pane-thread" aria-label="Conversation">
+      <div class="scroller" id="thread-scroll">
+        <div class="thread" id="thread"></div>
       </div>
-      <footer class="fine">
-        <p>Research, not legal advice. Not a citator, and not exhaustive. Answers are written by Claude, Anthropic's model, through the Claude API; check every factual assertion against the opinions.</p>
-        <p>Opinion text comes from the U.S. Reports and Supreme Court opinions, via CourtListener, from Free Law Project. Free Law Project did not produce, review or endorse this analysis. The text is normalised from the official opinions and is unofficial; the official text is the U.S. Reports.</p>
-        <p>Corpus covers decisions through June 30, 2026, pulled Oct 23, 2026. Independent project. Not affiliated with Anthropic.</p>
-      </footer>
+      <div class="dock">
+        <p class="status" id="status"></p>
+        <form id="composer" class="field composer">
+          <label class="sr" for="q2">Your question</label>
+          <textarea id="q2" rows="1" placeholder="Ask another question"></textarea>
+          <button type="submit" class="primary" id="send">Research</button>
+          <button type="button" class="ghost" id="skip">Skip to the end</button>
+        </form>
+        <div class="disclaimer">
+          <p>Research, not legal advice. Not a citator, and not exhaustive.<span class="long"> Answers are written by Claude, Anthropic's model, through the Claude API; check them against the opinions.</span></p>
+          <details>
+            <summary>Sources and credits</summary>
+            <p>Opinion text comes from the U.S. Reports and Supreme Court opinions, via CourtListener, from Free Law Project. Free Law Project did not produce, review or endorse this analysis. The text is normalised from the official opinions and is unofficial; the official text is the U.S. Reports.</p>
+            <p>Corpus covers decisions through June 30, 2026, pulled Oct 23, 2026. Independent project. Not affiliated with Anthropic.</p>
+          </details>
+        </div>
+      </div>
     </section>
 
-    <aside class="col" id="pane-sources" aria-label="Sources">
+    <aside class="col scroller" id="pane-sources" aria-label="Sources">
       <header class="col-head">
         <h2>Sources</h2>
         <p id="src-count">Passages appear here as Claude finds them.</p>
-        <div class="mid-switch api-only"><button type="button" data-pane="sources">Sources</button><button type="button" data-pane="wire">API</button></div>
       </header>
       <ol class="passages" id="passages"></ol>
-    </aside>
-
-    <aside class="col api-only" id="pane-wire" aria-label="API traffic">
-      <header class="col-head">
-        <h2>API traffic</h2>
-        <p>Every request and response in this run. Shapes follow the Messages API; values are sample.</p>
-        <div class="mid-switch"><button type="button" data-pane="sources">Sources</button><button type="button" data-pane="wire">API</button></div>
-      </header>
-      <ol class="wire" id="wire"></ol>
     </aside>
   </div>
 
   <svg class="threads" id="threads" aria-hidden="true"></svg>
 </section>
+
+<dialog id="api" aria-labelledby="api-title">
+  <div class="dlg">
+    <header class="dlg-head">
+      <div>
+        <h2 id="api-title"></h2>
+        <p>The requests and responses that brought this passage into the run. Shapes follow the Messages API; values are sample.</p>
+      </div>
+      <button type="button" class="ghost" id="api-close">Close</button>
+    </header>
+    <div class="dlg-body">
+      <section class="dlg-source" aria-label="The source as shown">
+        <h3>The source as shown</h3>
+        <div id="api-card"></div>
+      </section>
+      <section class="dlg-wire" aria-label="API traffic">
+        <h3>API traffic</h3>
+        <ol class="xchg" id="api-steps"></ol>
+      </section>
+    </div>
+  </div>
+</dialog>
 
 <script src="run.js"></script>
 </body>

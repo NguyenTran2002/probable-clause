@@ -7,6 +7,8 @@ const QUERIES = [
   'stored location history and the warrant requirement',
 ];
 
+// Each passage is the ordered list of text blocks sent in its search_result's content.
+// P-01, P-05 and P-07 are sent one sentence per block; the rest as one paragraph block.
 const P = {
   'P-01': { kase: 'Exemplar v. United States', cite: '000 U.S. 101 (1967)', decided: 'December 18, 1967', kind: 'Majority opinion', by: 'Justice Alder', joined: 'joined by Justices Birch, Cedar, Dogwood, Elm, Fir and Gum', blocks: ['[Sample sentence 1 of 3, standing in for the opinion’s framing of the question.] ', '[Sample sentence 2 of 3, standing in for the test the later cases apply.] ', '[Sample sentence 3 of 3, standing in for the test applied to the facts.]'], pin: '000 U.S., at 106', q: 0, keep: true, reason: 'States the test the later cases apply.' },
   'P-02': { kase: 'Exemplar v. United States', cite: '000 U.S. 101 (1967)', decided: 'December 18, 1967', kind: 'Dissent', by: 'Justice Hazel', joined: 'joined by no other Justice', blocks: ['[Sample paragraph sent as a single block. It stands in for dissent text reading the test more narrowly.]'], pin: '000 U.S., at 112', q: 0, keep: true, reason: 'Shows where the opinions disagree on the reach of the test.' },
@@ -21,8 +23,8 @@ const HUE = { 'P-01': 'h1', 'P-02': 'h2', 'P-03': 'h3', 'P-05': 'h4' };
 const CASES = ['Exemplar v. United States', 'Placeholder v. State of Example', 'Illustration v. United States', 'Phantom v. United States'];
 
 // A citation is a passage plus a block range [start, end), as search_result_location gives it.
-// Sentence-block passages (P-01, P-05) cite single sentences or runs of them;
-// paragraph-block passages (P-02, P-03) cite the whole paragraph. One rendering path serves both.
+// Sentence-block passages cite single sentences or runs of them; paragraph-block passages
+// cite the whole paragraph. One rendering path serves both.
 const ANSWER = [
   { text: 'In Exemplar v. United States (1967), the majority set out the test the later cases apply.', cite: { p: 'P-01', start: 1, end: 2 } },
   { text: ' The dissent in that case read the test more narrowly.', cite: { p: 'P-02', start: 0, end: 1 } },
@@ -46,6 +48,7 @@ const LINKS = [
 
 const $ = s => document.querySelector(s);
 const body = document.body;
+const root = document.documentElement;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function el(tag, cls, html) {
   const e = document.createElement(tag);
@@ -67,11 +70,6 @@ function pretty(v, ind = '') {
   return '{\n' + Object.entries(v).map(([k, x]) => pad + JSON.stringify(k) + ': ' + pretty(x, pad)).join(',\n') + '\n' + ind + '}';
 }
 const json = o => paint(pretty(o));
-function callLine(name, input, max = 150) {
-  let s = JSON.stringify(input);
-  if (s.length > max) s = s.slice(0, max) + ' …';
-  return `<span class="m">${name}(</span>${paint(s)}<span class="m">)</span>`;
-}
 const source = id => `probable-clause://passages/${id}`;
 const title = id => `${P[id].kase}, ${P[id].cite}, ${P[id].kind.toLowerCase()}${P[id].by ? ' by ' + P[id].by : ''}`;
 const result = id => ({ type: 'search_result', source: source(id), title: title(id), content: P[id].blocks.map(text => ({ type: 'text', text })), citations: { enabled: true } });
@@ -82,70 +80,75 @@ function fmt(text) {
   return h;
 }
 
-// ---------- panes, modes, view ----------
-const panes = { research: $('#pane-research'), sources: $('#pane-sources'), wire: $('#pane-wire') };
+// ---------- prototype controls: palette and theme ----------
+function remember(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* storage may be blocked */ } }
+function recall(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+function setPref(name, value) {
+  root.dataset[name] = value;
+  remember('pc-' + name, value);
+  document.querySelectorAll(`.proto-controls [data-${name}]`).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[name] === value)));
+  redraw();
+}
+
+// ---------- panes and view ----------
+const panes = { thread: $('#thread-scroll'), sources: $('#pane-sources') };
+const threadEl = $('#thread'), passagesEl = $('#passages');
 const phone = () => matchMedia('(max-width: 759px)').matches;
 
-function setPane(p) {
-  body.dataset.pane = p;
-  if (playing) requestAnimationFrame(() => panes[p].scrollTo({ top: panes[p].scrollHeight }));
-  redraw();
-}
-function setMode(m) {
-  body.dataset.mode = m;
-  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
-  if (m !== 'api' && body.dataset.pane === 'wire') body.dataset.pane = phone() ? 'research' : 'sources';
-  if (m === 'api' && !phone() && innerWidth < 1280) body.dataset.pane = 'wire';
-  if (playing) requestAnimationFrame(() => Object.values(panes).forEach(p => p.scrollTo({ top: p.scrollHeight })));
-  redraw();
-}
+function setPane(p) { body.dataset.pane = p; redraw(); }
 function swap(view) {
   const go = () => { body.dataset.view = view; scrollTo(0, 0); };
   if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(go);
   else go();
 }
 function visible(e) { return e && e.getClientRects().length > 0; }
-
+function paneTop(pane) {
+  const head = pane.querySelector('.col-head');
+  return head ? head.getBoundingClientRect().bottom : pane.getBoundingClientRect().top;
+}
+function inView(e) {
+  const pane = e.closest('.scroller'), r = e.getBoundingClientRect();
+  return r.top >= paneTop(pane) && r.bottom <= pane.getBoundingClientRect().bottom;
+}
 // scroll an element to the middle of its own pane (scrollIntoView on two panes at once cancels one)
 function centerIn(e, smooth = true) {
-  const pane = e.closest('.col');
+  const pane = e.closest('.scroller');
   if (!pane) return;
   const pr = pane.getBoundingClientRect(), er = e.getBoundingClientRect();
   const head = pane.querySelector('.col-head');
   const offset = Math.max((head ? head.offsetHeight : 0) + 12, (pane.clientHeight - er.height) / 2);
   pane.scrollTo({ top: pane.scrollTop + er.top - pr.top - offset, behavior: smooth ? 'smooth' : 'auto' });
 }
-
-// keep a pane pinned to its newest content unless the reader scrolled away
 function fresh(node) {
   node.classList.add('fresh');
   setTimeout(() => node.classList.remove('fresh'), 450);
   return node;
 }
-function append(pane, list, node) {
+// add to a pane and keep it pinned to the newest content, unless the reader scrolled away
+function append(pane, parent, node) {
   fresh(node);
   const near = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 260;
-  list.append(node);
-  if (near) pane.scrollTo({ top: pane.scrollHeight, behavior: skipping ? 'auto' : 'smooth' });
+  parent.append(node);
+  if (near) follow(pane);
   return node;
 }
+function follow(pane) { pane.scrollTo({ top: pane.scrollHeight, behavior: skipping ? 'auto' : 'smooth' }); }
 
 // ---------- rendering ----------
-const stepsEl = $('#steps'), passagesEl = $('#passages'), wireEl = $('#wire');
+let stepsEl = null;
 
 function status(text, working) {
   const s = $('#status');
   s.textContent = text;
   s.classList.toggle('working', !!working);
 }
-function addStep({ title: t, say, query, meta, code, wire }) {
+function addStep({ title: t, say, query, meta }) {
   const li = el('li', 'step working');
   li.innerHTML = `<h3>${esc(t)}</h3>` +
     (say ? `<p class="say">${esc(say)}</p>` : '') +
     (query ? `<p class="query">“${esc(query)}”</p>` : '') +
-    `<p class="meta">${meta ? esc(meta) : ''}</p>` +
-    (code ? `<code class="code anno" data-wire="${wire}">${callLine(code[0], code[1])}</code>` : '');
-  return append(panes.research, stepsEl, li);
+    `<p class="meta">${meta ? esc(meta) : ''}</p>`;
+  return append(panes.thread, stepsEl, li);
 }
 function finish(li, t, meta, chips, rejected) {
   li.classList.remove('working');
@@ -162,14 +165,15 @@ function finish(li, t, meta, chips, rejected) {
     li.querySelector('.meta').after(c);
   }
 }
-function addCard(id) {
-  const p = P[id];
-  const li = el('li', `card reviewing ${p.keep ? HUE[id] : ''}${p.syllabus ? ' syllabus' : ''}`);
-  li.id = 'src-' + id;
-  li.dataset.id = id;
+function cardClass(id) {
+  const p = P[id], v = p.verdictShown;
+  return `card ${v || 'reviewing'} ${p.keep ? HUE[id] : ''}${p.syllabus ? ' syllabus' : ''}`;
+}
+function cardHTML(id) {
+  const p = P[id], v = p.verdictShown;
   const meta = p.syllabus ? `Decided ${p.decided}. Syllabus.` : `Decided ${p.decided}. ${p.kind} by ${p.by}, ${p.joined}.`;
-  li.innerHTML = `
-    <p class="verdict"><span class="pid">${id}</span><span class="mark">Reviewing</span><span class="reason"></span></p>
+  return `
+    <p class="verdict"><span class="pid">${id}</span><span class="mark">${v === 'kept' ? 'Kept' : v === 'discarded' ? 'Discarded' : 'Reviewing'}</span><span class="reason">${v ? esc(p.reason) : ''}</span></p>
     <p class="case"><i>${esc(p.kase)}</i>, ${esc(p.cite)}</p>
     <p class="meta">${esc(meta)}</p>
     <div class="body">
@@ -178,9 +182,16 @@ function addCard(id) {
       <p class="small guarantee">This passage appears verbatim in this ${p.syllabus ? 'opinion’s syllabus' : 'opinion'}.</p>
       ${p.slip ? '<p class="slip">Slip opinion: not yet final in the U.S. Reports, and subject to formal revision.</p>' : ''}
       <p class="small">Found by “${esc(QUERIES[p.q])}”</p>
-      <p class="anno"><span class="blk">search_result</span> <span class="blk">${p.blocks.length} text block${p.blocks.length > 1 ? 's' : ''}</span> <span class="blk">${esc(source(id))}</span></p>
     </div>
-    <button type="button" class="toggle">Show passage</button>`;
+    <div class="card-actions">
+      <button type="button" class="ghost api-btn" data-api="${id}">View API calls</button>
+      <button type="button" class="toggle">Show passage</button>
+    </div>`;
+}
+function addCard(id) {
+  const li = el('li', cardClass(id), cardHTML(id));
+  li.id = 'src-' + id;
+  li.dataset.id = id;
   append(panes.sources, passagesEl, li);
   counts();
 }
@@ -200,24 +211,9 @@ function counts() {
   $('#src-count').textContent = all ? `${all} considered, ${kept} kept` : 'Passages appear here as Claude finds them.';
   $('#tab-count').textContent = all ? `${kept} of ${all}` : '';
 }
-function addWire(id, dir, label, note, parts) {
-  const li = el('li', `msg ${dir}`);
-  li.id = id;
-  li.innerHTML = `<div class="msg-head"><b>${esc(label)}</b><span>${esc(note)}</span></div>`;
-  for (const part of parts) addPart(li, part);
-  return append(panes.wire, wireEl, li);
-}
-function addPart(msg, { id, path, obj, hue }) {
-  const d = el('div', `part${hue ? ' cite ' + hue : ''}`);
-  if (id) d.id = id;
-  d.innerHTML = `<p class="path">${esc(path)}</p><pre>${json(obj)}</pre>`;
-  msg.append(d);
-  const near = panes.wire.scrollHeight - panes.wire.scrollTop - panes.wire.clientHeight < 400;
-  if (near) panes.wire.scrollTo({ top: panes.wire.scrollHeight, behavior: skipping ? 'auto' : 'smooth' });
-  return d;
-}
 function showUpdate() {
-  const u = fresh($('#update'));
+  const u = el('section', 'update');
+  u.setAttribute('aria-label', 'Update check');
   u.innerHTML = `
     <h2>Update check</h2>
     <p class="label">Update check, a convenience: searched the web for material published since June 30, 2026. Finding nothing does not mean nothing has changed.</p>
@@ -232,11 +228,40 @@ function showUpdate() {
       <dt>exclude domains</dt><dd>not set</dd>
       <dt>search type</dt><dd>${WEB.search_type}</dd>
       <dt>results</dt><dd>${WEB.num_results} (the server allows up to 10)</dd>
-    </dl>
-    <p class="anno"><code class="code" data-wire="w12">${callLine('search_web_updates', WEB, 400)}</code></p>`;
-  const near = panes.research.scrollHeight - panes.research.scrollTop - panes.research.clientHeight < 260;
-  if (near) panes.research.scrollTo({ top: panes.research.scrollHeight, behavior: skipping ? 'auto' : 'smooth' });
+    </dl>`;
+  append(panes.thread, threadEl, u);
 }
+
+// ---------- the API record behind each passage, shown in the modal ----------
+// TRACE[id] lists the exchanges that touched passage id, in order, as the run makes them.
+let TRACE = {};
+function trace(ids, entry) { for (const id of ids) (TRACE[id] = TRACE[id] || []).push(typeof entry === 'function' ? entry(id) : entry); }
+
+const dlg = $('#api');
+function openApi(id) {
+  const p = P[id];
+  $('#api-title').textContent = `${id}: the API calls behind this source`;
+  const card = el('div', cardClass(id), cardHTML(id));
+  const ks = CITES.filter(c => c.p === id && document.querySelector(`.cited[data-c="${c.k}"]`));
+  if (ks.length) {
+    card.classList.add('focus');
+    card.querySelectorAll('.sb').forEach(sb => { const i = +sb.dataset.i; if (ks.some(c => i >= c.start && i < c.end)) sb.classList.add('hit'); });
+  }
+  $('#api-card').replaceChildren(card);
+  const steps = (TRACE[id] || []).map(x => `
+    <li>
+      <div class="x-head"><b>${esc(x.title)}</b><span>${esc(x.where)}</span></div>
+      <div class="x-body">${x.parts.map(part => `<p class="path">${esc(part.path)}</p><pre class="${part.hue ? 'cite ' + part.hue : ''}">${json(part.obj)}</pre>`).join('')}</div>
+      ${x.note ? `<p class="x-note">${esc(x.note)}</p>` : ''}
+    </li>`);
+  if (p.verdictShown === 'discarded') steps.push(`<li><div class="x-head"><b>Not sent to the composition call</b><span>no request</span></div><p class="x-note">Claude discarded this passage, so the call that writes the answer never saw it and cannot cite it.</p></li>`);
+  if (playing) steps.push(`<li><p class="x-note">The run is still working. More exchanges appear here as it goes.</p></li>`);
+  $('#api-steps').innerHTML = steps.join('');
+  dlg.querySelector('.dlg-wire').scrollTop = 0;
+  dlg.showModal();
+}
+$('#api-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
 // ---------- the run ----------
 let runId = 0, skipping = false, playing = false;
@@ -245,142 +270,134 @@ const sleep = ms => skipping ? Promise.resolve() : new Promise(r => setTimeout(r
 
 function reset() {
   for (const id in P) delete P[id].verdictShown;
-  stepsEl.replaceChildren(); passagesEl.replaceChildren(); wireEl.replaceChildren();
-  $('#update').replaceChildren(); $('#answer').replaceChildren();
-  $('#after').classList.remove('on');
-  $('#skip').hidden = false;
+  TRACE = {};
+  threadEl.replaceChildren();
+  passagesEl.replaceChildren();
   Object.values(panes).forEach(p => p.scrollTo(0, 0));
   counts();
   clearThread(true);
 }
+function setPlaying(on) {
+  playing = on;
+  body.classList.toggle('playing', on);
+  const q2 = $('#q2');
+  q2.disabled = on;
+  q2.placeholder = on ? 'Working…' : 'Ask another question';
+}
 
-async function play(question) {
+async function play(question, recorded) {
   const my = ++runId;
   skipping = false;
-  playing = true;
+  setPlaying(true);
   const wait = async ms => { await sleep(ms); if (my !== runId) throw STALE; };
   reset();
+
+  const ask = el('div', 'ask-msg');
+  ask.innerHTML = `<p class="bubble"></p><p class="caption"></p>`;
+  ask.querySelector('.bubble').textContent = question;
+  ask.querySelector('.caption').textContent = recorded
+    ? 'Recording made Oct 23, 2026. Sample run, fictional cases.'
+    : 'Prototype: every question plays the same sample run.';
+  append(panes.thread, threadEl, ask);
+  stepsEl = el('ol', 'steps');
+  threadEl.append(stepsEl);
+
   let req = 1, round = 0;
   const working = () => status(`Working. Tool round ${round} of up to 12.`, true);
-
   status('Working. Sending the question.', true);
-  addWire('w1', 'sent', `Request ${req}`, 'POST /v1/messages', [
-    { path: 'body (tool definitions shortened)', obj: { model: MODEL, max_tokens: 4096, tools: [{ name: 'search_corpus' }, { name: 'review_passages' }, { name: 'search_web_updates' }, { name: 'submit_answer' }], messages: [{ role: 'user', content: question }] } },
-  ]);
 
   // a corpus search, then a review of what came back
-  async function searchAndReview(q, ids, say, wSearch, wResult, wReview, wReviewResult, toolSearch, toolReview) {
+  async function searchAndReview(q, ids, say, toolSearch, toolReview) {
     await wait(900);
     round++; working();
-    const s = addStep({ title: 'Searching the corpus', say, query: QUERIES[q], code: ['search_corpus', { query: QUERIES[q] }], wire: wSearch });
-    addWire(wSearch, 'recv', `Response ${req}`, 'stop_reason: tool_use', [
-      { path: 'content[0]', obj: { type: 'text', text: say } },
-      { path: 'content[1]', obj: { type: 'tool_use', id: toolSearch, name: 'search_corpus', input: { query: QUERIES[q] } } },
-    ]);
+    const s = addStep({ title: 'Searching the corpus', say, query: QUERIES[q] });
+    const call = { type: 'tool_use', id: toolSearch, name: 'search_corpus', input: { query: QUERIES[q] } };
+    trace(ids, { title: 'Claude asked for a corpus search', where: `Received, response ${req}`, parts: [{ path: 'content[1]', obj: call }] });
     await wait(1000);
     for (const id of ids) { addCard(id); await wait(220); }
     finish(s, 'Searched the corpus', `${ids.length} passages returned`, ids);
     req++;
-    addWire(wResult, 'sent', `Request ${req}`, 'tool_result, new in this request', ids.map((id, i) => (
-      { id: 'wr-' + id, path: `messages[-1].content[0].content[${i}]`, obj: result(id) })));
+    trace(ids, id => ({ title: 'Our server returned this passage', where: `Sent, request ${req}`, parts: [{ path: `messages[-1].content[0].content[${ids.indexOf(id)}]`, obj: result(id) }], note: `${P[id].blocks.length} text block${P[id].blocks.length > 1 ? 's' : ''}. Each block is the smallest piece Claude can cite.` }));
 
     await wait(900);
     round++; working();
     const decisions = ids.map(id => ({ passage: id, keep: P[id].keep, reason: P[id].reason }));
-    const r = addStep({ title: `Reviewing ${ids.length} passages`, code: ['review_passages', { decisions }], wire: wReview });
-    addWire(wReview, 'recv', `Response ${req}`, 'stop_reason: tool_use', [
-      { path: 'content[0]', obj: { type: 'tool_use', id: toolReview, name: 'review_passages', input: { decisions } } },
-    ]);
+    const r = addStep({ title: `Reviewing ${ids.length} passages` });
+    trace(ids, id => ({ title: P[id].keep ? 'Claude kept it' : 'Claude discarded it', where: `Received, response ${req}`, parts: [{ path: `content[0].input.decisions[${ids.indexOf(id)}]  (review_passages, ${toolReview})`, obj: decisions[ids.indexOf(id)] }] }));
     await wait(500);
     for (const id of ids) { verdict(id); await wait(450); }
     const k = ids.filter(id => P[id].keep).length;
     finish(r, `Reviewed ${ids.length} passages`, `Kept ${k}, discarded ${ids.length - k}`, ids);
     req++;
-    addWire(wReviewResult, 'sent', `Request ${req}`, 'tool_result, new in this request', [
-      { path: 'messages[-1].content[0]', obj: { type: 'tool_result', tool_use_id: toolReview, content: `Recorded: kept ${k}, discarded ${ids.length - k}.` } },
-    ]);
   }
 
-  await searchAndReview(0, ['P-01', 'P-02', 'P-03', 'P-04'], 'I’ll start with the cases on records held by third parties.', 'w2', 'w3', 'w4', 'w5', 'toolu_s01', 'toolu_s02');
-  await searchAndReview(1, ['P-05', 'P-06', 'P-07'], 'Now the newer cases on location data.', 'w6', 'w7', 'w8', 'w9', 'toolu_s03', 'toolu_s04');
+  await searchAndReview(0, ['P-01', 'P-02', 'P-03', 'P-04'], 'I’ll start with the cases on records held by third parties.', 'toolu_s01', 'toolu_s02');
+  await searchAndReview(1, ['P-05', 'P-06', 'P-07'], 'Now the newer cases on location data.', 'toolu_s03', 'toolu_s04');
 
   // a submit the server refuses
   await wait(900);
   round++; working();
-  let s = addStep({ title: 'Submitting the answer', say: 'I have enough to answer.', code: ['submit_answer', { kept: KEPT }], wire: 'w10' });
-  addWire('w10', 'recv', `Response ${req}`, 'stop_reason: tool_use', [
-    { path: 'content[0]', obj: { type: 'text', text: 'I have enough to answer.' } },
-    { path: 'content[1]', obj: { type: 'tool_use', id: 'toolu_s05', name: 'submit_answer', input: { kept: KEPT } } },
-  ]);
+  let s = addStep({ title: 'Submitting the answer', say: 'I have enough to answer.' });
   await wait(900);
   const refusal = 'Not accepted: no update check has been run. Run one, or explain why it isn’t needed, then resubmit.';
   finish(s, 'Submit not accepted', `submit_answer with ${KEPT.join(', ')}`, null, true);
   s.querySelector('.meta').after(el('p', 'refused', esc(refusal)));
+  trace(KEPT, { title: 'Claude submitted it; the server refused the submit', where: `Response ${req}, then request ${req + 1}`, parts: [
+    { path: `response ${req}: content[1]`, obj: { type: 'tool_use', id: 'toolu_s05', name: 'submit_answer', input: { kept: KEPT } } },
+    { path: `request ${req + 1}: messages[-1].content[0]`, obj: { type: 'tool_result', tool_use_id: 'toolu_s05', is_error: true, content: refusal } },
+  ] });
   req++;
-  addWire('w11', 'sent', `Request ${req}`, 'tool_result, new in this request', [
-    { path: 'messages[-1].content[0]', obj: { type: 'tool_result', tool_use_id: 'toolu_s05', is_error: true, content: refusal } },
-  ]);
 
   // the update check
   await wait(1000);
   round++; working();
-  const sayWeb = 'Checking for anything published after the corpus’s coverage date.';
-  s = addStep({ title: 'Checking the web for later developments', say: sayWeb, meta: `Published after ${WEB.published_after}, ${WEB.category}, up to ${WEB.num_results} results`, code: ['search_web_updates', WEB], wire: 'w12' });
-  addWire('w12', 'recv', `Response ${req}`, 'stop_reason: tool_use', [
-    { path: 'content[0]', obj: { type: 'text', text: sayWeb } },
-    { path: 'content[1]', obj: { type: 'tool_use', id: 'toolu_s06', name: 'search_web_updates', input: WEB } },
-  ]);
+  s = addStep({ title: 'Checking the web for later developments', say: 'Checking for anything published after the corpus’s coverage date.', meta: `Published after ${WEB.published_after}, ${WEB.category}, up to ${WEB.num_results} results` });
   await wait(1400);
   finish(s, 'Checked the web', '3 sources returned, linked below and never quoted');
   showUpdate();
   req++;
-  addWire('w13', 'sent', `Request ${req}`, 'tool_result, page text withheld here', LINKS.map(([href, t], i) => (
-    { path: `messages[-1].content[0].content[${i}]`, obj: { type: 'search_result', source: href, title: t, content: [{ type: 'text', text: '(page text is not shown on this page)' }], citations: { enabled: true } } })));
 
   // the accepted submit
   await wait(1000);
   round++; working();
-  s = addStep({ title: 'Submitting the answer', code: ['submit_answer', { kept: KEPT }], wire: 'w14' });
-  addWire('w14', 'recv', `Response ${req}`, 'stop_reason: tool_use', [
-    { path: 'content[0]', obj: { type: 'tool_use', id: 'toolu_s07', name: 'submit_answer', input: { kept: KEPT } } },
-  ]);
+  s = addStep({ title: 'Submitting the answer' });
   await wait(700);
   finish(s, 'Submitted the answer', `Accepted with ${KEPT.join(', ')}`);
+  trace(KEPT, { title: 'Claude submitted it again; accepted', where: `Received, response ${req}`, parts: [{ path: 'content[0]', obj: { type: 'tool_use', id: 'toolu_s07', name: 'submit_answer', input: { kept: KEPT } } }] });
   req++;
-  addWire('w15', 'sent', `Request ${req}`, 'composition call: no tools', [
-    { path: 'body (shortened)', obj: { model: MODEL, max_tokens: 2048, system: '(instructions for writing the answer)', messages: [{ role: 'user', content: [...KEPT.map(id => ({ type: 'search_result', source: source(id), title: title(id), content: P[id].blocks.map(() => ({ type: 'text', text: '…' })), citations: { enabled: true } })), { type: 'text', text: question }] }] } },
-  ]);
+  trace(KEPT, id => ({ title: 'Sent to the composition call, which has no tools', where: `Sent, request ${req}`, parts: [{ path: `messages[0].content[${KEPT.indexOf(id)}]`, obj: result(id) }], note: `Its position makes it search_result_index ${KEPT.indexOf(id)} in this call’s citations.` }));
 
-  // composition: the answer streams, and each content block lands on the wire as it completes
+  // composition: the answer streams into the conversation
   await wait(900);
   status('Working. Writing the answer.', true);
   s = addStep({ title: `Writing the answer from ${KEPT.length} kept passages`, meta: 'No tools in this call, so the only sources Claude can cite are the kept passages.' });
-  const ans = fresh($('#answer'));
+  const ans = el('section', 'answer');
+  ans.setAttribute('aria-label', 'Answer');
   ans.innerHTML = '<h2>Answer</h2><p class="by">Written by Claude from the kept passages. A sample answer about fictional cases.</p><div class="prose"></div>';
+  append(panes.thread, threadEl, ans);
   const prose = ans.querySelector('.prose');
-  const resp = addWire('w16', 'recv', `Response ${req}`, 'stop_reason: end_turn', []);
   let para = prose.appendChild(el('p')), block = 0, newPara = false;
   for (const b of ANSWER) {
     if (b.para) { para = prose.appendChild(el('p')); newPara = true; continue; }
     if (b.tag) para.append(el('span', 'synth-tag', 'Claude’s synthesis, no source'), ' ');
     const c = b.cite;
     const span = el('span', c ? `cited ${HUE[c.p]}` : 'synth');
-    if (c) span.dataset.c = c.k;
     para.append(span);
     span.classList.add('caret');
     for (const tok of b.text.split(/(\s+)/)) {
       span.textContent += tok;
       if (!skipping && tok.trim()) await wait(32); else if (my !== runId) throw STALE;
+      if (!skipping) follow(panes.thread);
     }
     span.classList.remove('caret');
     const i = block++;
-    span.innerHTML = fmt(b.text) + (c ? ` <span class="pill">${c.p}</span>` : '') +
-      `<span class="blk anno" data-wire="${c ? 'wc-' + c.k : 'w16'}">content[${i}], ${c ? `cites ${c.p} blocks [${c.start}:${c.end}]` : 'no citations'}</span>`;
-    const text = (newPara ? '\n\n' : '') + b.text;
+    span.innerHTML = fmt(b.text) + (c ? ` <span class="pill">${c.p}</span>` : '');
+    if (c) {
+      span.dataset.c = c.k;
+      const text = (newPara ? '\n\n' : '') + b.text;
+      trace([c.p], { title: 'Claude cited it in the answer', where: `Received, response ${req}`, parts: [{ path: `content[${i}]`, hue: HUE[c.p], obj: { type: 'text', text, citations: [{ type: 'search_result_location', source: source(c.p), title: title(c.p), cited_text: citedText(c), search_result_index: KEPT.indexOf(c.p), start_block_index: c.start, end_block_index: c.end }] } }], note: `cited_text is blocks ${c.start} to ${c.end - 1} of this passage, word for word.` });
+    }
     newPara = false;
-    addPart(resp, c
-      ? { id: 'wc-' + c.k, hue: HUE[c.p], path: `content[${i}]`, obj: { type: 'text', text, citations: [{ type: 'search_result_location', source: source(c.p), title: title(c.p), cited_text: citedText(c), search_result_index: KEPT.indexOf(c.p), start_block_index: c.start, end_block_index: c.end }] } }
-      : { path: `content[${i}]`, obj: { type: 'text', text } });
     await wait(120);
   }
   finish(s, 'Wrote the answer', `Cites ${KEPT.length} kept passages. Every citation points to a passage you watched Claude keep.`);
@@ -393,35 +410,34 @@ async function play(question) {
   const ph = prose.querySelector('.phantom');
   ph.classList.add('flagged');
   ph.closest('p').after(el('p', 'flag-note', '<strong>Case name not found in the corpus:</strong> <i>Phantom v. United States</i>. It may be misnamed or outside the corpus; check it before relying on it.'));
-  addWire('w17', 'local', 'Name check', 'no model call', [
-    { path: 'result', obj: { checked: CASES, resolved: 3, not_found: ['Phantom v. United States'] } },
-  ]);
 
   status(`Finished in ${stepsEl.children.length} steps: ${round} tool rounds, the answer, and a name check.`, false);
-  playing = false;
-  $('#skip').hidden = true;
-  $('#after').classList.add('on');
-  if (!skipping) panes.research.scrollTo({ top: panes.research.scrollHeight, behavior: 'smooth' });
+  setPlaying(false);
+  follow(panes.thread);
 }
 
+function run(question, recorded) {
+  play(question, recorded).catch(e => { if (e !== STALE) throw e; });
+}
 function start(question, recorded) {
-  $('#asked-q').textContent = question;
-  $('#run-label').textContent = recorded
-    ? 'Recording made Oct 23, 2026. Sample run, fictional cases.'
-    : 'Prototype: every question plays the same sample run.';
-  body.dataset.pane = 'research';
+  body.dataset.pane = 'thread';
   swap('run');
-  play(question).catch(e => { if (e !== STALE) throw e; });
+  run(question, recorded);
+}
+function stop() {
+  runId++;
+  setPlaying(false);
+  clearThread(true);
 }
 
-// ---------- threads: sentence to cited range to citation block ----------
+// ---------- threads: sentence to cited range ----------
 const svg = $('#threads');
 let active = null; // { p, k, pinned }: a passage, and the citation into it if there is one
 
 function unlight() {
   document.querySelectorAll('.lit').forEach(e => e.classList.remove('lit'));
-  document.querySelectorAll('.card.focus').forEach(e => e.classList.remove('focus'));
-  document.querySelectorAll('.sb.hit').forEach(e => e.classList.remove('hit'));
+  document.querySelectorAll('#passages .card.focus').forEach(e => e.classList.remove('focus'));
+  document.querySelectorAll('#passages .sb.hit').forEach(e => e.classList.remove('hit'));
 }
 function clearThread(force) {
   if (active && active.pinned && !force) return;
@@ -429,7 +445,7 @@ function clearThread(force) {
   active = null;
   svg.replaceChildren();
 }
-// light citation k: the sentence that carries it, the cited blocks in context, and its block on the wire
+// light citation k: the sentence that carries it, and the cited blocks in the context of their paragraph
 function light(p, k, pinned, fresh = true) {
   unlight();
   active = { p, k, pinned };
@@ -443,23 +459,19 @@ function light(p, k, pinned, fresh = true) {
     }
   }
   if (k != null) document.querySelectorAll(`.cited[data-c="${k}"]`).forEach(e => e.classList.add('lit'));
-  const part = wirePart();
-  part && part.classList.add('lit');
   draw(fresh);
 }
-function wirePart() {
-  if (!active) return null;
-  return (active.k != null && document.getElementById('wc-' + active.k)) || document.getElementById('wr-' + active.p);
+function target(p) {
+  const card = $('#src-' + p);
+  return card && (card.querySelector('.sb.hit') || card);
 }
 function firstCite(p) {
   const c = CITES.find(c => c.p === p);
   return c && document.querySelector(`.cited[data-c="${c.k}"]`) ? c.k : null;
 }
 function clampY(y, e) {
-  const col = e.closest('.col'), r = col.getBoundingClientRect();
-  const head = col.querySelector('.col-head');
-  const top = head ? head.getBoundingClientRect().bottom : r.top;
-  return Math.min(Math.max(y, top + 10), r.bottom - 10);
+  const pane = e.closest('.scroller');
+  return Math.min(Math.max(y, paneTop(pane) + 10), pane.getBoundingClientRect().bottom - 10);
 }
 function curve(x1, y1, x2, y2, hue, fresh) {
   const dx = Math.max(40, (x2 - x1) / 2);
@@ -476,26 +488,20 @@ function curve(x1, y1, x2, y2, hue, fresh) {
 }
 function draw(fresh) {
   svg.replaceChildren();
-  if (!active || phone()) return;
+  if (!active || active.k == null || phone()) return;
   const card = $('#src-' + active.p);
-  if (!visible(card)) return;
-  const hue = getComputedStyle(card).getPropertyValue('--hue').trim() || '#5d6474';
+  const s = document.querySelector(`.cited[data-c="${active.k}"]`);
+  if (!visible(card) || !visible(s)) return;
+  const hue = getComputedStyle(card).getPropertyValue('--hue').trim();
   const cr = card.getBoundingClientRect();
-  // land on the first line of the cited range, or the card's top when nothing is cited yet
   const hit = card.querySelector('.sb.hit');
   const hr = hit && hit.getClientRects()[0];
   const cy = clampY(hr ? hr.top + hr.height / 2 : cr.top + 22, card);
-  const s = active.k != null && document.querySelector(`.cited[data-c="${active.k}"]`);
-  if (visible(s)) {
-    const rects = (s.querySelector('.pill') || s).getClientRects();
-    const a = rects[rects.length - 1];
-    curve(a.right + 2, clampY(a.top + a.height / 2, s), cr.left, cy, hue, fresh);
-  }
-  const part = wirePart();
-  if (visible(part)) {
-    const pr = part.getBoundingClientRect();
-    curve(cr.right, cy, pr.left, clampY(pr.top + 14, part), hue, fresh);
-  }
+  // start at the answer column's right edge, level with the sentence's tag, so the line never crosses text
+  const rects = (s.querySelector('.pill') || s).getClientRects();
+  const a = rects[rects.length - 1];
+  const x0 = (s.closest('.prose') || s).getBoundingClientRect().right + 8;
+  curve(x0, clampY(a.top + a.height / 2, s), cr.left, cy, hue, fresh);
 }
 let queued = false;
 function redraw() {
@@ -506,13 +512,16 @@ function redraw() {
 addEventListener('scroll', redraw, true);
 addEventListener('resize', redraw);
 
+// bring the cited range into view in the sources pane, without moving it if it already shows
+function reveal(p, smooth = true) {
+  const t = target(p);
+  if (t && visible(t) && !inView(t)) centerIn(t, smooth);
+}
 function focusSource(p, k) {
   if (phone()) setPane('sources');
   light(p, k, true);
-  const card = $('#src-' + p);
-  centerIn(card.querySelector('.sb.hit') || card, !phone());
-  const part = wirePart();
-  if (visible(part)) centerIn(part);
+  const t = target(p);
+  if (t) centerIn(t, !phone());
 }
 
 // ---------- events ----------
@@ -521,23 +530,32 @@ $('#ask').addEventListener('submit', e => {
   const q = $('#q').value.trim() || $('#q').placeholder;
   start(q, false);
 });
-$('#q').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#ask').requestSubmit(); }
+$('#composer').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = $('#q2').value.trim();
+  if (!q || playing) return;
+  $('#q2').value = '';
+  run(q, false);
 });
+for (const id of ['#q', '#q2']) {
+  $(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); }
+  });
+}
 document.querySelectorAll('.recorded .chip').forEach(b => b.addEventListener('click', () => start(b.dataset.q, true)));
-$('#home').addEventListener('click', () => { runId++; clearThread(true); swap('landing'); });
-$('#again').addEventListener('click', () => { runId++; clearThread(true); swap('landing'); });
-$('#replay').addEventListener('click', () => play($('#asked-q').textContent).catch(e => { if (e !== STALE) throw e; }));
+$('#home').addEventListener('click', () => { stop(); swap('landing'); });
 $('#skip').addEventListener('click', () => { skipping = true; });
-document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
-document.querySelectorAll('button[data-pane]').forEach(b => b.addEventListener('click', () => setPane(b.dataset.pane)));
+document.querySelectorAll('.tabs button[data-pane]').forEach(b => b.addEventListener('click', () => setPane(b.dataset.pane)));
 
-const research = panes.research;
-research.addEventListener('mouseover', e => {
+threadEl.addEventListener('mouseover', e => {
   const s = e.target.closest('.cited');
-  if (s && !(active && active.pinned)) { const c = CITES[s.dataset.c]; light(c.p, c.k, false); }
+  if (!s || (active && active.pinned)) return;
+  const c = CITES[s.dataset.c];
+  if (active && active.k === c.k) return;
+  light(c.p, c.k, false);
+  reveal(c.p);
 });
-research.addEventListener('mouseout', e => {
+threadEl.addEventListener('mouseout', e => {
   const s = e.target.closest('.cited');
   if (s && !s.contains(e.relatedTarget)) clearThread();
 });
@@ -550,6 +568,9 @@ passagesEl.addEventListener('mouseleave', () => clearThread());
 
 document.addEventListener('click', e => {
   const t = e.target;
+  if (t.closest('dialog')) return;
+  const api = t.closest('[data-api]');
+  if (api) { openApi(api.dataset.api); return; }
   const toggle = t.closest('.toggle');
   if (toggle) {
     const card = toggle.closest('.card');
@@ -557,26 +578,20 @@ document.addEventListener('click', e => {
     toggle.textContent = card.classList.contains('open') ? 'Hide passage' : 'Show passage';
     return;
   }
-  const code = t.closest('[data-wire]');
-  if (code && body.dataset.mode !== 'plain') {
-    setMode('api');
-    if (phone()) setPane('wire');
-    const target = document.getElementById(code.dataset.wire);
-    if (target) {
-      requestAnimationFrame(() => centerIn(target));
-      target.classList.add('lit');
-      setTimeout(() => target.classList.remove('lit'), 1600);
-    }
-    return;
-  }
   const s = t.closest('.cited');
   if (s) { const c = CITES[s.dataset.c]; focusSource(c.p, c.k); return; }
   const go = t.closest('[data-goto]');
   if (go) {
     const id = go.dataset.goto;
-    if (P[id].verdictShown === 'kept') focusSource(id, firstCite(id));
-    else { phone() && setPane('sources'); requestAnimationFrame(() => centerIn($('#src-' + id))); }
+    if (P[id].verdictShown === 'kept' && firstCite(id) != null) focusSource(id, firstCite(id));
+    else { if (phone()) setPane('sources'); requestAnimationFrame(() => centerIn($('#src-' + id))); }
     return;
   }
   if (!t.closest('.card')) clearThread(true);
 });
+
+for (const name of ['palette', 'theme']) {
+  const saved = recall('pc-' + name);
+  if (saved) setPref(name, saved);
+  document.querySelectorAll(`.proto-controls [data-${name}]`).forEach(b => b.addEventListener('click', () => setPref(name, b.dataset[name])));
+}

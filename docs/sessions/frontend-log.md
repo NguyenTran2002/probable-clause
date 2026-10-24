@@ -73,3 +73,47 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
 - On showing the machinery: *"Showing the raw API and underneath machinery might actually be a great thing. Let's prototype it up first because it would be hard to find the right balance without seeing it visually."*
 - On granularity: sentence blocks are *"Not yet on the backend; that's the main session's call. But build the prototype to handle both"*. One rendering path with no mode switch, the cited range highlighted in context, no sentence splitting in the frontend, mock passages of both kinds. *"Record this shape as an assumption for the Phase 3 interfaces contract, not a locked decision."*
 - No direction picked yet. The user has not yet said which of Plain, Annotated and API traffic is closest to right.
+
+## Oct 23, 2026, 19:31 CDT — Look tests: prototype polish (chat layout, API window, palettes)
+**Asked:** Six polish items on the machinery prototype:
+1. When hovering a cited sentence, scroll the sources to it.
+2. Stop the question jumping to the header when a run starts.
+3. A familiar chat layout that moves up step by step.
+4. Replace the Plain, Annotated and API traffic switch with a labelled button on each source that opens a window with the API traffic and the rendered source.
+5. Mock up a few colour palettes, with dark mode that follows the system.
+6. Fix the kept stripe sticking out past the card's rounded corner.
+**Came back:**
+- **Chat layout.**
+  - On submit, the landing question box glides down to become the composer at the bottom of the conversation (View Transitions API, with an instant swap as fallback). The question appears as a message bubble just above it.
+  - The conversation is anchored to the bottom, so steps, the update check and the answer stack up from the composer and push earlier content upward.
+  - While the run works, the composer is disabled, with the status line above it and a "Skip to the end" button. When the run finishes, the composer takes a new question.
+  - The header now holds only the wordmark.
+  - The notices sit under the composer: the not-legal-advice, not-a-citator, not-exhaustive and AI lines, with source credits and coverage under "Sources and credits".
+- **Hover.** Hovering a cited sentence lights the cited blocks in their paragraph and scrolls the Sources pane to them, but only if they are out of view. The thread now starts at the answer column's right edge, so it no longer crosses the following text.
+- **API window.**
+  - The view switch is gone. Each source card has a "View API calls" button that opens a modal: the rendered source on the left (cited ranges lit), and on the right, in order, every exchange that touched that passage. These are:
+    1. the search call
+    2. the tool result carrying the passage's text blocks
+    3. the keep or discard decision
+    4. the refused submit and its error result
+    5. the accepted submit
+    6. the passage's place in the composition call, with its `search_result_index`
+    7. each answer block that cites it, with the `search_result_location`
+  - A discarded passage ends with a note that the composition call never saw it.
+  - On a phone the modal is full screen and stacked.
+- **Palettes.** Three options, switchable from the prototype banner along with System, Light or Dark (remembered per browser):
+  - **Cobalt:** cool blue-grey neutrals, cobalt accent.
+  - **Evergreen:** green-grey neutrals, deep green accent.
+  - **Violet:** violet-grey neutrals, violet accent.
+- **How the palettes are built.** Each is defined in OKLCH from a single hue that tints the neutrals and sets the accent. Four source hues share one lightness and chroma, so no kept passage looks louder than another, and red is kept for the verifier flag. Dark mode follows `prefers-color-scheme` unless the viewer picks Light or Dark.
+- **Card edge.** The kept stripe is now the card's own left border, so it follows the rounded corners.
+- **Checked** with element rectangles at 1440×900, 393×852 and 852×393:
+  - No horizontal scroll on the landing page, the conversation, the sources or the modal.
+  - On a phone, tapping a cited sentence opens Sources with the cited range in view.
+  - Sideways, the conversation keeps 210 px: there the notice line shortens to its first sentence and the banner shows only its controls.
+- Wording grep is clean.
+**Failures:**
+- On a phone, the modal measured 6 px short of the screen. It was caught mid-animation; the computed size is the full screen. The browser's `dialog:modal` size limits needed an id selector to override.
+- Calling the saved-palette restore before the thread state existed would have thrown, so the restore moved to the end of the script.
+- Sideways, the first layout left the conversation 127 px tall.
+**DECISION (user):** *"This is a very good start."* Then, in the user's words: hovering a cited sentence should make *"the right hand section … scroll to the right source on hover"*; the question being *"teleported all the way to the header … can be confusing"*; *"I'd want a familiar chat UI, where things start moving up a bit by a bit as more steps are taken"*; *"getting rid of the Plain, Annotated, and API traffic toggle to declutter. Instead, for each source, there should be a clearly labeled button that will display the request and response that led to that citation, ideally in a modal"* showing *"both API traffics and the rendered source"*; *"No coherent color palette. Mock up a few options? I want automatic dark mode handling as well that follow system's settings."*; and the stripe *"protruding further than the rounded border"* is *"jarring if unfixed."* No palette picked yet.
