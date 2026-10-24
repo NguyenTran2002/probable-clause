@@ -292,7 +292,7 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
   flex-direction: column;
   justify-content: flex-end;
   gap: 1.25rem;
-  max-width: 46rem;
+  max-width: 69rem;
   margin: 0 auto;
   padding: 2rem clamp(1rem, 3vw, 2.5rem) 1rem;
 }
@@ -309,7 +309,7 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
 .ask-msg .caption { margin: 0.3rem 0.25rem 0 0; font-size: 0.8125rem; color: var(--muted); }
 
 .dock { padding: 0.5rem clamp(1rem, 3vw, 2.5rem) 0.75rem; }
-.dock > * { max-width: 41rem; margin-left: auto; margin-right: auto; }
+.dock > * { max-width: 61.5rem; margin-left: auto; margin-right: auto; }
 .composer { padding: 0.5rem 0.5rem 0.5rem 1rem; border-radius: 16px; align-items: center; }
 .composer textarea { font-size: 1rem; }
 .composer .primary { padding: 0.55rem 1rem; }
@@ -447,6 +447,8 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 .card:not(.discarded) .toggle { display: none; }
 .api-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.65rem; }
 .api-btn::before { content: "{ }"; font-family: var(--code); font-size: 0.6875rem; font-weight: 500; color: var(--brand); }
+.read-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.65rem; }
+.read-btn::before { content: "¶"; font-family: var(--src); font-size: 0.9375rem; line-height: 1; color: var(--brand); }
 
 /* text blocks: a citation lights its block range and dims the rest of the paragraph, so it reads in context */
 .sb { border-radius: 3px; transition: opacity 0.2s, background 0.2s; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
@@ -454,8 +456,8 @@ body:not(.playing) #skip, body.playing #send { display: none; }
 .card.focus .sb.hit { opacity: 1; background: color-mix(in oklab, var(--hue) var(--mix), transparent); }
 
 /* ---------- the API modal ---------- */
-/* #api outranks the browser's own dialog:modal size limits */
-#api {
+/* ids outrank the browser's own dialog:modal size limits */
+#api, #reader {
   width: min(68rem, calc(100vw - 2rem));
   max-width: none;
   max-height: min(36rem, calc(100dvh - 4rem));
@@ -506,6 +508,37 @@ details[open] .x-preview { display: none; }
 .x-note { margin: 0; padding: 0 0.75rem 0.5rem; font-size: 0.8125rem; color: var(--code-muted); }
 .xchg > li > .x-note:only-child { padding-top: 0.5rem; }
 
+/* ---------- the source reader ---------- */
+#reader { width: min(50rem, calc(100vw - 2rem)); height: min(52rem, calc(100dvh - 4rem)); max-height: min(52rem, calc(100dvh - 4rem)); }
+.reader { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; }
+.reader-head h2 { font-family: var(--src); font-weight: 500; font-size: 1.125rem; }
+.reader-actions { display: flex; gap: 0.5rem; flex: none; }
+.nw { white-space: nowrap; }
+.reader-body { position: relative; overflow-y: auto; padding: 2rem clamp(1rem, 6vw, 4.5rem) 2.5rem; }
+.reader-text { max-width: 38rem; margin: 0 auto; font-family: var(--src); font-size: 1.125rem; line-height: 1.7; }
+.reader-text h3 { margin: 0 0 0.35rem; text-align: center; font-size: 1.0625rem; font-weight: 600; letter-spacing: 0.01em; }
+.reader-text .byline { margin: 0 0 1.75rem; text-align: center; font-style: italic; color: var(--muted); font-size: 1rem; }
+.reader-text p { margin: 0 0 1.1em; }
+.reader-text .syl-label { font-family: var(--ui); font-size: 0.875rem; font-weight: 600; color: var(--syl-ink); text-align: center; }
+/* page numbers sit in the left margin, as in the printed reports */
+.pg { float: left; width: 3rem; margin-left: -3.75rem; text-align: right; font-family: var(--ui); font-size: 0.75rem; line-height: 1.9rem; color: var(--muted); }
+.pg-word { display: none; }
+/* the passage Claude retrieved, in place; cited sentences lit, the rest of it dimmed */
+.excerpt {
+  margin: 1.4rem -1.1rem;
+  padding: 0.85rem 1.1rem 0.85rem 1.35rem;
+  border: 1px solid color-mix(in oklab, var(--hue, var(--muted)) 40%, var(--line));
+  border-radius: 12px;
+  box-shadow: inset 4px 0 0 var(--hue, var(--muted));
+  background: color-mix(in oklab, var(--hue, var(--muted)) 5%, var(--raise));
+}
+.excerpt .ex-label { margin: 0 0 0.35rem; font-family: var(--ui); font-size: 0.8125rem; color: var(--muted); }
+.excerpt .ex-text { margin: 0; }
+.excerpt.focus .sb { opacity: 0.45; }
+.excerpt.focus .sb.hit { opacity: 1; background: color-mix(in oklab, var(--hue) var(--mix), transparent); }
+.reader-foot { max-width: 38rem; margin: 2rem auto 0; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.8125rem; color: var(--muted); }
+.reader-foot p { margin: 0 0 0.35rem; }
+
 /* threads */
 .threads { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 20; overflow: visible; }
 .threads path { fill: none; stroke-width: 2; stroke-linecap: round; }
@@ -549,10 +582,17 @@ details[open] .x-preview { display: none; }
   .threads { display: none; }
   .ask-msg { max-width: 92%; }
 
-  #api { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; inset: 0; border-radius: 0; border: 0; }
+  #api, #reader { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; inset: 0; border-radius: 0; border: 0; }
   .dlg { height: 100dvh; max-height: 100dvh; }
   .dlg-body { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
   .dlg-source, .dlg-wire { overflow: visible; }
+  .reader { height: 100dvh; }
+  .reader-head { flex-wrap: wrap; }
+  .reader-body { padding: 1.25rem 1rem 2rem; }
+  .reader-text { font-size: 1.0625rem; }
+  .pg { float: none; display: block; width: auto; margin: 0 0 0.15rem; text-align: left; line-height: 1.4; }
+  .pg-word { display: inline; }
+  .excerpt { margin: 1.25rem 0; }
 }
 
 /* sideways phone: short viewport */

@@ -185,6 +185,7 @@ function cardHTML(id) {
     </div>
     <div class="card-actions">
       <button type="button" class="ghost api-btn" data-api="${id}">View API calls</button>
+      <button type="button" class="ghost read-btn" data-read="${id}">View source</button>
       <button type="button" class="toggle">Show passage</button>
     </div>`;
 }
@@ -267,8 +268,66 @@ function openApi(id) {
   dlg.querySelector('.dlg-wire').scrollTop = 0;
   dlg.showModal();
 }
-$('#api-close').addEventListener('click', () => dlg.close());
-dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+// both modals close from their Close button or a click on the backdrop
+for (const d of document.querySelectorAll('dialog')) {
+  d.querySelector('[data-close]').addEventListener('click', () => d.close());
+  d.addEventListener('click', e => { if (e.target === d) d.close(); });
+}
+
+// ---------- the source reader: the whole opinion, opened at the excerpt ----------
+// Mock text until Phase 1's corpus lands: every paragraph but the retrieved one is a labelled placeholder.
+const TOPICS = ['the facts and the proceedings below', 'the question presented', 'the earlier cases on the subject',
+  'the parties’ arguments', 'the history of the warrant requirement', 'how the rule applies to records held by others',
+  'the limits of the holding', 'the response to the other opinions', 'the practical consequences', 'the disposition'];
+const HEADINGS = { 'Majority opinion': 'Opinion of the Court', 'Dissent': 'Dissenting opinion', 'Concurrence': 'Concurring opinion', 'Plurality opinion': 'Plurality opinion', 'Syllabus': 'Syllabus' };
+function byline(p) {
+  const names = (p.joined || '').replace(/^joined by /, '');
+  const one = !/,| and /.test(names);
+  if (p.kind === 'Majority opinion') return `${p.by} delivered the opinion of the Court, in which ${names} joined.`;
+  if (p.kind === 'Plurality opinion') return `${p.by} announced the judgment of the Court and delivered an opinion, in which ${names} join.`;
+  const role = p.kind === 'Dissent' ? 'dissenting' : 'concurring';
+  return names === 'no other Justice' ? `${p.by}, ${role}.` : `${p.by}, with whom ${names} ${one ? 'joins' : 'join'}, ${role}.`;
+}
+function readerHTML(id) {
+  const p = P[id];
+  const n = p.syllabus ? 6 : 14, at = p.syllabus ? 2 : 6;
+  // pages turn every two paragraphs, placed so the excerpt lands on its pinpoint page
+  const pin = p.pin && +p.pin.match(/(\d+)$/)[1];
+  const pageWord = p.slip ? 'Slip opinion page' : 'U.S. Reports page';
+  const page = i => pin - Math.floor(at / 2) + Math.floor(i / 2);
+  const ks = CITES.filter(c => c.p === id && document.querySelector(`.cited[data-c="${c.k}"]`));
+  const label = ks.length ? `The passage Claude retrieved, ${id}. The sentences the answer cites are lit.` : `The passage Claude retrieved, ${id}${p.verdictShown === 'discarded' ? ', later discarded' : ''}.`;
+  let h = `<div class="reader-text"><h3>${HEADINGS[p.kind]}</h3>` +
+    (p.syllabus ? '<p class="syl-label">Prepared by the Reporter of Decisions. It constitutes no part of the opinion of the Court.</p>' : `<p class="byline">${esc(byline(p))}</p>`);
+  for (let i = 0; i < n; i++) {
+    const marker = pin && i % 2 === 0 ? `<span class="pg"><span class="pg-word">${pageWord} </span>${page(i)}</span>` : '';
+    if (i === at) {
+      h += `<div class="excerpt ${HUE[id] && p.keep ? HUE[id] : ''}${ks.length ? ' focus' : ''}" id="reader-excerpt">${marker}
+        <p class="ex-label">${esc(label)}</p>
+        <p class="ex-text">${p.blocks.map((b, j) => `<span class="sb${ks.some(c => j >= c.start && j < c.end) ? ' hit' : ''}">${esc(b)}</span>`).join('')}</p></div>`;
+    } else {
+      h += `<p>${marker}[Sample paragraph ${i + 1} of ${n}, standing in for text on ${TOPICS[i % TOPICS.length]}. Phase 1 supplies the verbatim ${p.syllabus ? 'syllabus' : 'opinion'}.]</p>`;
+    }
+  }
+  h += `</div><div class="reader-foot">
+    <p>${p.slip ? 'Slip opinion: not yet final in the U.S. Reports, and subject to formal revision. ' : ''}The text is normalised from the official opinion and is unofficial; the official text is the U.S. Reports.</p>
+    <p>Opinion text via CourtListener, from Free Law Project.</p></div>`;
+  return h;
+}
+const reader = $('#reader'), readerBody = $('#reader-body');
+function toExcerpt(smooth) {
+  const ex = $('#reader-excerpt');
+  readerBody.scrollTo({ top: ex.offsetTop - Math.max(24, (readerBody.clientHeight - ex.offsetHeight) / 2), behavior: smooth ? 'smooth' : 'auto' });
+}
+function openReader(id) {
+  const p = P[id];
+  $('#reader-title').innerHTML = `<i>${esc(p.kase)}</i>, ${esc(p.cite)}`;
+  $('#reader-sub').innerHTML = `${HEADINGS[p.kind]}. Decided ${esc(p.decided)}. Opened at <span class="nw">${id}</span>.`;
+  readerBody.innerHTML = readerHTML(id);
+  reader.showModal();
+  requestAnimationFrame(() => toExcerpt(false));
+}
+$('#reader-jump').addEventListener('click', () => toExcerpt(true));
 
 // ---------- the run ----------
 let runId = 0, skipping = false, playing = false;
@@ -580,6 +639,8 @@ document.addEventListener('click', e => {
   if (t.closest('dialog')) return;
   const api = t.closest('[data-api]');
   if (api) { openApi(api.dataset.api); return; }
+  const read = t.closest('[data-read]');
+  if (read) { openReader(read.dataset.read); return; }
   const toggle = t.closest('.toggle');
   if (toggle) {
     const card = toggle.closest('.card');

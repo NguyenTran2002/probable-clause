@@ -151,3 +151,27 @@ Append-only. Kept by the frontend session (locked-decisions P0.3, P1.6), in the 
 - On the outline: *"use code to investigate and ensure everything smoothes into each other perfectly."*
 - On the API window: *"The API modal is using too much vertical space, decrease it."*
 - On the layout bug: called it a *"Critical display bug"* and *"jarring"*.
+
+## Oct 23, 2026, 20:03 CDT — Look tests: wider conversation; source reader
+**Asked:** On desktop, widen the conversation by 50%, growing equally on both sides. Next to each source's "View API calls", add a "View source" button that opens a reader modal with the whole text, starting at the cited excerpt.
+**Came back:**
+- **Width.** The conversation's maximum width went from 46rem to 69rem, and the composer's from 41rem to 61.5rem, both centred.
+  - At 1440 px wide the column beside Sources is 1008 px, so the conversation now fills that column: 1008 px, up from 736 px (46rem).
+  - The full 69rem shows only on wider screens.
+  - Answer lines at 1440 px run to about 928 px.
+- **"View source" reader.** Each source card has a "View source" button (¶) beside "View API calls".
+  - It opens a reader modal holding the whole opinion the passage came from:
+    - a heading and byline in the Court's form (for example "Justice Sycamore, with whom Justice Tamarind joins, concurring.")
+    - the paragraphs
+    - page numbers in the left margin, as in the printed reports, set so the excerpt lands on its pinpoint page
+    - a closing note on unofficial text, plus the slip-opinion note where it applies
+  - The modal opens scrolled so the retrieved passage is centred, set off in its passage colour. The sentences the answer cites are lit and the rest of the passage is dimmed, so the cited text is read in context. A discarded passage is shown in grey and labelled "later discarded".
+  - A "Back to the excerpt" button returns to it after scrolling.
+  - On a phone the reader is full screen, and page numbers sit above their paragraph as "U.S. Reports page 318".
+  - The text is mock: every paragraph except the retrieved passage is a labelled placeholder until Phase 1's corpus is ready. A syllabus passage opens the syllabus, with the Reporter's label.
+- **ASSUMPTION for the Phase 3 interfaces contract (not a locked decision):** the reader needs, for each passage, the full text of the opinion or syllabus it came from, the passage's position in it, and page breaks with page numbers if Phase 1 finds them (brief §4.4 test 3). If there are no page breaks, the reader drops the margin numbers.
+- **Checked** at 1440×900, 393×852 and 852×393:
+  - No horizontal scroll on the conversation, sources or reader.
+  - On desktop the excerpt opens centred in the reader (measured 290 to 470 px in a 759 px viewport).
+**Failures:** None.
+**DECISION (user):** *"Good improvements."* Then: *"On desktop, increase the amount of width that the chat interface uses by 50% to both sizes."* Read as 50% wider overall, growing equally on both sides. Also: *"For each source, next to View API calls buttons, have a View Source button that will open a reader modal that lets the user scroll thru the whole actual text, starting from the cited excerpt."*
