@@ -57,6 +57,7 @@ def vocabulary() -> set[str]:
         # error of that copy ("thermalimaging").
         _VOCAB = words | {w for w, n in seen.items() if n >= 2}
     return _VOCAB
+CLOSING_QUOTE = r"[’”]+[.,;:)\]’”]*|'[’”][.,;:)\]’”]*"  # a word of closing quotes and what follows them
 WORD = re.compile(r"[A-Za-z][A-Za-z'’]*[A-Za-z]|[A-Za-z]")
 
 
@@ -84,7 +85,8 @@ def read_pages(pdf: Path) -> list[list[dict]]:
                             and merged[-1]["t"][-1:].isalpha())
                 # After small capitals, a comma can arrive as its own word ("ALITO ,").
                 # Never a period (an ellipsis is spaced periods) or a bracket closing "[ ]".
-                stray_punct = (merged and re.fullmatch(r"[,;:)\]’”]+", w["t"])
+                # A closing quote after a thin gap arrives the same way ("geofencing" "”).").
+                stray_punct = (merged and re.fullmatch(r"[,;:)\]’”]+[.,;:)\]’”]*|" + CLOSING_QUOTE, w["t"])
                                and not merged[-1]["t"].endswith("[")
                                and merged[-1]["t"] != "."  # ". . . ”": the print spaces an ellipsis from its quote
                                and w["x0"] - merged[-1]["x1"] < 4 and not w["h"] < merged[-1]["h"] * 0.7
@@ -271,6 +273,8 @@ class Repairer:
             keep, why = False, f"printed solid {n_j}x"
         elif digits:
             keep, why = True, "number"
+        elif b_core[:1].isupper():
+            keep, why = True, "capital after the break"  # "Radar-|Based"
         elif a_core[:1].isupper() and b_core[:1].islower():
             keep, why = False, "name broken at a line end"
         elif self.known(joined_core):
@@ -361,7 +365,9 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
                 # hyphens too, so every break is decided the same way.
                 head = prev.rsplit(" ", 1)
                 if URLISH.search(head[-1]):
-                    joined = head[-1].rstrip("­") + t
+                    # In a URL a break hyphen is dropped ("geofence_war-|rants"),
+                    # but kept before a capital ("Dog-|Leashes.htm").
+                    joined = head[-1].rstrip("­").rstrip("-") + ("-" if t[:1].isupper() else "") + t
                 else:
                     joined = rep.hyphen(head[-1], t)
                 para["text"] = (head[0] + " " if len(head) == 2 else "") + joined
@@ -369,7 +375,8 @@ def build_pdf_case(key: str, pdf: Path, first_page: int, reference_text: str | N
                                     and (not prev.endswith((".", ",", ")"))
                                          or prev.endswith(".") and t[:1].islower())):  # "services.google." + "com/fh"
                 para["text"] = prev + t  # closed-up dash, or a URL broken at the line end
-            elif ((re.fullmatch(r"[,;:)\]][,;:)\].]*", t) and not prev.endswith("[")) or prev.endswith("—")
+            elif ((re.fullmatch(r"[,;:)\]][,;:)\].]*", t) and not prev.endswith("["))
+                  or (re.fullmatch(CLOSING_QUOTE, t) and not prev.endswith(". . .")) or prev.endswith("—")
                   or (t.startswith("—") and not prev.endswith(". . ."))  # ". . . —was" keeps its space
                   or (re.fullmatch(r"[“‘`]+", prev.rsplit(" ", 1)[-1]) and t[:1] in "“‘`")):  # nested opening quotes
                 para["text"] = prev + t  # no space before closing punctuation ("Brief)."), around an em dash,

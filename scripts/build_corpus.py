@@ -90,6 +90,7 @@ def lawbox_text(fragment: str) -> str:
     for _ in range(3):
         t = re.sub(r"\b([A-Z])\.(?=(?:[A-Z]\.|\d))", r"\1. ", t)
     t = re.sub(r"\b(MR|MRS|MESSRS|DR)\.(?=[A-Z])", r"\1. ", t)
+    t = re.sub(r"\bMr\. (?=(?:CHIEF )?JUSTICE\b)", "MR. ", t)  # small capitals, as the heading prints them
     return straighten(t)
 
 
@@ -311,6 +312,16 @@ def pages_from(text: str, otoks: list, opages: list, oindex: dict, near: int, ha
         for i in range(b.size):
             pages[b.a + i] = opages[base + b.b + i]
         prev_b, prev_a = b.b + b.size, b.a + b.size
+    # A word the official copy has in a damaged form ("South-em" for "Southern",
+    # broken across a page turn) takes the page of the official words it lines
+    # up with, when they are all on one page: a divided word is on the page where
+    # it begins. Harvard, consulted next, puts such a word on the later page.
+    for tag, a0, a1, b0, b1 in sm.get_opcodes():
+        span = set(opages[base + b0:base + b1])
+        if tag == "replace" and prev_b is not None and b1 <= prev_b and len(span) == 1:
+            page = span.pop()
+            for i in range(a0, a1):
+                pages[i] = pages[i] if pages[i] is not None else page
     if harvard:
         hpg = harvard(ptoks)
         if hpg:
@@ -332,6 +343,22 @@ def pages_from(text: str, otoks: list, opages: list, oindex: dict, near: int, ha
     offs = token_offsets(text)
     breaks = [{"offset": snap(text, offs[i]), "page": out[i]} for i in range(1, len(out)) if out[i] != out[i - 1]]
     return out[0], breaks, base
+
+
+def monotonic_pages(case: dict) -> None:
+    """Within an opinion, a body paragraph never starts on a page before the one
+    the previous paragraph ended on (a short paragraph such as "The Commission
+    recommends:", printed several times, can match an earlier copy)."""
+    moved = 0
+    for op in case["opinions"]:
+        last = None
+        for p in op["paragraphs"]:
+            if last is not None and p["page_start"] < last:
+                p["page_start"] = last
+                p["page_breaks"] = [b for b in p["page_breaks"] if b["page"] > last]
+                moved += 1
+            last = p["page_breaks"][-1]["page"] if p["page_breaks"] else p["page_start"]
+    case["cleaning"]["paragraph_pages_raised"] = moved
 
 
 def wholly_on(ftext: list[str], here: list[str]) -> bool:
@@ -598,8 +625,9 @@ CORRECTIONS = Path(__file__).resolve().parent / "corrections.json"
 def apply_corrections(case: dict, key: str) -> None:
     """The reviewed corrections table (scripts/corrections.json, P1.16 as
     amended by P1.21): replace an exact string, insert printed lines after a
-    paragraph, set paragraphs' kind, set an opinion's joined_by_note, or fix a
-    page break. Every entry must apply exactly once, or the build stops."""
+    paragraph, set paragraphs' kind, set an opinion's joined_by_note, fix a page
+    break, or split a paragraph where print starts a new one. Every entry must
+    apply exactly once, or the build stops."""
     entries = [e for e in json.loads(CORRECTIONS.read_text())["entries"] if e["case"] == key]
     log, where = [], []
 
@@ -692,6 +720,26 @@ def apply_corrections(case: dict, key: str) -> None:
                         u["page_starts"][j] = page - 1
                         u["page_breaks"][j] = [b for b in u["page_breaks"][j] if b["page"] != page]
             log.append({"remove_break": e["remove_break"], "page": page, "source": e["source"], "where": where[-1]})
+        elif "split_at" in e:
+            # A new printed paragraph begins at this text (a run-in heading
+            # such as "Perjury." that Lawbox runs into the paragraph before).
+            u, qi, text, breaks = unique(e["split_at"])
+            if qi is not None:
+                sys.exit(f"{key}: split_at applies to body paragraphs only")
+            at = text.index(e["split_at"])
+            op = next(o for o in case["opinions"] if any(p is u for p in o["paragraphs"]))
+            tail = {"text": text[at:], "kind": u["kind"], "page_start": u["page_start"],
+                    "page_breaks": [{**b, "offset": b["offset"] - at} for b in breaks if b["offset"] > at],
+                    "footnote_refs": [{**r, "offset": r["offset"] - at} for r in u["footnote_refs"] if r["offset"] >= at]}
+            for b in breaks:
+                tail["page_start"] = b["page"] if b["offset"] <= at else tail["page_start"]
+            if tail["page_breaks"] and tail["page_breaks"][0]["offset"] == 0:
+                tail["page_start"] = tail["page_breaks"].pop(0)["page"]
+            u["text"] = text[:at].rstrip()
+            u["page_breaks"] = [b for b in breaks if b["offset"] < len(u["text"])]
+            u["footnote_refs"] = [r for r in u["footnote_refs"] if r["offset"] < at]
+            op["paragraphs"].insert(op["paragraphs"].index(u) + 1, tail)
+            log.append({"split_at": e["split_at"], "page": tail["page_start"], "source": e["source"], "where": where[-1]})
         else:
             sys.exit(f"{key}: unknown correction entry {e}")
     case["cleaning"]["reviewed_corrections"] = log
@@ -829,6 +877,7 @@ def main() -> int:
             continue
         lineup_joiners(case, key)
         apply_corrections(case, key)  # after the lineup, so a table note wins
+        monotonic_pages(case)
         if not case.get("decided_text"):
             # The early U.S. Reports print the Term, not the decision date.
             idx = json.loads((RAW / "pull_index.json").read_text())
