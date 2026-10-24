@@ -37,3 +37,7 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Built corpus and verification output, until the corpus is frozen (brief default 3)
+data/corpus/
+data/verification/
