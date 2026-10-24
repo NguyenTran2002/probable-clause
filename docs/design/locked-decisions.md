@@ -500,3 +500,17 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 10 as T1.14 as proposed; borderline questions like the employer email get researched (the state-action limit), not flagged out of scope."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:04 CDT — Phase 3: Architecture, Area 1 (the loop's system prompt, T1.14)"
+
+### T2.1 `search_web_updates`: what Claude sets, what our server limits, what it costs
+
+- **Decision:** Area 2, topic 1:
+  - **Reading of brief §2's Update check row** ("Claude controls every search field; our server clamps cost-related fields"): Claude controls every field of **our** wrapper tool, the list in brief §6.2 (query, date window, domains, category, search type), not every field Exa's tool offers.
+  - **Claude sets:** `query` (required); `start_published_date` and `end_published_date`, both optional, checked by our code (valid dates, the end not before the start); `include_domains` and `exclude_domains`, **up to 100 entries each**, a limit only against overrun (Exa's own is 1,200), each a hostname, a path prefix or a subdomain wildcard; `category`, one of `news` or `publication`; `type`, `auto` or `lite`, default `auto`; `num_results`, 1 to 10, default 10, clamped by our code. The tool description states the trade-offs: a date filter also drops pages with no published date; `lite` is cheaper and faster but searches only Exa's cache and never fetches live, so it can miss the newest pages.
+  - **Our code sets** the text cap per result and highlights (topic 2).
+  - **Left out:** Exa-written summaries (`enableSummary`, `summaryQuery`: the band shows Claude's own synthesis, P1.3); crawl dates (ignored by the API); `includeText` and `excludeText` (deprecated); `additionalQueries` (deep types only); `subpages` and `subpageTarget`; `maxAgeHours` and `livecrawlTimeout` (Exa's default kept); `userLocation`; `moderation`; the categories `company`, `people`, `financial report`, `pdf` and `github` (no use here or being deprecated; this also removes the known failing date-filter combinations, brief §6.2); the legacy types `fast` and `instant`. The deep types cannot be sent through Exa's tool at all (Phase 2 findings §4).
+  - **Limits:** 3 update searches per run (P2.7); a fourth is refused with an error result. A call our code refuses before it reaches Exa does not count; a call that reached Exa counts, even if Exa returned an error. The per-turn status line (T1.14) shows "update searches <n> of 3".
+  - **Shown:** the step log shows every value Claude chose and one line of our fixed settings, so every parameter is shown (brief §2, Update-check honesty).
+  - **Cost:** at most 3 × $0.007 = $0.021 a run. Exa's reported cost (`costDollars`) is recorded per call and **counts toward the $10 daily and $60 monthly caps** (P2.7).
+- **User's words:** *"I only have 1 correction here, for include and exclude domains, set a high limit (100) to prevent overrun only and give Claude flexibilities."* Then: *"Lock topic 1 as T2.1: reading B, domains up to 100 each, the rest as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:18 CDT — Phase 3: Architecture, Area 2 (the update-check tool's inputs, T2.1)"

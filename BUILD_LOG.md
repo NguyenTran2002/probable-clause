@@ -562,3 +562,15 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
   3. *"For all search tools, should we consider giving Claude more filtering options before the search is ran? Claude can filter by date, for example, or exclude any passage containing certain words, etc."*
   4. *"From the current architecture, the Composition call is the only place where Citations is in action, which makes sense because for Citations to work, we must not be using structured output. However, with the context of legal citation, citing a sentence (within the context of a passage) is often a more frequent practice than citing whole passage. This is from my experience in Constitutional Law class back in college. Thus, I want us to explore giving Claude flexibility in deciding not only what to cite but also how much to cite. Then, in the source panel, we always show the sentence within a paragraph."*
 - On usage: *"don't send any subagent out again because this is a targeted fix. I also want to conserve usage as well. Push back otherwise."*
+
+## Oct 24, 2026, 17:18 CDT — Phase 3: Architecture, Area 2 (the update-check tool's inputs, T2.1)
+**Asked:** Resume Phase 3 after the compaction with Area 2, the update check: topics first, then topic 1, what Claude sets on `search_web_updates`, what our server limits, and what the check costs.
+**Came back:**
+- Area 2's five topics, confirmed by the user: the tool's inputs, limits and cost; what a result looks like to Claude; the band's summary and links; errors and unavailability; the MCP connection. Raised for topic 3: P1.3's internal Citations grounding of web results has nothing to run on, since loop results are plain text (T1.6) and the band's summary is written in the loop (T1.11).
+- Facts for topic 1, from Phase 2's `tools/list` and the agent's reading of Exa's tool source: crawl dates are ignored by the API; `includeText` and `excludeText` are deprecated; `additionalQueries` works only with deep types the tool cannot send; `fast` and `instant` are legacy; `lite` is cache-only and refuses most optional fields; the `pdf` and `github` categories are being deprecated; `company` and `people` refuse date filters; summaries are Exa-written text at $1 per 1,000 pages. Phase 2 probe: `auto` $0.007 and about 1.9 s of Exa's search time, `lite` $0.004 and about 0.3 s. Exa accepts up to 1,200 domains per list, as hostnames, path prefixes or subdomain wildcards.
+- The brief's "Claude controls every search field" read two ways (every field Exa offers, or every field of our wrapper as §6.2 lists them); restated before proposing.
+- T2.1 locked: see `docs/design/locked-decisions.md`.
+**DECISION (user):**
+- Topics: *"The five topics work. Open topic 1."*
+- The one correction to the proposal: *"I only have 1 correction here, for include and exclude domains, set a high limit (100) to prevent overrun only and give Claude flexibilities."*
+- T2.1: *"Lock topic 1 as T2.1: reading B, domains up to 100 each, the rest as proposed."*
