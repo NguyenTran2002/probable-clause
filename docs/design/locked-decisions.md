@@ -479,3 +479,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I'm considering not offering this if it's something we cannot check reliably. The response is covered under the AI disclosure already, and adding a check that isn't reliable might give false confidence to user."* Then: *"Drop the general case-name verifier. Keep the quotation check and the narrow full-citation check, each worded exactly. Lock topic 8."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:51 CDT — Phase 3: Architecture, Area 1 (answer checks, T1.12)"
+
+### T1.13 The citing-cases lookup is cut; Claude uses keyword search on the citation string
+
+- **Decision:** The citing-cases lookup of brief §5.2 is not built (brief §3 lists it second among the cuts). To find later corpus passages citing a case, Claude uses the keyword search (T1.2, T1.4) on that case's citation, for example `any_of: ["\"389 U. S. 347\"", "\"389 U. S., at\""]` with a `decided_from` filter; the corpus catalog in the system prompt gives every case's citation (T1.6). The system prompt (Area 1, topic 10) describes this technique, and that date order alone is not treatment. No citation index is built.
+- **Recorded with it:** the text holds 805 citations between corpus cases in 524 passages; a short pinpoint citation identifies a case only together with its page range (a volume can hold other cases, e.g. *Leon* beside *Karo* in 468 U. S.), which the system prompt's guidance accounts for.
+- **User's words:** *"The idea of the tool find_citing(case, filters?) is sound on the consumption end (Claude), but I'm reading that we'd need to build the underlying infrastructure?"* Then: *"Cut the citing lookup; Claude uses keyword search on the citation string. Lock topic 9."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:00 CDT — Phase 3: Architecture, Area 1 (citing-cases lookup cut, T1.13)"

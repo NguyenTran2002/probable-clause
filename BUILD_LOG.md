@@ -490,3 +490,16 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - The concern that opened the topic: *"I'm concerned of the fragile deterministic case-name verifier, particularly how do we recognize robustly what is a case name to check within Claude's answer without requesting Claude to write it as structured output (which breaks Citations feature). I'm considering not offering this if it's something we cannot check reliably. The response is covered under the AI disclosure already, and adding a check that isn't reliable might give false confidence to user."*
 - T1.12: *"Drop the general case-name verifier. Keep the quotation check and the narrow full-citation check, each worded exactly. Lock topic 8."*
+
+## Oct 24, 2026, 17:00 CDT — Phase 3: Architecture, Area 1 (citing-cases lookup cut, T1.13)
+
+**Asked:** Area 1, topic 9: the citing-cases lookup of brief §5.2 ("if time allows"), second on brief §3's cut list. The user asked whether it needs its own infrastructure.
+
+**Came back:**
+- Citations between corpus cases in the opinion text (script): 805 occurrences resolving to another corpus case (509 full, 296 short pinpoint forms) in 524 passages; 30 of 32 cases cited by another (Boyd by 22, Katz by 19, Olmstead by 18).
+- The proposed `find_citing(case, filters?)` would need a citation index built once by script (about 70 KB, estimate) and a lookup at run time. Cross-checked against CourtListener's `opinions_cited` graph: all 217 of its case pairs found in the text, 12 more found; 2 of those were false matches of the quick rule (a short citation resolved by volume alone: Greenwood's "Leon, 468 U. S., at 908" as Karo; Shultz's "274 U. S., at 263" as Lee), fixed by a page-range rule; Knotts → White real and missing from CourtListener; 9 recent cases citing recent ones.
+- Alternative: Claude finds citing passages with keyword search on the citation string.
+
+**DECISION (user):**
+- *"The idea of the tool find_citing(case, filters?) is sound on the consumption end (Claude), but I'm reading that we'd need to build the underlying infrastructure? For each case, we will need to parse and store what are the cases that it is citing?"*
+- T1.13: *"Cut the citing lookup; Claude uses keyword search on the citation string. Lock topic 9."*
