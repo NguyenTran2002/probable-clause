@@ -598,3 +598,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - *"Go with option A, structured findings in submit_answer. Let's go through the details."*
 - T2.3: *"Lock topic 3 as T2.3: option A with the eight details as proposed."*
+
+## Oct 24, 2026, 17:43 CDT — Phase 3: Architecture, Area 2 (errors and unavailability, T2.4)
+**Asked:** Area 2, topic 4: what happens when the update check fails or is unavailable.
+**Came back:**
+- Facts from Phase 2 and the agent's reading of Exa's tool source: Exa's refusals arrive as error tool results (the 400 and 401 seen in Phase 2), transport and gateway failures as protocol errors (the 1 MB event limit); 402 `NO_MORE_CREDITS` when the credit runs out, back on the 1st (reset time zone undocumented); 429 above 10 queries a second team-wide; Exa retries its own 500 to 504 twice (P2.8); its tool aborts at 300 s. The tool list and system prompt are fixed and cached (T1.14), so the tool cannot be withdrawn while unavailable.
+- Proposal: four kinds of failure (refused by our code, refused by Exa, failed, unavailable), each with what Claude gets, whether it counts toward the 3 searches and what cost is recorded; a monthly unavailability flag in Atlas; a 30 s timeout as a placeholder; no retries by our code.
+- T2.4 locked: see `docs/design/locked-decisions.md`.
+**DECISION (user):**
+- T2.4: *"Lock topic 4 as T2.4 as proposed."*

@@ -547,3 +547,21 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Go with option A, structured findings in submit_answer. Let's go through the details."* Then: *"Lock topic 3 as T2.3: option A with the eight details as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:40 CDT — Phase 3: Architecture, Area 2 (the band's summary and links, T2.3)"
+
+### T2.4 Update-check errors and unavailability
+
+- **Decision:** Area 2, topic 4:
+  - **Four kinds of failure:**
+    - **Refused by our code** (a bad date, over 100 domains, a fourth search): an error result saying what to fix; not counted toward the 3 searches (T2.1); no cost.
+    - **Refused by Exa** (a 4xx other than 401 and 402): Exa's own message passed to Claude, which may change the search and retry; counted; no cost recorded.
+    - **Failed** (a 5xx after Exa's own retries, a protocol or connection error, a timeout, a reply our code cannot read): a plain "the search did not complete" message; counted; Claude may search again if searches remain; recorded at Exa's list price for the type, since it may have been billed without a report.
+    - **Unavailable** (402 `NO_MORE_CREDITS`, or 401): no search runs; "Update check unavailable: <reason>"; not counted; no cost.
+  - **Out of credit across runs:** the first 402 sets a flag in Atlas, unavailable until the 1st of the next month (P2.11). Every run checks it before starting; while it is set, a line in the run's first user message tells Claude, and any update search returns "unavailable" without calling Exa. After the 1st the next run tries again; a further 402 sets the flag again at no cost. The tool stays listed, since the tools and system prompt are fixed and cached (T1.14).
+  - **A 401** makes the check unavailable for that run only and is logged as our configuration fault.
+  - **Rejection rule 4** (T1.10) is waived only while the check is unavailable; a failed search counts as the check having run.
+  - **Timeout:** 30 s per update search, a placeholder until measured (brief §10.7); Exa's own server time was 0.3 to 1.9 s in Phase 2, and its tool's 300 s limit would leave a run waiting five minutes. An abandoned call is recorded at list price.
+  - **No retries by our code** (brief §10.7); Exa's server-side retries stand (P2.8).
+  - **The band** never shows a raw error (brief §6.4): with nothing run, "Update check unavailable" and the reason in plain words; with some searches incomplete, the band as usual, each incomplete search listed with its parameters and "did not complete" (T2.3).
+- **User's words:** *"Lock topic 4 as T2.4 as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:43 CDT — Phase 3: Architecture, Area 2 (errors and unavailability, T2.4)"
