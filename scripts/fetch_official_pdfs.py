@@ -36,6 +36,7 @@ US_CITES = [
     ("ex_parte_jackson", "96-727"), ("boyd", "116-616"), ("hester", "265-57"),
     ("lee", "274-559"), ("shultz", "416-21"), ("jacobsen", "466-109"),
     ("oliver", "466-170"), ("dunn", "480-294"), ("greenwood", "486-35"),
+    ("clinton", "377-158"),  # P1.20, approved separately
 ]
 FILES = [(key, f"USREPORTS-{vp}.pdf", GOVINFO.format(v=vp.split("-")[0], p=vp.split("-")[1]))
          for key, vp in US_CITES]

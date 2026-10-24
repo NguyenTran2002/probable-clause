@@ -43,6 +43,7 @@ LAWBOX = {
     # Filter-check additions (P1.14).
     "ex_parte_jackson": 89759, "boyd": 91573, "hester": 100413, "lee": 101118,
     "shultz": 109005, "jacobsen": 111143, "oliver": 111146, "dunn": 111833, "greenwood": 112067,
+    "clinton": 106815,  # P1.20
 }
 
 # Official PDFs (P1.11): file, first U.S. page, the CourtListener cluster whose

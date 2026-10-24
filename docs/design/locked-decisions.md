@@ -194,3 +194,9 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The printed heading ("MR. CHIEF JUSTICE STONE and MR. JUSTICE FRANKFURTER:") names no role. They would overrule *Olmstead* and agree with its dissents, but do not dissent; the statement is typed as a concurrence in the judgment.
 - **User's words:** *"Goldman's Stone and Frankfurter statement as concurrence in the judgment."*
 - **Date:** Oct 23, 2026
+
+### P1.20 *Clinton v. Virginia* joins the corpus
+
+- **Decision:** *Clinton v. Virginia*, 377 U.S. 158 (1964) (per curiam: a listening device stuck into a wall is a search, under *Silverman*), proposed by the independent case-list agent (P1.1) after P1.14, joins the corpus as a core case. Its official PDF is downloaded with the user's approval, and it is verified like the other additions.
+- **User's words:** *"Add Clinton v. Virginia: pull it, download its official PDF (approved), build and verify it."*
+- **Date:** Oct 23, 2026

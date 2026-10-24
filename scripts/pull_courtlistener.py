@@ -64,6 +64,7 @@ CASES = [
     ("oliver", "Oliver v. United States", "466 U.S. 170", None, "core"),
     ("dunn", "United States v. Dunn", "480 U.S. 294", None, "core"),
     ("greenwood", "California v. Greenwood", "486 U.S. 35", None, "core"),
+    ("clinton", "Clinton v. Virginia", "377 U.S. 158", None, "core"),  # P1.20
     # Considered at the filter check and left out (P1.14); raw cache only.
     ("quon", "City of Ontario v. Quon", "560 U.S. 746", "130 S. Ct. 2619", "excluded"),
 ]
@@ -112,14 +113,20 @@ def lookup() -> list:
     """One lookup for every case not yet looked up; earlier lookups are cached."""
     path = RAW / "citation_lookup.json"
     extra = RAW / "citation_lookup_2.json"
+    extra3 = RAW / "citation_lookup_3.json"
     if path.exists():
         done = json.loads(path.read_text(encoding="utf-8"))
         have = {r["citation"] for r in done}
         missing = [us for _, _, us, _, _ in CASES if us not in have]
-        if missing and not extra.exists():
+        later = [json.loads(f.read_text(encoding="utf-8")) for f in (extra, extra3) if f.exists()]
+        have |= {r["citation"] for batch in later for r in batch}
+        missing = [us for _, _, us, _, _ in CASES if us not in have]
+        if missing:
+            target = extra3 if extra.exists() else extra
             data = call(f"{API}/citation-lookup/", {"text": "; ".join(missing)})
-            extra.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
-        return done + (json.loads(extra.read_text(encoding="utf-8")) if extra.exists() else [])
+            target.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+            later.append(data)
+        return done + [r for batch in later for r in batch]
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     cites = [c for _, _, us, sct, _ in CASES for c in (us, sct) if c]
