@@ -21,8 +21,8 @@
 | Area | T | Status |
 |---|---|---|
 | 1. The research loop | T1 | **Closed** Oct 24, 17:05 CDT (T1.1 to T1.14) |
-| 2. The update check (Exa wrapper) | T2 | **Open** (opened Oct 24, 17:12 CDT) |
-| 3. Run lifecycle and infrastructure | T3 | Not started |
+| 2. The update check (Exa wrapper) | T2 | **Closed** Oct 24, 17:46 CDT (T2.1 to T2.5) |
+| 3. Run lifecycle and infrastructure | T3 | **Next**, after the compaction |
 | 4. The interface | T4 | Not started |
 | 5. The user's wording and the replays | T5 | Not started |
 | Design note (Phase 3's gate) | — | After Area 5 |
@@ -222,3 +222,33 @@ Facts in `docs/research/phase2-findings.md` §4, the agent notes `data/verificat
 - **Locked T2.4**, 17:43 CDT (log entry of that time), as proposed. **Next: topic 5, the MCP connection — the last topic of Area 2.**
 - **Topic 5 opened, 17:44 CDT.** Facts: Exa's hosted server is stateless (a fresh handler per request, agent notes Q1), over streamable HTTP; the Phase 2 probe used the official `mcp` package (2.3.0, in `uv.lock`) with `create_mcp_http_client(headers={"x-api-key": key})`, `streamable_http_client` and `ClientSession.initialize()`, one session for a batch of calls; handshake time not measured. Options: a session per search, per run, or one kept open for the whole instance. Proposed: **a session per search** (open, initialize, call, close), since a stateless server gains nothing from a held session but the handshake, a held session can go stale while the instance idles or is throttled between requests, and per-search isolates one run's failures from another's; the 30 s timeout (T2.4) covers the handshake too; no `tools/list` per search; a schema check (`tools/list`, the fields and enum values we send) on the instance's first search and in Phase 5 tests and the post-deploy check, a mismatch logged as a warning, not blocking (T2.4 handles the failures it causes); the URL `https://mcp.exa.ai/mcp?tools=web_search_advanced_exa`, the key only in the `x-api-key` header, never in a URL or a log (brief §6.1); the unavailability flag (T2.4) checked before opening; how the key reaches Cloud Run is Area 3.
 - **Locked T2.5**, 17:46 CDT (log entry of that time). **All five Area 2 topics locked (T2.1 to T2.5).**
+
+---
+
+## Area 2 closed (Oct 24, 2026, 17:46 CDT): what carries forward
+
+Decisions: T2.1 to T2.5 in `locked-decisions.md`; the closing log entry is "Oct 24, 2026, 17:46 CDT — Phase 3: Architecture, Area 2 closed (the update check)".
+
+**The update check as locked:** `search_web_updates` with the fields of T2.1 (up to 3 a run); one session per search to `https://mcp.exa.ai/mcp?tools=web_search_advanced_exa`, key in `x-api-key` (T2.5); results as plain-text blocks with `web-` IDs, 4,000 characters of opening text in data markers, dates as written (T2.2); the band from `update_findings` and `update_overview` in `submit_answer`, sources checked, copy guard, outcome worked out by our code (T2.3); four kinds of failure and a monthly out-of-credit flag in Atlas (T2.4).
+
+**Build (Phase 4):** the wrapper and its field mapping (snake_case to Exa's names); the copy guard; the schema check; the data markers and their escaping.
+
+**Build tests and Phase 5:** inspect what the first 4,000 characters of real pages hold; measure the cap's tokens, the copy guard's 10 words, the 30 s timeout and the handshake time; trigger every failure kind (our refusal, Exa's 4xx, a 5xx or timeout, 402 and 401); confirm `costDollars` is recorded and counted.
+
+**Carried into later areas:**
+- Area 3: the Exa key's route into Cloud Run (T2.5); the out-of-credit flag in Atlas (T2.4); Exa's cost in the spend counters, with list price when unreported (T2.1, T2.4); no new Exa call while nobody is connected (brief §2).
+- Area 4: the band's layout, its outcomes, findings with links, the collapsed list of pages, incomplete searches (T2.3, T2.4).
+- Area 5: the honesty label (brief §6.4); a replacement for §6.4's guarantee sentence; source links never called verified; the "not summarised", "unavailable" and "did not complete" wording (T2.3, T2.4).
+
+## Area 3: run lifecycle and infrastructure (to open after the compaction)
+
+Facts in `docs/research/phase2-findings.md` §3, §6 and §7, brief §5.1, §7.2, §8 and decisions P2.6, P2.7, P2.10; items carried from Areas 1 and 2 above and in "Area 1 closed". Proposed topics, to confirm with the user when the area opens:
+
+| # | Topic | Status | Notes |
+|---|---|---|---|
+| 1 | Streaming a run to the page | Open | Events (steps, passages, keeps, update searches, rejections, the answer streaming, T1.11); event IDs; run events in Atlas with a TTL (brief §8.3, about a day, may shorten); replay on reconnect (brief §8.5) |
+| 2 | Disconnect detection and the grace window | Open | P2.10: Cloud Run does not pass a disconnect over HTTP/1.1; heartbeat vs end-to-end HTTP/2; 60 s grace (placeholder); no new Claude, Exa or Voyage call while nobody is connected; abandoned runs |
+| 3 | Spend counters and caps | Open | Atlas, atomic check and increment (brief §8.1, §8.4); what counts (Claude, Exa T2.1, Voyage?); checking before a run vs during it; overshoot tolerance; daily and monthly boundaries in Chicago; the cap-hit state (brief §7.2); the Exa flag (T2.4) |
+| 4 | The paid calls at run time | Open | Anthropic and Voyage: timeouts, errors, no retries (brief §10.7); the one-hour cache breakpoint and the per-turn status line (T1.14); the per-run budgets and the composition reserve (P2.7, T1.11) |
+| 5 | Cloud Run, the gateway and cold start | Open | Two services, request timeout, concurrency, max-instance overshoot (brief §8.1); the wake protocol and the long-wait state (§8.5); corpus, index and vectors loaded at start (vectors in memory to confirm, T1.1); secrets (Anthropic, Voyage, Exa, Atlas user); goodnight's own timeout and client IP (findings, item 2) |
+| 6 | Protections | Open | Question length cap; strict tool input handling (brief §8.3); what is stored and for how long, and the privacy note |
