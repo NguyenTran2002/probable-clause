@@ -616,3 +616,24 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T2.5 locked: see `docs/design/locked-decisions.md`.
 **DECISION (user):**
 - T2.5: *"Lock topic 5 as T2.5: a session per search, the rest as proposed."*
+
+## Oct 24, 2026, 17:46 CDT — Phase 3: Architecture, Area 2 closed (the update check)
+**Asked:** After the compaction, run Area 2, the update check through Exa's MCP server, topic by topic, then prepare the next compaction.
+**Came back:**
+- Five decisions, T2.1 to T2.5, each with its own entry above (17:18, 17:33, 17:40, 17:43, 17:46):
+  - T2.1: Claude sets the fields of our own wrapper (brief §2 read as the §6.2 list): query, optional published dates, domains up to 100 each, `news` or `publication`, `auto` or `lite`, 1 to 10 results; summaries, crawl dates, text filters, subpages and the rest left out; 3 searches a run; Exa's cost counted toward the caps.
+  - T2.2: one plain-text block per page with our `web-` IDs; the opening 4,000 characters of Exa's cleaned text inside data markers; no highlights; Exa's dates taken as written, with no conversion.
+  - T2.3: the band's statements as structured findings in `submit_answer`, each naming its sources, checked by our code, with a copy guard against republishing page text; the outcome worked out by our code.
+  - T2.4: four kinds of failure; a monthly out-of-credit flag in Atlas; a 30 s timeout (placeholder); no retries by our code; no raw error on the page.
+  - T2.5: a session per search to Exa's server; a schema check that warns.
+- Amended along the way: P1.3 (Citations no longer ground the band; Claude names sources, our code checks them) and T1.10 (two new `submit_answer` fields), by T2.3. One exception to brief §10.7 recorded in T2.2 (Exa's dates as written).
+- Carried forward, recorded in `docs/design/phase3-working.md`:
+  - **Area 3:** the Exa key's route into Cloud Run; the Atlas flag (T2.4); Exa's cost in the spend counters (T2.1); no Exa call while nobody is connected.
+  - **Area 4:** the band's layout, its outcomes and the collapsed list of pages (T2.3).
+  - **Area 5:** the honesty label; a replacement for brief §6.4's guarantee sentence; source links never called verified; the "not summarised" and "unavailable" wording (T2.3, T2.4).
+  - **Build and Phase 5:** inspect what the first 4,000 characters of real pages hold; measure the cap, the copy guard's 10 words, the 30 s timeout and the handshake; trigger every failure kind.
+**Failures:** My first explanation of why converting Exa's dates loses a day did not make the reason clear; the user asked, and the supremecourt.gov example answered it (T2.2).
+**DECISION (user):**
+- Area 2's topics: *"The five topics work. Open topic 1."*
+- The user's own calls along the way: *"for include and exclude domains, set a high limit (100) to prevent overrun only and give Claude flexibilities"*; *"I'm leaning not trusting Exa's highlight here."*; *"Let's keep 4000"*; *"I mean take Exa's date as written, with no conversion"*; *"Go with option A, structured findings in submit_answer."*
+- The five locks: *"Lock topic 1 as T2.1: reading B, domains up to 100 each, the rest as proposed."* *"Lock topic 2 as T2.2 as restated."* *"Lock topic 3 as T2.3: option A with the eight details as proposed."* *"Lock topic 4 as T2.4 as proposed."* *"Lock topic 5 as T2.5: a session per search, the rest as proposed."*
