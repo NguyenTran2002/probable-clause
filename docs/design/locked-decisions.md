@@ -597,3 +597,20 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Your recommendations work here. Lock and proceed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:55 CDT — Phase 3: Architecture, Area 3 (starting a run and streaming it, T3.1)"
+
+### T3.2 Disconnect detection: a heartbeat from the page, checked before every paid call
+
+- **Decision:** Area 3, topic 2 (settles P2.10's mechanism; brief §2's Browser disconnect rule stands):
+  - **Heartbeat:** while its stream is open, the page sends `POST /runs/{id}/alive` every 10 s, carrying the last event ID it holds. The run counts as attended while the last heartbeat is under 25 s old.
+  - **Checked before every paid call:** each loop call to Claude, each Exa search, each Voyage embed and rerank, and the composition call. A call already running finishes, a composition included (an abandoned request is still charged, Anthropic support page).
+  - **Pause and resume:** when a paid call is due and the run is not attended, the run pauses (a stored event) and resumes on the next heartbeat (a stored event).
+  - **Abandoned:** 60 s after the last heartbeat the run is abandoned: no answer composed, its actual spend recorded (topic 4), and our code closes its stream, since Cloud Run does not end the request when the browser leaves (INFERRED from the troubleshooting page).
+  - **Page watchdog:** the page reconnects when nothing, neither an event nor a keep-alive line (T3.1), has arrived for 45 s.
+  - **Reload:** the page keeps the run ID in sessionStorage and reattaches after a reload (iOS Safari may reload a suspended page).
+  - **Another instance:** a heartbeat that reaches an instance not holding the run is written to Atlas; the holding instance reads Atlas before it pauses.
+  - **A run that finished while the page was away** stays readable on reconnect until its events expire (topic 7).
+  - **Every figure** (10 s, 25 s, 60 s, 45 s) is a placeholder until measured against real drops on the iPhone in Phase 5 (brief §8.5, §10.7).
+  - **Considered:** end-to-end HTTP/2 (`--use-http2` and h2c on goodnight and the API, nginx 1.29.4 or later proxying HTTP/2; two goodnight changes, uvicorn's HTTP/2 experimental, still blind to a half-open connection); WebSocket (set aside by T3.1). Edge noted, untested: Chrome slows chained timers in a tab hidden over 5 minutes to about once a minute, longer than any measured run.
+- **User's words:** *"Lock option A. Proceed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:58 CDT — Phase 3: Architecture, Area 3 (disconnect detection and the grace window, T3.2)"

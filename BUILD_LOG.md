@@ -648,3 +648,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - Topics: *"The seven topics work. Open topic 1."*
 - T3.1: *"Your recommendations work here. Lock and proceed."*
+
+## Oct 24, 2026, 17:58 CDT — Phase 3: Architecture, Area 3 (disconnect detection and the grace window, T3.2)
+**Asked:** Area 3, topic 2: how the server knows the page is still connected, so no paid call starts while nobody is (brief §2, P2.10).
+**Came back:**
+- Facts from the Phase 2 Cloud Run notes: Cloud Run passes a client disconnect to the container only over WebSockets or end-to-end HTTP/2; goodnight is itself a Cloud Run service on HTTP/1.1, so its nginx probably never sees the browser leave; nginx proxies HTTP/2 upstream only since 1.29.4 (goodnight's version not recorded); Anthropic still charges an abandoned request that was on track to succeed. Inferred: our stream request stays open in the container after the browser leaves until our code ends it.
+- Options: a heartbeat from the page; end-to-end HTTP/2 through goodnight and the API (two goodnight changes, still blind to a half-open connection); WebSocket (set aside by T3.1). Recommended the heartbeat, with placeholder timings (10 s heartbeat, 25 s attended, 60 s grace, 45 s page watchdog).
+- T3.2 locked: see `docs/design/locked-decisions.md`.
+**Failures:** In the working doc I wrote topic 2's opening time as 17:59 CDT before running `date`, which then read 17:57. Corrected in the working doc (commit `8b27450`); no log heading was affected.
+**DECISION (user):**
+- T3.2: *"Lock option A. Proceed."*
