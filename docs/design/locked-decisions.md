@@ -385,7 +385,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 15:47 CDT — Phase 3: Architecture, Area 1 (structure check; Oliver's heading, T1.5)"
 
-### T1.6 How passages reach Claude (clarifies T1.3)
+### T1.6 How passages reach Claude (clarifies T1.3) — AMENDED by T1.9 (the composition call receives custom content documents, not search result blocks)
 
 - **Decision:** Area 1, topic 3, as reviewed by the user:
   - **Result format:** loop tool results are text blocks, **one block per passage**, each starting with a header; not `search_result` blocks, since a tool result holding search results may hold nothing else (no "matched again" line, no read label, no no-match note). The composition call still receives `search_result` blocks. Untested in Phase 2; checked in build tests.
@@ -401,7 +401,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 15:50 CDT — Phase 3: Architecture, Area 1 (how passages reach Claude, T1.6)"
 
-### T1.7 The keep tool: batched keeps with reasons, no withdraw list
+### T1.7 The keep tool: batched keeps with reasons, no withdraw list — AMENDED by T1.9 (the keep reason goes in the composition document's `context`)
 
 - **Decision:** Area 1, topic 4, as reviewed by the user:
   - **`keep_passages(keep: [{id, reason}])`,** batched. The system prompt asks Claude to keep passages as soon as it has judged them, in the same turn as its next searches, so the sources panel fills in during the run.
@@ -423,3 +423,15 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"since the composition call is pretty independent and does not get fed the same context, so caching doesn't matter, should swap to Opus at high effort?"* Then: *"Let's switch to Opus 5.5 at high for quality and we will compare again with Sonnet 5.5 at high effort later as well."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:09 CDT — Phase 3: Architecture, Area 1 (composition on Opus, T1.8)"
+
+### T1.9 Citation granularity: Claude cites any run of our sentences, sent as custom content documents (amends T1.6 and T1.7 for the composition call)
+
+- **Decision:** Area 1, topic 5, the user's addition:
+  - **Claude decides how much to cite:** any run of whole sentences of a kept passage, from one sentence to the whole paragraph; one answer sentence may carry several citations. Nothing finer than a sentence (the Citations feature's smallest unit is a block).
+  - **Our conservative splitter makes the sentences,** not Anthropic's automatic chunking: it splits only where a sentence plainly ends (after a lowercase word that is not an abbreviation, a number, a closing bracket or quotation mark, or a capitalised word of five or more letters not on a legal-abbreviation list), erring towards leaving two sentences together. Deterministic, run once when the search index is built, boundaries stored so the composition call and the page agree; a build check asserts the sentences join back into exactly the passage; a script reports suspicious splits and the main session reviews a sample (no subagent), logged. Footnotes are split the same way.
+  - **Each kept passage goes to the composition call as a custom content document** (its sentence blocks, "used as-is"), with the passage's metadata and its keep reason (T1.7) in the document's **`context`**, the documented slot passed to Claude and never cited. Citations come back as block ranges. This replaces "search result blocks" for the composition call (T1.6) and "in its search result's header" for the keep reason (T1.7). Custom-content citation ranges are confirmed in build tests (Phase 2 tested search results).
+  - **The sources panel always shows cited sentences highlighted inside their full paragraph.**
+- **Evidence:** `scripts/probe_chunking.py` (Oct 24, 2026, one call, $0.1422): Anthropic's plain-text chunking broke legal citations in 133 of 200 pieces on the ten hardest passages; the conservative splitter, none of 54.
+- **User's words:** *"Thus, I want us to explore giving Claude flexibility in deciding not only what to cite but also how much to cite. Then, in the source panel, we always show the sentence within a paragraph."* *"Consider whether we can feed whole passage, and let Claude cite within them however much or however little Claude wants?"* *"Send the diagnostic calls with the hardest passage."* Then: *"Lock topic 5 as T1.9: our conservative splitter, sentence blocks sent as custom content documents with metadata and the keep reason in context, the rest as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)"

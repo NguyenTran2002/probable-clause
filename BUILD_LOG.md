@@ -432,3 +432,19 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - *"since the composition call is pretty independent and does not get fed the same context, so caching doesn't matter, should swap to Opus at high effort?"*
 - T1.8: *"Let's switch to Opus 5.5 at high for quality and we will compare again with Sonnet 5.5 at high effort later as well."*
+
+## Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)
+
+**Asked:** Area 1, topic 5 (the user's addition): let Claude decide not only what to cite but how much, with the source panel always showing the cited sentence inside its paragraph. The user then asked whether whole passages could be fed and cited at any length, and approved a diagnostic call on the hardest passages.
+
+**Came back:**
+- A citation is a range of whole blocks, so the split sets the smallest unit and Claude picks the span. The Phase 2 splitter, run over the corpus (2,610 paragraphs and footnote paragraphs), made 11,660 blocks with 491 splits right after a short capitalised word, mostly inside citations; a conservative variant made 11,093 with 68, erring towards leaving two sentences together.
+- From the Citations docs (cached Oct 24): plain-text documents are "automatically chunked into sentences"; custom content documents are "used as-is and no further chunking is done"; no option cites less than its smallest unit.
+- `scripts/probe_chunking.py`: the ten hardest passages (chosen by script) as plain-text documents, Claude citing each piece separately. Anthropic's chunking broke legal citations in 133 of 200 pieces ("205 F. Supp. ‖ 692", "Code Crim. ‖ Proc.", *Berger*'s statute footnote in 70 pieces, 69 broken); prose, "U. S." and "Id., at 657." split correctly. Our conservative splitter on the same passages: 54 blocks, none broken, matching Anthropic's correct boundaries where they can be counted.
+
+**Spend:** Anthropic: 1 call on `claude-sonnet-5-5` at low effort, $0.1422 (11,562 input, 11,912 output tokens); Phase 2 and 3 ledger total $0.6964 of the $2.00 ceiling.
+
+**DECISION (user):**
+- *"Consider whether we can feed whole passage, and let Claude cite within them however much or however little Claude wants? Or is it something technically not possible with this Citations feature?"*
+- *"You have the same idea as mine. Send the diagnostic calls with the hardest passage."*
+- T1.9: *"Lock topic 5 as T1.9: our conservative splitter, sentence blocks sent as custom content documents with metadata and the keep reason in context, the rest as proposed."*
