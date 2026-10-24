@@ -33,11 +33,13 @@ More, each from the brief:
 - `BUILD_LOG.md`: the raw record, append-only. Written by the main session only.
 - `docs/design/locked-decisions.md`: every decision after the brief. Written by the main session only.
 - `docs/research/licensing.md`: licences and terms of every source, with each quote string-matched against its page.
+- `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
 - `scripts/verify_quotes.py`: re-fetches cited pages and string-matches quotes (brief §9's re-check). Cache under `data/cache/pages/`.
 - Corpus pipeline (Phase 1): `scripts/pull_courtlistener.py`, `fetch_official_pdfs.py`, `build_corpus.py` (with `corpus_common.py`, `corpus_pdf.py`, `corpus_align.py`, and the reviewed `corrections.json`), `verify_corpus.py`, `verify_lineup.py`, `build_manifest.py`, `filter_check.py`. Order and purpose under "Current state and next step".
+- Phase 2 paid checks: `scripts/probe_common.py` (spend ledger and ceiling, no retries), `probe_loop.py` (a simulated research loop on the corpus), `probe_exa.py` (Exa's MCP server). Outputs under `data/verification/phase2/` (gitignored).
 - `data/`: `data/raw/` (raw CourtListener responses and official PDFs) and `data/cache/` (fetched pages) are gitignored and never committed; `data/corpus/` (the frozen corpus) is committed (P1.22); `data/verification/` (verification reports and agent findings) stays local.
 - `web/looktests/`: the frontend session's look tests (P1.6).
 - `.env.example`: the variable names; the user creates `.env`.
@@ -70,11 +72,27 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 23, 2026, 21:17 CDT, at the end of Phase 1.*
+*Updated Oct 24, 2026, 13:59 CDT, at the end of Phase 2.*
 
-- **State:** Phases 0 and 1 done (tag `phase-1-done`). Decisions P1.1 to P1.22 locked; read `docs/design/locked-decisions.md` in full. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
-- **Next: Phase 2**, per the brief.
+- **State:** Phases 0 to 2 done (tag `phase-2-done`). Decisions P0.1 to P2.11 locked; read `docs/design/locked-decisions.md` in full, and `docs/research/phase2-findings.md`. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
+- **Settled in Phase 2:**
+  - Model `claude-sonnet-5-5` at high effort (P2.1).
+  - Keep-only triage with a reason per kept passage (P2.3).
+  - Claude cites the Phase 1 text, not the PDFs (P2.4).
+  - Limits: 12 steps, 400K/20K tokens per run, 3 update searches, $10 a day, $60 a month, and no per-visitor limit (P2.6, P2.7).
+  - Exa's server-side retries accepted (P2.8); no keyless Exa fallback (P2.11).
+  - Name kept; the repo is `NguyenTran2002/probable-clause` and the frontend will be served at `nguyennhattran.com/probable-clause` (P2.9).
+  - Measured: a run costs about $0.14 to $0.24 of Claude and takes 30 to 45 s.
+- **Next: Phase 3, the architecture conversation,** which starts on the user's green light (brief §3). Topics carried in:
+  - How passages are surfaced to Claude and how it queries the corpus, and the keep tool's shape (P2.3; the user reviews in full before anything is locked).
+  - The retrieval method (findings §5).
+  - Paragraph or sentence text blocks (P2.4; findings §1).
+  - Disconnect detection (P2.10).
+  - The Exa wrapper: a text cap per result, the search types allowed, error handling (findings §4).
+  - The art direction as a T-entry (P1.6).
+  - The user's wording: the disclaimer, the update-check label, the replay questions.
+- **Open with the user:** whether `docs/design/locked-decisions.md` stays alongside `BUILD_LOG.md` now that the user has made the log the authoritative record of decisions (Oct 24, 2026).
 - **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py` (resumes from cache), `fetch_official_pdfs.py` (33 approved PDFs), `build_corpus.py` (`CORPUS_OUT=<dir>` to build elsewhere), `verify_corpus.py` (`VERIFY_OUT=<dir>`; includes the comma and period report), `verify_lineup.py`, `build_manifest.py` (token counts, free endpoint), `filter_check.py` (done).
 - **Verification record** (local, gitignored): `data/verification/text/` (script reports), `data/verification/agents/` (briefs `BRIEF.md`, `BRIEF_ROUND2.md`, `BRIEF_FINAL.md`; findings `batch1-10`, `r2_batch1-6`, `final_a`-`final_d`, `final_case`, `final_pages2`; `final_checklist.json`). `docs/sessions/phase1-handoff.md` is the round-2 handoff, now historical.
-- **Frontend session:** the direction is chosen (machinery prototype, Evergreen; folded into `BUILD_LOG.md`); it is locked as a T-entry in Phase 3 (P1.6). Open for the contract: sentence or paragraph text blocks (brief §5).
+- **Frontend session:** the look-test conversation has concluded. Its direction (machinery prototype, Evergreen) and the user's directions along the way are folded into `BUILD_LOG.md` (Oct 23, 20:48 and Oct 24 supplement); the direction is locked as a T-entry in Phase 3 (P1.6).
 - **Known, left as built** (P1.22 and the final pass): "supersensitive" (*Jardines*) unresolvable from the print; paragraph division inside the *Kyllo* and *Carpenter* appendices and one *Shultz* footnote; one *Ciraolo* footnote marker one character early; `lineup.json` shows no printed lineup for *White* and *Chatrie* though one is printed (verifier report only; the corpus joiners are right); *Kyllo*'s `header_footnotes_dropped` reads 0 for its excluded amici note.
