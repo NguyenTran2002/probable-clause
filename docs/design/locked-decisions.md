@@ -333,3 +333,15 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"BUILD LOG is our authoritative and final source of updating decision now that the front end parallel conversation has concluded. Make sure it's up to date."* Then: *"Keep locked-decisions.md as the index of decisions in force, under BUILD_LOG: the log wins on any conflict, and each entry names its log entry. Lock it."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 14:02 CDT — Records: BUILD_LOG first, locked-decisions as its index"
+
+---
+
+## Phase 3: Architecture
+
+### T1.1 Retrieval: two search tools in parallel, semantic (Voyage) and keyword
+
+- **Decision:** Claude searches the corpus with **two tools it chooses between** during the loop: a **semantic search** and a **keyword search**. The semantic stack embeds with Voyage **`voyage-law-2`** and reranks with Voyage **`rerank-3`**. Its vectors are not held in the user's free MongoDB cluster. Both tools get filtering options for Claude (Area 1, topic 2). This replaces brief §5.2's single `search_corpus` and settles brief §5.3's open choice of retrieval method; the brief was treated as a starting point only.
+- **Left open:** how keyword queries combine terms, the filters, and how results reach Claude (Area 1, topics 2 and 3); where the vectors are held (proposed: in memory in the API container).
+- **User's words:** *"Currently, I'm thinking of 2 parallel search stacks: 1. RAG with Reranker supported by Voyage AI. Vector search preferably not handled by our free MongoDB cluster. 2. Keyword based search. 3. Both with filtering optionalities for Claude."* Then: *"I'm thinking 2 tools in parallel is the right choice here. For model on the RAG stack, lock voyage-law-2 and rerank-3."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 14:48 CDT — Phase 3: Architecture, Area 1 (retrieval, T1.1)"

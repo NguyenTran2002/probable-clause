@@ -323,3 +323,18 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
   - The decision is recorded as P2.12. It came after the `phase-2-done` tag; Phase 3 has not started.
 
 **DECISION (user):** *"Keep locked-decisions.md as the index of decisions in force, under BUILD_LOG: the log wins on any conflict, and each entry names its log entry. Lock it."* (P2.12)
+
+## Oct 24, 2026, 14:48 CDT — Phase 3: Architecture, Area 1 (retrieval, T1.1)
+
+**Asked:** Start Phase 3. Split it into areas and finish one at a time, compacting after each area, with a working document the main session keeps in the repo. Draw the current placeholder loop. Add four topics to Area 1 (the case-name verifier's reliability, a second search tool, filters before a search runs, Claude choosing how much to cite). Then discuss retrieval from scratch, not from the brief.
+
+**Came back:**
+- Phase 3 split into five areas plus the design note: the research loop (T1), the update check (T2), run lifecycle and infrastructure (T3), the interface (T4), the user's wording and the replays (T5). Working document `docs/design/phase3-working.md`; CLAUDE.md points to it.
+- Two diagrams of the placeholder loop (brief §5, P2.3, P2.4, `scripts/probe_loop.py`), shown in the conversation.
+- Area 1 revised to ten topics, the user's four additions folded in.
+- Retrieval facts: 2,250 paragraphs and 498 footnotes (2,748 searchable units; the Phase 2 probe indexed paragraphs only); in the probe runs 13 of 96 and 23 of 56 surfaced passages were repeats. Options shown: vectors held in the API container rather than a database; two tools, one fused tool, or one tool with a mode; a reranker on semantic results; a metadata header on the embedded text; a corpus catalog in the system prompt; a tool to read around a passage; the whole corpus in context (not recommended: P2.7's 400K ceiling).
+
+**DECISION (user):**
+- How Phase 3 runs: *"I want us to compact after each area, so how about you keep a working document for yourself somewhere of your choosing within this repo. (It's fine to have git track this document.)"*
+- Retrieval from scratch: *"Let's zoom out from the brief for a moment and discuss retrieval method from scratch here. The brief was written as a starting point only. Currently, I'm thinking of 2 parallel search stacks: 1. RAG with Reranker supported by Voyage AI. Vector search preferably not handled by our free MongoDB cluster. 2. Keyword based search. 3. Both with filtering optionalities for Claude."*
+- T1.1: *"I'm thinking 2 tools in parallel is the right choice here. For model on the RAG stack, lock voyage-law-2 and rerank-3."*
