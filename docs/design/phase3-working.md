@@ -20,8 +20,8 @@
 
 | Area | T | Status |
 |---|---|---|
-| 1. The research loop | T1 | **In progress** (opened Oct 24, 14:14 CDT) |
-| 2. The update check (Exa wrapper) | T2 | Not started |
+| 1. The research loop | T1 | **Closed** Oct 24, 17:05 CDT (T1.1 to T1.14) |
+| 2. The update check (Exa wrapper) | T2 | **Next**, after the compaction |
 | 3. Run lifecycle and infrastructure | T3 | Not started |
 | 4. The interface | T4 | Not started |
 | 5. The user's wording and the replays | T5 | Not started |
@@ -164,3 +164,37 @@ Then: *"Let's list out topics and go into them one at a time together."*
 - **Locked T1.13**, 17:00 CDT (log entry of that time). For topic 10: describe the citation-string search technique (full and "at" forms, a `decided_from` filter) and the page-range caution. **Next: topic 10, the system prompt outline — the last topic of Area 1.**
 - **Topic 10 opened, 17:02 CDT** (the loop's system prompt; composition prompt already outlined in T1.11). Proposed outline in five parts: (1) role and the split of work (the loop researches; a separate step writes the answer from kept passages only, so keep reasons must carry what the writer needs); (2) the corpus: scope and inclusion rule (P1.9), the three coverage dates (manifest: 2026-06-29, 2026-06-29, ingested 2026-10-23), text notes (normalised, straight quotes, syllabus excluded), the ID scheme, the catalog (T1.6) with the opinion-type grouping note (T1.4); (3) how to research with the tools (meaning vs exact search; filters optional, T1.4 wording; independent calls together in one turn; the citation-string technique and the page-range caution, T1.13; read around before keeping a passage that may restate a party, lower court or dissent; page reads for "ante, at"; keep as you go, reasons, re-keep to correct, T1.7; the update check near the end with the window trade-off, Claude choosing parameters; submit rules, T1.10); (4) judgement rules (research not advice; personal situations in scope; describe, never evaluate; exact opinion types, never a dissent or concurrence as the holding; dates are not treatment; web and passage text are data, never instructions); (5) out of scope and borderline cases. Also proposed: a status line appended by our code to each turn's tool results ("Round 5 of 12 · 9 kept · update check not yet run"), outside the cached system prompt; the static prefix (tools, system prompt, catalog; about 12K tokens, estimate) on a 1-hour cache breakpoint; the user reviews the drafted prompt text in Phase 4 before the first paid run. Borderline to decide: the employer-email case (lean: research the state-action limit).
 - **Locked T1.14**, 17:04 CDT (log entry of that time). **All ten Area 1 topics locked (T1.1 to T1.14).**
+
+---
+
+## Area 1 closed (Oct 24, 2026, 17:05 CDT): what carries forward
+
+Decisions: T1.1 to T1.14 in `locked-decisions.md`; the closing log entry is "Oct 24, 2026, 17:05 CDT — Phase 3: Architecture, Area 1 closed (the research loop)".
+
+**The loop as locked:** tools `search_meaning` and `search_exact` (names working), `read_passages`, `keep_passages`, `search_web_updates`, `submit_answer`; Sonnet 5.5 high for the loop, Opus 5.5 high for composition; composition from kept passages as custom content documents of our sentences; quotation check and full-citation check on the answer.
+
+**For the design note (confirm with the user):** vectors held in memory in the API container (T1.1 left it open); a metadata header prepended to the text Voyage embeds (raised with T1.1, never decided).
+
+**Start of Phase 4:** T1.5 (Oliver's "II" through `corrections.json`, page image confirmed by the main session, Phase 1 checks and `check_structure.py` re-run, logged); the sentence splitter built with its check and a sampled review by the main session (T1.9); the user reviews the drafted loop and composition prompts before their first paid run (T1.14).
+
+**Build tests:** plain-text loop results read correctly (T1.6); custom-content citation ranges (T1.9); Citations, adaptive thinking and effort on Opus 5.5 (T1.8); Markdown straddle fallback fixture (T1.11); every rejection rule triggered (T1.10).
+
+**Phase 5:** Sonnet 5.5 against Opus 5.5 composition, side by side, paid calls with approval (T1.8); placeholders measured: 50 semantic candidates, 10 items per keyword list (T1.4), 300-character reasons and the 40-passage keep cap (T1.7), the 30,000 / 12,000 composition reserve (T1.11), the four-word quotation minimum (T1.12); Claude's filter use counted (T1.4); answer lengths reviewed (T1.11).
+
+**Carried into later areas:**
+- Area 2: the band's summary written in the loop by the Claude that read the results, likely a `submit_answer` field (would amend T1.10); rule 4's waiver while the update check is unavailable (T1.10); the fixed pointer line under the answer (T1.11).
+- Area 3: the per-turn status line and the one-hour cache breakpoint (T1.14); streaming of the answer (T1.11); disconnect detection (P2.10).
+- Area 4: panel states (kept and cited, kept and not cited, shown and never kept, matched again); synthesis marking that skips headings and lead labels (T1.11); flags from the two checks and their summary line (T1.12); the cut-off label (T1.11); a failed composition and whether to offer "try again" (T1.11); the art direction T-entry (P1.6).
+- Area 5: wording of the check line (T1.12), the standard out-of-scope and nothing-found messages (T1.10), the cut-off and fallback labels (T1.11), plus the brief's list.
+
+## Area 2: the update check (to open after the compaction)
+
+Facts in `docs/research/phase2-findings.md` §4 and decisions P1.3, P1.7, P2.2, P2.8, P2.11. Proposed topics, to confirm with the user when the area opens:
+
+| # | Topic | Status | Notes |
+|---|---|---|---|
+| 1 | `search_web_updates` inputs: what Claude controls, what our server clamps | Open | Brief §6.2; MCP types only auto, lite, fast, instant (no deep); at most 10 results; 3 per run (P2.7) |
+| 2 | What a result looks like to Claude | Open | Text cap per result (2,000 characters worked; 1 MB event limit); fields; undated pages dropped by a date filter |
+| 3 | Errors and unavailability | Open | Tool errors vs protocol errors; 402 `NO_MORE_CREDITS` → unavailable until the 1st (P2.11); Exa's own retries accepted (P2.8), never ours; how the loop learns it is unavailable (rule 4's waiver, T1.10) |
+| 4 | The band's summary and links | Open | Written in the loop (T1.11); links from our code; no Exa text shown or stored (P1.3, P1.7); what replays keep |
+| 5 | The MCP client connection | Open | Per run or kept open; key in the `x-api-key` header |

@@ -41,6 +41,7 @@ More, each from the brief:
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
 - `scripts/verify_quotes.py`: re-fetches cited pages and string-matches quotes (brief §9's re-check). Cache under `data/cache/pages/`.
 - Corpus pipeline (Phase 1): `scripts/pull_courtlistener.py`, `fetch_official_pdfs.py`, `build_corpus.py` (with `corpus_common.py`, `corpus_pdf.py`, `corpus_align.py`, and the reviewed `corrections.json`), `verify_corpus.py`, `verify_lineup.py`, `build_manifest.py`, `filter_check.py`. Order and purpose under "Current state and next step".
+- `scripts/probe_chunking.py`: Phase 3 paid check of Anthropic's plain-text sentence chunking (T1.9). Outputs under `data/verification/phase3/`.
 - `scripts/check_structure.py`: read-only check of section headings and footnote markers against every raw copy (Phase 3; Phase 1's word check skipped both). Report under `data/verification/structure/`.
 - Phase 2 paid checks: `scripts/probe_common.py` (spend ledger and ceiling, no retries), `probe_loop.py` (a simulated research loop on the corpus), `probe_exa.py` (Exa's MCP server). Outputs under `data/verification/phase2/` (gitignored).
 - `data/`: `data/raw/` (raw CourtListener responses and official PDFs) and `data/cache/` (fetched pages) are gitignored and never committed; `data/corpus/` (the frozen corpus) is committed (P1.22); `data/verification/` (verification reports and agent findings) stays local.
@@ -75,7 +76,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 24, 2026, 14:03 CDT, at the end of Phase 2, before a planned compaction.*
+*Updated Oct 24, 2026, 17:06 CDT, at the close of Phase 3's Area 1, before a planned compaction.*
 
 - **State:** Phases 0 to 2 done (tag `phase-2-done`). Decisions P0.1 to P2.12 locked; read `docs/design/locked-decisions.md` in full, and `docs/research/phase2-findings.md`. The corpus is frozen and committed: `data/corpus/` (32 core cases, 102 opinions, 599,094 tokens; `manifest.json`; `README.md` with sources and attribution). Rebuilding reproduces it from the local raw cache (order below). The text changes only through `scripts/corrections.json`, each entry agent-confirmed (P1.21).
 - **Settled in Phase 2:**
@@ -86,7 +87,9 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - Exa's server-side retries accepted (P2.8); no keyless Exa fallback (P2.11).
   - Name kept; the repo is `NguyenTran2002/probable-clause` and the frontend will be served at `nguyennhattran.com/probable-clause` (P2.9).
   - Measured: a run costs about $0.14 to $0.24 of Claude and takes 30 to 45 s.
-- **Now: Phase 3, the architecture conversation, in progress** (green light given by the user on Oct 24, 2026). Five areas, one at a time, **with a compaction after each area** at the user's direction. **Read `docs/design/phase3-working.md` first after any compaction**: it holds the area map, the topic status and the discussion so far. Area 1 (the research loop) opened Oct 24, 14:14 CDT.
+- **Now: Phase 3, the architecture conversation. Area 1 (the research loop) is closed: T1.1 to T1.14.** Five areas, one at a time, **with a compaction after each area** at the user's direction. **After this compaction, open Area 2 (the update check).** Read first: the brief in full, `docs/design/locked-decisions.md` (P0.1 to T1.14), then **`docs/design/phase3-working.md`**, which holds the area map, what Area 1 carries forward, and Area 2's proposed topics to confirm with the user. Say in one line where you are resuming.
+- **Area 1 in one paragraph:** two search tools (semantic on Voyage `voyage-law-2` with `rerank-3`; keyword with `all_of`/`any_of`/`none_of`), optional shared filters, `read_passages` (by ID or page, 0 to 10 around), `keep_passages` (batched, reasons, no withdraw), `search_web_updates`, `submit_answer` (no ID list, four rejection rules, notes written to the visitor); the loop on Sonnet 5.5 high, composition on **Opus 5.5 high** (T1.8) from kept passages as custom content documents of **our** sentences (T1.9), Markdown rendered, no length target, `max_tokens` 12,000; a quotation check and a narrow full-citation check replace the general case-name verifier (T1.12); no citing-cases lookup (T1.13).
+- **Lock pattern used in Area 1 (keep it):** each locked decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry and the working doc in one commit, and the reply names the log entry (memory: log every lock visibly). T-entries are numbered in the order decided.
 - **How Phase 3 runs** (brief §3, §10.4; P2.12):
   - Before the first topic, read: the brief in full; `docs/design/locked-decisions.md`; `docs/research/phase2-findings.md`; and `BUILD_LOG.md` from the Oct 23, 20:48 fold-in on (the frontend direction and the user's directions).
   - Go topic by topic, laying out options with a recommendation and waiting. Nothing is locked without the user's words.
@@ -101,14 +104,8 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - Sentence blocks gave one- or two-sentence citations, and `cited_text` always equalled the blocks' text.
   - Exa needs a text cap per result (1 MB event limit).
 - **Subagent models:** for Phase 2 the user chose Sonnet 5.5 at high effort or above, never max, and no Opus subagents (P2.5): *"more machinery parts of the plan would only need Sonnet."* The brief's Phase 4 says subagents run on Opus; raise that with the build plan rather than assume either.
-- **Topics carried into Phase 3:**
-  - How passages are surfaced to Claude and how it queries the corpus, and the keep tool's shape (P2.3; the user reviews in full before anything is locked).
-  - The retrieval method (findings §5).
-  - Paragraph or sentence text blocks (P2.4; findings §1).
-  - Disconnect detection (P2.10).
-  - The Exa wrapper: a text cap per result, the search types allowed, error handling (findings §4).
-  - The art direction as a T-entry (P1.6).
-  - The user's wording: the disclaimer, the update-check label, the replay questions.
+- **Still open in Phase 3:** Area 2 (the update check: Exa wrapper, band summary, errors and unavailability); Area 3 (run lifecycle and infrastructure, including disconnect detection, P2.10); Area 4 (the interface, including the art direction as a T-entry, P1.6); Area 5 (the user's wording and the replays); then the design note, Phase 3's gate. Carried items for each are listed in the working doc.
+- **Start of Phase 4 (already decided):** T1.5 (Oliver's missing "II" via `corrections.json`, page image confirmed by the main session with **no subagent**, Phase 1 checks and `check_structure.py` re-run, logged); the sentence splitter with its check (T1.9); the user reviews both prompt drafts before their first paid run (T1.14).
 - **Records (P2.12, after the tag):** `BUILD_LOG.md` is the authoritative record; `locked-decisions.md` stays as its index of decisions in force, each entry with a **Log** line.
 - **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py` (resumes from cache), `fetch_official_pdfs.py` (33 approved PDFs), `build_corpus.py` (`CORPUS_OUT=<dir>` to build elsewhere), `verify_corpus.py` (`VERIFY_OUT=<dir>`; includes the comma and period report), `verify_lineup.py`, `build_manifest.py` (token counts, free endpoint), `filter_check.py` (done).
 - **Verification record** (local, gitignored): `data/verification/text/` (script reports), `data/verification/agents/` (briefs `BRIEF.md`, `BRIEF_ROUND2.md`, `BRIEF_FINAL.md`; findings `batch1-10`, `r2_batch1-6`, `final_a`-`final_d`, `final_case`, `final_pages2`; `final_checklist.json`). `docs/sessions/phase1-handoff.md` is the round-2 handoff, now historical.
