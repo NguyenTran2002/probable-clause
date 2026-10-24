@@ -637,3 +637,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Area 2's topics: *"The five topics work. Open topic 1."*
 - The user's own calls along the way: *"for include and exclude domains, set a high limit (100) to prevent overrun only and give Claude flexibilities"*; *"I'm leaning not trusting Exa's highlight here."*; *"Let's keep 4000"*; *"I mean take Exa's date as written, with no conversion"*; *"Go with option A, structured findings in submit_answer."*
 - The five locks: *"Lock topic 1 as T2.1: reading B, domains up to 100 each, the rest as proposed."* *"Lock topic 2 as T2.2 as restated."* *"Lock topic 3 as T2.3: option A with the eight details as proposed."* *"Lock topic 4 as T2.4 as proposed."* *"Lock topic 5 as T2.5: a session per search, the rest as proposed."*
+
+## Oct 24, 2026, 17:55 CDT — Phase 3: Architecture, Area 3 (starting a run and streaming it, T3.1)
+**Asked:** Open Area 3 (run lifecycle and infrastructure) after the compaction, topics first; then topic 1: how a run starts and how it reaches the page.
+**Came back:**
+- Area 3's topics: the six drafted before the compaction, with Cloud Run split into its infrastructure (topic 5) and its start-up and wake protocol (topic 6), and the paid calls (topic 3) moved before the spend counters (topic 4). Confirmed by the user.
+- Facts for topic 1: the Phase 2 loop turns held only tool calls, no text from Claude, and empty thinking blocks (thinking text is omitted by default); content paragraphs average 774 characters (script), so a run's passage text is about 80 to 120 KB (estimate); the corpus files are 2.4 MB.
+- Three transports compared: Server-Sent Events with a create request and a stream request; one streaming POST plus a reconnect GET; WebSocket (Cloud Run passes its disconnects on, but it needs a goodnight change and a hand-written resume, and a suspended iPhone page still needs a liveness signal). Recommended Server-Sent Events, the answer streamed one text block at a time, thinking summaries off, passage text inside the events.
+- T3.1 locked: see `docs/design/locked-decisions.md`.
+**DECISION (user):**
+- Topics: *"The seven topics work. Open topic 1."*
+- T3.1: *"Your recommendations work here. Lock and proceed."*

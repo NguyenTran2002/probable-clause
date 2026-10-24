@@ -578,3 +578,22 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 5 as T2.5: a session per search, the rest as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:46 CDT — Phase 3: Architecture, Area 2 (the MCP connection, T2.5)"
+
+### T3.1 Starting a run and streaming it to the page
+
+- **Decision:** Area 3, topic 1:
+  - **Transport: Server-Sent Events.** `POST /runs` with the question creates a run and returns its ID; `GET /runs/{id}/events` streams it. The browser's EventSource reconnects on its own, one attempt at a time, sending the last event ID it received (brief §8.5). How the server learns the page is gone is topic 2 (P2.10).
+  - **The loop starts when the first stream attaches**, not on the POST; a run no stream attaches to expires with no spend. The run lives in a task on the instance, not in a request, so a reconnect picks up the same run.
+  - **Events** are numbered 1, 2, 3 within a run and carry the time since the run started (replays play at the recorded pace); stored timestamps carry their zone (brief §10.7).
+  - **Event kinds:** run started (question, limits, coverage dates, update-check availability); round started (with the status line, T1.14); tool call (exactly what Claude sent); tool result (passages; keeps with reasons; web results as title, URL and date only, T2.2; submits accepted or refused with the rule); a paid call that failed; each paid call's tokens and cost (shown or not, Area 4); composition started; answer blocks; the two checks (T1.12); the update-check band (T2.3); run ended (answered, a reply with no sources, step limit, token ceiling, abandoned, failed, with totals).
+  - **The answer streams one text block at a time with its citations**, not token by token, so everything shown is stored and a reconnect or replay shows the same thing.
+  - **No thinking summaries**: thinking display stays at its default (omitted), as in Phase 2; the tool calls show the research.
+  - **Passage text is sent in the events**, the first time a passage appears in a run, with its sentence offsets (the panel shows a cited sentence inside its paragraph, T1.9); later mentions carry the ID only. The page does not fetch a separate corpus.
+  - **Storage:** events are held in the instance's memory first and copied to Atlas in order without holding up the stream; a failed Atlas write is logged and the run continues. A reconnect to the same instance replays from memory; one that reaches another instance replays from Atlas and ends "interrupted" (brief §8.5). How long Atlas keeps them is topic 7.
+  - **Replays** are static files in the same event format, played by the same code on the page (brief §7.4).
+  - **The run ID is random and unguessable** (anyone holding it could read the question). **One stream per run**: a new connection replaces the old one.
+  - **A comment line every 15 s** (placeholder until measured) keeps an idle stream open through the gateway; not an event, not stored.
+  - **Considered:** one streaming POST plus a reconnect GET (two code paths for the stream, a hand-written reconnect); WebSocket (Cloud Run passes its disconnects, but it needs a goodnight change and a hand-written resume, and a suspended page still needs a liveness signal); token-by-token answer streaming (what is stored would differ from what was shown); thinking summaries (untested here); the page fetching a static corpus (2.4 MB; two copies to keep in step).
+- **User's words:** *"Your recommendations work here. Lock and proceed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:55 CDT — Phase 3: Architecture, Area 3 (starting a run and streaming it, T3.1)"
