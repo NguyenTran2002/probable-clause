@@ -649,3 +649,23 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"B1 is good, but I'd also want it logged in our database how many times have a run failed due to budget as well. This is for me to keep an eye on usage and refusal just in case."* Then: *"Record everything stopped due to budget regardless of how as long as it's a budget concern. Lock otherwise."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:13 CDT — Phase 3: Architecture, Area 3 (spend counters and caps, T3.4)"
+
+### T3.5 Cloud Run and the gateway
+
+- **Decision:** Area 3, topic 5:
+  - **Project and region:** both services in the GCP project `probable-clause` (number 1066460440617, created by the user), region us-central1, both min 0, request-based billing.
+  - **Web service:** the frontend and the replay files, static, max 2 instances (placeholder).
+  - **API:** max 1 instance, concurrency 80, 1 vCPU, 512 MiB (until measured), startup boost passed explicitly; the deploy script passes `--scaling=auto` and every limit explicitly (brief §8.5).
+  - **API request timeout 900 s** (placeholder). It bounds one stream connection, not a run: a cut stream reconnects and resumes (T3.1). Through goodnight a stream is cut at goodnight's own 300 s timeout anyway, so a run longer than 5 minutes reconnects once; goodnight's timeout is not changed.
+  - **Run deadline: 10 minutes** (placeholder), after which the loop goes to composition with a time-limit label; recorded as a limit stop (T3.4).
+  - **Concurrent runs** are bounded by the reservation (about five at once at $1.67 within $10, T3.4); no separate run limit.
+  - **Both services through goodnight on the one domain:** `/probable-clause/` to the web service, `/probable-clause/api/` to the API, so same origin and no CORS. The API sends `X-Accel-Buffering: no` and the 15 s keep-alive (T3.1).
+  - **The one goodnight change:** a new probable-clause block inside its own delimiters (the API location with the prefix stripped, buffering and caching off, a read timeout well above the keep-alive; the page location with the prefix stripped; a bare-path redirect), **forwarding no `X-Forwarded-For`**. Written in goodnight's repository, shown to the user first, deployed only on the user's green light (brief §8.1). No goodnight code is copied into this repository.
+  - **No client IP** is used or stored by our services (P2.6 removed its only use). Visitors' IPs remain in goodnight's own Cloud Run request logs in the framedbytran project, as for every app on the domain; the privacy note says so (topic 7, Area 5).
+  - **Secrets in Secret Manager**, referenced as environment variables, readable only by the API's own service account: the Anthropic key from the live workspace (T3.4), the Voyage key, the Exa key, the Atlas connection string. How the values get there is settled with the user in Phase 4.
+  - **Atlas:** the user's cluster in GCP us-central1, open to all addresses; the URI's user has readWrite on `Probable_Clause` (live) and `Probable_Clause_test` (local and test runs, T3.4) only (brief §8.4).
+  - **Deploys** only when no run holds a reservation (checked in Atlas), and only on the user's green light.
+  - **Considered:** the page calling the API's run.app address directly (avoids goodnight's timeout, but cross-origin and against brief §8.1); raising goodnight's timeout (unneeded given T3.1's resume).
+- **User's words:** *"You're clear to read goodnight's nginx.conf and its Cloud Run settings. Don't bring any of its code over here though--contamination."* *"Atlas cluster is opened to all IPs, so with the URI you're covered."* *"Cluster is in GCP / Iowa (us-central1). I already set up a new empty database in the cluster for you, named Probable_Clause"* *"Good on both notes."* *"URI is limited to readWrite only on Probable_Clause."* *"I've added a new db Probable_Clause_test to the MongoDB cluster, and your URI now also has readWrite against that db too for you to test."* *"probable-clause (id) project created on GCP. Project number 1066460440617."* Then: *"Lock otherwise."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:26 CDT — Phase 3: Architecture, Area 3 (Cloud Run and the gateway, T3.5)"

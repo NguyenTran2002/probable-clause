@@ -682,3 +682,15 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - B1 and the budget log: *"B1 is good, but I'd also want it logged in our database how many times have a run failed due to budget as well. This is for me to keep an eye on usage and refusal just in case."*
 - T3.4: *"Record everything stopped due to budget regardless of how as long as it's a budget concern. Lock otherwise."*
+
+## Oct 24, 2026, 18:26 CDT — Phase 3: Architecture, Area 3 (Cloud Run and the gateway, T3.5)
+**Asked:** Area 3, topic 5: the two Cloud Run services, timeouts, concurrency, secrets, the goodnight gateway and the client IP. The user cleared a read of goodnight: *"You're clear to read goodnight's nginx.conf and its Cloud Run settings. Don't bring any of its code over here though--contamination."*
+**Came back:**
+- Facts from Phase 2 (findings §6): request timeout default 300 s, maximum 3,600 s; max instances exceeded during deploys and replacements, with in-flight grace up to the request timeout; the previous build's API at 512 MiB, 1 vCPU, concurrency 80, 300 s.
+- goodnight, read only (its `nginx.conf`, `deploy.sh`, `Dockerfile` and `gcloud run services describe`; nothing copied into this repo): the domain's front door, one routing block per app; its live revision has a 300 s request timeout, max 1 instance, concurrency 250, 256 MiB, startup boost, min 0; unpinned `nginx:alpine`. So a stream through it is cut at 300 s and resumes by T3.1, with no change to goodnight's timeout; visitors' IPs stay in goodnight's own request logs, outside this project.
+- The user's answers: Atlas open to all addresses, cluster in GCP us-central1, database `Probable_Clause` created; client IP dropped; Secret Manager. Then: the URI's user is readWrite on `Probable_Clause` only, plus `Probable_Clause_test` for testing; GCP project `probable-clause` created (number 1066460440617, confirmed ACTIVE with a read-only `gcloud projects describe`).
+- T3.5 locked: see `docs/design/locked-decisions.md`.
+**DECISION (user):**
+- Atlas and the IP: *"Atlas cluster is opened to all IPs, so with the URI you're covered."* *"Cluster is in GCP / Iowa (us-central1). I already set up a new empty database in the cluster for you, named Probable_Clause"* *"Good on both notes."*
+- Database user, test database, project: *"URI is limited to readWrite only on Probable_Clause."* *"I've added a new db Probable_Clause_test to the MongoDB cluster, and your URI now also has readWrite against that db too for you to test."* *"probable-clause (id) project created on GCP. Project number 1066460440617."*
+- T3.5: *"Lock otherwise."*
