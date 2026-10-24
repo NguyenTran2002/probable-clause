@@ -258,3 +258,27 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** The per-visitor limit of brief §8.2 ("3 a day, by client IP") is removed. Live research is limited only by the global daily cost cap and the monthly cost cap. Consequences recorded with it: brief §8.5's "counts as one of the visitor's daily runs" for an abandoned run no longer applies (its spend still counts toward the cost caps), and one visitor can use the whole day's budget, after which live research pauses for everyone until the next day while replays stay available (brief §7.2).
 - **User's words:** *"On cap on runs per visitor, uncap it. We will control with daily cost cap and monthly cost cap only. I don't want a focused visitor getting blocked from trying out the demo."*
 - **Date:** Oct 24, 2026
+
+### P2.7 Run limits kept from brief §8.2
+
+- **Decision:** The remaining starting values of brief §8.2 stand after Phase 2's measurements (`docs/research/phase2-findings.md` §3: two runs of 4 and 6 steps, $0.14 and $0.24 of Claude): a step limit of 12 tool rounds plus the final composition call; a per-run ceiling of 400K input and 20K output tokens; at most 3 update searches per run, results clamped to 10; a global daily cap of $10; a monthly cap of $60. Every counter persists in Atlas. P2.6 removed the per-visitor limit.
+- **User's words:** *"Stick with these limits: 12 steps, 400K input and 20K output tokens per run, 3 update searches, the $10 daily cap and the $60 monthly cap."*
+- **Date:** Oct 24, 2026
+
+### P2.8 Exa's server-side retries are accepted
+
+- **Decision:** Exa's hosted MCP server retries Exa's own 500, 502, 503 and 504 responses twice, and this cannot be turned off (`docs/research/phase2-findings.md` §4). That is accepted as an exception to brief §10.7's "a paid request is never retried automatically", which still binds our own code: our backend never retries a Claude or Exa call itself.
+- **User's words:** *"Exa's server-side retries are allowed."*
+- **Date:** Oct 24, 2026
+
+### P2.9 The name Probable Clause is kept
+
+- **Decision:** The name stays (brief §2). The research found no product, company or repository by that name, and the main domains look unregistered; the trademark registry could not be read by the research and is the user's to check by hand. The user holds the GitHub repository `NguyenTran2002/probable-clause` (empty, reserved), and the frontend will be served at `nguyennhattran.com/probable-clause`, so no separate domain is needed.
+- **User's words:** *"Probable Clause as a name is fine. I already reserved an empty github repo at https://github.com/NguyenTran2002/probable-clause. Additionally, the final front end will be served at nguyennhattran.com/probable-clause so there's no conflict in domain naming there."*
+- **Date:** Oct 24, 2026
+
+### P2.10 Disconnect detection is a Phase 3 topic
+
+- **Decision:** Cloud Run does not pass a browser's disconnect to the container over HTTP/1.1 (`docs/research/phase2-findings.md` §6), so the §2 Browser disconnect rule needs an explicit way to know a browser is still connected (for example a heartbeat from the page, or end-to-end HTTP/2). The rule stands; the mechanism is settled in the Phase 3 architecture conversation.
+- **User's words:** *"I'm open to carrying the disconnect detection into Phase 3, unless you'd want to discuss it now."*
+- **Date:** Oct 24, 2026
