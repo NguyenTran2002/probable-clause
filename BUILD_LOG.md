@@ -246,3 +246,65 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - 20:18, the direction: *"Yes. This prototype, in Evergreen, is the chosen direction. Log it and get it ready for the main session to fold in."* (Folded in at 20:48; locked as a T-entry in Phase 3 under P1.6.)
 
 **DECISION (user):** That this log is where every decision is kept: *"BUILD LOG is our authoritative and final source of updating decision now that the front end parallel conversation has concluded. Make sure it's up to date."*
+
+## Oct 24, 2026, 13:59 CDT — Phase 2: Research
+
+**Asked:** Discuss and kick off Phase 2, the research of brief §9, then lay out the research plan for approval before running it. The user asked that the plan not default to Opus: subagents on Sonnet 5.5 at high effort at the least, extra-high where needed, never max. The user also asked for a check of the goodnight gateway's request timeout, read only, keeping that project's code out of this repository and logging at most that one figure. Then close the phase.
+
+**Came back:**
+- Findings in `docs/research/phase2-findings.md`. They came from six read-only research agents (Sonnet, high or extra-high effort) plus paid checks from committed scripts (`scripts/probe_common.py`, `probe_loop.py`, `probe_exa.py`; the `mcp` package added).
+- **A simulated loop on the real corpus,** at the product's settings (Sonnet 5.5, high effort, automatic caching, SQLite FTS5 search, a stubbed update check):
+
+  | Run | Steps | Claude cost | Elapsed |
+  |---|---|---|---|
+  | First question | 6 | $0.237 | about 45 s |
+  | Second question | 4 | $0.144 | about 30 s |
+
+  The brief had estimated $0.35 to $0.45 a run uncached.
+- **Citations:** 97 of 97 citations' `cited_text` equalled the cited blocks' text exactly. Sentence blocks narrowed citations to one or two sentences.
+- **Other API behaviour:**
+  - Claude made two or three searches per turn.
+  - A rejected `submit_answer`, returned as an error result with thinking intact, was accepted by the API. Claude then ran another update search. The trigger was artificial, since Claude ran the update check unprompted in both runs.
+- **Exa through its MCP server:**
+  - A search costs $0.004 on Lite and $0.007 on Auto, with page text included at no extra charge.
+  - Deep search can't be sent through the server.
+  - A published-date filter appears to drop undated pages.
+  - The server retries Exa's 5xx errors twice on its side.
+- **Settled from the docs:**
+  - A cache read on Sonnet 5.5 is $0.10 per million tokens; the brief had flagged this as contradicted.
+  - Forced `tool_choice` is a 400 on Sonnet 5.5.
+  - Thinking blocks need an append-only history.
+  - Cloud Run does not pass a client disconnect to the container over HTTP/1.1.
+  - Anthropic offers no embeddings model.
+  - The Console has monthly spend limits but no daily one.
+- **Name check:** no product or repository called "Probable Clause" was found. The trademark registry could not be read by the agents.
+- **goodnight's Cloud Run request timeout: 300 s.**
+- **Sources re-checked:**
+  - `scripts/verify_quotes.py` matched 439 of 488 web quotes exactly, plus all 38 quotes from the previous build's files.
+  - An agent not told the conclusions confirmed the other 49 by hand.
+  - A further agent checked all 126 claims in the draft findings against their cited pages and the probe outputs. Its 22 corrections were applied before the findings were committed: 10 claims citing a neighbouring page, 7 worded too strongly, and 5 figures off. None was unsupported.
+- **Decisions P2.1 to P2.11** locked in `docs/design/locked-decisions.md`.
+
+**Failures:**
+- The Claude API reference used to draft the probe gave Sonnet 5.5's cache read as $0.20. The pricing agent found $0.10 on Anthropic's pricing page, and I confirmed it there before any paid call.
+- The first Exa run lost two requests: full page text for 10 results overflowed the MCP client's 1 MB event limit. Capping the text at 2,000 characters per result fixed it. Whether the two failed requests were billed is not known.
+- The Exa probe first read the error flag under the wrong field name (`isError` for `is_error`), so its summary shows null for the two error replies. The raw replies show true. Fixed for the later requests.
+- The first thinking-removal test was skipped, because the first turn had no thinking block. It was rerun on the first turn that had one, and the removal was accepted.
+- The claims check found 22 problems in the draft findings, listed above; all fixed before commit.
+
+**Spend:**
+- Anthropic: 16 calls on `claude-sonnet-5-5`, $0.5541 (ceiling $2).
+- Exa: 9 requests from the free credit. Five reported $0.029 in all; two failed with no reported cost, and two error replies (a rejected filter combination and an invalid key) cost nothing.
+
+**DECISION (user):**
+- Model, P2.1: *"For model check, let's lock Sonnet 5.5 at high effort and only increase the effort or ponder Opus if we see evidence that Sonnet 5.5 at high cannot handle what we want."*
+- Exa prices, P2.2: *"It's from my console so it's authoritative."*
+- Keep-only triage, P2.3: *"Instead we should expose only keep tool, with sources not acted on by Claude simply discarded."* And: *"only what is kept would want a reason. Everything else discarded."* How passages are surfaced and queried stays open for Phase 3, with the user's green light.
+- Citable text, P2.4: *"On sticking with Phase's 1 work and finding, you have my green light here."*
+- Research plan, P2.5: *"The research plan looks good to me. One note though, use Sonnet 5.5 at high effort in the minimum. You're allowed to set extra high effort for certain parts of the plan. However, you're barred from using Sonnet 5.5 at max effort."*
+- No per-visitor limit, P2.6: *"On cap on runs per visitor, uncap it. We will control with daily cost cap and monthly cost cap only."*
+- Limits, P2.7: *"Stick with these limits: 12 steps, 400K input and 20K output tokens per run, 3 update searches, the $10 daily cap and the $60 monthly cap."*
+- Exa retries, P2.8: *"Exa's server-side retries are allowed."*
+- Name, P2.9: *"Probable Clause as a name is fine."* The repository is reserved, and the frontend will be served at nguyennhattran.com/probable-clause.
+- Disconnect detection, P2.10: carried to Phase 3.
+- No keyless fallback, P2.11: *"Agreed: no keyless fallback. When the credit runs out the update check shows as unavailable until the 1st. Close Phase 2."*
