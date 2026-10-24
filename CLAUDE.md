@@ -33,6 +33,7 @@ More, each from the brief:
 - `PROBABLE_CLAUSE_KICKOFF.md`: the brief, frozen.
 - `BUILD_LOG.md`: the raw record and the authoritative record of decisions, append-only. Written by the main session only.
 - `docs/design/locked-decisions.md`: the index of decisions in force, under the log and over the brief (P2.12). Written by the main session only.
+- `docs/design/phase3-working.md`: the main session's Phase 3 working notes (where the conversation stands, topic by topic). Not a decisions record.
 - `docs/research/licensing.md`: licences and terms of every source, with each quote string-matched against its page.
 - `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
@@ -84,7 +85,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - Exa's server-side retries accepted (P2.8); no keyless Exa fallback (P2.11).
   - Name kept; the repo is `NguyenTran2002/probable-clause` and the frontend will be served at `nguyennhattran.com/probable-clause` (P2.9).
   - Measured: a run costs about $0.14 to $0.24 of Claude and takes 30 to 45 s.
-- **Next: Phase 3, the architecture conversation.** The user plans to start it right after the compaction ("I'd want to start Phase 3 after a /compact command"). Confirm the green light in one line before the first topic (brief §3, §12).
+- **Now: Phase 3, the architecture conversation, in progress** (green light given by the user on Oct 24, 2026). Five areas, one at a time, **with a compaction after each area** at the user's direction. **Read `docs/design/phase3-working.md` first after any compaction**: it holds the area map, the topic status and the discussion so far. Area 1 (the research loop) opened Oct 24, 14:14 CDT.
 - **How Phase 3 runs** (brief §3, §10.4; P2.12):
   - Before the first topic, read: the brief in full; `docs/design/locked-decisions.md`; `docs/research/phase2-findings.md`; and `BUILD_LOG.md` from the Oct 23, 20:48 fold-in on (the frontend direction and the user's directions).
   - Go topic by topic, laying out options with a recommendation and waiting. Nothing is locked without the user's words.
