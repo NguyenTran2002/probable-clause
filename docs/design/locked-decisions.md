@@ -170,3 +170,27 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Decision:** *Kyllo*'s official GovInfo PDF is born-digital, so, by P1.12's reasoning, it replaces the Lawbox copy as the text of record. The Lawbox copy serves as the reference copy for repairs.
 - **User's words:** *"Also switch Kyllo to its official PDF."*
 - **Date:** Oct 23, 2026
+
+### P1.16 Lawbox wording errors are corrected where two independent scans of the print agree
+
+- **Decision:** The P1.1 verification agents confirmed wording errors in the Lawbox copies against the page images (for example *Olmstead* "We have to chose" for "choose", *Lopez* "notwithstanding are the verdict", *Miller* "400 U. S. 322" for 409). The build corrects a Lawbox word wherever the official PDF's text layer and CourtListener's Harvard scan, two independent readings of the printed page, agree with each other against Lawbox. Every correction is logged with its page, and a second round of verification agents checks every applied correction against the page image, since two OCRs can share a misreading. Corrections an agent confirms that the two scans cannot make (punctuation, omitted rows of omission points) go in a reviewed corrections table applied by the build.
+- **User's words:** *"correct Lawbox where both scans agree and have agents review every correction"*
+- **Date:** Oct 23, 2026
+
+### P1.17 Quotation marks and apostrophes are straight throughout
+
+- **Decision:** Every quotation mark and apostrophe in the corpus is normalised to straight ASCII (`'` and `"`), whatever the source (Lawbox's straight quotes and backticks, the fonts that encode single quotes as a backtick and `'`, and curly quotes). The page's text-status note says quotation marks are normalised.
+- **User's words:** *"straight quotation marks throughout"*
+- **Date:** Oct 23, 2026
+
+### P1.18 Majority joiners come from the Reporter's lineup where it is printed
+
+- **Decision:** A majority opinion's heading names no joiners. Where the volume prints the Reporter's lineup paragraph (roughly the 1970s on), the majority's joiners are taken from it, partial joins noted. Where no lineup is printed, the majority's joiners are recorded as not printed, not inferred. Separate opinions keep their joiners from their own headings.
+- **User's words:** *"majority joiners from the Reporter's lineup where printed"*
+- **Date:** Oct 23, 2026
+
+### P1.19 *Goldman*: Stone and Frankfurter's statement is a concurrence in the judgment
+
+- **Decision:** The printed heading ("MR. CHIEF JUSTICE STONE and MR. JUSTICE FRANKFURTER:") names no role. They would overrule *Olmstead* and agree with its dissents, but do not dissent; the statement is typed as a concurrence in the judgment.
+- **User's words:** *"Goldman's Stone and Frankfurter statement as concurrence in the judgment."*
+- **Date:** Oct 23, 2026
