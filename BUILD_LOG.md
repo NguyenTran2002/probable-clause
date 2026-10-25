@@ -2350,3 +2350,27 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the two quotes above.
+
+## Oct 25, 2026, 18:51 CDT — Frontend: the user's review, round 5 (autoscroll restored; the cost line kept in view)
+**Asked:**
+- The page stopped following the answer as it streams. It worked before the iteration rounds, and scrolling down by hand latched it again.
+- At the run's end the cost line sat half hidden.
+- Opening the cost line left its parts behind the composer.
+**Came back:**
+- **Cause of the lost autoscroll (a regression from rounds 1 to 4):**
+  - Pinning was decided per event: follow only if the pane was within 260 px of its bottom before the event.
+  - With research paced at 3 s, "Finishing research" is held, and everything behind it reaches the screen in one burst: the groups, the band and the first answer paragraphs. Measured: about 990 px in one tick.
+  - A smooth scroll still under way left the pane "far" from a bottom that had just moved, so following stopped for the rest of the run.
+- **The fix:** the pin is decided by the visitor's own scrolling, never by measuring at each event.
+  - A pane starts pinned. A scroll within a second of the visitor's own wheel, touch, key or scrollbar grab sets it from where they left it (within 260 px of the bottom pins it).
+  - Our own scrolls never change it.
+  - The same holds for the sources pane.
+- **The half-hidden cost line:** when a run ends, the dock grows (the line under the composer returns) and covered the conversation's last lines. A `ResizeObserver` on the conversation pane now keeps a pinned pane at its bottom when the pane resizes.
+- **Opening the cost line:** its `toggle` scrolls the pane just far enough to show all of it.
+- **Checked (only what changed), in the browser on the thermal-imager replay:**
+  - the answer followed to its end, and the end left the cost line fully above the dock (891 to 911 px; the pane ends at 927);
+  - opened, it moved up to 726 to 911;
+  - scrolling up 800 px mid-answer stayed put (1,490 px from the bottom 3 s later); scrolling back down latched again.
+**Failures:** the first try of the fold's reveal never ran. A function named `reveal` already existed in `view.js` (the passage reveal), and the later declaration replaced it; renamed `revealFold`.
+**Spend:** none.
+**DECISION (user):** none beyond the three requests (bug fixes).

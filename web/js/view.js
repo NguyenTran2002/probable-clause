@@ -43,6 +43,30 @@ export function createView({ cfg, corpus, md }) {
   function near(pane) { return pane.scrollHeight - pane.scrollTop - pane.clientHeight < 260; }
   function follow(pane, glide = true) { pane.scrollTo({ top: pane.scrollHeight, behavior: glide && smooth() ? 'smooth' : 'auto' }); }
 
+  // Following the newest content: a pane stays pinned to its bottom until the visitor scrolls it away, and pins again
+  // when they scroll back near the bottom. Pinning is decided by the visitor's own scrolling, never by measuring at
+  // each event: in a burst of events (a held research step releasing what queued behind it), a smooth scroll still
+  // under way leaves the pane far from a bottom that just moved, and following stopped for good (the user, Oct 25).
+  const pinned = new Map([[threadScroll, true], [sourcesPane, true]]);
+  const touched = new Map([...pinned.keys()].map(p => [p, -Infinity]));   // each pane's last wheel, touch, key or scrollbar grab
+  addEventListener('keydown', () => { for (const p of touched.keys()) touched.set(p, performance.now()); }, true);
+  for (const pane of pinned.keys()) {
+    const mark = () => touched.set(pane, performance.now());
+    for (const t of ['wheel', 'touchstart', 'touchmove']) pane.addEventListener(t, mark, { passive: true });
+    pane.addEventListener('pointerdown', e => { if (e.target === pane) mark(); });    // the scrollbar itself
+    // within a second of the visitor's input, a scroll is theirs (momentum included); ours never change the pin
+    pane.addEventListener('scroll', () => { if (performance.now() - touched.get(pane) < 1000) pinned.set(pane, near(pane)); }, { passive: true });
+  }
+  // the dock grows when a run ends (the line under the composer returns): a pinned conversation keeps its last line
+  // in view instead of sliding under the dock
+  new ResizeObserver(() => { if (pinned.get(threadScroll)) follow(threadScroll, false); }).observe(threadScroll);
+  // an opened fold near the bottom (the cost line's parts) scrolls up far enough to show all of it
+  function revealFold(e) {
+    const pr = threadScroll.getBoundingClientRect(), er = e.getBoundingClientRect();
+    const by = Math.min(er.bottom - pr.bottom + 16, er.top - pr.top - 16);
+    if (er.bottom > pr.bottom && by > 0) threadScroll.scrollBy({ top: by, behavior: smooth() ? 'smooth' : 'auto' });
+  }
+
   // ---------- a new run screen (T4.4 #12: conversation and sources cleared) ----------
   function reset({ question, replay = null }) {
     clearThread(true);
@@ -65,6 +89,7 @@ export function createView({ cfg, corpus, md }) {
     answerNodes = null;
     threadScroll.scrollTo(0, 0);
     sourcesPane.scrollTo(0, 0);
+    for (const pane of pinned.keys()) pinned.set(pane, true);
     setPane('thread');
   }
   function setQuestion(q) {
@@ -81,7 +106,7 @@ export function createView({ cfg, corpus, md }) {
   // ---------- one event ----------
   function onEvent(ev, { quiet = false } = {}) {
     setQuiet(quiet);
-    const pinThread = near(threadScroll), pinSources = near(sourcesPane);
+    const pinThread = pinned.get(threadScroll), pinSources = pinned.get(sourcesPane);
     apply(run, ev);
     steps.sync(run);
     sources.sync(run);
@@ -195,7 +220,11 @@ export function createView({ cfg, corpus, md }) {
     else if (e.state === 'refusal') steps.last(T.REFUSAL_ENDED);
     else if (e.state === 'failed' && !kept) steps.last(T.FAILED_NOTHING_KEPT(T.failureWords(e.failure_reason)));
     else if (['step_limit', 'token_ceiling', 'time_limit', 'error_stopped'].includes(e.state) && !run.blocks.length) steps.last(T.stopNothingKept(e.state, cfg));
-    if (e.totals) clear(endSlot).append(renderCosts(e.totals, replayDate));
+    if (e.totals) {
+      const costs = renderCosts(e.totals, replayDate);
+      costs.addEventListener('toggle', () => { if (costs.open) requestAnimationFrame(() => revealFold(costs)); });
+      clear(endSlot).append(costs);
+    }
   }
 
   // ---------- citations: hover or tap lights the exact sentences, with a connecting line (T4.1) ----------
