@@ -1359,3 +1359,36 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Tests:** contract, 571 passed, 7 skipped.
 **Spend:** none.
 **DECISION (user):** none; the main session's rulings within the locked decisions, announced to G and H.
+
+## Oct 24, 2026, 23:56 CDT — Phase 4: Build, Wave 2, part H merged (the API and run lifecycle)
+**Asked:** Wave 2 (*"Let's start Wave 2."*); part H, contract §4.H.
+**Came back:**
+- **Part H merged:**
+  - `api/server/`: `app.py`, `run.py`, `registry.py`, `sse.py`, `clock.py`, `totals.py`, `summary.py`;
+  - `api/main.py`, which exposes `app` and imports `api.loop` only inside its deps factory;
+  - `tests/server/`.
+- **What it does:**
+  - **Endpoints** per §5, answering as `tests/fixtures/http/` does.
+  - **The reservation:** made at `POST /runs` and released once on every end path, in a shielded `finally`. It stays counted while a paid call is unrecorded or a cost is unsettled.
+  - **The heartbeat gate** in §4.H's order: abandoned, then the deadline (composition exempt), then the unattended pause, with Atlas polled and the run abandoned at `ABANDON_AFTER_S`.
+  - **Events:** numbered with no gaps, copied to Atlas in order without holding up the stream, replayed from `Last-Event-ID`, with one stream per run (a second attach replaces the first, T3.1).
+  - **On another instance,** `interrupted` is sent on the stream only, never stored.
+  - **Run records** in `api/state/records.py`'s allowlisted shape. Logs hold error kinds only, never an exception chain.
+- **Review fixes (from the review logged at 23:40), each with a test:**
+  - a cancel mid-settle keeps the cost counted;
+  - an estimated usage is shown as `usage: null`;
+  - **shutdown closes every stream and releases reservations within `SHUTDOWN_GRACE_S`**, with releases run at once and a hung Atlas unable to hold it;
+  - a cancelled `create_run` releases;
+  - ASCII digits only in headers;
+  - `interrupted` numbered and replayed per v1.2;
+  - `failed` carries `internal`;
+  - the extra codes.
+- **The builder's choices,** besides those the 23:40 entry rules on:
+  - both spend stop kinds set the spend-limit flag;
+  - the question's tabs and newlines become spaces, other control characters are removed, and zero-width characters are kept;
+  - composition still pauses when unattended;
+  - calls due together share one pause.
+- **Mutation check:** 54 mutations at first, then 18 of the touched rules after the fixes. All are caught, except one equivalent: the order of a decrement the `finally` makes irrelevant. The builder says it wrote most of its tests after the code, not first; the mutation check is the evidence they have teeth.
+- **Tests:** server and contract, 762 passed, 7 skipped.
+**Spend:** none.
+**DECISION (user):** *"Let's start Wave 2."* No new decision.
