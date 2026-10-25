@@ -881,7 +881,8 @@
       "properties": {
         "since_ms": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "On paused: milliseconds since the last heartbeat. On resumed: milliseconds the run was paused."
         }
       }
     },
@@ -1213,10 +1214,29 @@
           ]
         },
         "failure_reason": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "enum": [
+            "rate_limited",
+            "spend_cap",
+            "spend_limit",
+            "overloaded",
+            "server_error",
+            "gateway_timeout",
+            "connection",
+            "stream_broken",
+            "timeout",
+            "deadline",
+            "refusal",
+            "bad_request",
+            "auth",
+            "permission",
+            "not_found",
+            "too_large",
+            "no_credit",
+            "protocol",
+            "unreadable",
+            null
+          ],
+          "description": "The api/errors.ErrorKind behind a failed, error_stopped, refusal or incomplete ending; null otherwise (spend_limit carries its stop_kind instead)."
         },
         "rounds": {
           "type": "integer",
@@ -1376,18 +1396,16 @@
         },
         "stop_kind": {
           "enum": [
-            "daily_cap",
-            "monthly_cap",
             "step_limit",
             "token_ceiling_input",
             "token_ceiling_output",
             "composition_max_tokens",
             "console_spend_limit",
             "tier_spend_cap",
-            "exa_no_credit",
             "time_limit",
             null
-          ]
+          ],
+          "description": "The budget or limit stop that ended the run (contract §6), else null. The cap refusals and exa_no_credit are recorded in Atlas (§8) but never end a run: a cap refuses POST /runs, and an Exa 402 only makes the update check unavailable."
         }
       }
     }

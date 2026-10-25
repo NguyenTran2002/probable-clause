@@ -1,0 +1,10 @@
+{
+  "description": "POST /runs when the month's cap would be exceeded, or while the Anthropic spend-limit flag is set.",
+  "method": "POST",
+  "path": "/runs",
+  "status": 503,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"error\":\"paused_month\",\"message\":\"The run's worst case would take this month's spend past the monthly cap.\"}"
+}

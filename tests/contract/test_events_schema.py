@@ -66,7 +66,8 @@ def test_bad_events_fail(event):
 
 @pytest.mark.parametrize("path", FIXTURES, ids=[p.name for p in FIXTURES])
 def test_fixture_streams_validate(path):
-    events = json.loads(path.read_text())["events"]
+    doc = json.loads(path.read_text())
+    events, after = doc["events"], doc.get("after", 0)       # a reconnect fixture holds only the events after n = `after`
     for e in events:
         VALIDATOR.validate(e)
-    assert [e["n"] for e in events] == list(range(1, len(events) + 1))
+    assert [e["n"] for e in events] == list(range(after + 1, after + len(events) + 1))

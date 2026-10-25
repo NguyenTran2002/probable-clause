@@ -1,0 +1,10 @@
+{
+  "description": "POST /runs with an empty or whitespace-only question (refused before any paid call).",
+  "method": "POST",
+  "path": "/runs",
+  "status": 400,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"error\":\"question_empty\",\"message\":\"The question is empty after control characters were removed.\"}"
+}

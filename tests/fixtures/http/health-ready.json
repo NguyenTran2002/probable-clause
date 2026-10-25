@@ -1,0 +1,10 @@
+{
+  "description": "GET /health when loading is complete and live research is open (contract section 5).",
+  "method": "GET",
+  "path": "/health",
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"app\":\"probable-clause\",\"ready\":true,\"live_research\":\"open\",\"update_check\":\"available\",\"commit\":\"fixture\"}"
+}

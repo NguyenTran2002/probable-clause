@@ -1,0 +1,10 @@
+{
+  "description": "POST /runs/{id}/alive for an unknown or expired run.",
+  "method": "POST",
+  "path": "/runs/uSZPbMAkuQGfL7TAcGTjZu/alive",
+  "status": 404,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"error\":\"run_unknown\",\"message\":\"No such run, or its events have expired.\"}"
+}

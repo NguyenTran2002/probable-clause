@@ -1,0 +1,10 @@
+{
+  "description": "GET /runs/{id}/events for a run that never existed or has expired (the page says the run is no longer stored).",
+  "method": "GET",
+  "path": "/runs/uSZPbMAkuQGfL7TAcGTjZu/events",
+  "status": 404,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"error\":\"run_unknown\",\"message\":\"No such run, or its events have expired.\"}"
+}

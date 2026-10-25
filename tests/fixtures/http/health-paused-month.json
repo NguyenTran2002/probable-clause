@@ -1,0 +1,10 @@
+{
+  "description": "GET /health when the month's cap would be exceeded, or after the Console spend limit ended a run.",
+  "method": "GET",
+  "path": "/health",
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"app\":\"probable-clause\",\"ready\":true,\"live_research\":\"paused_month\",\"update_check\":\"available\",\"commit\":\"fixture\"}"
+}

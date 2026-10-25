@@ -1,0 +1,10 @@
+{
+  "description": "GET /health when Atlas did not answer within the short timeout: both fields are unknown.",
+  "method": "GET",
+  "path": "/health",
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"app\":\"probable-clause\",\"ready\":true,\"live_research\":\"unknown\",\"update_check\":\"unknown\",\"commit\":\"fixture\"}"
+}

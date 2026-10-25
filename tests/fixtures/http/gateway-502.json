@@ -1,0 +1,10 @@
+{
+  "description": "A representative gateway HTML 502, written generically for this fixture; the real page will differ. The page treats it as still starting.",
+  "method": "GET",
+  "path": "/health",
+  "status": 502,
+  "headers": {
+    "Content-Type": "text/html; charset=utf-8"
+  },
+  "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>502 Bad Gateway</title></head>\n<body>\n<h1>Bad Gateway</h1>\n<p>The gateway could not get a valid answer from the service behind it. Please try again in a moment.</p>\n</body>\n</html>\n"
+}

@@ -434,6 +434,9 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
   - `composition_max_tokens` with `answer_end: cut_off`;
   - `console_spend_limit` / `tier_spend_cap` with `spend_limit`;
   - `time_limit` with `time_limit`.
+- **`answer_end: incomplete`** goes with state `answered` (the loop finished; the composition broke after its first block, T3.3), with `failure_reason` the error kind; `error_stopped` is only for a loop stopped by an error after retries, composed from what was kept (v1.1).
+- **`failure_reason`** is an `api/errors.ErrorKind` or null; `paused.since_ms` is the time since the last heartbeat and `resumed.since_ms` the time paused (v1.1).
+- **A failed attempt with no usage reported** has `usage: null` and `estimated: true` in its `paid_call`, priced from the caller's input estimate (T3.3, v1.1).
 
 ### 6.1 A passage in events
 

@@ -1,0 +1,10 @@
+{
+  "description": "A representative Cloud Run plain-text 503 while an instance starts or has stopped. Not a verbatim capture.",
+  "method": "GET",
+  "path": "/health",
+  "status": 503,
+  "headers": {
+    "Content-Type": "text/plain; charset=utf-8"
+  },
+  "body": "Service Unavailable"
+}

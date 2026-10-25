@@ -1,0 +1,10 @@
+{
+  "description": "POST /runs accepted: a random, unguessable run ID.",
+  "method": "POST",
+  "path": "/runs",
+  "status": 201,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"run_id\":\"uSZPbMAkuQGfL7TAcGTjZu\"}"
+}

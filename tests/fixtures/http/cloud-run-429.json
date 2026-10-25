@@ -1,0 +1,10 @@
+{
+  "description": "A representative Cloud Run plain-text 429 (no instance free yet). Not a verbatim capture. Any answer that is not our JSON means the server is still starting (contract section 5.1).",
+  "method": "GET",
+  "path": "/health",
+  "status": 429,
+  "headers": {
+    "Content-Type": "text/plain; charset=utf-8"
+  },
+  "body": "Rate exceeded."
+}

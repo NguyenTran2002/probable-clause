@@ -1,0 +1,10 @@
+{
+  "description": "POST /runs when the Chicago day's cap would be exceeded (the daily cap). Authoritative over /health.",
+  "method": "POST",
+  "path": "/runs",
+  "status": 503,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"error\":\"paused_day\",\"message\":\"The run's worst case would take today's spend past the daily cap.\"}"
+}

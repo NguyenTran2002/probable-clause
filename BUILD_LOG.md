@@ -1189,3 +1189,41 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - **Clean-up checked:** each test used randomly prefixed collections dated 2030 and dropped them. Afterwards `Probable_Clause_test` holds only its existing `init` collection, with no test collection left. The live database `Probable_Clause` was not touched.
 **Spend:** none.
 **DECISION (user):** *"Yes, run part E's Atlas-gated tests against Probable_Clause_test."*
+
+## Oct 24, 2026, 22:48 CDT — Phase 4: Build, fixtures for the mock frontend; frontend brief rewritten
+**Asked:** *"Proceed on to the fixtures and the frontend brief update"*
+**Came back:**
+- **Fixtures** (contract §12), written by a Sonnet 5.5 xhigh subagent to the main session's brief and reviewed by the main session.
+  - `tests/fixtures/make_fixtures.py` regenerates them deterministically: two runs gave identical files, checked by the main session.
+  - **30 event streams** (3.3 MB), in the replay format of §11.2:
+    - an answered run (phone location records: *Carpenter*, *Smith*, *Miller*, *Katz*);
+    - both no-sources replies;
+    - every limit stop (step, token input and output, time, length cut-off, both spend limits);
+    - a pause and resume, an abandoned run, an interrupted run;
+    - loop and composition failures, and a refusal;
+    - a copy-guard refusal with P4.3's withholding, and a declined update check;
+    - check flags (a misquotation and *Entick v. Carrington*, real `check_answer` output);
+    - every band outcome, both Voyage warnings, retries;
+    - a reconnect after `n = 185`;
+    - a replay on the pre-*Chatrie* corpus.
+  - **19 HTTP answers:** `/health` states; Cloud Run's plain-text 429, 500 and 503 and a gateway HTML 502 (representative, written from scratch); every `POST /runs` refusal; expired-run 404s.
+  - **Real wherever code exists:** passages from `Corpus`, cited text sliced from real sentence spans, checks from `check_answer`, web results through `format_for_events` (synthetic `example.test` pages, no page text), costs from `price`, rejection texts from `api/prompts/`. The loop's tool-result text is approximate until builder G, as the README says.
+  - `tests/contract/test_fixtures.py` checks for every stream:
+    - the order rules, cited text and totals;
+    - passages named only after their `passage` event;
+    - the web IDs, the one `run_ended`, the re-run checks;
+    - coverage of every state, stop kind and band outcome, and the allowed pairings of state and `answer_end`.
+- **Main session's rulings on the builder's questions** (contract §6 and the schema, v1.1):
+  - `run_ended.stop_kind` allows only the seven kinds that end a run.
+  - `failure_reason` is an `ErrorKind` or null.
+  - `since_ms` is defined.
+  - `answer_end: incomplete` goes with state `answered`.
+  - A failed attempt with no usage has `usage: null` and `estimated: true`.
+- **Frontend brief** rewritten (f6d70f6) for the real page against a mock:
+  - the frontend session writes `web/` (served) and `webdev/` (mock and Node tests, never served);
+  - the generated reader and config files are in the gitignored `web/_generated/`;
+  - the contract details found in Wave 1;
+  - the checks at three sizes and no third-party request.
+- **Whole suite:** 2,907 passed, 47 skipped (the reconnect fixture's checks that need a stream's first events, and the Atlas-gated tests).
+**Spend:** none.
+**DECISION (user):** *"Proceed on to the fixtures and the frontend brief update"*
