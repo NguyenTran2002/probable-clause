@@ -832,3 +832,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Drafts with recommendations for six lines; T5.2 locked with every recommendation. T1.12's example line is reworded by it.
 **DECISION (user):**
 - T5.2: *"Lock topic 2 as T5.2 with the recommended drafts."*
+
+## Oct 24, 2026, 19:21 CDT — Phase 3: Architecture, Area 5 (the update-check band, T5.3)
+**Asked:** Open topic 3 (the update-check band's wording); then lock it with the recommended drafts.
+**Came back:**
+- Read in the prototype's `run.js` (read only): the band's heading, brief §6.4's draft label with a fixed date, the summary paragraph, the links list, the parameter list, the update step's lines.
+- Brief §6.4's label assumes a "since <date>" window, but Claude chooses the window and may set none (T2.1); it also omits that a date filter skips undated pages and that dates are Exa's estimates (T2.2). §6.4's guarantee sentence ("text as fetched") no longer fits, since no web text is shown (T2.3).
+- Drafts with recommendations for the honesty label, the replacement guarantee sentence, the band's parts, every outcome line, the pointer under the answer (T1.11) and the step lines; T5.3 locked with every recommendation.
+**DECISION (user):**
+- T5.3: *"Lock topic 3 as T5.3 with the recommended drafts."*

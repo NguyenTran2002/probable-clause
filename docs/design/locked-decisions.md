@@ -813,3 +813,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 2 as T5.2 with the recommended drafts."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:18 CDT — Phase 3: Architecture, Area 5 (the guarantee, coverage and checks, T5.2)"
+
+### T5.3 The update-check band's wording (replaces brief §6.4's draft label and guarantee sentence)
+
+- **Decision:** Area 5, topic 3, every recommended draft. Final text; angle brackets are filled by code from the run:
+  1. **Honesty label,** under the heading "Update check": *"A convenience, kept apart from the evidence above. Claude searched the web for later developments, with the settings listed below. Finding nothing does not mean nothing has changed: a web search can miss pages, and a date filter skips pages with no published date."*
+  2. **Guarantee sentence** (replaces §6.4's "text as fetched from that page", T2.3): *"Each statement is Claude's own summary, linked to the pages it names. This site's code confirms only that those pages came back from the search in this run, not that they say what the statement reports. Open the links to check."* The page never calls the links or statements verified.
+  3. **The band's parts:** findings headed *"What the search found, in Claude's words"*; the overview labelled *"Claude's overview (its own synthesis)"*; each link *"<title> · <domain> · published <date> (Exa's estimate)"* or *"no published date"*; *"Settings Claude chose"*, every field listed, unset ones *"not set"*; the fixed line *"Set by this site: up to 10 results a search, at most 3 searches a run, each page's text cut at 4,000 characters before Claude reads it, no Exa highlights or summaries."*; the folded list *"Every page the search returned (<n>), including those Claude did not mention"*.
+  4. **Outcome lines** (worked out by code, T2.3): found shows the findings with no extra line; nothing relevant *"Nothing relevant found. That does not mean nothing has changed."*; skipped and declined keep *"Update check skipped: <reason>"* (T1.10) and *"Update check declined after reminder"* (brief §5.4), each with *"Claude's reason: <reason>"*; unavailable *"Update check unavailable: this month's web search credit is used up. It returns on the 1st."* (402) or *"Update check unavailable: the web search service refused this site's key."* (401); an incomplete search *"This search did not complete; nothing came back."*; not summarised *"Not summarised: the run stopped before Claude summarised these searches. The pages they returned are listed below."*
+  5. **The pointer under the answer,** only on "found" (T1.11): *"The update check found later material that may bear on this. It is not part of the evidence for this answer; see the update check above."*
+  6. **The update step in the step log:** *"Searching the web for later developments"*; done, *"Searched the web: <n> pages returned, <k> with no published date. Linked in the update check, never quoted."*
+- **User's words:** *"Lock topic 3 as T5.3 with the recommended drafts."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:21 CDT — Phase 3: Architecture, Area 5 (the update-check band, T5.3)"
