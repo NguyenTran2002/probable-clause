@@ -1709,3 +1709,28 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Whole suite: 3,443 passed, 49 skipped.** Nothing pushed.
 **Spend:** none tonight. Phase 4 Anthropic is still $0 of $3, and Exa still 0 of 10.
 **DECISION (user):** none new. The questions for the user are in "Waiting on the user" in `docs/sessions/overnight-run.md`.
+
+## Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)
+**Asked:** the morning report's five questions (BUILD_LOG 02:22 to 02:50; "Waiting on the user" in `docs/sessions/overnight-run.md`).
+**Came back:**
+- **P4.11:** the daily cap is raised from $10 to **$15** (amends P2.7). At the $2.106 worst case, seven reservations fit at once (T3.5 had about five at $1.67; at $10 it would have been four). The monthly cap stays $60.
+- **P4.12:** a run's recorded spend may pass its reservation through its failed composition attempts' streamed output (P4.10); the worst case stays $2.106. The caps stay correct, since every cost is settled as spent.
+- **P4.13:** `update_skip_reason` gets the copy guard (amends P4.8). Once an update search has returned a page in the run, a skip reason repeating `COPY_GUARD_WORDS` or more of a page's words refuses the submit (rule `copy_guard`) and is withheld in the stored `tool_call`, as P4.3 does. The refusal text mirrors the approved `copy_guard_note`, with "the update skip reason" for "the note".
+- **P4.14:** the composition's worst case is counted by the loop's estimator, not the tokenizer. Densely tokenized text can run past the reserve by about $0.04, which is logged and never stopped. Accepted.
+- **P4.15:** the prompt and refusal drafts are approved as written (T1.14):
+  - the five texts from 23:52 (`unknown_tool`, `submit_accepted_note`, `submit_accepted_answer`, `composition_scope_note`, `composition_coverage`);
+  - `out_of_scope_no_note`;
+  - `note_too_long` and `copy_guard_note`;
+  - the note's length line in `tools.json`;
+  - the `copy_guard` text, its opening line included.
+- **Also approved:** the paid build tests' budget (`docs/design/paid-build-tests.md`), to be run after the compaction.
+- **Order of work:** the patches, then the lock, then the compaction prep. The main session wrote the lock first so the patches can cite it.
+**Spend:** none.
+**DECISION (user):**
+1. *"Raise daily cap to $15."*
+2. *"Retried answers can pass the reservation is fine."*
+3. *"update_skip_reason: give it the guard."*
+4. *"Accept the limit of our estimator."*
+5. *"Wording look goods to me."*
+
+Then: *"The budget for paid build tests are sound."*

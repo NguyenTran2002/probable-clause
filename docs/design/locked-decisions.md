@@ -292,7 +292,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 13:59 CDT — Phase 2: Research"
 
-### P2.7 Run limits kept from brief §8.2 — AMENDED by P4.6 (the run's input limit is 436,000)
+### P2.7 Run limits kept from brief §8.2 — AMENDED by P4.6 (the run's input limit is 436,000) and P4.11 (the daily cap is $15)
 
 - **Decision:** The remaining starting values of brief §8.2 stand after Phase 2's measurements (`docs/research/phase2-findings.md` §3: two runs of 4 and 6 steps, $0.14 and $0.24 of Claude): a step limit of 12 tool rounds plus the final composition call; a per-run ceiling of 400K input and 20K output tokens; at most 3 update searches per run, results clamped to 10; a global daily cap of $10; a monthly cap of $60. Every counter persists in Atlas. P2.6 removed the per-visitor limit.
 - **User's words:** *"Stick with these limits: 12 steps, 400K input and 20K output tokens per run, 3 update searches, the $10 daily cap and the $60 monthly cap."*
@@ -936,7 +936,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
 
-### P4.8 The copy guard covers a no-sources reply's note once a page was returned (amends T2.3)
+### P4.8 The copy guard covers a no-sources reply's note once a page was returned (amends T2.3) — AMENDED by P4.13 (`update_skip_reason` is guarded too)
 
 - **Decision:** On a no-sources reply (out of scope or nothing found), when any update search has returned a page in the run, the `note` gets T2.3's copy guard: `COPY_GUARD_WORDS` or more consecutive words of a returned page refuse the submit, with a refusal asking for it to be reworded, and the flagged note is withheld in the stored `tool_call` as P4.3 does. Keep reasons, the scope note of an answered run and `update_skip_reason` stay unguarded.
 - **Considered:** guarding keep reasons, every note and the skip reason too (the cross-part review's suggestion); leaving T2.3 as it was.
@@ -959,3 +959,45 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Don't count as stream because we have our max retries guards working here right? Push back?"* The main session read it as "counted as streamed", and said so. Then: *"Confirm."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
+
+### P4.11 The daily cap is $15 (amends P2.7)
+
+- **Decision:** `DAILY_CAP_USD` is $15, up from $10. At P4.6's $2.106 worst case, seven runs can hold a reservation at once (at $10 it would have been four; T3.5 had about five at $1.67). The monthly cap stays $60.
+- **Considered:** keeping $10, with four reservations at once.
+- **User's words:** *"Raise daily cap to $15."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
+
+### P4.12 A run's spend may pass its reservation through failed composition attempts
+
+- **Decision:** The worst case stays $2.106. It reserves input only for the two failed composition attempts, while P4.10 also prices their streamed output, so a run's recorded spend can pass its reservation: typically by cents, by $0.48 at most. The caps stay correct, because every cost is settled as spent.
+- **Considered:** reserving that output too ($2.586 a run).
+- **User's words:** *"Retried answers can pass the reservation is fine."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
+
+### P4.13 The copy guard covers `update_skip_reason` too (amends P4.8)
+
+- **Decision:** Once an update search has returned a page in the run, `update_skip_reason` gets T2.3's copy guard on every submit. A skip reason repeating `COPY_GUARD_WORDS` or more consecutive words of a returned page refuses the submit (rule `copy_guard`) and is withheld in the stored and streamed `tool_call`, as P4.3 does. Its refusal text mirrors the approved `copy_guard_note`. Keep reasons and an answered run's scope note stay unguarded (P4.8).
+- **Considered:** leaving it unguarded, as P4.8 did ("because the update is skipped"); refusing or dropping a skip reason once a search counted.
+- **User's words:** *"update_skip_reason: give it the guard."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
+
+### P4.14 The composition's worst case is counted by the loop's estimator
+
+- **Decision:** `COMPOSITION_RESERVE_INPUT` (P4.6) bounds the composition's input as the loop's estimator counts it (characters over the corpus's characters-per-token ratio), not as the tokenizer does. Text that tokenizes densely can run past it by about $0.04 a run; that is logged and never stopped (P4.4).
+- **Considered:** a larger margin.
+- **User's words:** *"Accept the limit of our estimator."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
+
+### P4.15 The prompt and refusal drafts are approved (T1.14)
+
+- **Decision:** The drafts written for the user's review are approved as written:
+  - `loop_messages.json`'s `unknown_tool`, `submit_accepted_note`, `submit_accepted_answer`, `composition_scope_note` and `composition_coverage`;
+  - `rejections.json`'s `submit.out_of_scope_no_note`, `submit.note_too_long`, `submit.copy_guard_note` and `submit.copy_guard`;
+  - `tools.json`'s note length line.
+- **User's words:** *"Wording look goods to me."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
