@@ -1478,3 +1478,26 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Next:** these are built in one patch round. The user asked for it to run overnight, with this session as orchestrator, on a plan approved before the compaction.
 **Spend:** none.
 **DECISION (user):** *"Increase the budget to accommodate the worst case, which is rare anyway."* *"Keep the loop at 370,000 and raise the run's limit to about 435,000."* *"Scope refusal should not trigger update search."* *"Your recommendations on handling false match is sound."* Then, on the list of five: *"Confirm."*
+
+## Oct 25, 2026, 01:06 CDT — Phase 4: Build, ground prepared for a compaction and an overnight run
+**Asked:** *"Prep the ground for compaction first though."* Then the plan for an unsupervised overnight run, with this session as orchestrator, approved before the compaction. Then: *"docker builds locally are allowed since those are not risking anything. Architectural decisions are locked, so you can proceed without me. Good."* And: *"Now, prep the ground for compaction, including writing yourself a note to guide yourself for the autonomous post-compaction-overnight-orchestration run."*
+**Came back:**
+- **`docs/sessions/overnight-run.md`:** the main session's guide for the night: the user's words, the standing limits, the recipe, eight steps in order, and what waits for the user.
+- **The steps:**
+  1. contract v1.5 and P4.6 to P4.10's shared changes;
+  2. the loop patch (Opus 5.5 xhigh);
+  3. a Sonnet 5.5 high review and the merge;
+  4. the fixtures regenerated from the real code (Opus 5.5 high);
+  5. the frontend brief for v1.2 to v1.5;
+  6. local Docker builds;
+  7. a final Opus 5.5 xhigh verification review;
+  8. a priced paid-test plan and the morning report.
+- **Limits for the night:**
+  - no paid call, deploy, `gcloud`, goodnight, push, Atlas or `web/`;
+  - no new decision or final wording;
+  - Docker builds are allowed, and built images run only with no keys and no network (never `local.sh` or `deploy.sh`);
+  - questions are queued for the morning.
+- **CLAUDE.md**'s state section rewritten, pointing first to the overnight note. The layout list names `deploy/`, the end-to-end test and the note.
+- **Keep-awake** requested for the session (it lapses after about 5 idle minutes, so it is renewed on each wake).
+**Spend:** none.
+**DECISION (user):** *"docker builds locally are allowed since those are not risking anything. Architectural decisions are locked, so you can proceed without me. Good."*
