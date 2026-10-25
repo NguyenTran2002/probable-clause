@@ -860,3 +860,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Open topic 5. Read the retention pages yourself, no subagent."*
 - *"I checked myself, and goodnight keeps request logs for 30 days, the default, so your note's "30 days by default" is correct. Voyage AI is also dropped out as well."*
 - T5.5: *"Add the query rule and self-host the fonts (amending T4.1). Lock the privacy note as T5.5."*
+
+## Oct 24, 2026, 19:39 CDT — Phase 3: Architecture, Area 5 (the replays, T5.6)
+**Asked:** Open topic 6 (the replays: how many, the questions, the pre-*Chatrie* option, recording rules); then lock it with the four recommended questions, the pre-*Chatrie* replay as a fifth, and the recording rules as proposed.
+**Came back:**
+- Facts from brief §2, §7.4 and §12, T2.3, T4.4, T5.4 and T4.5. Without *Chatrie*, the latest corpus case is *Carpenter*, 2018-06-22 (manifest, script).
+- Five candidate questions, each showing a different behaviour; the pre-*Chatrie* options; recording rules; the Phase 5 spend estimated at about $2 to $3 (five runs at about $0.19 to $0.31, plus retakes), to be approved then.
+- T5.6 locked as asked.
+**DECISION (user):**
+- T5.6: *"Lock topic 6 as T5.6: the four recommended questions, the pre-Chatrie replay as the fifth, and the recording rules as proposed."*

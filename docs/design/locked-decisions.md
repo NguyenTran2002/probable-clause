@@ -857,3 +857,18 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I checked myself, and goodnight keeps request logs for 30 days, the default, so your note's "30 days by default" is correct. Voyage AI is also dropped out as well."* Then: *"Add the query rule and self-host the fonts (amending T4.1). Lock the privacy note as T5.5."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:36 CDT — Phase 3: Architecture, Area 5 (the privacy note, T5.5)"
+
+### T5.6 The replays: five recorded runs, one on a corpus that ends before *Chatrie*
+
+- **Decision:** Area 5, topic 6 (brief §2 Replay mode, §7.4):
+  1. **Four replays on the full corpus,** the questions as the chips' text:
+     - *"Can police search my phone when they arrest me?"* (a personal situation, research not advice; *Riley*)
+     - *"Is getting someone's location history from Google with a geofence warrant a Fourth Amendment search?"* (*Smith* and *Miller* to *Carpenter* to *Chatrie*; the likeliest to make the update check find something)
+     - *"Can police attach a GPS tracker to a car without a warrant?"* (*Knotts*, *Karo*, *Katz*, *Jones*; opinion types and dates)
+     - *"Is it a search for police to fly a drone over someone's backyard?"* (no drone case in the corpus; *Ciraolo* and *Florida v. Riley*; the honest edges and the update check)
+  2. **A fifth replay on a corpus that ends before *Chatrie*** (brief §7.4, taken): the geofence question recorded against the corpus without *Chatrie* (latest case *Carpenter*, 2018), so the update check can be seen finding it; labelled *"Recorded with a corpus that ends before* Chatrie v. United States *(June 29, 2026), to show the update check finding it. Live research uses the full corpus."* Built as a recording-only switch that drops the one case from the index, the vectors, the catalog and the coverage dates; never available to the live API; tested like the rest.
+  3. **Recording rules:** a replay is a real run exported from its events and never edited; the user reviews each recording before it is published, and a run that went wrong is either published as it is, with its flags, or re-recorded, the user's call each time; each file carries its recording date, the commit, the models and that date's prices (T4.5); a replay is re-recorded only deliberately, with the user (for example after the prompts change).
+  4. **Spend:** about $2 to $3 in Phase 5 (estimate), approved by the user then. The five chips are measured at phone width (T4.1).
+- **User's words:** *"Lock topic 6 as T5.6: the four recommended questions, the pre-Chatrie replay as the fifth, and the recording rules as proposed."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:39 CDT — Phase 3: Architecture, Area 5 (the replays, T5.6)"
