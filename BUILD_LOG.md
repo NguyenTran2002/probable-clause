@@ -1762,3 +1762,38 @@ Then: *"The budget for paid build tests are sound."*
 **Came back:** yes, on the condition below. The keys reach the API only through `uv run --env-file .env`, which parses the file itself. The main session never opens, reads or prints `.env` or any key, and checks the keys only with `scripts/check_env.py`, which prints only set, empty, missing or commented out. No log, event or report carries a key.
 **Spend:** none yet.
 **DECISION (user):** *"Paid tests can use the keys in .env, but make sure to NOT read the file or print out the key."*
+
+## Oct 25, 2026, 12:29 CDT — Phase 4: Build, the paid build tests
+**Asked:** *"Send the paid tests."* (plan: `docs/design/paid-build-tests.md`, budget approved at 12:09; keys per the 12:17 entry.)
+**Came back:**
+- **Set-up:**
+  - The keys were checked with `scripts/check_env.py --phase 4` only (all five set). `.env` was never opened; the server log and every saved event hold no key-like string (scanned by count, nothing printed).
+  - **The client,** `scripts/run_client.py`: posts the question, reads the stream (re-opening with `Last-Event-ID` if it drops), heartbeats every `HEARTBEAT_INTERVAL_S`, saves the events and a summary under `data/verification/phase4/`. Tested first on H's app with fakes over a real port: answered, heartbeat 204, no schema errors.
+  - **Anthropic's pricing page re-read at 12:21:** every figure unchanged (Sonnet 5.5 $2 / $2.50 / $4 / $0.10 / $10; Opus 5.5 $4 / $5 / $8 / $0.20 / $20; no long-context surcharge; `inference_geo: "us"` 1.1x, not set). `PRICE_TABLE`'s Anthropic date is now 2026-10-25; the fixtures were regenerated for it (only the price lines changed). Suite 3,456 passed, 49 skipped. Commit 613c62f.
+  - The API ran on localhost:8000 with `PC_ENV` unset (`Probable_Clause_test`, full corpus); stopped after test 4.
+- **The four runs:**
+
+  | # | Question | Ended | Rounds | Anthropic | Exa | Band |
+  |---|---|---|---|---|---|---|
+  | 1 | thermal imager on a house | answered, 65 blocks, 32 citations | 5 | $0.2727 | 0 | skipped |
+  | 2 | "hello" | no_sources, out_of_scope, 1 call | 1 | $0.0045 | 0 | not_run |
+  | 3 | a car's onboard computer, 2027 | answered with a scope note, 4 passages kept | 4 | $0.2072 | 3 | nothing_relevant |
+  | 4 | tracking a phone's location | answered, 89 blocks, 44 citations | 6 | $0.3233 | 1 | nothing_relevant |
+
+- **What held:**
+  - **Money:** every Anthropic `paid_call.cost_usd` equals the price table by hand from its `usage` (to rounding); the totals equal their sums; every reservation ($2.106) was settled and released; no open reservations after.
+  - **Cache classes:** the first call of test 1 wrote the 1-hour prefix (18,691 tokens); every later first call (tests 2 to 4) read it; later loop calls read and wrote 5-minute entries. The composition is uncached (one call).
+  - **Citations:** 87 cited blocks across three answers; no mapping-fault or other warning in the server log. Citation checks 12 of 12 found.
+  - **Thinking:** adaptive thinking at high effort thinks little: 0 to 99 thinking tokens per loop call, 215 to 968 for the composition. Turns carrying thinking were passed back with no 400.
+  - **Test 2 as P4.7 says:** out of scope at once with a note, no Exa call, no rule-4 reminder, no composition.
+  - **Rules seen live:** an `update_overview` with no search was refused (test 1); the copy guard refused an update finding that repeated 10 or more of a page's words, and withheld it in the stored event (test 3).
+  - **Page text** never reached an event (`[page text: … characters, not stored]`).
+- **What did not hold, or needs the user:**
+  1. **Two `submit_answer` calls in one turn (a defect, seen in tests 3 and 4).** Claude split its submit: the note and overview in one call, the findings (test 3) or nothing (test 4) in another. G judges each on its own and the last accepted wins (`self.accepted`). Test 3 lost a relevant finding (a reported vacate-and-remand of two geofence rulings in light of *Chatrie*), so its band read "nothing_relevant"; test 4 lost its scope note and overview. The contract has no rule for it (§4.G, "a turn's tools").
+  2. **A capitalised first letter fails the quotation check.** In test 1, "Presumptively unreasonable without a warrant." is in kept passage `kyllo-1-p14` lower-cased; it was flagged as not found. This is T1.12 read strictly (the convention would be "[P]resumptively"), but the visitor sees a real quotation flagged. The other three flags in test 1 were headings Claude put in quotation marks, correctly flagged.
+  3. **Test 1 ran no update search.** Claude skipped it with a reason (P4.7's path), so the Exa path was measured in tests 3 and 4 instead. Its shown reason says *Kyllo* "is settled".
+  4. **Test 3 was not a nothing-found reply.** Claude kept the nearest cases and answered with a scope note; P4.8's note guard on a no-sources reply was not exercised live.
+  5. **The loop's input budget binds before 12 rounds on research-heavy questions.** Loop input per call (real tokens): test 4 went 18.8k, 30.6k, 40.8k, 49.2k, 50.5k, 59.1k (249k of `LOOP_INPUT_BUDGET` 370k in 6 rounds); test 3 grew about 16k a round. At that growth the budget stops a run at about round 7 or 8. Not hit in these tests.
+- **Times:** 3 s (test 2) to 75 s (test 4); the composition took 14 to 40 s.
+**Spend:** Anthropic **$0.8078** in Phase 4 (19 calls) of the $3.00 ceiling; ledger `data/verification/phase4/spend.jsonl` (the Phase 2 and 3 ledger stays at $0.6964 under its own ceiling). Exa **4 searches** ($0.028) of 10. Voyage $0.0065 at list price.
+**DECISION (user):** none yet. Items 1 and 2 above are put to the user.
