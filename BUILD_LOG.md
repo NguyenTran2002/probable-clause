@@ -1891,3 +1891,12 @@ Then: *"The budget for paid build tests are sound."*
 - **New question from answer 3:** `UPDATE_INPUT_BUDGET` 1.2M or 2M. Each update call re-sends the research conversation, so the heaviest plausible update step is about 1.06M. The catastrophic overrun for 5 runs is about $44 at 1.2M, or $54 at 2M.
 **Spend:** none.
 **DECISION (user):** none locked yet. These answers go into P4.18 to P4.21 when the design is approved.
+
+## Oct 25, 2026, 13:41 CDT — Phase 4: Build, the Wave 3 design's last two answers (nothing locked)
+**Asked:** the two items left open at 13:38: `UPDATE_INPUT_BUDGET` (1.2M or 2M), and the restated development allowance.
+**Came back:** the user's answers, written into `docs/design/wave3-design.md` §8:
+- `UPDATE_INPUT_BUDGET` **2,000,000**. With 5 runs at once the catastrophic overrun is about $54, against the Console's $60 monthly limit.
+- **Development spend:** Wave 3's paid tests start a fresh tally at $0 in a new ledger (`data/verification/wave3/spend.jsonl`), with an allowance of $3.00 of Anthropic and 20 Exa searches. Each paid test still runs only on the user's go. The Phase 4 ledger closes at $1.6729 and 8 Exa searches. Production never counts development spend: it has its own Atlas database and its own Console workspace and key (T3.4).
+- The design has no open question left. On the user's approval, P4.18 to P4.21 are locked, with the development allowance as P4.22.
+**Spend:** none.
+**DECISION (user):** *"UPDATE_INPUT_BUDGET 2M. Development allowance as you restated it: a fresh tally at $0, $3 Anthropic and 20 Exa searches."* Not yet a lock: the design waits for the user's approval.
