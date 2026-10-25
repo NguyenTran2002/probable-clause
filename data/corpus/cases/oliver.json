@@ -112,6 +112,13 @@
      ]
     },
     {
+     "text": "II",
+     "kind": "section",
+     "page_start": 176,
+     "page_breaks": [],
+     "footnote_refs": []
+    },
+    {
      "text": "The rule announced in Hester v. United States was founded upon the explicit language of the Fourth Amendment. That Amendment indicates with some precision the places and things encompassed by its protections. As Justice Holmes explained for the Court in his characteristically laconic style: \"[T]he special protection accorded by the Fourth Amendment to the people in their 'persons, houses, papers, and effects,' is not extended to the open fields. The distinction between the latter and the house is as old as the common law.\" Hester v. United States, 265 U. S., at 59.",
      "kind": "text",
      "page_start": 176,
@@ -1250,6 +1257,13 @@
     "with": "searches and seizures . . . .\" See",
     "source": "final_c",
     "where": "op0.p9"
+   },
+   {
+    "inserted": [
+     "II"
+    ],
+    "after": "The Maine Supreme Judicial Court affirmed. 453 A. 2d 489",
+    "source": "main_T1.5"
    }
   ],
   "paragraph_pages_raised": 0

@@ -8,7 +8,7 @@
  "token_model": "claude-sonnet-5-5",
  "core_cases": 32,
  "core_opinions": 102,
- "core_tokens": 599094,
+ "core_tokens": 599096,
  "cases": [
   {
    "key": "berger",
@@ -1708,8 +1708,8 @@
      "statement": false,
      "paragraphs": 22,
      "footnotes": 15,
-     "words": 4132,
-     "tokens": 8618
+     "words": 4133,
+     "tokens": 8620
     },
     {
      "id": "oliver-1",

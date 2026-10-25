@@ -925,3 +925,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **Came back:** `git status` clean, no worktrees beyond the main checkout; the frontend session's last commit (45ccae0) is folded in. CLAUDE.md's tag line updated; `phase-3-done` placed on this commit. Next: Phase 4, step 0 of P4.1.
 **DECISION (user):**
 - *"Frontend session is closed and concluded."*
+
+## Oct 24, 2026, 20:10 CDT — Phase 4: Build, step 0 (scaffold; T1.5, Oliver's Part II heading)
+**Asked:** Start Phase 4, step 0 of P4.1: the scaffold, T1.5, then contract v1.
+**Came back:**
+- **Scaffold** (commit ecb2f0c): `LICENSE`, the standard Apache 2.0 text, copied from a local package's licence file (md5 3b83ef96387f14655fc854ddc3c6bd57, identical in two independent packages) rather than downloaded; the `api/` package, `tests/` with a smoke test, `contracts/`; pytest settings in `pyproject.toml`. Dependencies added at once with `uv add`: fastapi 0.162.0, uvicorn 0.54.0, pymongo 4.19.0, numpy 2.5.4, httpx2 2.16.0, jsonschema 4.26.0; pytest 9.1.1 for development. Claude's call: Voyage is reached through its HTTP API with `httpx2` (the client the Anthropic SDK already uses), not the `voyageai` package, so timeouts and retries stay in our code (T3.3). SQLite's FTS5 is present in the local Python (3.53.4); the image is checked in the build (T3.6).
+- **T1.5:** *Oliver*'s Part II heading added through `scripts/corrections.json` (an `insert_after` entry, source `main_T1.5`, page 176). Confirmed by the main session against the page image, with no subagent: page 176 of `USREPORTS-466-170.pdf`, rendered locally and viewed, prints "II" centred above "The rule announced in *Hester v. United States*". The table's `about` text notes this one entry was confirmed by the main session.
+- **Checks re-run:** `build_corpus.py` built to a scratch folder first: only `oliver.json` differed, by the heading and its log line. Then built in place; `verify_corpus.py` and `verify_lineup.py` exit 0; every text report identical except *Oliver*'s, which differs only in paragraph positions after the heading; `lineup.json` unchanged. `build_manifest.py`: 32 cases, 102 opinions, **599,096 tokens** (was 599,094; *Oliver*'s majority 8,618 → 8,620 tokens, 4,132 → 4,133 words; 102 free token-count requests). `check_structure.py`: *Oliver*'s heading-sequence error is gone, the `html` copy and Harvard's scan now agree with the corpus, and Lawbox shows the corpus holding the "II" it drops, as expected. No other case changed.
+- The design note's "599,094 tokens" is left as approved; this entry records the change.
+**Spend:** none (token counting is free).
+**DECISION (user):**
+- *"Start Phase 4, step 0 of P4.1: the scaffold, T1.5, then contract v1."*
