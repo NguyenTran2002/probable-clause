@@ -1153,3 +1153,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
   - A second `--confirm` run paid nothing; its batch came from the cache.
 **Spend:** Voyage, about 7,650 tokens in all, about $0.0004 at list price, likely within the free tokens. Anthropic: none.
 **DECISION (user):** *"Wait, send a throwaway run first to confirm end to end working"*
+
+## Oct 24, 2026, 22:02 CDT — Phase 4: Build, the rerank compared with the embedding order
+**Asked:** *"Reranking also worked?"*, then *"Do that comparison too just to confirm"*.
+**Came back:** a throwaway scratchpad script over the same 12 rows. One query embed (17 tokens) gave the cosine order, then `rerank-3` ranked the same documents (2,398 tokens).
+- The rerank moved **10 of 12 positions**.
+- Both orders put the four *Katz* passages first and *Berger*'s appendix last.
+- The rerank lifted katz-1-p1 (the opening of the majority) from 4th to 1st and katz-1-p2 from 11th to 8th, and put *Kyllo* above *Smith*.
+- Its order matches what the earlier `MeaningIndex.search` returned, so the search uses the rerank's order.
+**Spend:** Voyage, 2,415 tokens, about $0.0001 at list price. Anthropic: none.
+**DECISION (user):** *"Do that comparison too just to confirm"*
