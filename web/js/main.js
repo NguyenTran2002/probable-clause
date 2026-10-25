@@ -12,12 +12,17 @@ import { makeMarkdown } from './answer.js';
 import * as T from './text.js';
 
 const RUN_KEY = 'probable-clause-run';
+// until the page is ready, a form must never submit natively (a GET reload with the question in the URL)
+for (const f of document.forms) f.addEventListener('submit', e => e.preventDefault());
 const body = document.body;
 
 function swap(view) {
   const go = () => { body.dataset.view = view; scrollTo(0, 0); };
-  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(go);
-  else go();
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const t = document.startViewTransition(go);
+    // a transition skipped or aborted by a quick second swap is not an error
+    for (const pr of [t.ready, t.finished, t.updateCallbackDone]) pr.catch(() => {});
+  } else go();
 }
 
 // ---------- the standing lines (T5.1, T5.2, T5.5), filled from corpus.json ----------
@@ -69,20 +74,25 @@ async function boot() {
   }
 
   // ---------- replays ----------
-  const replays = await loadReplays();
-  const chipList = (cls) => h('ul', { class: `chiplist ${cls || ''}` }, replays.map(r => h('li', null,
-    h('button', { class: 'chip', attrs: { type: 'button' }, on: { click: () => startReplay(r.slug) } }, r.question))));
-  if (replays.length) { $('#recorded-label').textContent = T.OR_WATCH; $('#recorded').append(chipList()); } else $('#recorded').hidden = true;
+  let replays = [];
+  const chipList = (cls) => (replays.length ? h('ul', { class: `chiplist ${cls || ''}` }, replays.map(r => h('li', null,
+    h('button', { class: 'chip', attrs: { type: 'button' }, on: { click: () => startReplay(r.slug) } }, r.question)))) : null);
+  $('#recorded').hidden = true;
+  loadReplays().then(list => {
+    replays = list;
+    if (replays.length) { $('#recorded-label').textContent = T.OR_WATCH; $('#recorded').append(chipList()); $('#recorded').hidden = false; }
+  });
 
   async function startReplay(slug) {
     stopAll();
     session.del(RUN_KEY);
+    const my = token;          // stopAll moved the token on; a later click or run moves it again
     let rec;
     try { rec = await loadReplay(slug); } catch { return; }
+    if (my !== token) return;
     view.reset({ question: rec.question, replay: rec });
     swap('run');
     setPlaying(true, true);
-    const my = token;
     player = playReplay(rec.events, (ev, o) => { if (my === token) view.onEvent(ev, o); }, () => { if (my === token) setPlaying(false); });
   }
   $('#skip').textContent = T.SKIP;
@@ -133,7 +143,12 @@ async function boot() {
     // POST /runs only after /health answered our JSON, and never retried automatically (brief §8.5 rule 2)
     let r, j = null;
     try {
-      r = await fetch('api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
+      // a timeout so a request that never answers ends the wait; never retried (a run nobody attaches to expires
+      // with no spend, T3.1). WAKE_CHECK_TIMEOUT_S: the same placeholder as a health check's wait.
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), cfg.WAKE_CHECK_TIMEOUT_S * 1000);
+      r = await fetch('api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }), signal: ctl.signal });
+      clearTimeout(timer);
       if (/application\/json/.test(r.headers.get('content-type') || '')) j = await r.json().catch(() => null);
     } catch { r = null; }
     if (my !== token) return;
@@ -153,10 +168,19 @@ async function boot() {
     setPlaying(false);
   }
 
+  // the stream could not reconnect: the waking step's give-up, whose Try again reattaches, never starts a run
+  function gaveUp(runId, my) {
+    const s = view.steps().waking();
+    s.gaveUp(() => { s.remove(); setPlaying(true); follow(runId, my, view.run.lastN); }, chipList('chips-replay'));
+    view.status('', false);
+    setPlaying(false);
+  }
+
   function follow(runId, my, lastN = 0) {
     live = attach(runId, cfg, {
       onEvent: ev => {
         if (my !== token) return;
+        if (ev.kind === 'run_started') view.setQuestion(ev.data.question);
         const behind = Date.now() - Date.parse(ev.at) > 5000;     // a stored event caught up on, not a new one
         view.onEvent(ev, { quiet: behind });
       },
@@ -165,12 +189,8 @@ async function boot() {
         if (st === 'reconnecting') view.status(T.RECONNECTING, true);
         else if (st === 'open') view.status();
         else if (st === 'closed') { setPlaying(false); live = null; }
-        else if (st === 'expired') { view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
-        else if (st === 'gave_up') {
-          const s = view.steps().waking();
-          s.gaveUp(() => { s.remove(); follow(runId, my, live ? live.last : 0); }, chipList('chips-replay'));
-          view.status('', false);
-        }
+        else if (st === 'expired') { view.setQuestion(null); view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
+        else if (st === 'gave_up') gaveUp(runId, my);
       },
       wake: () => waker.wake(),
     }, { lastN });
@@ -196,31 +216,15 @@ async function boot() {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); e.target.form.requestSubmit(); }
     });
   }
-  $('#home').addEventListener('click', () => { stopAll(); session.del(RUN_KEY); view.clearThread(true); swap('landing'); });
+  $('#home').addEventListener('click', () => { stopAll(); session.del(RUN_KEY); view.clearThread(true); swap('landing'); $('#q').focus(); });
 
   // ---------- a reload goes straight back into its run (T3.2, T4.4 #6) ----------
   const saved = session.get(RUN_KEY);
   if (saved) {
-    view.reset({ question: '' });
+    view.reset({ question: '' });      // the bubble fills from run_started
     body.dataset.view = 'run';
     setPlaying(true);
-    const my = token;
-    let first = true;
-    live = attach(saved, cfg, {
-      onEvent: ev => {
-        if (my !== token) return;
-        if (first && ev.kind === 'run_started') { $('.ask-msg .bubble').textContent = ev.data.question; first = false; }
-        view.onEvent(ev, { quiet: Date.now() - Date.parse(ev.at) > 5000 });
-      },
-      onState: st => {
-        if (my !== token) return;
-        if (st === 'reconnecting') view.status(T.RECONNECTING, true);
-        else if (st === 'closed') { setPlaying(false); live = null; }
-        else if (st === 'expired') { $('.ask-msg').remove(); view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
-        else if (st === 'gave_up') { view.endStep(T.WAKE_GAVE_UP); setPlaying(false); }
-      },
-      wake: () => waker.wake(),
-    });
+    follow(saved, token);
   }
 }
 

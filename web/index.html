@@ -73,10 +73,11 @@
   <div class="cols">
     <section class="col" id="pane-thread" aria-label="Conversation">
       <div class="scroller" id="thread-scroll">
-        <div class="thread" id="thread" aria-live="polite" aria-relevant="additions"></div>
+        <div class="thread" id="thread"></div>
       </div>
       <div class="dock">
-        <p class="status" id="status" role="status"></p>
+        <p class="status" id="status"></p>
+        <p class="sr" id="announce" role="status"></p>
         <form id="composer" class="field composer">
           <label class="sr" for="q2">Your question</label>
           <textarea id="q2" rows="1"></textarea>

@@ -21,6 +21,9 @@ const HEADINGS = { h1: 'h3', h2: 'h3', h3: 'h4', h4: 'h5', h5: 'h6', h6: 'h6' };
 export function makeMarkdown(markdownit) {
   const md = markdownit('default', { html: false, linkify: false, typographer: false });
   md.disable(['link', 'image', 'autolink', 'html_inline', 'html_block', 'linkify', 'reference'], true);
+  // Off as well (the review of step 8): tables and code blocks hold text no citation can sit in, and entities
+  // could decode to the private-use sentinels below; all three stay plain text, as Claude wrote it.
+  md.disable(['table', 'code', 'fence', 'entity'], true);
   return md;
 }
 
@@ -81,12 +84,13 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
   const lineAt = n => (n < lineStarts.length ? lineStarts[n] : src.length);
 
   // pass 1: each inline token's characters, mapped to the source, and which containers each block touches
-  const inl = [];
+  const inl = [], byTok = new Map();
   for (const tok of tokens) {
     if (tok.type !== 'inline' || !tok.map) continue;
     const from = lineAt(tok.map[0]), to = lineAt(tok.map[1]);
     const map = align(src, from, to, tok.content);
     inl.push({ tok, map });
+    byTok.set(tok, inl.length - 1);
   }
   const touches = new Map();     // block -> set of inline token numbers holding a non-space character of it
   inl.forEach(({ tok, map }, n) => {
@@ -103,7 +107,6 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
   const root = [], stack = [{ kids: root, notes: [] }];
   const placed = new Set();      // straddled blocks already shown as plain text
   const flagged = [];
-  let n = -1;
   for (const tok of tokens) {
     const top = stack[stack.length - 1];
     if (tok.nesting === 1) {
@@ -122,7 +125,8 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
       continue;
     }
     if (tok.type === 'inline') {
-      n++;
+      const n = byTok.get(tok);
+      if (n == null) { top.kids.push(text(tok.content.replace(PUA, ''))); continue; }    // no source map: as text
       const { map } = inl[n];
       const pieces = [];
       for (let i = 0; i < tok.content.length;) {

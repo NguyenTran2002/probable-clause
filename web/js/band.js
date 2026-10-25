@@ -13,8 +13,9 @@ const FIELDS = [['query', 'query'], ['start_published_date', 'published from'], 
 
 // null when there is nothing to show: no search reached the check and nothing stopped it (T2.3 #5: the band shows
 // for a run with no answer only if an update search ran).
-export function renderBand(band, cfg) {
-  const searched = (band.searches || []).length > 0;
+export function renderBand(band, cfg, limits) {
+  // a search that met an out-of-credit or refused key never ran (T2.4), so it does not count as searching
+  const searched = (band.searches || []).some(x => x.status !== 'unavailable');
   if (band.outcome === 'not_run' && !searched) return null;
   const sec = h('section', { class: 'update', attrs: { 'aria-label': T.BAND_HEADING } });
   sec.append(h('h2', null, T.BAND_HEADING));
@@ -57,7 +58,11 @@ export function renderBand(band, cfg) {
       if (s.status !== 'ok') block.append(h('p', { class: 'meta' }, s.status === 'unavailable' ? T.WEB_STATUS.unavailable : T.BAND_INCOMPLETE));
       sec.append(block);
     }
-    sec.append(h('p', { class: 'meta fixed' }, T.bandFixed(cfg)));
+    // the settings the run itself recorded, so a replay states what it ran with, not today's figures
+    const fixed = searches.find(x => x.fixed) ? searches.find(x => x.fixed).fixed : {};
+    sec.append(h('p', { class: 'meta fixed' }, T.bandFixed({ ...cfg,
+      ...(limits && limits.update_searches != null ? { UPDATE_SEARCHES_PER_RUN: limits.update_searches } : {}),
+      ...(fixed.text_max_characters != null ? { EXA_TEXT_CHARS: fixed.text_max_characters } : {}) })));
   }
   const all = band.pages || [];
   if (all.length) {

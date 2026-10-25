@@ -31,7 +31,8 @@ function paragraphNodes(text, { sentences = null, breaks = [], refs = [], slip, 
   const spans = sentences ? rangesToUnits(text, sentences) : [[0, text.length]];
   const out = [];
   spans.forEach(([a, z], i) => {
-    const points = [...cuts.keys()].filter(u => u > a && u < z).sort((x, y) => x - y);
+    // a marker at a sentence's first character belongs to that sentence (the first sentence's offset 0 is below)
+    const points = [...cuts.keys()].filter(u => (u > a || (u === a && i > 0)) && u < z).sort((x, y) => x - y);
     const kids = [];
     let from = a;
     if (i === 0 && cuts.has(0)) kids.push(...cuts.get(0));
@@ -120,10 +121,24 @@ export function createReader(dialog) {
         });
         const label = h('span', { class: 'fn-label' }, `${fn.label} `);
         if (fn.id === id) {
-          const box = excerptOf(fn.paragraphs.join('\n\n'), sentences => {
+          const joined = fn.paragraphs.join('\n\n');
+          const box = excerptOf(joined, sentences => {
             if (sentences && paras.length === 1) return [label, ...paras[0].nodesFn(sentences)];
+            if (sentences) {
+              // several paragraphs: sentence spans over the joined text (each join is a sentence boundary, contract
+              // §3), shown with its paragraph breaks; page breaks shifted to the joined text's offsets
+              const breaks = [];
+              let base = 0;
+              fn.paragraphs.forEach((t, k) => {
+                if (k === 0) breaks.push({ offset: 0, page: fn.page_starts[0] });
+                for (const b of fn.page_breaks[k] || []) breaks.push({ offset: base + b.offset, page: b.page });
+                base += [...t].length + 2;
+              });
+              return [label, ...paragraphNodes(joined, { sentences, breaks, slip, onRef: goRef })];
+            }
             return [label, ...paras.flatMap((x, k) => [k ? h('br') : null, ...x.nodesFn(null)])];
           });
+          if (paras.length > 1) box.querySelector('.ex-text').classList.add('pre-line');
           box.id = 'reader-excerpt';
           col.append(h('div', { class: 'fnote', attrs: { id: `rd-${fn.id}` } }, box));
         } else {

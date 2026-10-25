@@ -36,11 +36,16 @@ export function createSteps(container, { cfg, onGoto }) {
     if (groups || !run.researchDone) return;
     if (!run.composition.started && !run.update.started) return;
     groups = {};
-    if (run.update.started) {
+    if (run.update.started && run.update.kept.length) {
       groups.composition = group('composition', T.GROUP_ANSWER);
       groups.update = group('update', T.GROUP_UPDATE);
       tail.append(fresh(h('p', { class: 'group-intro' }, T.UPDATE_STARTED(run.update.kept.length))),
         groups.composition.sec, groups.update.sec);
+    } else if (run.update.started) {
+      // nothing kept: no answer is written, so the update check is the only thing after research
+      groups.update = { ol: research };
+      groups.composition = { ol: research };
+      tail.append(fresh(h('p', { class: 'group-intro' }, T.UPDATE_ONLY)));
     } else {
       groups.composition = { ol: research };           // only the answer follows: no groups to tell apart
     }
@@ -71,15 +76,18 @@ export function createSteps(container, { cfg, onGoto }) {
         if (rec.sig !== sig) { render(run, it, rec.li); rec.sig = sig; }
       }
     }
-    if (groups && groups.update) {
+    if (groups && groups.update && groups.update.head) {
       groups.composition.head.classList.toggle('working', run.open.composition);
       groups.update.head.classList.toggle('working', run.open.update);
     }
   }
 
+  // what an item shows, so it is redrawn only when that changes (a redraw would drop keyboard focus from its chips)
   function signature(run, it) {
-    const kept = it.result && it.result.found ? it.result.found.map(id => hueOf(run, id)).join() : '';
-    return `${it.state}|${it.lines.length}|${it.result ? 1 : 0}|${kept}|${run.keepOrder.length}|${run.blocks.length}`;
+    const r = it.result;
+    const ids = r ? [...(r.found || []), ...(r.read || []), ...(r.kept || []).map(k => k.id)] : [];
+    const extra = it.type === 'composition' ? run.blocks.length > 0 : '';
+    return `${it.state}|${it.lines.length}|${r ? 1 : 0}|${ids.map(id => hueOf(run, id)).join()}|${extra}`;
   }
 
   function render(run, it, li) {
@@ -92,8 +100,11 @@ export function createSteps(container, { cfg, onGoto }) {
     } else if (it.type === 'resumed') {
       li.append(h('h3', null, T.RESUMED));
     } else if (it.type === 'composition') {
-      li.append(h('h3', null, it.state === 'working' ? T.WRITING(it.documents) : T.WROTE(it.documents)),
-        h('p', { class: 'meta' }, T.WRITING_META));
+      const title = it.state === 'working' ? T.WRITING(it.documents) : it.state === 'failed' || it.state === 'stopped'
+        ? (run.blocks.length ? T.WROTE_PART : T.WRITE_FAILED) : T.WROTE(it.documents);
+      li.append(h('h3', null, title), h('p', { class: 'meta' }, T.WRITING_META));
+    } else if (it.type === 'update_end') {
+      li.append(h('h3', null, T.UPDATE_STEP_ENDED[it.end]));
     } else if (it.type === 'checks') {
       li.append(h('h3', null, T.CHECKED));
     } else if (it.type === 'tool') {
@@ -120,13 +131,16 @@ export function createSteps(container, { cfg, onGoto }) {
     let title = it.state === 'working' || it.state === 'stopped' ? working : done;
     if (refusedSubmit) title = T.REFUSED_TITLE;
     else if (r && r.wrong_step) title = T.WRONG_STEP_TITLE;
+    // a service that failed after its retries (meaning search unavailable) is not this site refusing the call
+    const failedService = r && r.is_error && it.lines.some(l => l.kind === 'failed');
+    if (failedService) title = done;
     else if (r && r.is_error && it.name !== 'search_web_updates') title = T.TOOL_ERROR_TITLE;
     const head = h('h3', null, title);
     li.append(head);
     const inp = it.input || {};
     switch (it.name) {
       case 'search_meaning':
-        if (inp.query != null) li.append(h('p', { class: 'query' }, '“', ...withheld(inp.query), '”'));
+        if (inp.query != null) li.append(queryLine(inp.query));
         li.append(h('p', { class: 'meta' }, searchMeta(inp)));
         break;
       case 'search_exact': {
@@ -143,7 +157,7 @@ export function createSteps(container, { cfg, onGoto }) {
           h('p', { class: 'meta' }, `${inp.before ? `${inp.before} before` : 'none before'}, ${inp.after ? `${inp.after} after` : 'none after'}`));
         break;
       case 'search_web_updates':
-        li.append(h('p', { class: 'query' }, '“', ...withheld(String(inp.query ?? '')), '”'),
+        li.append(queryLine(inp.query ?? ''),
           h('p', { class: 'meta' }, webMeta(inp)));
         break;
       case 'submit_answer':
@@ -162,6 +176,7 @@ export function createSteps(container, { cfg, onGoto }) {
         break;
     }
     if (!r) return;
+    if (failedService) { li.append(h('p', { class: 'meta' }, ...withheld(r.content || ''))); return; }
     if (refusedSubmit || r.wrong_step || (r.is_error && it.name !== 'search_web_updates')) {
       li.append(h('p', { class: 'refused' }, ...withheld(r.content || '')));
       return;
@@ -191,7 +206,7 @@ export function createSteps(container, { cfg, onGoto }) {
         li.append(h('p', { class: 'meta' }, T.WEB_STATUS[r.web_status] || T.BAND_INCOMPLETE));
         if (r.web_status === 'refused_by_us' || r.web_status === 'refused_by_exa') li.append(h('p', { class: 'refused' }, ...withheld(r.content || '')));
       }
-      li.append(h('p', { class: 'meta' }, T.bandFixed(cfg)));
+      li.append(h('p', { class: 'meta' }, T.bandFixed(run.limits ? { ...cfg, UPDATE_SEARCHES_PER_RUN: run.limits.update_searches } : cfg)));
     }
   }
 
@@ -204,12 +219,13 @@ export function createSteps(container, { cfg, onGoto }) {
     const li = h('li', { class: 'step working' }, h('h3', null, T.WAKING));
     pre.append(fresh(li));
     return {
-      long(chipsEl) { if (!li.querySelector('.wake-long')) li.append(h('p', { class: 'meta wake-long' }, T.WAKE_LONG), chipsEl); },
+      // with no recorded runs to offer, the lines leave out their pointer to them (main session's trim of T5.4 #1)
+      long(chipsEl) { if (!li.querySelector('.wake-long')) li.append(h('p', { class: 'meta wake-long' }, chipsEl ? T.WAKE_LONG : T.WAKE_LONG_NONE), chipsEl || ''); },
       done() { li.className = 'step done'; },
       gaveUp(onTry, chipsEl) {
         li.className = 'step rejected';
         li.querySelectorAll('.wake-long, .chips-replay').forEach(e => e.remove());
-        li.append(h('p', { class: 'meta' }, T.WAKE_GAVE_UP), h('p', { class: 'actions' }, h('button', { class: 'ghost', attrs: { type: 'button' }, on: { click: onTry } }, T.TRY_AGAIN)), chipsEl);
+        li.append(h('p', { class: 'meta' }, chipsEl ? T.WAKE_GAVE_UP : T.WAKE_GAVE_UP_NONE), h('p', { class: 'actions' }, h('button', { class: 'ghost', attrs: { type: 'button' }, on: { click: onTry } }, T.TRY_AGAIN)), chipsEl || '');
       },
       remove() { li.remove(); },
     };
@@ -223,18 +239,26 @@ export function createSteps(container, { cfg, onGoto }) {
   return { sync, waking, last, pre, post };
 }
 
+// a query in quotation marks, as Claude sent it; a withheld one is shown as it is, never quoted as if searched for
+function queryLine(q) {
+  q = String(q);
+  return WITHHELD.test(q) ? h('p', { class: 'query' }, ...withheld(q)) : h('p', { class: 'query' }, '\u201c', q, '\u201d');
+}
+
 function searchMeta(inp) {
-  const f = inp.filters || {};
+  // the search tools are not strict (Claude's input is stored exactly as sent), so any field may be any type
+  const f = inp.filters && typeof inp.filters === 'object' ? inp.filters : {};
+  const list = x => (Array.isArray(x) ? x.join(', ') : String(x));
   const bits = [];
-  if (f.cases) bits.push(`cases ${f.cases.join(', ')}`);
-  if (f.decided_from) bits.push(`decided from ${f.decided_from}`);
-  if (f.decided_to) bits.push(`decided to ${f.decided_to}`);
-  if (f.opinion_types) bits.push(`opinion types ${f.opinion_types.join(', ')}`);
-  if (f.authors) bits.push(`authors ${f.authors.join(', ')}`);
-  if (f.none_of) bits.push(`none of ${f.none_of.join(', ')}`);
+  if (f.cases != null) bits.push(`cases ${list(f.cases)}`);
+  if (f.decided_from != null) bits.push(`decided from ${f.decided_from}`);
+  if (f.decided_to != null) bits.push(`decided to ${f.decided_to}`);
+  if (f.opinion_types != null) bits.push(`opinion types ${list(f.opinion_types)}`);
+  if (f.authors != null) bits.push(`authors ${list(f.authors)}`);
+  if (f.none_of != null) bits.push(`none of ${list(f.none_of)}`);
   if (f.include_footnotes === false) bits.push('no footnotes');
   if (inp.max_results != null) bits.push(`up to ${inp.max_results} results`);
-  return bits.join(' · ');
+  return bits.join(' \u00b7 ');
 }
 
 function webMeta(inp) {

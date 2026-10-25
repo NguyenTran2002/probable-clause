@@ -337,7 +337,7 @@ body:not(.replaying) #skip, body.replaying #send { display: none; }
 .whose { display: block; font-size: 0.8125rem; color: var(--muted); margin-bottom: 0.15rem; }
 .update ul { margin: 0 0 0.8rem; padding: 0; list-style: none; }
 .update li { padding: 0.35rem 0; border-top: 1px solid var(--line); font-size: 0.9375rem; }
-.update li span { display: block; font-size: 0.8125rem; color: var(--muted); }
+.update li > span { display: block; font-size: 0.8125rem; color: var(--muted); }
 .params { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.15rem 1rem; margin: 0; font-size: 0.8125rem; }
 .params dt { color: var(--muted); }
 .params dd { margin: 0; overflow-wrap: anywhere; }
@@ -540,6 +540,9 @@ body.playing .scratch { display: none; }
 .step .actions { margin-top: 0.5rem; }
 .step .said { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--muted); font-style: italic; }
 .step .said .src { font-style: normal; font-size: 0.75rem; }
+/* long unbroken text (a pasted URL, an ID run) wraps instead of widening the page */
+.bubble, .step .query, .step .say, .prose, .verdict .reason, .refused, .notice, .update, .card .text { overflow-wrap: anywhere; }
+
 /* the copy guard's withheld text (contract §4.G.2): shown as it is, muted, never as an error */
 .withheld { color: var(--muted); font-style: italic; }
 .refused .withheld { color: inherit; opacity: 0.75; }
@@ -602,6 +605,7 @@ body.playing .scratch { display: none; }
 .fnref button { border: 0; background: none; padding: 0 0.1rem; font-family: var(--ui); font-size: 0.75em; color: var(--brand); }
 .fnote p { font-size: 1rem; }
 .reader-wait { color: var(--muted); text-align: center; }
+.ex-text.pre-line { white-space: pre-line; }
 
 /* ---------- phone: one pane at a time ---------- */
 @media (max-width: 759px) {
@@ -654,7 +658,7 @@ body.playing .scratch { display: none; }
 /* sideways phone: short viewport */
 @media (max-height: 500px) and (min-width: 760px) {
   .bar { padding: 0.35rem 1rem; }
-  .disclaimer details, .disclaimer .long, .disclaimer .folds, .disclaimer .aff, .scratch { display: none; }
+  .disclaimer details, .disclaimer .folds, .disclaimer .aff, .scratch { display: none; }
   .dock { padding-top: 0.25rem; }
   .status { margin-bottom: 0.2rem !important; }
   .composer { padding: 0.3rem 0.3rem 0.3rem 0.8rem; }

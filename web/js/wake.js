@@ -55,8 +55,9 @@ export function createWaker(cfg, { fetchFn = (...a) => fetch(...a), now = () => 
       const w = open || start();
       let timer = null;
       if (onTick) {
+        const t0 = now();           // the visitor's own wait, from their click, even when it joins an older check
         const tick = () => {
-          const s = (now() - w.started) / 1000;
+          const s = (now() - t0) / 1000;
           onTick({ elapsed: s, long: s >= cfg.LONG_WAIT_S });
         };
         tick();

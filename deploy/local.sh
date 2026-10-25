@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Runs both images locally for the user's review (P4.1, contract 4.I). WRITTEN, NEVER RUN by an agent.
+# Runs both images locally for the user's review (P4.1, contract 4.I). Run by the main session to stand the app up for the
+# user's review (P4.1 as clarified Oct 25, 16:38); never pointed at the live database or the live key.
 #   API  : http://localhost:8000   (PC_ENV=test: Probable_Clause_test, never the live database)
 #   Page : http://localhost:8080   (the local nginx profile proxies /api/ to the API, prefix stripped)
 # Keys reach the API from .env through `uv run --env-file` (which parses it, quotes stripped) and
 # `docker run -e NAME` with no value, so only those four variables are passed; this script never reads .env. Ctrl-C stops and cleans up.
-# This run spends real money on live keys when a question is asked; the user decides what to ask.
+# A question asked on the page is a real paid run on the development keys; the user decides what to ask.
+# replays/ is copied into the web image when present; for the review it holds local-only files, never committed.
 
 set -euo pipefail
 

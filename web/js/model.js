@@ -177,6 +177,8 @@ export function apply(run, ev) {
       run.update.ended = d;
       run.open.update = false;
       closeWorking(run.lists.update, 'stopped');
+      // an update step that did not submit says how it ended, in its own group
+      if (d.end !== 'submitted') item(run, 'update', { type: 'update_end', end: d.end, state: d.end === 'abandoned' ? 'stopped' : 'rejected', lines: [] });
       break;
 
     case 'composition_started':

@@ -33,7 +33,8 @@ export function createParser(onFrame, onComment) {
 }
 
 // handlers: onEvent(envelope), onState('open' | 'reconnecting' | 'expired' | 'closed'), wake() -> Promise
-export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), lastN = 0 } = {}) {
+export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), lastN = 0,
+  sleep = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
   let last = lastN, done = false, stopped = false, ctl = null, beat = null, watchdog = null, reader = null;
   // aborting the request ends a real body; the reader is cancelled too, so a stalled read always returns
   const cut = () => { if (ctl) ctl.abort(); if (reader) reader.cancel().catch(() => {}); };
@@ -53,7 +54,13 @@ export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), 
   };
 
   async function connect() {
+    const how = await open();
+    stopBeats();
+    return how;
+  }
+  async function open() {
     ctl = new AbortController();
+    arm();                          // the watchdog covers the wait for headers too, so a hung request is retried
     let r;
     try {
       r = await fetchFn(`${base}/events`, { headers: { 'Last-Event-ID': String(last), Accept: 'text/event-stream' },
@@ -75,8 +82,10 @@ export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), 
       try { ev = JSON.parse(f.data); } catch { return; }
       if (!ev || ev.v !== 2 || typeof ev.n !== 'number' || ev.n <= last) return;   // the page plays only v2 (§6)
       last = ev.n;
-      handlers.onEvent(ev);
-      if (ev.kind === 'run_ended') { done = true; cut(); }
+      if (ev.kind === 'run_ended') done = true;
+      // a fault in drawing one event is the page's, not the connection's: it must never look like a dropped stream
+      try { handlers.onEvent(ev); } catch (e) { console.error(e); }
+      if (done) cut();
     }, () => arm());
     reader = r.body.getReader();
     const dec = new TextDecoder();
@@ -87,18 +96,23 @@ export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), 
         parse(dec.decode(value, { stream: true }));
       }
     } catch { /* aborted by the watchdog or the end */ }
-    stopBeats();
     return done ? 'ended' : 'dropped';
   }
 
   (async () => {
+    let idle = 0;        // reconnects in a row that brought nothing new
     for (;;) {
+      const before = last;
       const how = await connect();
       if (stopped) return;
       if (how === 'ended') { handlers.onState('closed'); return; }
       if (how === 'expired') { handlers.onState('expired'); return; }
       handlers.onState('reconnecting');
       try { await handlers.wake(); } catch { handlers.onState('gave_up'); return; }
+      // back off when reconnecting brings nothing (1, 2, 4 ... 30 s; main session's placeholder), so a stream that
+      // keeps closing never becomes a tight loop of requests
+      idle = last > before ? 0 : idle + 1;
+      if (idle) await sleep(Math.min(30, 2 ** (idle - 1)) * 1000);
       if (stopped) return;
     }
   })();

@@ -12,7 +12,7 @@ export function playReplay(events, onEvent, onDone) {
       const due = ev.t_ms - (performance.now() - start);
       if (!skipping && due > 0) { timer = setTimeout(next, Math.min(due, 1000)); return; }
       i++;
-      onEvent(ev, { quiet: skipping });
+      try { onEvent(ev, { quiet: skipping }); } catch (e) { console.error(e); }   // one event's fault never ends the replay
     }
     onDone();
   }

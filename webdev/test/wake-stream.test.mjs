@@ -126,3 +126,53 @@ test('the SSE parser: frames split anywhere, comments, CRLF', () => {
   assert.deepEqual(frames.map(f => [f.id, f.event, f.data]), [['7', 'x', '{"a":1}'], ['8', 'y', '{"b":2}']]);
   assert.equal(comments.length, 1);
 });
+
+test('review fix: an error while drawing an event is not a dropped stream, and run_ended still closes it', async () => {
+  const evs = [1, 2, 3].map(n => ({ v: 2, run: 'r', n, t_ms: n, at: '2026-10-24T22:00:00.000-05:00', kind: n === 3 ? 'run_ended' : 'x', data: {} }));
+  let gets = 0;
+  const states = [];
+  await new Promise(resolve => {
+    attach('r', { HEARTBEAT_INTERVAL_S: 10, PAGE_WATCHDOG_S: 45 }, {
+      onEvent: () => { throw new Error('a drawing bug'); },
+      onState: s => { states.push(s); if (s === 'closed') resolve(); },
+      wake: async () => {},
+    }, { fetchFn: async url => {
+      if (url.endsWith('/alive')) return new Response(null, { status: 204 });
+      gets++;
+      return new Response(streamOf(sse(evs)), { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
+    } });
+  });
+  assert.equal(gets, 1);
+  assert.ok(!states.includes('reconnecting'));
+});
+
+test('review fix: reconnects that bring nothing back off instead of looping', async () => {
+  let gets = 0;
+  const waits = [];
+  const h = attach('r', { HEARTBEAT_INTERVAL_S: 10, PAGE_WATCHDOG_S: 45 }, {
+    onEvent: () => {}, onState: () => {}, wake: async () => {},
+  }, { fetchFn: async url => {
+    if (url.endsWith('/alive')) return new Response(null, { status: 204 });
+    gets++;
+    return new Response(streamOf(''), { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
+  }, sleep: async ms => { waits.push(ms); if (waits.length >= 4) h.stop(); } });
+  await new Promise(r => setTimeout(r, 50));
+  assert.deepEqual(waits.slice(0, 4), [1000, 2000, 4000, 8000]);
+  assert.ok(gets <= 5);
+});
+
+test('review fix: the watchdog also covers a request whose headers never come', async () => {
+  let conn = 0;
+  const ev = { v: 2, run: 'r', n: 1, t_ms: 0, at: '2026-10-24T22:00:00.000-05:00', kind: 'run_ended', data: {} };
+  await new Promise(resolve => {
+    attach('hung', { HEARTBEAT_INTERVAL_S: 10, PAGE_WATCHDOG_S: 0.05 }, {
+      onEvent: () => {}, onState: s => { if (s === 'closed') resolve(); }, wake: async () => {},
+    }, { fetchFn: (url, opts) => {
+      if (url.endsWith('/alive')) return Promise.resolve(new Response(null, { status: 204 }));
+      conn++;
+      if (conn === 1) return new Promise((_, reject) => opts.signal.addEventListener('abort', () => reject(new Error('aborted'))));
+      return Promise.resolve(new Response(streamOf(sse([ev])), { status: 200, headers: { 'Content-Type': 'text/event-stream' } }));
+    } });
+  });
+  assert.equal(conn, 2);
+});

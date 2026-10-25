@@ -97,3 +97,27 @@ test('every fixture answer renders: each cited block once, its text intact, its 
     assert.equal(flagged.length, flags.length, `${name}: every flag has its note`);
   }
 });
+
+test('review fixes: a table, an indented block and a fenced block stay text, and a citation in them keeps its underline', () => {
+  for (const blocks of [
+    [blk(0, 'Intro.\n\n| Case | Year |\n|---|---|\n| Katz | '), blk(1, '1967', ['katz-1-p1']), blk(2, ' |\n')],
+    [blk(0, 'Intro.\n\n    '), blk(1, 'The Court said this.', ['katz-1-p1']), blk(2, '\n\nAfter.')],
+    [blk(0, 'Intro.\n\n```\n'), blk(1, 'The Court said this.', ['katz-1-p1']), blk(2, '\n```\n')],
+  ]) {
+    const { nodes } = layoutAnswer({ md, blocks });
+    assert.equal(find(nodes, isCited).length, 1);
+    assert.equal(find(nodes, n => n.tag === 'table' || n.tag === 'pre' || n.tag === 'code').length, 0);
+  }
+});
+
+test('review fixes: an entity cannot decode to a sentinel and fake, cut or hide a flag', () => {
+  const a = 'He wrote &#xF000;fake&#xF400; and "a search of the home is &#xF400;unreasonable" here.';
+  const q = a.indexOf('"a search');
+  const flags = [{ block: 0, start: q, end_block: 0, end: a.indexOf(' here'), kind: 'quotation_not_found', text: '' }];
+  const { nodes } = layoutAnswer({ md, blocks: [blk(0, a)], flags });
+  const f = find(nodes, n => n.cls === 'flagged');
+  assert.equal(f.length, 1);
+  assert.equal(textOf(f[0].kids), '"a search of the home is &#xF400;unreasonable"');
+  assert.ok(textOf(nodes).includes('&#xF000;fake&#xF400;'), 'the entities stay as Claude wrote them');
+  assert.doesNotThrow(() => layoutAnswer({ md, blocks: [blk(0, 'x &#xF000; y')] }));
+});

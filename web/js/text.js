@@ -133,7 +133,7 @@ export function bandUnavailable(reason) {
   if (['console_spend_limit', 'tier_spend_cap', 'spend_limit', 'spend_cap'].includes(reason)) {
     return `${UNAVAILABLE}: this site’s monthly API spending limit was reached.`;
   }
-  const words = FAILURE_WORDS[reason];
+  const words = T54_WORDS[reason];
   return words ? `${UNAVAILABLE}: the check failed (${words}).` : `${UNAVAILABLE}.`;
 }
 export const BAND_POINTER = 'The update check found later material that may bear on this. It is not part of the evidence for this answer; see the update check above.';
@@ -155,6 +155,8 @@ export const seconds = s => `${num(s)} s`;
 export const WAKE_LONG = 'This is taking longer than usual. After a quiet spell the server starts from cold. While you wait, you can watch a recorded run:';
 export const WAKE_GAVE_UP = 'The research server did not start. Try again, or watch a recorded run.';
 export const TRY_AGAIN = 'Try again';
+export const WAKE_LONG_NONE = 'This is taking longer than usual. After a quiet spell the server starts from cold.';
+export const WAKE_GAVE_UP_NONE = 'The research server did not start. Try again.';
 export const PAUSED_DAY = 'Live research is paused for today. Recorded runs are still available. It reopens at midnight, Chicago time.';
 export const PAUSED_MONTH = 'Live research is paused for the rest of this month. Recorded runs are still available. It reopens on the 1st.';
 export const ATLAS_UNREACHABLE = 'Live research is unavailable right now: this site cannot reach its spending records, so it will not start a paid run. Recorded runs are still available.';
@@ -171,6 +173,10 @@ export function abandoned(cfg) {
 }
 export const INTERRUPTED = 'This run was interrupted: the server that held it is no longer running. The steps it recorded are shown above. Ask again to start a new run.';
 export function expired(cfg) { return `This run is no longer stored. Runs are kept for ${hoursPhrase(cfg.EVENTS_TTL_S)}.`; }
+// T5.4 #4's four words; the band uses only these (BUILD_LOG 16:52)
+const T54_WORDS = { overloaded: 'overloaded', rate_limited: 'rate limited', server_error: 'server error', gateway_timeout: 'server error',
+  connection: 'connection lost', stream_broken: 'connection lost' };
+// T5.4's four, then the main session's words for the kinds a retry line or a failure line still has to name
 export const FAILURE_WORDS = { overloaded: 'overloaded', rate_limited: 'rate limited', server_error: 'server error',
   gateway_timeout: 'server error', connection: 'connection lost', stream_broken: 'connection lost', timeout: 'timed out',
   deadline: 'timed out', internal: 'an error on this site', unreadable: 'an unreadable reply', protocol: 'connection lost' };
@@ -209,6 +215,10 @@ export const REPLAY_BANNER = date => `Recorded run, ${date}. A real run, replaye
 export const FROM_SCRATCH = 'Each question is researched from scratch; Claude does not see your earlier questions.';
 export const REFUSED_TITLE = 'Submission refused by this site’s rules';
 export const finished = (rounds, s) => `Finished: ${plural(rounds, 'tool round')} and the answer, ${num(s)} s.`;
+// main session's: T5.4 #9's line for a no-sources reply, and the label for an answer cut short by a failed or
+// interrupted run, which T5.4's "Incomplete" line does not fit, since the checks did not run on it
+export const finishedReply = (rounds, s) => `Finished: ${plural(rounds, 'tool round')} and Claude\u2019s reply, ${num(s)} s.`;
+export const PARTIAL_UNCHECKED = 'Incomplete: the run ended before the answer was finished, and the checks did not run on it.';
 // T5.6 #2's label for the replay recorded on the corpus without Chatrie.
 export const BEFORE_CHATRIE = ['Recorded with a corpus that ends before ', { i: 'Chatrie v. United States' }, ' (June 29, 2026), to show the update check finding it. Live research uses the full corpus.'];
 
@@ -239,9 +249,12 @@ export const GROUP_ANSWER = 'Writing the answer';
 export const GROUP_UPDATE = 'Update check, running beside the answer';
 export const THINKING = 'Asking Claude for the next step';
 export const THOUGHT = 'Asked Claude for the next step';
+export const UPDATE_ONLY = 'Research finished with no passages kept, so no answer is written. The update check runs next.';
 export const UPDATE_STARTED = n => `Research finished with ${plural(n, 'passage')} kept. The answer and the update check start side by side.`;
 export const WRITING = n => `Writing the answer from ${plural(n, 'kept passage')}`;
 export const WROTE = n => `Wrote the answer from ${plural(n, 'kept passage')}`;
+export const WROTE_PART = 'Wrote part of the answer before an error';
+export const WRITE_FAILED = 'The answer could not be written';
 export const WRITING_META = 'No tools in this call, so the only sources Claude can cite are the passages it kept.';
 export const CHECKING = 'Checking the answer';
 export const CHECKED = 'Checked the answer';
@@ -258,7 +271,8 @@ export const runStatus = {
   research: line => `Research · ${line}`,
   both: 'Writing the answer · the update check runs beside it',
   answer: 'Writing the answer',
-  update: 'Update check · the answer is written',
+  update: 'Update check \u00b7 the answer is written',
+  updateOnly: 'Update check',
 };
 export const ENDED_STATUS = s => `Stopped after ${num(s)} s.`;
 export const REPLAY_STATUS = date => `Recorded run, ${date}`;

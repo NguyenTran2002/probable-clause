@@ -22,7 +22,9 @@ export function createView({ cfg, corpus, md }) {
   const reader = createReader($('#reader'));
   for (const d of $$('dialog')) {
     d.querySelector('[data-close]').addEventListener('click', () => d.close());
-    d.addEventListener('click', e => { if (e.target === d) d.close(); });
+    let downOnBackdrop = false;
+    d.addEventListener('mousedown', e => { downOnBackdrop = e.target === d; });
+    d.addEventListener('click', e => { if (e.target === d && downOnBackdrop) d.close(); });
   }
 
   let run = createRun(), steps = null, bandSlot = null, answerSlot = null, endSlot = null, replayDate = null;
@@ -30,10 +32,16 @@ export function createView({ cfg, corpus, md }) {
   const phone = () => matchMedia('(max-width: 759px)').matches;
 
   // ---------- panes ----------
-  function setPane(p) { document.body.dataset.pane = p; redraw(); }
+  const smooth = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function setPane(p) {
+    document.body.dataset.pane = p;
+    $$('.tabs button[data-pane]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pane === p)));
+    redraw();
+  }
+  $$('.tabs button[data-pane]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pane === (document.body.dataset.pane || 'thread'))));
   $$('.tabs button[data-pane]').forEach(b => b.addEventListener('click', () => setPane(b.dataset.pane)));
   function near(pane) { return pane.scrollHeight - pane.scrollTop - pane.clientHeight < 260; }
-  function follow(pane, smooth = true) { pane.scrollTo({ top: pane.scrollHeight, behavior: smooth ? 'smooth' : 'auto' }); }
+  function follow(pane, glide = true) { pane.scrollTo({ top: pane.scrollHeight, behavior: glide && smooth() ? 'smooth' : 'auto' }); }
 
   // ---------- a new run screen (T4.4 #12: conversation and sources cleared) ----------
   function reset({ question, replay = null }) {
@@ -46,7 +54,7 @@ export function createView({ cfg, corpus, md }) {
       thread.append(h('div', { class: 'notice replay' }, T.REPLAY_BANNER(replayDate),
         replay.corpus_label === 'before_chatrie' ? h('span', { class: 'block' }, ...richParts(T.BEFORE_CHATRIE)) : null));
     }
-    thread.append(h('div', { class: 'ask-msg' }, h('p', { class: 'bubble' }, question)));
+    thread.append(h('div', { class: 'ask-msg', attrs: { hidden: !question } }, h('p', { class: 'bubble' }, question)));
     const stepsBox = h('div', { class: 'steps-box' });
     thread.append(stepsBox);
     steps = createSteps(stepsBox, { cfg, onGoto: id => gotoSource(id) });
@@ -57,7 +65,14 @@ export function createView({ cfg, corpus, md }) {
     answerNodes = null;
     threadScroll.scrollTo(0, 0);
     sourcesPane.scrollTo(0, 0);
-    document.body.dataset.pane = 'thread';
+    setPane('thread');
+  }
+  function setQuestion(q) {
+    const b = $('.ask-msg', thread);
+    if (!b) return;
+    if (q == null) { b.remove(); return; }
+    $('.bubble', b).textContent = q;
+    b.hidden = !q;
   }
   function richParts(parts) {
     return parts.map(p => (typeof p === 'string' ? p : p.i ? h('i', null, p.i) : ''));
@@ -74,6 +89,7 @@ export function createView({ cfg, corpus, md }) {
     if (ev.kind === 'answer_block' || ev.kind === 'checks' || ev.kind === 'run_ended' || ev.kind === 'composition_started'
       || ev.kind === 'warning') showAnswer();
     if (ev.kind === 'run_ended') showEnd();
+    if (ev.kind === 'composition_started') announce(T.runStatus.answer);
     status();
     if (pinThread) follow(threadScroll, !quiet);
     if (pinSources && (ev.kind === 'tool_result' || ev.kind === 'passage')) follow(sourcesPane, !quiet);
@@ -81,25 +97,34 @@ export function createView({ cfg, corpus, md }) {
     setQuiet(false);
   }
 
+  const announcer = $('#announce');
+  let said = '';
+  function announce(text) { if (text && text !== said) { said = text; announcer.textContent = text; } }
   function status(text, working) {
     if (text !== undefined) { statusEl.textContent = text; statusEl.classList.toggle('working', !!working); return; }
     const e = run.ended;
     let s;
     if (e) {
-      s = e.state === 'answered' || run.blocks.length || e.state === 'no_sources'
-        ? T.finished(e.rounds, T.num(run.lastT / 1000)) : T.ENDED_STATUS(run.lastT / 1000);
-      if (e.state === 'no_sources') s = s.replace(' and the answer', ' and Claude’s reply');
+      // "Finished" only where research finished and its answer or reply was written (T5.4 #9)
+      const finishedStates = ['answered', 'no_sources', 'step_limit', 'token_ceiling', 'time_limit', 'error_stopped'];
+      if (!finishedStates.includes(e.state)) s = T.ENDED_STATUS(run.lastT / 1000);
+      else if (e.state === 'no_sources') s = T.finishedReply(e.rounds, run.lastT / 1000);
+      else if (run.blocks.length) s = T.finished(e.rounds, run.lastT / 1000);
+      else s = T.ENDED_STATUS(run.lastT / 1000);
     } else if (!run.researchDone) s = run.researchStatus ? T.runStatus.research(run.researchStatus) : T.WORKING;
     else if (run.open.composition && run.open.update) s = T.runStatus.both;
-    else if (run.open.update) s = T.runStatus.update;
-    else s = T.runStatus.answer;
+    else if (run.open.composition) s = T.runStatus.answer;
+    else if (run.open.update) s = run.blocks.length && run.checks ? T.runStatus.update : T.runStatus.updateOnly;
+    else s = T.WORKING;
     if (replayDate && !e) s = `${T.REPLAY_STATUS(replayDate)} · ${s}`;
     statusEl.textContent = s;
     statusEl.classList.toggle('working', !e);
+    // screen readers hear the start and end of the answer and the run's end, not every step or second
+    if (e) announce(s);
   }
 
   // ---------- the band, above the answer (T4.3 #4) ----------
-  function showBand() { const b = renderBand(run.band, cfg); clear(bandSlot); if (b) bandSlot.append(fresh(b)); }
+  function showBand() { const b = renderBand(run.band, cfg, run.limits); clear(bandSlot); if (b) bandSlot.append(fresh(b)); }
 
   // ---------- the answer ----------
   function showAnswer() {
@@ -118,19 +143,29 @@ export function createView({ cfg, corpus, md }) {
     const labels = answerLabels(run);
     if (e && e.scope_note) sec.append(h('p', { class: 'notice' }, h('span', { class: 'whose' }, T.WHOSE_NOTE), ...withheld(e.scope_note)));
     if (labels.top) sec.append(h('p', { class: 'stop-label' }, T.stopTop(labels.top, cfg)));
-    sec.append(h('h2', null, T.ANSWER_HEADING), h('p', { class: 'by' }, T.ANSWER_BY),
-      h('p', { class: 'key' }, h('span', { class: 'key-cited' }, T.ANSWER_KEY.split(';')[0]), T.ANSWER_KEY.slice(T.ANSWER_KEY.indexOf(';'))));
+    if (run.blocks.length) {
+      sec.append(h('h2', null, T.ANSWER_HEADING), h('p', { class: 'by' }, T.ANSWER_BY),
+        h('p', { class: 'key' }, h('span', { class: 'key-cited' }, T.ANSWER_KEY.split(';')[0]), T.ANSWER_KEY.slice(T.ANSWER_KEY.indexOf(';'))));
+    }
     const prose = h('div', { class: 'prose' });
     const laid = layoutAnswer({ md, blocks: run.blocks, flags: run.checks ? run.checks.flags : [], hueOf: id => hueOf(run, id) });
     prose.append(mount(laid.nodes));
+    // each note names the words it is about, and each marked span points to its note for screen readers
+    const flags = run.checks ? run.checks.flags : [];
     for (const note of prose.querySelectorAll('.flag-note')) {
-      const kind = note.dataset.kind;
-      note.textContent = kind === 'quotation_not_found' ? T.FLAG_QUOTATION : T.flagCitation(corpus);
+      const j = note.dataset.flagNote, f = flags[Number(j)];
+      note.id = `flag-note-${j}`;
+      note.append(h('strong', null, `\u201c${f ? f.text : ''}\u201d`), ' ',
+        note.dataset.kind === 'quotation_not_found' ? T.FLAG_QUOTATION : T.flagCitation(corpus));
+    }
+    for (const span of prose.querySelectorAll('.flagged')) {
+      span.setAttribute('aria-describedby', span.dataset.flag.split(' ').map(j => `flag-note-${j}`).join(' '));
     }
     if (!run.checks && !e && run.blocks.length) prose.lastElementChild?.classList.add('caret-host');
     sec.append(prose);
     answerNodes = prose;
     if (labels.end) sec.append(h('p', { class: 'stop-label end' }, labels.end === 'cut_off' ? T.CUT_OFF : T.INCOMPLETE));
+    else if (e && ['failed', 'interrupted', 'abandoned'].includes(e.state) && run.blocks.length) sec.append(h('p', { class: 'stop-label end' }, T.PARTIAL_UNCHECKED));
     if (run.band && run.band.outcome === 'found' && run.blocks.length) sec.append(h('p', { class: 'pointer' }, T.BAND_POINTER));
     if (run.checks) {
       const c = run.checks;
@@ -144,7 +179,7 @@ export function createView({ cfg, corpus, md }) {
       line.append(` ${T.CHECKS_SHORT_NAMES}`);
       sec.append(line);
     }
-    if (run.composition.failed || (e && e.state === 'failed' && !run.blocks.length && run.keepOrder.length)) {
+    if (!run.blocks.length && (run.composition.failed || (e && e.state === 'failed' && run.keepOrder.length))) {
       sec.append(h('p', { class: 'stop-label' }, T.COMPOSITION_FAILED(T.failureWords(e ? e.failure_reason : run.composition.failed.error_kind))));
     }
     clear(answerSlot).append(sec);
@@ -199,13 +234,13 @@ export function createView({ cfg, corpus, md }) {
   }
   function paneTop(pane) { const head = pane.querySelector('.col-head'); return head ? head.getBoundingClientRect().bottom : pane.getBoundingClientRect().top; }
   function inView(e) { const pane = e.closest('.scroller'), r = e.getBoundingClientRect(); return r.top >= paneTop(pane) && r.bottom <= pane.getBoundingClientRect().bottom; }
-  function centerIn(e, smooth = true) {
+  function centerIn(e, glide = true) {
     const pane = e.closest('.scroller');
     if (!pane) return;
     const pr = pane.getBoundingClientRect(), er = e.getBoundingClientRect();
     const head = pane.querySelector('.col-head');
     const offset = Math.max((head ? head.offsetHeight : 0) + 12, (pane.clientHeight - er.height) / 2);
-    pane.scrollTo({ top: pane.scrollTop + er.top - pr.top - offset, behavior: smooth ? 'smooth' : 'auto' });
+    pane.scrollTo({ top: pane.scrollTop + er.top - pr.top - offset, behavior: glide && smooth() ? 'smooth' : 'auto' });
   }
   function target(p) { const card = document.getElementById(`src-${p}`); return card && (card.querySelector('.sb.hit') || card); }
   function visible(e) { return e && e.getClientRects().length > 0; }
@@ -255,7 +290,11 @@ export function createView({ cfg, corpus, md }) {
     if (phone()) setPane('sources');
     light(p, b, ci, true);
     const t = target(p);
-    if (t) requestAnimationFrame(() => centerIn(t, !phone()));
+    if (t) requestAnimationFrame(() => {
+      centerIn(t, !phone() && smooth());
+      const card = document.getElementById(`src-${p}`);
+      if (phone() && card) { card.tabIndex = -1; card.focus({ preventScroll: true }); }
+    });
   }
   function gotoSource(id) {
     const fc = firstCite(id);
@@ -292,7 +331,8 @@ export function createView({ cfg, corpus, md }) {
     if (s) { const b = Number(s.dataset.b); const c = citationAt(b); if (c) focusSource(c.passage_id, b, 0); return; }
     if (!t.closest('.card') && !t.closest('[data-goto]')) clearThread(true);
   });
-  // keyboard: a cited sentence's pills are buttons, so Tab reaches each citation and Enter follows it
+  // keyboard: a cited sentence's pills are buttons, so Tab reaches each citation and Enter follows it; Escape lets go
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && active && !document.querySelector('dialog[open]')) clearThread(true); });
 
   // a copy of a card for the API window, its cited sentences lit
   function cardCopy(id) {
@@ -307,8 +347,8 @@ export function createView({ cfg, corpus, md }) {
   }
 
   return {
-    reset, onEvent, status, steps: () => steps, get run() { return run; },
+    reset, onEvent, status, setQuestion, steps: () => steps, get run() { return run; },
     clearThread,
-    endStep(text) { steps.last(text); },
+    endStep(text) { steps.last(text); announce(text); },
   };
 }
