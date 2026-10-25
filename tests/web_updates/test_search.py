@@ -324,7 +324,8 @@ async def test_the_first_402_sets_the_flag_records_the_stop_and_marks_the_run(tr
     assert stop[1] == "exa_no_credit" and stop[2] == "run-test-1"
     assert "query" not in str(stop[3]).lower() and "synthetic query" not in str(stop[3])      # T3.7
     assert ctx.usages == []                                          # not counted, no cost: no paid_call event
-    assert ctx.before == [("exa", "update_search")] and ctx.order == ["before_paid_call"]
+    assert ctx.before == [("exa", "update_search")]
+    assert ctx.order == ["before_paid_call", "call_not_billed"]      # the gate is undone: nothing billed (v1.4)
 
 
 async def test_a_402_identified_by_status_alone_is_out_of_credit(transport, searcher, ctx):
@@ -339,7 +340,7 @@ async def test_a_401_is_key_refused_for_this_run_only(transport, searcher, ctx, 
     assert o.kind == "unavailable" and o.unavailable_reason == "key_refused" and o.cost_usd == 0.0
     assert ctx.flags.exa_unavailable == "key_refused"
     assert "set_flag" not in store.names() and "record_stop" not in store.names()
-    assert ctx.usages == [] and ctx.order == ["before_paid_call"]    # no record_usage, so no paid_call event
+    assert ctx.usages == [] and ctx.order == ["before_paid_call", "call_not_billed"]   # no paid_call event (v1.4)
 
 
 async def test_a_401_identified_by_status_alone(transport, searcher, ctx):

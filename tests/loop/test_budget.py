@@ -15,8 +15,9 @@ pytestmark = pytest.mark.anyio
 
 
 def read_keep():
-    return turn(tu("read_passages", target="katz-1-p6"),
-                tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}]), usage=loop_usage(1, first=True))
+    """Two rounds: shown, then kept (T1.7)."""
+    return [turn(tu("read_passages", target="katz-1-p6"), usage=loop_usage(1, first=True)),
+            turn(tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}]), usage=loop_usage(2))]
 
 
 def answer(world):
@@ -51,13 +52,13 @@ def test_later_estimates_build_on_the_last_reported_usage(world):
 
 async def test_a_retry_that_would_cross_the_ceiling_is_not_made(world):
     partial = raw_usage(40, w5=1_000, read=360_000, output=10)       # the failed attempt reported its input
-    ctx, fakes = await run_loop(world, [read_keep(), StreamFailed("overloaded", None, "x", raw_usage=partial,
+    ctx, fakes = await run_loop(world, [*read_keep(), StreamFailed("overloaded", None, "x", raw_usage=partial,
                                                                   started=True), answer(world)])
     end = ctx.ended()
     assert end["state"] == "token_ceiling" and end["stop_kind"] == "token_ceiling_input"
-    call2 = [p for p in ctx.of("paid_call") if p.get("call_no") == 2]
+    call2 = [p for p in ctx.of("paid_call") if p.get("call_no") == 3]
     assert [p["outcome"] for p in call2] == ["failed"]        # no retry followed it, so it never reads "retrying"
-    assert len(fakes["anthropic"].requests) == 3       # loop call 1, the failed attempt, the composition
+    assert len(fakes["anthropic"].requests) == 4       # loop calls 1 and 2, the failed attempt, the composition
 
 
 async def test_failed_attempts_count_their_estimate(world, monkeypatch):

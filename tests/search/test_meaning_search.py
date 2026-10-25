@@ -285,3 +285,46 @@ async def test_a_short_rerank_reply_keeps_the_missing_candidates_unreranked_at_t
     assert len(res.hits) == len(passages)
     assert [h.reranked for h in res.hits] == [True] * 3 + [False] * (len(passages) - 3)
     assert res.status == "not_reranked" and ctx.flags.meaning_degraded
+
+
+# ---- the run's Voyage bound (T3.4, contract v1.4)
+
+class PricedContext(FakeContext):
+    """record_usage returns the attempt's real list-price cost, as H's does."""
+
+    async def record_usage(self, usage, **kw):
+        await super().record_usage(usage, **kw)
+        from api.state.prices import price
+        return price(usage) if usage is not None else 0.0
+
+
+async def test_each_attempts_cost_is_added_to_the_runs_voyage_spend(tmp_path, passages, sleeps):
+    from api.state.prices import price
+    ctx = PricedContext()
+    fake = FakeVoyageClient(rerank_failures=[err("server_error", 500)])
+    idx = build(tmp_path, passages, fake)
+    await idx.search("warrant", ALL, ctx, fake, sleep=sleeps)
+    assert len(ctx.usages) == 3                               # embed, a failed rerank, the rerank
+    assert ctx.flags.voyage_spent_usd == pytest.approx(sum(price(u["usage"]) for u in ctx.usages))
+
+
+async def test_no_voyage_call_once_the_bound_would_be_passed(tmp_path, passages, ctx, sleeps):
+    ctx.flags.voyage_spent_usd = float(settings.VOYAGE_RUN_BOUND_USD.value)
+    fake = FakeVoyageClient()
+    idx = build(tmp_path, passages, fake)
+    res = await idx.search("warrant", ALL, ctx, fake, sleep=sleeps)
+    assert res.status == "unavailable" and res.hits == [] and fake.calls == [] and ctx.usages == []
+    assert ctx.flags.meaning_unavailable_once and not ctx.flags.voyage_unavailable
+
+
+async def test_rerank_skipped_when_only_the_embed_fits_under_the_bound(tmp_path, ctx, sleeps):
+    from api.state.prices import price
+    from api.types import Usage
+    ps = [make_passage(i) for i in range(1, 8)]
+    fake = FakeVoyageClient()
+    idx = build(tmp_path, ps, fake)
+    embed_worst = price(Usage(service="voyage", model="voyage-law-2", input_tokens=-(-len("warrant") // 3))) * 3
+    ctx.flags.voyage_spent_usd = float(settings.VOYAGE_RUN_BOUND_USD.value) - embed_worst
+    res = await idx.search("warrant", ALL, ctx, fake, sleep=sleeps)
+    assert res.status == "not_reranked" and all(not h.reranked for h in res.hits) and res.hits
+    assert [c[0] for c in fake.calls] == ["embed"] and ctx.flags.meaning_degraded

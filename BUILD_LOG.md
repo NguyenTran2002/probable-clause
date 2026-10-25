@@ -1424,3 +1424,30 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
   6. paid build tests within $3, each priced and approved.
 **Spend:** none.
 **DECISION (user):** *"Let's start Wave 2."* No new decision.
+
+## Oct 25, 2026, 00:34 CDT — Phase 4: Build, the cross-part review (Opus 5.5 xhigh) and contract v1.4
+**Asked:** P4.1's final review of the honesty-critical paths after Wave 2, read-only. It drove G's real `execute_run` through H's real `Run` on fakes, with scripts in the scratchpad.
+**Came back:**
+- **Sound, with evidence:**
+  - **Citation mapping:** document order, one block per sentence, inclusive ranges, our own `cited_text`, mismatches dropped. No character outside the BMP is in the corpus.
+  - **The checks as G calls them:** 3,000 fuzzed answers raised no exception.
+  - **The band's rules** and P4.3's withholding through to Atlas.
+  - **The reservation:** released exactly once.
+  - **The heartbeat gate** before every attempt.
+  - **The `record_usage` convention** across C, D, G and H; `api/main.py`'s wiring.
+  - **T3.7** in every log and record.
+- **Defects found and fixed now (contract v1.4, the main session's rulings within the locked decisions):**
+  - **A false pass in the quotation check (F), demonstrated and reproduced by the main session.** `"that the Constitution did . . . forbid the obtaining"` was reported found against *Berger*'s "did not forbid". An ellipsis now matches the smallest gap in the source, and a gap holding a negation fails the match. Fixed by the main session, with tests. A mutation restoring the old rule fails 4 of them. A fair ellipsis over an unrelated "not" is now flagged, which is the safe direction.
+  - **A keep whose reason was written before its passage was seen was accepted (G):** a read in the same turn showed the passage first, and T1.7 requires the keep be refused. Keeps are now checked against what was shown before the turn began. Fixed by G.
+  - **A loop limit's budget stop was lost** when the composition then failed or was cut off (T3.4). `run_ended.stop_kinds` now lists every budget and limit stop in order, and H records each once. Fixed by G and H.
+  - **An Exa 402 or 401 left a paid call marked in flight (D and H).** A later abnormal end would then have kept the whole $1.62 reserved, and `deploy.sh`'s gate would have blocked deploys until it was cleared by hand. `RunContext.call_not_billed` undoes the gate's count; D calls it on that path. Fixed by the main session (D) and H.
+  - **Voyage's per-run bound (`VOYAGE_RUN_BOUND_USD`, $0.03) was assumed by the worst case but never enforced:** 60 meaning searches in a turn cost $0.032. C now checks each call with all its allowed attempts priced. Over the bound, the embed is not run (`unavailable`), or the results come back in embedding order (`not_reranked`). Fixed by the main session, with tests.
+- **For the user (money and wording; see the reply):**
+  - **The real maximum of one run as the code stands:** about $2.16 recorded against the $1.674 reserved. The excess comes from the composition input (estimated at up to 64,535 tokens against a 30,000 reserve, with failed attempts priced at that estimate) and from Voyage, now bounded.
+  - **Hidden thinking on a broken stream:** Sonnet 5.5 and Opus 5.5 default to `display: "omitted"`, so thinking tokens are billed but never streamed. A broken attempt is recorded with the output that was visible only, up to $0.08 short per loop attempt and $0.24 per composition attempt.
+  - **No tripwire** stops a run at its reservation.
+  - **Page words reach events through keep reasons and notes, demonstrated:** 14 consecutive page words placed in a keep reason were stored in `tool_call`, `tool_result.kept`, the composition fragments and `scope_note`. The copy guard covers only the update statements and overview (T2.3).
+  - **The band says `nothing_relevant` when no search completed** (failed or refused by Exa), which follows §6 and T2.4 to the letter. The page could word it from `searches[].status`.
+- **Tests:** the whole suite, 3,322 passed, 49 skipped.
+**Spend:** none.
+**DECISION (user):** none yet; the money and wording questions above are put to the user.

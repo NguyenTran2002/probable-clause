@@ -362,3 +362,96 @@ async def test_a_page_holding_the_stored_end_gets_nothing_more():
             await h.clock.settle()
             s.pump()
             assert [e["n"] for e in s.events()] == ns and s.closed
+
+
+# v1.4: call_not_billed and stop_kinds -------------------------------------------------------------------------------
+async def test_a_402_path_then_an_abnormal_end_releases_the_reservation():
+    """D clears the gate, Exa answers 402, nothing is billed: call_not_billed undoes the in-flight count, so a later
+    exception does not keep the whole reservation counted."""
+    async def script(ctx, deps):
+        await ctx.emit("run_started", run_started_data(ctx))
+        await ctx.before_paid_call("exa", "update_search")
+        await ctx.call_not_billed("exa", "update_search")
+        await ctx.call_not_billed("exa", "update_search")     # never below zero
+        raise RuntimeError("a later bug")
+
+    h = make_app(script)
+    async with lifespan(h.app):
+        run_id, s = await begin(h)
+        await h.clock.settle()
+        assert s.events()[-1]["data"]["state"] == "failed"
+        assert h.run(run_id).reservation_released and h.run(run_id)._in_flight == 0
+        assert (await h.store.read_month("2026-10"))["reservations"] == {}
+        assert not [e for e in s.events() if e["kind"] == "paid_call"], "nothing is recorded"
+
+
+async def test_without_call_not_billed_the_reservation_stays():
+    async def script(ctx, deps):
+        await ctx.emit("run_started", run_started_data(ctx))
+        await ctx.before_paid_call("exa", "update_search")
+        raise RuntimeError("a later bug")
+
+    h = make_app(script)
+    async with lifespan(h.app):
+        run_id, s = await begin(h)
+        await h.clock.settle()
+        assert run_id in (await h.store.read_month("2026-10"))["reservations"]
+
+
+def ends_with(state, stop_kind, stop_kinds, answer_end="none", failure_reason=None):
+    async def script(ctx, deps):
+        await ctx.emit("run_started", run_started_data(ctx))
+        await loop_call(ctx)
+        chars = 0
+        if answer_end != "none":
+            await ctx.emit("answer_block", {"index": 0, "text": "Text.", "citations": []})
+            chars = 5
+        data = ended_data(ctx, state=state, stop_kind=stop_kind, answer_end=answer_end, answer_chars=chars,
+                          failure_reason=failure_reason)
+        if stop_kinds is not None:
+            data["stop_kinds"] = stop_kinds
+        await ctx.emit("run_ended", data)
+    return script
+
+
+@pytest.mark.parametrize("state,stop_kind,stop_kinds,answer_end,reason,recorded", [
+    ("failed", None, ["token_ceiling_output"], "none", "overloaded", ["token_ceiling_output"]),
+    ("step_limit", "composition_max_tokens", ["step_limit", "composition_max_tokens"], "cut_off", None,
+     ["step_limit", "composition_max_tokens"]),
+    ("step_limit", "step_limit", None, "complete", None, ["step_limit"]),          # an older loop: stop_kind
+    ("answered", None, [], "complete", None, []),
+])
+async def test_each_stop_in_stop_kinds_is_recorded_once(state, stop_kind, stop_kinds, answer_end, reason, recorded):
+    h = make_app(ends_with(state, stop_kind, stop_kinds, answer_end, reason))
+    async with lifespan(h.app):
+        run_id, s = await begin(h)
+        await h.clock.settle()
+        stops = await h.store.read_stops(day="2026-10-24")
+        assert [x["kind"] for x in stops] == recorded and all(x["run"] == run_id for x in stops)
+    assert h.schema_errors == []
+
+
+def test_stops_recorded_elsewhere_are_skipped_and_repeats_dropped():
+    from api.server.run import Run
+    ended = {"stop_kind": "tier_spend_cap", "stop_kinds": ["exa_no_credit", "daily_cap", "step_limit", "step_limit",
+                                                           "tier_spend_cap"]}
+    assert Run._stops_to_record(ended) == ["step_limit", "tier_spend_cap"]
+    assert Run._stops_to_record({"stop_kind": None}) == []
+
+
+async def test_hs_own_endings_carry_empty_stop_kinds():
+    async def script(ctx, deps):
+        await ctx.emit("run_started", run_started_data(ctx))
+        raise RuntimeError("bug")
+
+    h = make_app(script)
+    async with lifespan(h.app):
+        _, s = await begin(h)
+        assert s.events()[-1]["data"]["stop_kinds"] == []
+    store, run = stored_run([1, 2])
+    h = make_app(store=store)
+    async with lifespan(h.app):
+        st = h.client.stream(f"/runs/{run}/events")
+        await h.clock.settle()
+        st.pump()
+        assert st.events()[-1]["data"]["stop_kinds"] == []

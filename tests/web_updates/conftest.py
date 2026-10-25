@@ -68,6 +68,9 @@ class FakeCtx:
         if self.stop:
             raise self.stop
 
+    async def call_not_billed(self, service, purpose):
+        self.order.append("call_not_billed")
+
     async def record_usage(self, usage, *, purpose, attempt, max_attempts, outcome, error_kind, duration_ms,
                            raw_usage=None, call_no=None):
         self.order.append("record_usage")

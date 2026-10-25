@@ -20,8 +20,10 @@ SKIP = "Not needed."
 
 
 def read_keep(usage=None):
-    return turn(tu("read_passages", target="katz-1-p6"), tu("search_exact", any_of=["booth"], max_results=1),
-                tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}]), usage=usage or loop_usage(1, first=True))
+    """Two rounds: the passage is shown, then kept (a keep may name only what an earlier turn showed, T1.7)."""
+    return [turn(tu("read_passages", target="katz-1-p6"), tu("search_exact", any_of=["booth"], max_results=1),
+                 usage=loop_usage(1, first=True)),
+            turn(tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}]), usage=usage or loop_usage(2))]
 
 
 def blocks(world, n):
@@ -47,12 +49,12 @@ def limit_scripts(world):
     huge = raw_usage(40, w5=2_000, read=360_000, output=500)
     spent = raw_usage(40, w5=2_000, read=13_000, output=settings.LOOP_OUTPUT_BUDGET.value)
     return {
-        ("token_ceiling", "token_ceiling_input"): ([read_keep(usage=huge)], {}),
-        ("token_ceiling", "token_ceiling_output"): ([read_keep(usage=spent)], {}),
-        ("time_limit", "time_limit"): ([read_keep()], {"seconds_left": _clock([600.0])}),
-        ("step_limit", "step_limit"): ([read_keep()] + [turn(tu("read_passages", target=f"katz-1-p{i}"),
-                                                             usage=loop_usage(i)) for i in range(2, 13)], {}),
-        ("error_stopped", None): ([read_keep()] + [StreamFailed("overloaded", 529, "x")] * 3, {}),
+        ("token_ceiling", "token_ceiling_input"): ([*read_keep(usage=huge)], {}),
+        ("token_ceiling", "token_ceiling_output"): ([*read_keep(usage=spent)], {}),
+        ("time_limit", "time_limit"): ([*read_keep()], {"seconds_left": _clock([600.0, 600.0])}),
+        ("step_limit", "step_limit"): ([*read_keep()] + [turn(tu("read_passages", target=f"katz-1-p{i}"),
+                                                             usage=loop_usage(i)) for i in range(2, 12)], {}),
+        ("error_stopped", None): ([*read_keep()] + [StreamFailed("overloaded", 529, "x")] * 3, {}),
     }
 
 
@@ -84,7 +86,7 @@ async def test_a_loop_limit_then_a_composition_that_breaks(world, key):
 async def test_a_composition_that_breaks_after_several_blocks_counts_what_it_streamed(world):
     partial = raw_usage(9_000, output=1)            # message_start's usage: output not yet known
     comp = composition(*blocks(world, 4), break_after=3, partial_usage=partial)
-    ctx, fakes = await run_loop(world, [read_keep(), turn(tu("submit_answer", out_of_scope=False,
+    ctx, fakes = await run_loop(world, [*read_keep(), turn(tu("submit_answer", out_of_scope=False,
                                                              update_skip_reason=SKIP)), comp])
     p = [x for x in ctx.paid if x["purpose"] == "composition"][-1]
     streamed = sum(len(b.get("text") or b.get("thinking") or "") for b in comp.content[:4])   # thinking + 3 texts
@@ -98,44 +100,44 @@ async def test_a_composition_that_breaks_after_several_blocks_counts_what_it_str
 async def test_a_loop_call_cut_by_its_deadline_counts_its_output(world):
     partial = raw_usage(40, w5=1_000, read=12_500, output=1)
     cut = StreamFailed("deadline", None, "deadline", raw_usage=partial, started=True, streamed_chars=40_000)
-    ctx, fakes = await run_loop(world, [read_keep(), cut, composition(*blocks(world, 1))])
-    p = next(x for x in ctx.paid if x.get("call_no") == 2)
+    ctx, fakes = await run_loop(world, [*read_keep(), cut, composition(*blocks(world, 1))])
+    p = next(x for x in ctx.paid if x.get("call_no") == 3)
     ratio = __import__("api.loop.run", fromlist=["chars_per_token"]).chars_per_token(world.corpus)
     est = math.ceil(40_000 / ratio)
     assert p["outcome"] == "failed" and p["error_kind"] == "deadline" and p["usage"]["output_tokens"] == est
     # counted against the output ceiling: the output used is the first call's and the estimate
     loop_out = sum(x["_usage"].output_tokens for x in ctx.paid if x["purpose"] == "loop")
-    assert loop_out == 400 + est
+    assert loop_out == 400 + 500 + est
     assert ctx.ended()["state"] == "error_stopped" and ctx.ended()["failure_reason"] == "deadline"
 
 
 async def test_a_reported_output_larger_than_the_estimate_stands(world):
     partial = raw_usage(40, read=12_500, output=5_000)
     cut = StreamFailed("deadline", None, "deadline", raw_usage=partial, started=True, streamed_chars=10)
-    ctx, _ = await run_loop(world, [read_keep(), cut, composition(*blocks(world, 1))])
-    assert next(x for x in ctx.paid if x.get("call_no") == 2)["usage"]["output_tokens"] == 5_000
+    ctx, _ = await run_loop(world, [*read_keep(), cut, composition(*blocks(world, 1))])
+    assert next(x for x in ctx.paid if x.get("call_no") == 3)["usage"]["output_tokens"] == 5_000
 
 
 async def test_an_attempt_that_reported_nothing_but_streamed_is_estimated(world):
     cut = StreamFailed("stream_broken", None, "x", started=True, streamed_chars=2_000)
-    ctx, _ = await run_loop(world, [read_keep(), cut, turn(tu("submit_answer", out_of_scope=False,
+    ctx, _ = await run_loop(world, [*read_keep(), cut, turn(tu("submit_answer", out_of_scope=False,
                                                               update_skip_reason=SKIP)), composition(*blocks(world, 1))])
-    p = next(x for x in ctx.paid if x.get("call_no") == 2)
+    p = next(x for x in ctx.paid if x.get("call_no") == 3)
     assert p["outcome"] == "retrying" and p["estimated"] and p["usage"]["output_tokens"] > 0
     assert p["usage"]["input_tokens"] >= settings.FIXED_PREFIX_TOKENS_ESTIMATE.value
 
 
 async def test_no_retrying_record_without_an_attempt_after_it(world):
     """The gate stops the retry: the failed attempt is recorded `failed`, not `retrying` (T3.3)."""
-    ctx, _ = await run_loop(world, [read_keep(), StreamFailed("overloaded", 529, "x"), composition(*blocks(world, 1))],
-                            ctx=FakeCtx(stop=stop_on("loop", "deadline", at=3)))
-    call2 = [x for x in ctx.paid if x.get("call_no") == 2]
+    ctx, _ = await run_loop(world, [*read_keep(), StreamFailed("overloaded", 529, "x"), composition(*blocks(world, 1))],
+                            ctx=FakeCtx(stop=stop_on("loop", "deadline", at=4)))
+    call2 = [x for x in ctx.paid if x.get("call_no") == 3]
     assert [(x["attempt"], x["outcome"]) for x in call2] == [(1, "failed")]
     assert ctx.ended()["state"] == "time_limit"
 
 
 async def test_a_composition_retry_stopped_at_the_gate(world):
-    ctx, _ = await run_loop(world, [read_keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+    ctx, _ = await run_loop(world, [*read_keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
                                     StreamFailed("overloaded", 529, "x")],
                             ctx=FakeCtx(stop=stop_on("composition", "abandoned", at=2)))
     comp = [x for x in ctx.paid if x["purpose"] == "composition"]
@@ -144,10 +146,10 @@ async def test_a_composition_retry_stopped_at_the_gate(world):
 
 
 async def test_a_retry_that_runs_is_recorded_retrying_before_it(world):
-    ctx, _ = await run_loop(world, [read_keep(), StreamFailed("overloaded", 529, "x"),
+    ctx, _ = await run_loop(world, [*read_keep(), StreamFailed("overloaded", 529, "x"),
                                     turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
                                     composition(*blocks(world, 1))])
-    call2 = [x for x in ctx.paid if x.get("call_no") == 2]
+    call2 = [x for x in ctx.paid if x.get("call_no") == 3]
     assert [(x["attempt"], x["outcome"]) for x in call2] == [(1, "retrying"), (2, "ok")]
 
 
@@ -156,7 +158,7 @@ async def test_a_citation_that_disagrees_is_not_attached_in_a_run(world, caplog)
     good = cite_block("Good. ", world.corpus, ["katz-1-p6"], "katz-1-p6", 0, 0)
     bad = cite_block("Bad. ", world.corpus, ["katz-1-p6"], "katz-1-p6", 1, 1)
     bad["citations"][0]["cited_text"] = "Words the passage does not have at these sentences."
-    ctx, _ = await run_loop(world, [read_keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+    ctx, _ = await run_loop(world, [*read_keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
                                     composition(good, bad)])
     b = ctx.of("answer_block")
     assert len(b[0]["citations"]) == 1 and b[1]["citations"] == []
@@ -171,7 +173,7 @@ async def test_no_empty_text_block_is_sent(world, monkeypatch):
         return MeaningResult([], "unavailable", None)
 
     monkeypatch.setattr("api.search.meaning.MeaningIndex.search", unavailable)
-    script = [turn(tu("search_meaning", query="x")), read_keep(), turn(tu("search_exact", any_of=["booth"], max_results=1)),
+    script = [turn(tu("search_meaning", query="x")), *read_keep(), turn(tu("search_exact", any_of=["booth"], max_results=1)),
               turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)), composition(*blocks(world, 1))]
     ctx, fakes = await run_loop(world, script)
     sent = fakes["anthropic"].requests[1]["messages"][2]["content"][0]["content"][0]["text"]
@@ -221,3 +223,49 @@ async def test_sdk_validation_and_other_api_errors(make, kind):
     with pytest.raises(StreamFailed) as e:
         await s.stream({"model": "m", "max_tokens": 1, "messages": []}, 5.0, None)
     assert e.value.kind == kind
+
+
+# ---------- v1.4 ----------
+
+async def test_a_keep_of_a_passage_shown_in_the_same_turn_is_refused(world):
+    """T1.7: Claude wrote the keep before it saw the text, whichever order the calls came in."""
+    from api.loop.prompts import rejection
+    script = [turn(tu("read_passages", target="katz-1-p9"), tu("keep_passages", keep=[{"id": "katz-1-p9", "reason": "guess"}]),
+                   tu("search_exact", any_of=["booth"], max_results=1)),
+              turn(tu("keep_passages", keep=[{"id": "katz-1-p8", "reason": "guess"}]), tu("read_passages", target="katz-1-p8")),
+              turn(tu("keep_passages", keep=[{"id": "katz-1-p9", "reason": "seen in an earlier turn"}])),
+              turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+              composition(cite_block("Text. ", world.corpus, ["katz-1-p9"], "katz-1-p9", 0, 0))]
+    ctx, _ = await run_loop(world, script)
+    k1, k2, k3 = ctx.results("keep_passages")
+    assert k1["is_error"] and k1["refused"] == [{"id": "katz-1-p9", "why": rejection("keep", "unseen_id", id="katz-1-p9")}]
+    assert k2["is_error"] and k2["refused"][0]["id"] == "katz-1-p8"
+    assert k3["kept"] == [{"id": "katz-1-p9", "reason": "seen in an earlier turn", "replaced": False}]
+    assert ctx.of("composition_started")[0]["documents"] == ["katz-1-p9"]
+
+
+async def test_stop_kinds_on_every_end(world):
+    spent = raw_usage(40, w5=2_000, read=13_000, output=settings.LOOP_OUTPUT_BUDGET.value)
+    # a loop limit, then a composition that fails: the limit is still recorded
+    ctx, _ = await run_loop(world, [*read_keep(usage=spent), *[StreamFailed("overloaded", 529, "x")] * 3])
+    assert (ctx.ended()["state"], ctx.ended()["stop_kind"], ctx.ended()["stop_kinds"]) == \
+        ("failed", None, ["token_ceiling_output"])
+    # a loop limit, then a cut-off composition: both, in order
+    script, kw = limit_scripts(world)[("step_limit", "step_limit")]
+    ctx, _ = await run_loop(world, script + [cut_off(world)], ctx=FakeCtx(**kw))
+    assert ctx.ended()["stop_kind"] == "step_limit"
+    assert ctx.ended()["stop_kinds"] == ["step_limit", "composition_max_tokens"]
+    # max_tokens with only thinking: failed (unreadable), the cut-off still listed
+    thinking_only = composition(stop_reason="max_tokens", usage=raw_usage(9_000, output=12_000))
+    ctx, _ = await run_loop(world, [*read_keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+                                    thinking_only])
+    end = ctx.ended()
+    assert (end["state"], end["failure_reason"], end["stop_kind"], end["stop_kinds"]) == \
+        ("failed", "unreadable", None, ["composition_max_tokens"])
+    # a spend limit
+    ctx, _ = await run_loop(world, [*read_keep(), StreamFailed("spend_cap", 429, "x")])
+    assert ctx.ended()["stop_kinds"] == ["tier_spend_cap"] == [ctx.ended()["stop_kind"]]
+    # no stop at all
+    ctx, _ = await run_loop(world, [*read_keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+                                    composition(*blocks(world, 1))])
+    assert ctx.ended()["stop_kinds"] == [] and ctx.ended()["stop_kind"] is None

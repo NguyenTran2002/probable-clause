@@ -47,6 +47,7 @@ class FakeCtx:
         self.events: list[dict] = []
         self.gates: list[tuple[str, str]] = []
         self.paid: list[dict] = []
+        self.not_billed: list[tuple[str, str]] = []
         self.stop = stop
         self._seconds_left = seconds_left
         self._t = 0
@@ -67,6 +68,10 @@ class FakeCtx:
             err = self.stop(service, purpose, len(self.gates))
             if err is not None:
                 raise err
+
+    async def call_not_billed(self, service, purpose) -> None:
+        """Contract v1.4: a call the gate let through that cost nothing (Exa's 402 and 401). Recorded only."""
+        self.not_billed.append((service, purpose))
 
     async def record_usage(self, usage, *, purpose, attempt, max_attempts, outcome, error_kind, duration_ms,
                            raw_usage=None, call_no=None) -> float:
@@ -342,6 +347,8 @@ def check_stream(events: list[dict], corpus, *, page_texts: list[str] = ()) -> N
 
     # totals are the sum of the paid calls
     ended = events[-1]["data"]
+    assert isinstance(ended["stop_kinds"], list)                       # v1.4: on every run_ended
+    assert ended["stop_kind"] is None or ended["stop_kind"] in ended["stop_kinds"]
     t = ended["totals"]
     claude = [e["data"] for e in events if e["kind"] == "paid_call" and e["data"]["service"] == "anthropic"]
     assert t["claude"]["calls"] == len(claude)

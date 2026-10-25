@@ -719,3 +719,34 @@ def test_a_quotation_that_cannot_be_decided_in_the_budget_is_flagged_never_passe
     r = check('It said "the Fourth Amendment protects people, not places" there.')
     assert (r.quotations_checked, r.quotations_found) == (1, 0)
     assert [f.kind for f in r.flags] == ["quotation_not_found"]
+
+
+# ---- an ellipsis never drops a negation (contract v1.4, after the cross-part review)
+
+NEG_SOURCE = "The argument was that the Constitution did not forbid the obtaining of evidence by wiretapping."
+
+
+@pytest.mark.parametrize("quote", [
+    '"that the Constitution did . . . forbid the obtaining"',
+    '"that the Constitution did … forbid the obtaining"',
+    '"that the Constitution did... forbid the obtaining"',
+    '"the Constitution . . . forbid the obtaining of evidence"',
+])
+def test_an_ellipsis_over_a_negation_is_flagged(quote):
+    r = check_answer([f"The Court wrote {quote}."], [NEG_SOURCE], MANIFEST)
+    assert r.quotations_checked == 1 and r.quotations_found == 0
+    assert [f.kind for f in r.flags] == ["quotation_not_found"]
+
+
+def test_an_ellipsis_over_words_without_a_negation_still_matches():
+    r = check_answer(['The Court wrote "the Constitution did not . . . the obtaining of evidence".'], [NEG_SOURCE], MANIFEST)
+    assert r.quotations_found == 1 and r.flags == []
+
+
+def test_an_ellipsis_takes_the_smallest_gap():
+    # "the" occurs before and after the negation: the match may start after it, so the gap holds no "not"
+    source = "Not the first time; the officers did search the house and the officers did leave."
+    r = check_answer(['He wrote "the officers did search . . . the officers did leave".'], [source], MANIFEST)
+    assert r.quotations_found == 1 and r.flags == []
+    r = check_answer(['He wrote "Not the first time . . . did search the house".'], [source], MANIFEST)
+    assert r.quotations_found == 1

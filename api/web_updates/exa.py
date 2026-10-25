@@ -498,7 +498,9 @@ class UpdateSearch:
         log.info("run %s: update search %d %s (%s), %d ms", ctx.run_id, search_no, what, error.kind, ms)
 
         if what in ("no_credit", "key_refused"):
-            # Not counted, no cost (T2.4): record_usage is not called, so no paid_call event is emitted.
+            # Not counted, no cost (T2.4): record_usage is not called, so no paid_call event is emitted. The gate
+            # was passed, so the lifecycle is told no record follows (contract v1.4).
+            await ctx.call_not_billed("exa", "update_search")
             ctx.flags.exa_unavailable = what
             if what == "no_credit":
                 now = self._now()

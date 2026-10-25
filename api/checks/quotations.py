@@ -17,7 +17,7 @@ Matching is bounded: a quotation that cannot be decided within MATCH_STEP_BUDGET
 from __future__ import annotations
 
 import re
-from bisect import bisect_left, bisect_right
+from bisect import bisect_right
 from dataclasses import dataclass
 
 from api.settings import QUOTATION_BRACKET_MAX_SOURCE_WORDS, QUOTATION_MIN_WORDS
@@ -383,7 +383,12 @@ def _reached(boundary: Boundary, ends: list[int], source: str, start: int, budge
     """Does an earlier piece end where `boundary` allows a piece to start at `start`? `ends` is sorted."""
     i = bisect_right(ends, start)
     if boundary.kind == "gap":
-        return i > 0
+        # An ellipsis matches the smallest gap, after the latest earlier end; every larger gap holds it, so a
+        # negation there fails every reading: ". . ." never drops a "not" (contract v1.4).
+        if not i:
+            return False
+        budget.spend(1)
+        return not _negated(source[ends[i - 1]:start].split())
     literal = len(boundary.literal or "")
     while i:
         budget.spend(1)
@@ -397,7 +402,7 @@ def _reached(boundary: Boundary, ends: list[int], source: str, start: int, budge
 
 
 class Matches:
-    """Every match of a piece in a source, found once: sorted starts, their ends, and the least end from each start on."""
+    """Every match of a piece in a source, found once: sorted starts and their ends."""
 
     def __init__(self, piece: Piece, source: str):
         found = []
@@ -405,11 +410,6 @@ class Matches:
             found = [(m.start(1), m.end(1)) for m in piece.pattern.finditer(source)]
         self.starts = [s for s, _ in found]
         self.ends = [e for _, e in found]
-        self.least_end_from = [0] * len(found)
-        least = None
-        for i in range(len(found) - 1, -1, -1):
-            least = self.ends[i] if least is None else min(least, self.ends[i])
-            self.least_end_from[i] = least
 
     def __len__(self):
         return len(self.starts)
@@ -419,7 +419,6 @@ def _chain(compiled: CompiledQuotation, source: str, matches_of, budget: _Budget
     """The pieces in order, each starting where the boundary before it allows. Every match of every piece is
     considered, so a repetitive passage cannot send the search into backtracking."""
     ends: list[int] = []
-    last = len(compiled.pieces) - 1
     for k, piece in enumerate(compiled.pieces):
         matches = matches_of(piece)
         budget.spend(1)
@@ -429,18 +428,8 @@ def _chain(compiled: CompiledQuotation, source: str, matches_of, budget: _Budget
             ends = sorted(set(matches.ends))
             continue
         boundary = compiled.boundaries[k - 1]
-        if boundary.kind == "gap":
-            i = bisect_left(matches.starts, ends[0])    # only the earliest end matters before a gap
-            if i == len(matches):
-                return False
-            if k == last or compiled.boundaries[k].kind == "gap":
-                ends = [matches.least_end_from[i]]
-            else:
-                ends = sorted(set(matches.ends[i:]))
-                budget.spend(len(ends))
-        else:
-            ends = sorted({e for s, e in zip(matches.starts, matches.ends)
-                           if _reached(boundary, ends, source, s, budget)})
+        ends = sorted({e for s, e in zip(matches.starts, matches.ends)
+                       if _reached(boundary, ends, source, s, budget)})
         if not ends:
             return False
     return True

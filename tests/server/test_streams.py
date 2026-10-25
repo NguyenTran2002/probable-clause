@@ -257,7 +257,9 @@ async def test_interrupted_matches_the_fixture_exactly():
         s.pump()
         evs = s.events()
         assert evs[:-1] == stored
-        assert evs[-1] == expected, "n is the last stored + 1; totals are summed from the stored paid calls"
+        # v1.4 adds stop_kinds, [] on H's interrupted; fixtures generated before v1.4 lack it
+        want = {**expected, "data": {**expected["data"], "stop_kinds": expected["data"].get("stop_kinds", [])}}
+        assert evs[-1] == want, "n is the last stored + 1; totals are summed from the stored paid calls"
         assert s.closed
         assert not list(VALIDATOR.iter_errors(evs[-1]))
         assert [e["n"] for e in await store.read_events(run_id, 0)] == [e["n"] for e in stored], "never stored"

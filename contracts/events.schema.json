@@ -1408,6 +1408,22 @@
             null
           ],
           "description": "The budget or limit stop that ended the run (contract §6), else null. The cap refusals and exa_no_credit are recorded in Atlas (§8) but never end a run: a cap refuses POST /runs, and an Exa 402 only makes the update check unavailable."
+        },
+        "stop_kinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "step_limit",
+              "token_ceiling_input",
+              "token_ceiling_output",
+              "composition_max_tokens",
+              "console_spend_limit",
+              "tier_spend_cap",
+              "time_limit"
+            ]
+          },
+          "description": "Every budget or limit stop of the run, in the order they happened, `stop_kind` among them; each is recorded once by H (contract v1.4). A loop limit followed by a failed or cut-off composition lists both."
         }
       }
     }

@@ -92,6 +92,7 @@ async def test_unavailable_mid_run(world, failure, reason):
     assert len(fakes["exa"].calls) == 1               # the second never reaches Exa
     assert ctx.flags.exa_unavailable == reason
     assert not [p for p in ctx.of("paid_call") if p["service"] == "exa"]     # not counted, no cost (T2.4)
+    assert ctx.not_billed == [("exa", "update_search")]                          # D tells H the call cost nothing (v1.4)
     band = ctx.of("update_band")[0]
     assert band["outcome"] == "unavailable" and band["reason"] == reason
     assert [s["status"] for s in band["searches"]] == ["unavailable", "unavailable"]

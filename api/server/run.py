@@ -267,6 +267,11 @@ class Run:
                 await self._pause()       # returns on a heartbeat, then the checks run again; raises when abandoned
         self._in_flight += 1
 
+    async def call_not_billed(self, service: Service, purpose: Purpose) -> None:
+        """A call the gate cleared that was never made or billed (Exa's 402 or 401, contract v1.4): undo its
+        in-flight count, never below zero. Nothing is recorded."""
+        self._in_flight = max(0, self._in_flight - 1)
+
     def _fresh(self, now: datetime) -> bool:
         return self._last_hb is not None and (now - self._last_hb).total_seconds() < _f("ATTENDED_WINDOW_S")
 
@@ -381,7 +386,8 @@ class Run:
     async def _emit_failed(self, failure_reason: str | None) -> None:
         """H's `run_ended` with state `failed` (contract §4.H)."""
         await self.emit("run_ended", {
-            "state": "failed", "stop_kind": None, "no_sources_reason": None, "note": None, "scope_note": None,
+            "state": "failed", "stop_kind": None, "stop_kinds": [], "no_sources_reason": None, "note": None,
+            "scope_note": None,
             "answer_end": "none", "failure_reason": failure_reason, "rounds": rounds_of(self._events),
             "answer_chars": answer_chars_of(self._events), "totals": self.totals()})
 
@@ -413,6 +419,19 @@ class Run:
             return
         await self._release()
 
+    @staticmethod
+    def _stops_to_record(ended: dict) -> list[str]:
+        """Each kind in `run_ended.stop_kinds`, once, in order; `stop_kind` when the list is absent (v1.4). The cap
+        refusals (`reserve`) and `exa_no_credit` (D) are recorded elsewhere."""
+        kinds = ended.get("stop_kinds")
+        if not isinstance(kinds, list):
+            kinds = [ended.get("stop_kind")]
+        out: list[str] = []
+        for k in kinds:
+            if isinstance(k, str) and k and k not in RECORDED_ELSEWHERE and k not in out:
+                out.append(k)
+        return out
+
     async def _finish(self, outcome: str) -> None:
         """Every end: the spend-limit pause, the money, the last events to Atlas, the stop, the run record."""
         try:
@@ -435,13 +454,13 @@ class Run:
                     await self._writer
                 except Exception as e:
                     log.error("run %s: the event copy ended badly (%s)", self.run_id, _kind(e))
-            if stop_kind and stop_kind not in RECORDED_ELSEWHERE:
+            for kind in self._stops_to_record(ended):
                 try:
-                    await self.store.record_stop(stop_kind, self.run_id, now, {
+                    await self.store.record_stop(kind, self.run_id, now, {
                         "state": state, "rounds": rounds_of(self._events),
                         "cost_usd": self._totals.total_cost()})
                 except Exception as e:
-                    log.error("run %s: could not record the %s stop (%s)", self.run_id, stop_kind, _kind(e))
+                    log.error("run %s: could not record the %s stop (%s)", self.run_id, kind, _kind(e))
             try:
                 await self.store.upsert_run_record(run_record(
                     self.run_id, self.started_at, state, stop_kind, self._events, self._totals, self.corpus_label))

@@ -328,6 +328,8 @@ class _Run:
         self.round_no = 0
         self.status_for_round = ""
         self.seen: set[str] = set()                 # passages whose text Claude was sent (T1.7)
+        self.seen_before_turn: frozenset[str] = frozenset()   # what Claude had seen when it wrote this turn's calls
+        self.stops: list[str] = []                  # every budget or limit stop, in order (v1.4)
         self.emitted: set[str] = set()              # passages with a `passage` event
         self.kept: dict[str, KeptPassage] = {}
         self.pending: list[tuple[str, int, int, int, str]] = []
@@ -554,6 +556,8 @@ class _Run:
         uses = [(ti, ci, b) for ti, (ci, b) in enumerate((i, b) for i, b in enumerate(res.content)
                                                          if b.get("type") == "tool_use")]
         same_turn = any(b.get("name") in SEARCH_OR_READ for _, _, b in uses)     # T1.10 rule 1
+        # T1.7: a keep may name only passages shown before this turn; this turn's results are not yet seen by Claude
+        self.seen_before_turn = frozenset(self.seen)
         user_index = len(self.messages)          # the index the tool results' user message will have
         results: list[dict | None] = [None] * len(uses)
         accepted_any = False
@@ -704,7 +708,7 @@ class _Run:
         applied, refused = [], []
         for it in items:
             pid, reason = it["id"], it["reason"]
-            if pid not in self.seen:
+            if pid not in self.seen_before_turn:
                 why = rejection("keep", "unseen_id", id=pid)
             elif not reason.strip():
                 why = rejection("keep", "reason_empty", id=pid)
@@ -871,9 +875,16 @@ class _Run:
                 await self.emit("warning", {"code": code})
 
     # -- the end --
+    def add_stop(self, kind: str | None) -> None:
+        """A budget or limit stop, recorded once, in the order it happened (v1.4)."""
+        if kind and kind not in self.stops:
+            self.stops.append(kind)
+
     async def finish(self, end: _End) -> None:
         await self.emit_warnings()
         k = end.kind
+        if k in LIMIT_STATE:
+            self.add_stop(k)                 # before composing, so a failed composition still records it (v1.4)
         if k == "abandoned":
             return await self.close("abandoned")                 # T3.2: composes nothing
         if k == "spend_limit":
@@ -922,9 +933,10 @@ class _Run:
 
     async def close(self, state: str, *, stop_kind=None, failure_reason=None, no_sources_reason=None, note=None,
                     scope_note=None, answer_end: str = "none") -> None:
+        self.add_stop(stop_kind)             # the end's own stop, last (a spend limit, or a limit's stop_kind)
         await self.emit("update_band", self.band())
         await self.emit("run_ended", {
-            "state": state, "stop_kind": stop_kind, "no_sources_reason": no_sources_reason, "note": note,
+            "state": state, "stop_kind": stop_kind, "stop_kinds": list(self.stops), "no_sources_reason": no_sources_reason, "note": note,
             "scope_note": scope_note, "answer_end": answer_end, "failure_reason": failure_reason,
             "rounds": self.round_no, "answer_chars": sum(len(t) for t in self.answer_texts),
             "totals": self.ctx.totals()})
@@ -1028,11 +1040,14 @@ class _Run:
                       "with our sentences; none was attached", self.ctx.run_id, call_no, st["dropped"], st["mismatched"])
         if isinstance(res, _Broken):
             await att.failed_finally(res.error)
+            self.add_stop(SPEND_STOP.get(res.error.kind))
             await self.response_fragments(blocks, call_no)
             await self.run_checks(docs)
             return _Comp("incomplete", kind=res.error.kind)
         refused = res.stop_reason == "refusal"
         await att.completed(res, "failed" if refused else "ok", "refusal" if refused else None)
+        if res.stop_reason == "max_tokens":
+            self.add_stop("composition_max_tokens")          # recorded even if nothing usable came of it (v1.4)
         await self.response_fragments(blocks, call_no)
         if not blocks:
             return _Comp("refused") if refused else _Comp("failed", kind="unreadable")

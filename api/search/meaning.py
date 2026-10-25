@@ -20,8 +20,8 @@ from api import settings
 from api.errors import ServiceError
 from api.retry import VOYAGE_POLICY, with_retries
 from api.search.voyage import VoyageClient
-from api.state.prices import failed_attempt_usage
-from api.types import Hit, Passage, Purpose, RunContext
+from api.state.prices import failed_attempt_usage, price
+from api.types import Hit, Passage, Purpose, RunContext, Usage
 
 log = logging.getLogger("probable_clause.meaning")
 
@@ -63,6 +63,14 @@ def _estimate_tokens(chars: int) -> int:
     """Tokens for `chars` characters of input, rounded up (settings.VOYAGE_CHARS_PER_TOKEN_ESTIMATE)."""
     per = int(settings.VOYAGE_CHARS_PER_TOKEN_ESTIMATE.value)
     return -(-chars // per)
+
+
+def _within_bound(ctx: RunContext, purpose: Purpose, tokens: int) -> bool:
+    """Would this call, with every retry it may take, keep the run's Voyage spend within VOYAGE_RUN_BOUND_USD?
+    The worst case reserves that bound for Voyage (T3.4, contract v1.4)."""
+    model = str((settings.EMBED_MODEL if purpose == "embed" else settings.RERANK_MODEL).value)
+    worst = price(Usage(service="voyage", model=model, input_tokens=tokens)) * (VOYAGE_POLICY.retries + 1)
+    return ctx.flags.voyage_spent_usd + worst <= float(settings.VOYAGE_RUN_BOUND_USD.value)
 
 
 class MeaningIndex:
@@ -116,6 +124,10 @@ class MeaningIndex:
         if not rows:
             return MeaningResult([], "ok", None)
 
+        if not _within_bound(ctx, "embed", _estimate_tokens(len(query))):
+            log.warning("voyage run bound reached run=%s: meaning search not run", ctx.run_id)
+            ctx.flags.meaning_unavailable_once = True
+            return MeaningResult([], "unavailable", UNAVAILABLE_NOTE)
         try:
             vectors, = await self._call(ctx, "embed", lambda: voyage.embed([query], "query"), sleep,
                                         _estimate_tokens(len(query)))
@@ -143,6 +155,10 @@ class MeaningIndex:
             docs = [self.texts[r] for r in cand]
             # Voyage counts query tokens x documents + document tokens (docs.voyageai.com/docs/reranker, Oct 24, 2026)
             estimate = _estimate_tokens(len(query) * len(docs) + sum(len(d) for d in docs))
+            if not _within_bound(ctx, "rerank", estimate):
+                log.warning("voyage run bound reached run=%s: results not reranked", ctx.run_id)
+                ctx.flags.meaning_degraded = True
+                return MeaningResult(embedding_order, "not_reranked", NOT_RERANKED_NOTE)
             ranked, = await self._call(ctx, "rerank", lambda: voyage.rerank(query, docs), sleep, estimate)
         except ServiceError as e:
             self._note_failure(ctx, e, "rerank")
@@ -182,6 +198,10 @@ class MeaningIndex:
         failed_usage = failed_attempt_usage("voyage", model, estimate_tokens)
         state = {"attempt": 1, "ms": 0}
 
+        async def record(usage, **kw) -> None:
+            cost = await ctx.record_usage(usage, purpose=purpose, max_attempts=max_attempts, **kw)
+            ctx.flags.voyage_spent_usd += float(cost or 0.0)      # the run's bound (T3.4, contract v1.4)
+
         async def attempt(n: int):
             state["attempt"] = n
             t0 = time.monotonic()
@@ -190,13 +210,13 @@ class MeaningIndex:
             except ServiceError:
                 state["ms"] = round((time.monotonic() - t0) * 1000)
                 raise
-            await ctx.record_usage(usage, purpose=purpose, attempt=n, max_attempts=max_attempts, outcome="ok",
-                                   error_kind=None, duration_ms=round((time.monotonic() - t0) * 1000))
+            await record(usage, attempt=n, outcome="ok", error_kind=None,
+                         duration_ms=round((time.monotonic() - t0) * 1000))
             return (result,)
 
         async def on_retry(next_attempt: int, error: ServiceError, wait_s: float) -> None:
-            await ctx.record_usage(failed_usage, purpose=purpose, attempt=next_attempt - 1, max_attempts=max_attempts,
-                                   outcome="retrying", error_kind=error.kind, duration_ms=state["ms"])
+            await record(failed_usage, attempt=next_attempt - 1, outcome="retrying", error_kind=error.kind,
+                         duration_ms=state["ms"])
 
         async def before(n: int) -> None:
             await ctx.before_paid_call("voyage", purpose)
@@ -204,6 +224,6 @@ class MeaningIndex:
         try:
             return await with_retries(attempt, VOYAGE_POLICY, before, on_retry, sleep)
         except ServiceError as e:
-            await ctx.record_usage(failed_usage, purpose=purpose, attempt=state["attempt"], max_attempts=max_attempts,
-                                   outcome="failed", error_kind=e.kind, duration_ms=state["ms"])
+            await record(failed_usage, attempt=state["attempt"], outcome="failed", error_kind=e.kind,
+                         duration_ms=state["ms"])
             raise

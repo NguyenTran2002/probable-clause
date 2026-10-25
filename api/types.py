@@ -99,6 +99,7 @@ class RunFlags:
     meaning_degraded: bool = False            # some search not reranked (T3.3): the warning
     meaning_unavailable_once: bool = False    # some search had no meaning results (T3.3): the warning
     exa_unavailable: Literal["no_credit", "key_refused"] | None = None   # T2.4
+    voyage_spent_usd: float = 0.0             # this run's Voyage spend, held under VOYAGE_RUN_BOUND_USD (T3.4, v1.4)
 
 
 class RunStopped(Exception):
@@ -123,6 +124,10 @@ class RunContext(Protocol):
     async def before_paid_call(self, service: Service, purpose: Purpose) -> None:
         """Wait while paused; raise RunStopped("abandoned") if abandoned, or RunStopped("deadline")
         past the run deadline (never for purpose "composition", contract §4.H)."""
+
+    async def call_not_billed(self, service: Service, purpose: Purpose) -> None:
+        """A call `before_paid_call` cleared was refused before anything was billed (Exa's 402 or 401, T2.4), so no
+        `record_usage` follows it (contract v1.4)."""
 
     async def record_usage(self, usage: Usage | None, *, purpose: Purpose, attempt: int, max_attempts: int,
                            outcome: CallOutcome, error_kind: str | None, duration_ms: int,
