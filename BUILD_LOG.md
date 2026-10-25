@@ -2273,3 +2273,32 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 - A boot-order error (a `let` used before its line) blanked the page once during the fixes; caught by the browser sweep.
 **Spend:** none. The local stack has made no paid call.
 **DECISION (user):** *"Yes, both"* (the two downloads, asked in this sitting). No other decision; the calls above are the main session's.
+
+## Oct 25, 2026, 18:22 CDT — Frontend: the user's review, round 1 (the empty band, the thinking line, tool calls paced)
+**Asked:**
+- First, whether the page was built from the wrong prototype.
+- Then the user withdrew that (*"My bad it was the right prototype, but this bug came back to life"*) and pointed to a screenshot: at the start of a run, the run view ended partway down the window with an empty band below it.
+- Then two polish items:
+  - "Asking Claude for the next step" becomes "Claude is thinking";
+  - tool calls that arrive together appear at least 0.5 s apart, in live runs and replays.
+**Came back:**
+- **The prototype:** the page is built from `web/looktests/machinery/` at badc05f. Every edit to it, in git and in every session's transcript, falls between 17:56 and 20:17 CDT on Oct 23, so there is no later version.
+- **The empty band (7ef82b9):**
+  - The prototype's `body` grid had two rows: the switcher banner, then the run view.
+  - The banner was dropped but the rows were kept, so `#run` fell into the content-sized row (measured 524 of 900 px) and an empty 376 px row took the rest.
+  - The fix from Oct 23 (frontend-log 19:50) pinned the rows inside `#run` and still holds; this was the grid one level up.
+  - Now one full-height row. Measured at 1440×900, 393×852 and 852×393: the panes and the composer reach the bottom, with no sideways scroll, and a finished run scrolls inside its pane.
+- **The thinking line:**
+  - "Claude is thinking", in the user's words.
+  - Its past form, shown only when the call retried or failed, is "Claude was thinking" (the main session's call).
+- **The pace:** `web/js/pace.js`, between the event source and the view, for live runs and replays.
+  - Events keep their order. A tool call is held until 500 ms after the previous one appeared, and anything behind it waits with it.
+  - A quiet event (a reload catching up on stored events, or "Skip to the end") is never held, and first releases whatever waits.
+  - A replay or run ends on screen only after its last held event is shown.
+  - A give-up or an expiry shows the held events before reattaching, so the reattach starts from the last event on screen.
+- **Checked:**
+  - Node: 70 tests pass (5 new for the pace, including every fixture played at its recorded times: each event once, in order, no two tool calls closer than 0.5 s).
+  - Browser, the real phone-tracking run: the three calls recorded at 11,837, 11,839 and 11,843 ms appeared at 11.86, 12.36 and 12.86 s, and every later call stayed at least 0.5 s apart. "Skip to the end" finished the run at once.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"'Asking Claude for the next step' -> Claude is thinking (more natural)"*; *"add an intentional delay just a bit so that every tool call appears after 0.5s the other at the minimum. This should be the case for both replay and live runs"*.

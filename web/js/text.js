@@ -247,8 +247,8 @@ export const CREDITS_SUMMARY = 'Sources and credits';
 export const PRIVACY_SUMMARY = 'Privacy';
 export const GROUP_ANSWER = 'Writing the answer';
 export const GROUP_UPDATE = 'Update check, running beside the answer';
-export const THINKING = 'Asking Claude for the next step';
-export const THOUGHT = 'Asked Claude for the next step';
+export const THINKING = 'Claude is thinking';           // the user's words, Oct 25, 2026
+export const THOUGHT = 'Claude was thinking';          // shown only when the call needed a retry or failed
 export const UPDATE_ONLY = 'Research finished with no passages kept, so no answer is written. The update check runs next.';
 export const UPDATE_STARTED = n => `Research finished with ${plural(n, 'passage')} kept. The answer and the update check start side by side.`;
 export const WRITING = n => `Writing the answer from ${plural(n, 'kept passage')}`;

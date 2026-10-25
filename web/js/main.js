@@ -7,6 +7,7 @@ import { loadStatic, loadReplays, loadReplay } from './config.js';
 import { createWaker } from './wake.js';
 import { attach } from './stream.js';
 import { playReplay } from './replay.js';
+import { createPacer } from './pace.js';
 import { createView } from './view.js';
 import { makeMarkdown } from './answer.js';
 import * as T from './text.js';
@@ -56,6 +57,7 @@ async function boot() {
 
   let live = null;          // the stream of the live run on screen
   let player = null;        // the replay on screen
+  let pacer = null;         // the step log's pace for the run on screen (pace.js)
   let token = 0;            // bumps when the screen moves on, so a wake still open starts nothing
 
   function setPlaying(on, replay = false) {
@@ -70,6 +72,7 @@ async function boot() {
     token++;
     if (live) { live.stop(); live = null; }
     if (player) { player.stop(); player = null; }
+    if (pacer) { pacer.stop(); pacer = null; }
     setPlaying(false);
   }
 
@@ -93,10 +96,11 @@ async function boot() {
     view.reset({ question: rec.question, replay: rec });
     swap('run');
     setPlaying(true, true);
-    player = playReplay(rec.events, (ev, o) => { if (my === token) view.onEvent(ev, o); }, () => { if (my === token) setPlaying(false); });
+    const pace = pacer = createPacer((ev, o) => { if (my === token) view.onEvent(ev, o); });
+    player = playReplay(rec.events, (ev, o) => pace.push(ev, o), () => pace.whenIdle(() => { if (my === token) setPlaying(false); }));
   }
   $('#skip').textContent = T.SKIP;
-  $('#skip').addEventListener('click', () => { if (player) player.skip(); });
+  $('#skip').addEventListener('click', () => { if (player) player.skip(); if (pacer) pacer.flush(); });
 
   // ---------- the landing check (brief §2): it shows nothing unless research is paused (T4.4 #2) ----------
   waker.landing().then(health => {
@@ -177,20 +181,25 @@ async function boot() {
   }
 
   function follow(runId, my, lastN = 0) {
+    const pace = pacer = createPacer((ev, o) => {
+      if (my !== token) return;
+      if (ev.kind === 'run_started') view.setQuestion(ev.data.question);
+      view.onEvent(ev, o);
+    });
     live = attach(runId, cfg, {
       onEvent: ev => {
         if (my !== token) return;
-        if (ev.kind === 'run_started') view.setQuestion(ev.data.question);
         const behind = Date.now() - Date.parse(ev.at) > 5000;     // a stored event caught up on, not a new one
-        view.onEvent(ev, { quiet: behind });
+        pace.push(ev, { quiet: behind });
       },
       onState: st => {
         if (my !== token) return;
         if (st === 'reconnecting') view.status(T.RECONNECTING, true);
         else if (st === 'open') view.status();
-        else if (st === 'closed') { setPlaying(false); live = null; }
-        else if (st === 'expired') { view.setQuestion(null); view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
-        else if (st === 'gave_up') gaveUp(runId, my);
+        else if (st === 'closed') { live = null; pace.whenIdle(() => { if (my === token) setPlaying(false); }); }
+        else if (st === 'expired') { pace.flush(); view.setQuestion(null); view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
+        // everything held is shown first, so the reattach starts from the last event on screen
+        else if (st === 'gave_up') { pace.flush(); gaveUp(runId, my); }
       },
       wake: () => waker.wake(),
     }, { lastN });
