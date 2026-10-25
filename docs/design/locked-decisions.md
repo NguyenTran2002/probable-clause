@@ -436,7 +436,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)"
 
-### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1); by P4.6 (the note is capped at 1,000 characters); by P4.7 (rule 4 waived when out of scope)
+### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1); by P4.6 (the note is capped at 1,000 characters); by P4.7 (rule 4 waived when out of scope); by P4.16 (rule 1: a submit must be alone in its turn, and sent once; a keep in the same turn no longer counts)
 
 - **Decision:** Area 1, topic 6:
   - **`submit_answer(out_of_scope, note?, update_skip_reason?)`.** No list of kept IDs: the composition call uses the kept set as it stands when the submit is accepted (T1.7). This supersedes brief §2's Termination row ("Its input lists the kept passage IDs"); the invariant stands (every citation points to a passage the viewer watched Claude keep).
@@ -1001,3 +1001,13 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Wording look goods to me."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
+
+### P4.16 `submit_answer` alone in its turn, once (amends T1.10 rule 1)
+
+- **Decision:**
+  - `submit_answer` must be the only call in its turn, and sent once. A turn holding two or more submits, or a submit with any other tool (`keep_passages` included), has every submit refused; the turn's other tools still run and their results go back with the refusal. The rule name stays `same_turn`. This replaces T1.10 rule 1's "A keep in the same turn is fine" and contract v1.3's "a keep in the same turn counts".
+  - **Three texts, as drafted:** `rejections.json`'s `submit.rule_1_same_turn`; `tools.json`'s `submit_answer` description (submitting ends research at once; alone, once, every field in one call); `loop_system.md`'s "Submitting" item ("Submitting ends the research"). The exact texts are in the log entry.
+  - **Why:** in the paid build tests Claude split its submit into two calls in one turn twice in three answered runs; the last accepted won, losing a relevant update finding (test 3) and a scope note and overview (test 4).
+- **User's words:** *"Refuse 2 or more submission in a turn. I'd also add that a submission tool call must be its own turn with no extra tool accompanying it."* Then: *"Lock P4.16: submit_answer alone in its turn, once; other tools in that turn still run; keep the rule name same_turn; the three prompt texts as drafted. Then build it, contract v1.8."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:42 CDT — Phase 4: Build, `submit_answer` alone in its turn (P4.16)"
