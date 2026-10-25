@@ -1000,3 +1000,26 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
   - Voyage's docs disagree on whether `rerank-3` exists: it is listed in the reranker guide and the rate-limit table, but not in the API reference's model list. To confirm before the first live run.
 **Spend:** none.
 **DECISION (user):** *"Start wave 1 let's go!"*
+
+## Oct 24, 2026, 21:19 CDT — Phase 4: Build, Wave 1, part B merged
+**Asked:** Part B, the corpus index (contract §4.B), under *"Start wave 1 let's go!"*
+**Came back:**
+- **Part B:** `api/corpus/` (except `sentences.py`), `scripts/build_web_data.py`, `tests/corpus/` (except `test_sentences.py`).
+  - Counts by test: 1,964 paragraph and 498 footnote passages, 2,462 in all; 102 opinions.
+  - Footnote references match one to one in label order, in every opinion.
+  - The pre-*Chatrie* corpus has 31 cases and 97 opinions, with both latest dates 2018-06-22.
+- **Labels:** 37 distinct labels, reviewed by the main session before any embedding, with no wrong label found.
+- **Review** by a Sonnet 5.5 high subagent: no blocking defect.
+  - Footnote offsets are insertion points, confirmed from the data: 155 of 498 references sit at the end of the text. The contract wording was fixed (bd0506b).
+  - Fixes made by the builder:
+    - bad list types raise a tool error;
+    - `read` targets are case-insensitive;
+    - the catalog states its counts;
+    - the labels file is written only on request;
+    - the marker tests are exact.
+- **Main session's rulings** (contract v1.1, bd0506b; the tool descriptions say so):
+  - `none_of` matches exact words and phrases, unstemmed, on both search tools. The two tools had differed by up to 129 passages on one exclusion.
+  - An unquoted item of several words needs all its words, anywhere in the passage; only a quoted item is an exact phrase.
+- **Tests:** 169 passed (corpus and contract), run on the stand-in splitter. Builder A's `sentences.py` has not landed yet; the run with the real splitter comes at the Wave 1 merge.
+**Spend:** none.
+**DECISION (user):** none new.
