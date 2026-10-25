@@ -292,7 +292,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 13:59 CDT — Phase 2: Research"
 
-### P2.7 Run limits kept from brief §8.2
+### P2.7 Run limits kept from brief §8.2 — AMENDED by P4.6 (the run's input limit is 436,000)
 
 - **Decision:** The remaining starting values of brief §8.2 stand after Phase 2's measurements (`docs/research/phase2-findings.md` §3: two runs of 4 and 6 steps, $0.14 and $0.24 of Claude): a step limit of 12 tool rounds plus the final composition call; a per-run ceiling of 400K input and 20K output tokens; at most 3 update searches per run, results clamped to 10; a global daily cap of $10; a monthly cap of $60. Every counter persists in Atlas. P2.6 removed the per-visitor limit.
 - **User's words:** *"Stick with these limits: 12 steps, 400K input and 20K output tokens per run, 3 update searches, the $10 daily cap and the $60 monthly cap."*
@@ -436,7 +436,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)"
 
-### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1)
+### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1); by P4.6 (the note is capped at 1,000 characters); by P4.7 (rule 4 waived when out of scope)
 
 - **Decision:** Area 1, topic 6:
   - **`submit_answer(out_of_scope, note?, update_skip_reason?)`.** No list of kept IDs: the composition call uses the kept set as it stands when the submit is accepted (T1.7). This supersedes brief §2's Termination row ("Its input lists the kept passage IDs"); the invariant stands (every citation points to a passage the viewer watched Claude keep).
@@ -531,7 +531,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:33 CDT — Phase 3: Architecture, Area 2 (what a web result looks like to Claude, T2.2)"
 
-### T2.3 The update-check band: structured findings in `submit_answer` (amends P1.3 and T1.10)
+### T2.3 The update-check band: structured findings in `submit_answer` (amends P1.3 and T1.10) — AMENDED by P4.8 (the no-sources note guarded) and P4.9 (corpus words exempt)
 
 - **Decision:** Area 2, topic 3, option A:
   1. **Fields** added to `submit_answer` (amends T1.10): `update_findings`, a list of `{statement, sources}` (source IDs `web-<search>-<n>`, T2.2), an empty list meaning nothing relevant was found; `update_overview`, optional. Caps, placeholders against overrun only: 20 findings, 600 characters a statement, 10 sources a statement, 600 characters for the overview. Statements describe what a page reports, attributed to its source, never whether the law has changed (system prompt).
@@ -633,7 +633,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:04 CDT — Phase 3: Architecture, Area 3 (the paid calls during a run, T3.3)"
 
-### T3.4 Spend counters and caps: the worst case reserved atomically at the start; every budget stop recorded
+### T3.4 Spend counters and caps: the worst case reserved atomically at the start; every budget stop recorded — AMENDED by P4.6 (the worst case is $2.11)
 
 - **Decision:** Area 3, topic 4:
   - **Reservation (B1):** a run starts only if, in one conditional update of one Atlas document per Chicago month (holding the month's and each day's spent and reserved), spent plus reserved plus the run's worst case stays within $10 for the Chicago day and $60 for the Chicago month (P2.7). The caps are therefore never overshot, however many instances run (brief §8.1). Up to one worst case of a day may go unused.
@@ -912,10 +912,50 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 00:41 CDT — Phase 4: Build, no spend tripwire (P4.4)"
 
-### P4.5 A broken loop attempt is counted from what it streamed and reported
+### P4.5 A broken loop attempt is counted from what it streamed and reported — AMENDED by P4.10 (composition attempts too)
 
 - **Decision:** When a loop call's stream breaks partway, the attempt is priced and counted against the run's output budget from what the stream reported and what it visibly streamed, as built (G's estimate from the streamed characters, at a ratio that errs high). It is not counted at its full `max_tokens`. Thinking tokens billed but never streamed (`display: "omitted"`, T3.1) can therefore go uncounted, up to about $0.08 for a loop attempt, and the run's spend may pass its reservation by that much. Every completed call is priced from Anthropic's final reported usage, which includes all thinking tokens.
 - **Considered:** counting a broken attempt at its full `max_tokens` (safe, but one break would spend the loop's remaining output budget and end research).
 - **User's words:** *"Broken stream, counting at full max tokens is too much compared to what could have been. Rely on what we have so far is fine. It's only a round."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 00:46 CDT — Phase 4: Build, broken loop attempts counted as streamed (P4.5)"
+
+### P4.6 The composition's room raised to its worst case; the run's input limit 436,000; the note capped (amends P2.7, T1.10, T3.4)
+
+- **Decision:** `COMPOSITION_RESERVE_INPUT` is 66,000 tokens. That is the composition's worst case by the loop's own estimator, 64,945 tokens (the 40 longest passages, each with a 300-character keep reason, a 2,000-character question and a 1,000-character note), plus a small margin. The loop keeps its 370,000 (`LOOP_INPUT_BUDGET`), so the run's input limit (`RUN_INPUT_TOKENS`, P2.7's 400,000) becomes **436,000**. The visitor's `note` (and so the scope note) is capped at **1,000 characters**, with a refusal text drafted for the user's review (T1.14). The worst case reserved per run (T3.4's $1.674) becomes about **$2.11**. A test recomputes the composition's worst case from the corpus and the settings, so the figure cannot fall behind the code.
+- **Considered:** a keep budget refusing keeps past a 30,000 reserve; keeping 400,000 with the loop at 335,000 (about $2.01); no note cap (about 448,000 and $2.25); a lower `KEEP_CAP`.
+- **User's words:** *"Increase the budget to accommodate the worst case, which is rare anyway."* Then: *"Keep the loop at 370,000 and raise the run's limit to about 435,000."* Then, on the list of five (the margin and the cap included): *"Confirm."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
+
+### P4.7 An out-of-scope reply needs no update check (amends T1.10)
+
+- **Decision:** T1.10's rule 4 (no update check and no skip reason: refused once) is waived when `out_of_scope` is true, so a greeting or an off-topic question is never pushed toward a paid Exa search. This matches the system prompt's "No search is needed."
+- **Considered:** keeping rule 4 for every submit, as T1.10 has it.
+- **User's words:** *"Scope refusal should not trigger update search."* Then: *"Confirm."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
+
+### P4.8 The copy guard covers a no-sources reply's note once a page was returned (amends T2.3)
+
+- **Decision:** On a no-sources reply (out of scope or nothing found), when any update search has returned a page in the run, the `note` gets T2.3's copy guard: `COPY_GUARD_WORDS` or more consecutive words of a returned page refuse the submit, with a refusal asking for it to be reworded, and the flagged note is withheld in the stored `tool_call` as P4.3 does. Keep reasons, the scope note of an answered run and `update_skip_reason` stay unguarded.
+- **Considered:** guarding keep reasons, every note and the skip reason too (the cross-part review's suggestion); leaving T2.3 as it was.
+- **User's words:** *"keep reason has nothing to do with Exa, don't extend the guard here … no-source reply maybe, and only then do we extend. Update skip reason also has no Exa content because the update is skipped so we shouldn't extend it here."* Then: *"Confirm."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
+
+### P4.9 The copy guard ignores words that are also the corpus's (amends T2.3)
+
+- **Decision:** Every copy-guard check, the update statements' and overview's included, ignores a run of words that also appears in the corpus. A page quoting the Supreme Court, and Claude quoting the same Court words, is not a copy of the page.
+- **Considered:** the guard as T2.3 has it, which would refuse a statement or note quoting the Court whenever a returned page quotes the same words.
+- **User's words:** *"Your recommendations on handling false match is sound."* Then: *"Confirm."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
+
+### P4.10 A broken composition attempt is counted as streamed too (amends P4.5)
+
+- **Decision:** A composition attempt whose stream breaks before its first block is priced and counted from what it streamed and reported, as P4.5 does for loop attempts, never at its full `max_tokens`: counting 12,000 would spend the run's output ceiling and stop the retry T3.3 allows, so the run would end with no answer (against P4.4). Retries bound it to two such attempts, and most such failures (429, 500, 529) come before anything is generated; hidden thinking on a stream broken mid-thinking can go uncounted, up to about $0.24 an attempt, $0.48 a run.
+- **Considered:** counting at `max_tokens`.
+- **User's words:** *"Don't count as stream because we have our max retries guards working here right? Push back?"* The main session read it as "counted as streamed", and said so. Then: *"Confirm."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"

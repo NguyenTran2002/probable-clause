@@ -1466,3 +1466,15 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 **Came back:** locked as P4.5 for loop attempts: counted as built, not at `max_tokens`. Completed calls are priced from Anthropic's final usage, which is authoritative. Whether it covers a composition attempt that breaks before its first block (up to about $0.24 each, at most two) is put to the user.
 **Spend:** none.
 **DECISION (user):** *"Broken stream, counting at full max tokens is too much compared to what could have been. Rely on what we have so far is fine. It's only a round."*
+
+## Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)
+**Asked:** the composition's room, rule 4 for out-of-scope replies, the copy guard's coverage and its false matches, and broken composition attempts. All followed from the cross-part review (00:34).
+**Came back:** locked, each in `locked-decisions.md`:
+- **P4.6:** composition reserve 66,000 (worst case 64,945 by the loop's estimator, plus a margin); loop budget unchanged at 370,000; run input limit 436,000 (amends P2.7); note capped at 1,000 characters (amends T1.10); worst case about $2.11 (amends T3.4), with a test recomputing it from the corpus.
+- **P4.7:** rule 4 is waived when `out_of_scope` is true (amends T1.10).
+- **P4.8:** the copy guard covers a no-sources reply's note once any page was returned (amends T2.3). Keep reasons, the scope note and the skip reason stay unguarded.
+- **P4.9:** every copy-guard check ignores runs of words that also appear in the corpus (amends T2.3).
+- **P4.10:** a composition attempt broken before its first block is counted as streamed, like P4.5's loop attempts. Counting it at `max_tokens` would stop the retry and end the run with no answer.
+- **Next:** these are built in one patch round. The user asked for it to run overnight, with this session as orchestrator, on a plan approved before the compaction.
+**Spend:** none.
+**DECISION (user):** *"Increase the budget to accommodate the worst case, which is rare anyway."* *"Keep the loop at 370,000 and raise the run's limit to about 435,000."* *"Scope refusal should not trigger update search."* *"Your recommendations on handling false match is sound."* Then, on the list of five: *"Confirm."*
