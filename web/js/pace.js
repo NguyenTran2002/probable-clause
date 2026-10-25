@@ -1,26 +1,32 @@
 // The step log's pace (the user, Oct 25, 2026): the tool calls of one round can arrive together, so on screen
-// each tool call appears at least gapMs after the one before, in live runs and replays alike. Events keep their
-// order: anything behind a held tool call waits with it. A quiet event (a replay skipped to the end, a reload
-// catching up on stored events) is never held, and first releases whatever is waiting, quietly.
+// each tool call appears at least gapMs after the one before, in live runs and replays alike, and so does the start
+// of the stage after research (the groups for the answer and the update check), which otherwise lands with
+// "Finishing research". Events keep their order: anything behind a held event waits with it. A quiet event (a
+// replay skipped to the end, a reload catching up on stored events) is never held, and first releases whatever is
+// waiting, quietly.
 // No DOM: `now` and the timer functions are seams for Node's tests.
 
-export const TOOL_CALL_GAP_MS = 500;   // the user's figure, Oct 25, 2026
+export const TOOL_CALL_GAP_MS = 1000;  // the user's figure, Oct 25, 2026 (0.5 s first, then 1 s: "still feel too abrupt")
+// the first of these is the stage after research beginning; only that first one is paced
+const STAGE = new Set(['update_started', 'composition_started', 'update_band']);
 
 export function createPacer(deliver, { gapMs = TOOL_CALL_GAP_MS, now = () => performance.now(),
   setTimer = (f, ms) => setTimeout(f, ms), clearTimer = t => clearTimeout(t) } = {}) {
   const queue = [];
-  let lastCall = -Infinity, timer = null, stopped = false, idle = [];
+  let lastShown = -Infinity, timer = null, stopped = false, idle = [], staged = false;
+  const paced = ev => ev.kind === 'tool_call' || (STAGE.has(ev.kind) && !staged);
 
   function drain(force) {
     if (timer !== null) { clearTimer(timer); timer = null; }
     while (queue.length && !stopped) {
       const [ev, opts] = queue[0];
-      if (ev.kind === 'tool_call' && !force) {
-        const wait = lastCall + gapMs - now();
+      if (!force && paced(ev)) {
+        const wait = lastShown + gapMs - now();
         if (wait > 0) { timer = setTimer(() => { timer = null; drain(false); }, wait); return; }
       }
       queue.shift();
-      if (ev.kind === 'tool_call') lastCall = now();
+      if (paced(ev)) lastShown = now();
+      if (STAGE.has(ev.kind)) staged = true;
       try { deliver(ev, force ? { ...opts, quiet: true } : opts); } catch (e) { console.error(e); }   // one event's fault never stalls the rest
     }
     if (!queue.length) { const cbs = idle; idle = []; for (const cb of cbs) cb(); }

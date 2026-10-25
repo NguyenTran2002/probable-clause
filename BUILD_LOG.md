@@ -2302,3 +2302,19 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"'Asking Claude for the next step' -> Claude is thinking (more natural)"*; *"add an intentional delay just a bit so that every tool call appears after 0.5s the other at the minimum. This should be the case for both replay and live runs"*.
+
+## Oct 25, 2026, 18:28 CDT — Frontend: the user's review, round 2 (the pace at 1 s; step 5 paced)
+**Asked:** *"Step 5, finish research should also get that delay as well."* And: *"increase the delay to 1 second. The current 0.5s still feel too abrupt to me."*
+**Came back:**
+- **Why step 5 looked unpaced:** in the thermal-imager run, "Finishing research" (`submit_answer`) comes about 1 s after step 4, so the 0.5 s gap never held it. But the next stage arrives within 3 ms of it: `update_started`, the update check's first round and `composition_started`. So the two groups and "Writing the answer" landed with step 5.
+- **Read both ways and done both (the main session's call):**
+  - every tool call waits at least 1 s after the previous paced item, step 5 included;
+  - the first event of the stage after research (`update_started`, `composition_started` or `update_band`, whichever comes first) also waits 1 s after step 5.
+  - The rest of that stage arrives with its first event, so the two groups appear together.
+- **`TOOL_CALL_GAP_MS` is 1,000** (the user's figure).
+- **Checked:**
+  - Node: 71 tests pass (a new one for the stage's wait; every fixture now checks 1 s between tool calls and the stage start).
+  - Browser, the thermal-imager run: steps 3, 4 and 5 at 21.86, 22.86 and 23.86 s, the groups at 24.86 s, the update check's submit at 25.86 s.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the two quotes above.

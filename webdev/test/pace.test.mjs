@@ -1,4 +1,5 @@
-// The step log's pace (pace.js): tool calls at least 0.5 s apart on screen, every event in order, quiet events
+// The step log's pace (pace.js): tool calls and the stage after research at least 1 s apart on screen,
+// every event in order, quiet events
 // never held, and a skip shows everything at once.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,7 +29,7 @@ function clock() {
 }
 const ev = (n, kind) => ({ n, kind, data: {} });
 
-test('tool calls that arrive together appear 0.5 s apart, everything in order', () => {
+test('tool calls that arrive together appear 1 s apart, everything in order', () => {
   const c = clock();
   const shown = [];
   const p = createPacer((e, o) => shown.push([e.n, c.now(), !!o.quiet]), c);
@@ -39,23 +40,23 @@ test('tool calls that arrive together appear 0.5 s apart, everything in order', 
   p.push(ev(5, 'tool_result'));
   p.push(ev(6, 'tool_call'));
   assert.deepEqual(shown.map(s => s[0]), [1, 2, 3], 'the first call shows at once; the rest wait behind the second');
-  c.advance(499);
+  c.advance(999);
   assert.equal(shown.length, 3);
   c.advance(1);
-  assert.deepEqual(shown.map(s => [s[0], s[1]]), [[1, 0], [2, 0], [3, 0], [4, 500], [5, 500]]);
-  c.advance(500);
-  assert.deepEqual(shown.at(-1), [6, 1000, false]);
+  assert.deepEqual(shown.map(s => [s[0], s[1]]), [[1, 0], [2, 0], [3, 0], [4, 1000], [5, 1000]]);
+  c.advance(1000);
+  assert.deepEqual(shown.at(-1), [6, 2000, false]);
   assert.equal(p.waiting, 0);
 });
 
-test('a tool call already 0.5 s after the last one is not delayed', () => {
+test('a tool call already 1 s after the last one is not delayed', () => {
   const c = clock();
   const shown = [];
   const p = createPacer(e => shown.push([e.n, c.now()]), c);
   p.push(ev(1, 'tool_call'));
-  c.advance(900);
+  c.advance(1200);
   p.push(ev(2, 'tool_call'));
-  assert.deepEqual(shown, [[1, 0], [2, 900]]);
+  assert.deepEqual(shown, [[1, 0], [2, 1200]]);
 });
 
 test('a quiet event releases whatever waits, quietly; flush does the same for a skip', () => {
@@ -88,7 +89,7 @@ test('whenIdle waits for the last held event; stop drops everything; a drawing f
     p.push(ev(3, 'run_ended'));
     p.whenIdle(() => { ended = true; });
     assert.equal(ended, false);
-    c.advance(500);
+    c.advance(1000);
     assert.deepEqual(shown, [1, 2, 3]);
     assert.equal(ended, true);
   } finally { console.error = err; }
@@ -103,7 +104,7 @@ test('whenIdle waits for the last held event; stop drops everything; a drawing f
   assert.deepEqual(shown, [1]);
 });
 
-test('every fixture, paced: each event once, in order, and tool calls never closer than 0.5 s', () => {
+test('every fixture, paced: each event once, in order, and tool calls and the stage start never closer than 1 s', () => {
   const dir = new URL('../../tests/fixtures/events/', import.meta.url);
   const files = readdirSync(dir).filter(f => f.endsWith('.json'));
   assert.ok(files.length >= 30);
@@ -116,7 +117,24 @@ test('every fixture, paced: each event once, in order, and tool calls never clos
     for (const e of events) { c.advance(Math.max(0, e.t_ms - c.now())); p.push(e); }
     c.advance(60_000);
     assert.deepEqual(shown.map(s => s[0]), events.map(e => e.n), name);
-    const calls = shown.filter(s => s[1] === 'tool_call').map(s => s[2]);
-    for (let i = 1; i < calls.length; i++) assert.ok(calls[i] - calls[i - 1] >= 500, `${name}: call ${i}`);
+    const stage = shown.findIndex(s => ['update_started', 'composition_started', 'update_band'].includes(s[1]));
+    const paced = shown.filter((s, i) => s[1] === 'tool_call' || i === stage).map(s => s[2]);
+    for (let i = 1; i < paced.length; i++) assert.ok(paced[i] - paced[i - 1] >= 1000, `${name}: paced item ${i}`);
   }
+});
+
+test('the stage after research waits 1 s after "Finishing research"; only its first event is held', () => {
+  const c = clock();
+  const shown = [];
+  const p = createPacer(e => shown.push([e.n, c.now()]), c);
+  p.push(ev(1, 'tool_call'));           // keep_passages
+  c.advance(1010);
+  p.push(ev(2, 'tool_call'));           // submit_answer, already 1 s after: shown at once
+  p.push(ev(3, 'tool_result'));
+  p.push(ev(4, 'update_started'));
+  p.push(ev(5, 'round_started'));
+  p.push(ev(6, 'composition_started'));
+  assert.deepEqual(shown.map(s => s[0]), [1, 2, 3]);
+  c.advance(1000);
+  assert.deepEqual(shown.slice(3), [[4, 2010], [5, 2010], [6, 2010]], 'the groups appear together, 1 s after step 5');
 });
