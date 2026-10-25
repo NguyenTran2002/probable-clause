@@ -488,7 +488,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:00 CDT — Phase 3: Architecture, Area 1 (citing-cases lookup cut, T1.13)"
 
-### T1.14 The research loop's system prompt, in outline
+### T1.14 The research loop's system prompt, in outline — AMENDED by T5.5 (a rule keeping personal details out of Voyage and Exa queries)
 
 - **Decision:** Area 1, topic 10. The loop's system prompt (Sonnet 5.5) covers, in this order; the text is written in the build, and **the user reviews the drafted text before its first paid run**:
   1. **Role and the division of labour:** Claude is the research engine for legal researchers; it researches, and a separate step writes the answer from the kept passages only, so each keep reason carries what the writer needs; text between tool calls stays brief.
@@ -705,7 +705,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 (protections and retention, T3.7)"
 
-### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6)
+### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6) — AMENDED by T5.5 (the fonts are served by our own web service, not Google Fonts)
 
 - **Decision:** Area 4, topic 1. The prototype at `web/looktests/machinery/` as of commit badc05f is the art direction and **the baseline for the build**: what it shows stays, except where Area 4's topic 3 changes it to match Areas 1 to 3 or topic 4 adds to it.
   - **Character:** a tech demo first, legal in flavour, for a technical visitor who came to see Claude and Citations.
@@ -842,3 +842,18 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 4 as T5.4 with the recommended drafts."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:25 CDT — Phase 3: Architecture, Area 5 (run states and stop labels, T5.4)"
+
+### T5.5 The privacy note (amends T1.14: a rule on personal details in queries; amends T4.1: fonts served by our own web service)
+
+- **Decision:** Area 5, topic 5 (T3.7's privacy note), facts in `docs/research/retention.md`:
+  1. **The note, final text,** each provider's name linking to the page its claim comes from:
+     > **Privacy.** Your question is sent to Anthropic, whose Claude model researches and answers it; Anthropic deletes it within 30 days, unless its safety systems flag it (up to 2 years) or the law requires otherwise. Claude's searches go to Voyage AI (meaning search; opted out of training Voyage's future models) and, for the update check, to Exa, which may keep and use search queries to improve its services; Claude is told to leave personal details out of them. Avoid putting anything in a question you would not want stored.
+     >
+     > This site keeps each run's steps, your question and the answer for 24 hours, so a dropped connection can resume, then deletes them. It keeps a record of each run without the question or answer (times, steps, tokens and cost) to track spending. No accounts, no cookies, no analytics; your browser holds only the current run's ID, until you close the tab. This site does not use or store IP addresses; the gateway in front of it and Google Cloud keep standard request logs, which include them, for 30 days. Recorded runs use questions chosen by the site's author; no visitor's run is ever recorded.
+  2. **The query rule (amends T1.14, judgement rules):** the loop's system prompt tells Claude never to put names or other personal details from the question into meaning-search (Voyage) or web (Exa) queries, so the question itself reaches only Anthropic. Build tests check it with a question that carries a name.
+  3. **Fonts served by our own web service (amends T4.1):** Instrument Sans, Newsreader and JetBrains Mono are served as `.woff2` files from the web service, with the SIL Open Font License text shipped beside them; no request goes to Google Fonts, so the page contacts no third party. No font credit on the page (T5.1).
+  4. **Voyage's opt-out:** done by the user on the Voyage AI dashboard (Terms of Service, Section 3(iii)), Oct 24, 2026. MongoDB's docs describe a separate Atlas toggle; which applies depends on where the project's key was created, checked in Phase 4 from the key's endpoint, and if it is an Atlas key the Atlas toggle is turned off as well (the user's action).
+  5. **The figures follow the settings:** 24 hours (T3.7), 30 days (Cloud Logging's default, the user's check for goodnight); a change to either changes the note.
+- **User's words:** *"I checked myself, and goodnight keeps request logs for 30 days, the default, so your note's "30 days by default" is correct. Voyage AI is also dropped out as well."* Then: *"Add the query rule and self-host the fonts (amending T4.1). Lock the privacy note as T5.5."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:36 CDT — Phase 3: Architecture, Area 5 (the privacy note, T5.5)"

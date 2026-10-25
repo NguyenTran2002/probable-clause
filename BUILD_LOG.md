@@ -849,3 +849,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Drafts with recommendations in nine groups: waking, paused and unavailable, connection, retries and failures, the Voyage warning, stop labels, no-sources replies, replays and the one-question line, rejections and the finish line; T5.4 locked with every recommendation.
 **DECISION (user):**
 - T5.4: *"Lock topic 4 as T5.4 with the recommended drafts."*
+
+## Oct 24, 2026, 19:36 CDT — Phase 3: Architecture, Area 5 (the privacy note, T5.5)
+**Asked:** Open topic 5 (the privacy note, T3.7) and read the retention pages directly, without a subagent; then add the query rule, self-host the fonts (amending T4.1) and lock the note.
+**Came back:**
+- `docs/research/retention.md`: Anthropic, Voyage (MongoDB), Exa, Cloud Run and Cloud Logging, and Google Fonts. Every quote was string-matched by `scripts/verify_quotes.py`; Exa's terms were checked as extracted PDF text; Google Fonts' FAQ renders by JavaScript, so it was matched in the built-in browser. Findings: Anthropic deletes API inputs and outputs within 30 days (up to 2 years if flagged; longer if the law requires). MongoDB may use what is sent to Voyage to improve its models unless the organisation opts out. Exa's terms take a perpetual licence to store and use queries, and its privacy policy says query data trains its models. Cloud Logging keeps request logs 30 days by default. Google Fonts receives the visitor's IP address and sets no cookies.
+- Four choices put to the user. The user checked two in their own accounts: Voyage training opted out on the Voyage AI dashboard (Terms of Service, Section 3(iii)), and goodnight's request logs kept 30 days. Recorded in `retention.md`; the screenshot is not committed.
+- T5.5 locked: the note's text, a query rule added to the loop's system prompt (amends T1.14), and the fonts served by our own web service (amends T4.1).
+**DECISION (user):**
+- *"Open topic 5. Read the retention pages yourself, no subagent."*
+- *"I checked myself, and goodnight keeps request logs for 30 days, the default, so your note's "30 days by default" is correct. Voyage AI is also dropped out as well."*
+- T5.5: *"Add the query rule and self-host the fonts (amending T4.1). Lock the privacy note as T5.5."*
