@@ -790,3 +790,23 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - The user's change: Voyage left out of the shown cost, since its use is very likely within its free tokens. Restated: the total line covers Claude (loop and answer) and Exa and says so; T3.4's caps still count Voyage at list price (display change only). Locked as T4.5.
 
 **DECISION (user):** *"Voyage is very likely free because we make so few requests that it'd still be within free tier even tho I added money to the account and am at Tier 1. So just total up Claude and Exa code with option B and D?"* Then: *"This matches what I wanted. Lock area 4."*
+
+## Oct 24, 2026, 19:00 CDT — Phase 3: Architecture, Area 4 closed (the interface)
+
+**Asked:** Run Area 4 after the compaction, one topic at a time, each locked in the user's words. On the first draft of nine topics the user pointed out that the prototype is done and locked, so the area was re-scoped to what the prototype leaves open.
+**Came back:**
+- Five topics, confirmed by the user, all locked:
+  - T4.1 (18:50): art direction — the machinery prototype in Evergreen (commit badc05f) as the build's baseline: the landing-to-chat flow, the sources column, underlined citations with hover, the answer key, "View API calls" and "View source", the wordmark, palette, type, the 51.25rem width, the three test sizes; the prototype-only parts dropped.
+  - T4.2 (18:52): the frontend stack — plain JavaScript modules, no build step, markdown-it vendored with raw HTML and links off, elements built with text, a pinned nginx web service with `Cache-Control: no-cache`, Node's built-in test runner.
+  - T4.3 (18:54): where Areas 1 to 3 change the prototype — cards Found, Kept, then kept and cited, kept not cited, or not kept; no syllabus; hues repeating in keep order; the band in T2.3's shape; the two checks' flags and line; the reader fetching per-opinion files from the web service; exact API fragments in the events.
+  - T4.4 (18:56): new pieces in the prototype's style — waking and the long wait, cap-paused, reconnecting, retries, interrupted and abandoned, reload, the Voyage warning, stop labels, a failed composition, no-sources replies, replays, one question per run.
+  - T4.5 (19:00): costs — a run total for Claude and Exa, labelled so, and each response's exact `usage` in the API window; Voyage not shown, still counted by the caps.
+- Amended: T3.1 (the reader fetches whole opinions as static files, T4.3). Settled: brief §2 default 1 (frontend stack, T4.2); T3.7's follow-up question (T4.4).
+- Carried forward: the working doc's "Area 4 closed" section (build, interfaces contract, Phase 5, Area 5); Area 5's proposed topics drafted there for after the compaction.
+**DECISION (user):**
+- Scope: *"Wait, the frontend prototype is done and locked. What will that change about this area?"* Then *"The five topics work. Open topic 1."*
+- T4.1: *"Lock topic 1 as T4.1 as drafted."*
+- T4.2: *"Lock topic 2 as T4.2: option A as proposed."*
+- T4.3: *"Lock topic 3 as T4.3: the seven changes as proposed, 6(a) and 7(b)."*
+- T4.4: *"Lock topic 4 as T4.4 as proposed."*
+- T4.5: *"Voyage is very likely free because we make so few requests that it'd still be within free tier even tho I added money to the account and am at Tier 1. So just total up Claude and Exa code with option B and D?"* Then *"This matches what I wanted. Lock area 4."*
