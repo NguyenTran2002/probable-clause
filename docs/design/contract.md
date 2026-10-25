@@ -505,7 +505,7 @@ In `api/state/prices.py`, one source and date per provider:
 
   The main session re-reads the pricing page before the first paid build test and records the date.
 - **Exa** (Phase 2 findings §4, observed): `auto` $0.007 and `lite` $0.004 a search with text. `costDollars` wins when it is reported.
-- **Voyage** (MongoDB's billing page): `voyage-law-2` and `rerank-3` per million tokens, filled from the page with its date before `embed_corpus.py --confirm` runs. Until then they are marked unconfirmed: `voyage-law-2` $0.12 (the top of the documented range) and `rerank-3` $0.05.
+- **Voyage** (Voyage AI's pricing page, https://docs.voyageai.com/docs/pricing, read Oct 24, 2026; the key is a Voyage platform key, checked by `scripts/probe_voyage.py`, so MongoDB's page does not apply): `voyage-law-2` $0.12 and `rerank-3` $0.05 per million tokens. Free tokens are not modelled; list price is the conservative figure for the caps (v1.1).
 
 ## 11. Static files
 

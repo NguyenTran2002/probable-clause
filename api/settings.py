@@ -26,7 +26,7 @@ COMPOSITION_EFFORT = _s("high", "T1.8")
 EMBED_MODEL = _s("voyage-law-2", "T1.1")
 RERANK_MODEL = _s("rerank-3", "T1.1")
 EMBED_DIMENSION = _s(1024, "voyage-law-2's output dimension (phase3-working, Area 3 topic 6)")
-VOYAGE_BASE_URL = _s("https://api.voyageai.com/v1", "PLACEHOLDER until the key's endpoint is checked (T5.5)")
+VOYAGE_BASE_URL = _s("https://api.voyageai.com/v1", "T5.5: the key is a Voyage platform key, accepted here and checked with scripts/probe_voyage.py, Oct 24, 2026")
 
 # Run limits (P2.7, T1.11, T3.3, T3.5)
 MAX_ROUNDS = _s(12, "P2.7")

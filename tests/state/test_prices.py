@@ -45,11 +45,11 @@ def test_exa_list_prices():
     assert PRICE_TABLE["exa"]["types"] == {"auto": 0.007, "lite": 0.004}
 
 
-def test_voyage_prices_are_marked_unconfirmed_until_the_billing_page_is_read():
+def test_voyage_prices_confirmed_from_voyages_pricing_page():
     v = PRICE_TABLE["voyage"]
-    assert v["confirmed"] is False
+    assert v["confirmed"] is True
     assert v["models"] == {"voyage-law-2": 0.12, "rerank-3": 0.05}
-    assert "unconfirmed" in v["source"].lower()
+    assert "docs.voyageai.com/docs/pricing" in v["source"] and v["date"] == "2026-10-24"
 
 
 def test_the_other_providers_are_confirmed():

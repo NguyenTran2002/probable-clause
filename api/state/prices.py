@@ -34,13 +34,12 @@ PRICE_TABLE: dict = {
         "types": {"auto": 0.007, "lite": 0.004},
     },
     "voyage": {
-        # contract §10: to be filled from MongoDB's billing page, with its date, before embed_corpus.py --confirm.
-        # voyage-law-2 is the top of the documented range ($0.02 to $0.12); rerank-3 as phase2-findings §5 reads it.
-        "source": ("UNCONFIRMED placeholders until read from MongoDB's billing page "
-                   "(https://www.mongodb.com/docs/voyageai/management/billing/): voyage-law-2 at the top of the "
-                   "documented range, rerank-3 as listed in phase2-findings §5"),
+        # contract §10: read by the main session before embed_corpus.py --confirm. The key is a Voyage platform key
+        # (api.voyageai.com accepted it, scripts/probe_voyage.py, Oct 24, 2026), so Voyage's own page applies.
+        # Free tokens (50M for voyage-law-2) are not modelled: list price is the conservative figure for the caps.
+        "source": "Voyage AI pricing page (https://docs.voyageai.com/docs/pricing), read Oct 24, 2026",
         "date": "2026-10-24",
-        "confirmed": False,
+        "confirmed": True,
         "unit": "USD per million tokens",
         "models": {"voyage-law-2": 0.12, "rerank-3": 0.05},
     },
