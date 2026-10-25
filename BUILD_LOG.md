@@ -1138,3 +1138,18 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"I checked the prompts. They are good to go."*
 - *"rerank-3 is valid, I just check."*
 - *"Voyage API key is included in .env. Do NOT read the file yourself."*
+
+## Oct 24, 2026, 21:58 CDT — Phase 4: Build, Voyage checked end to end before the embedding
+**Asked:** The checks before the embedding (contract §10, T5.5). Then, on the user's word, *"send a throwaway run first to confirm end to end working"*.
+**Came back:**
+- **The key's endpoint** (`scripts/probe_voyage.py`, 97e94ed): one one-word embedding, 2 tokens, was accepted by `api.voyageai.com`. It is a Voyage platform key, so the user's opt-out on Voyage's dashboard applies and no Atlas toggle is needed (T5.5). `VOYAGE_BASE_URL`'s basis is updated.
+- **Prices** (Voyage's pricing page, https://docs.voyageai.com/docs/pricing, read Oct 24, 2026): `voyage-law-2` $0.12 and `rerank-3` $0.05 per million tokens. Marked confirmed in `api/state/prices.py`. The 50M free embedding tokens are not modelled, since list price is the conservative figure for the caps.
+- **Dry run of the whole corpus:** 2,462 passages in 39 batches, about 653,063 tokens estimated (an over-estimate), about $0.0784 at list price.
+- **Throwaway run** (a scratchpad script, outputs in the scratchpad only; `data/vectors/` untouched):
+  - 12 real passages went through `embed_corpus.main --confirm`: 2,619 tokens, $0.0003.
+  - `MeaningIndex.load` accepted them: model, dimension and text hashes all checked.
+  - One real meaning search, "whether listening to a telephone booth conversation with an electronic device is a search", made the query embed (17 tokens, 413 ms) and a rerank of all 12 (2,398 tokens, 549 ms). Status ok, every hit reranked, no flags. The top four were *Katz* (katz-1-p1, katz-3-p1, katz-1-p10, katz-3-p3).
+  - Each attempt was recorded once with its cost.
+  - A second `--confirm` run paid nothing; its batch came from the cache.
+**Spend:** Voyage, about 7,650 tokens in all, about $0.0004 at list price, likely within the free tokens. Anthropic: none.
+**DECISION (user):** *"Wait, send a throwaway run first to confirm end to end working"*
