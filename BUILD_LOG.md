@@ -1296,3 +1296,33 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Tests:** C's retry tests now assert the estimate for the embed and the rerank. Search, state and contract tests: 1,851 passed, 47 skipped.
 **Spend:** none.
 **DECISION (user):** none; a fix within T3.3 as locked.
+
+## Oct 24, 2026, 23:40 CDT — Phase 4: Build, Wave 2, contract v1.2 (after part H's review)
+**Asked:** builder H's ten contract questions, and its Sonnet 5.5 high review.
+**Came back:**
+- **H's review found real defects; H is fixing them now:**
+  - a cancel during `record_usage` could drop a billed cost and then release the reservation;
+  - an estimated Voyage usage was shown as Voyage's own;
+  - **the shutdown path was unreachable while a stream was attached.** uvicorn runs the lifespan shutdown only after connections close, and Cloud Run sends SIGKILL 10 s after SIGTERM. Each run killed this way would have kept $1.674 reserved against the caps;
+  - `create_run` leaked the reservation on cancellation;
+  - `isdigit()` accepted non-ASCII digits;
+  - `interrupted` was skipped when the page was ahead of Atlas.
+- **Contract v1.2, the main session's rulings** (this file; `contract.md`'s header lists them):
+  - `ErrorKind` gains `internal`, for H's `failed` after an unexpected exception (`api/errors.py` and the schema's `failure_reason`).
+  - `interrupted`'s `n` is one more than the larger of the last stored event and the page's `Last-Event-ID`, so the page always receives it. Stored events are replayed only while their numbers run on without a gap.
+  - §5 lists the extra codes: `bad_request`, `not_found`, `method_not_allowed`, `internal`, and `atlas_unreachable` on an events read or a heartbeat. The page shows any code it has no words for as T5.4's general failure.
+  - `answer_chars` is always the length of the answer text streamed, so H's `failed` and `interrupted` keep `answer_end: none` with what arrived. The fixture test is adjusted.
+  - **Shutdown:** `SHUTDOWN_GRACE_S = 5`, uvicorn's `--timeout-graceful-shutdown` (in `deploy/api.Dockerfile`, with a test). Basis: Cloud Run's 10 s between SIGTERM and SIGKILL (docs.cloud.google.com/run/docs/container-contract, read Oct 24, 2026).
+- **Left as built:**
+  - the spend-limit pause's own message under `paused_month`;
+  - no run record for an unattached run that expires;
+  - finished runs kept in memory for `EVENTS_TTL_S`;
+  - an index failure at start-up is not fatal.
+  - Both stop kinds, `console_spend_limit` and `tier_spend_cap`, set the spend-limit flag, which is the safe reading.
+- **For the final Opus review and the user:**
+  - **No tripwire** stops a run whose spend passes its reservation. The contract relies on G's limits, so a bug there is unbounded for that run.
+  - **A reservation left by a SIGKILL** stays counted until cleared by hand. `deploy.sh`'s gate reports it, but nothing clears it.
+  - **Unattached runs:** five `POST /runs` with no stream hold the $10 day's room for `UNATTACHED_RUN_EXPIRY_S` (120 s), at no cost to whoever sends them. This follows from T3.1 and T3.4 as locked.
+- **Tests:** deploy, contract, state and search: 1,891 passed, 49 skipped.
+**Spend:** none.
+**DECISION (user):** none; the main session's rulings within the locked decisions, announced to G and H.

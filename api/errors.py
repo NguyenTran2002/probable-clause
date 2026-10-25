@@ -26,6 +26,7 @@ ErrorKind = Literal[
     "no_credit",        # Exa 402 NO_MORE_CREDITS (T2.4)
     "protocol",         # an MCP or HTTP protocol error
     "unreadable",       # a reply our code cannot parse
+    "internal",         # an unexpected exception in our own code: H's `failed` (contract v1.2)
 ]
 
 

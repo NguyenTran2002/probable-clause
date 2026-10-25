@@ -475,7 +475,7 @@ def test_run_ended_is_consistent(path):
         assert end != "incomplete"          # error_stopped is a loop stopped by an error, composed from what was kept
     if end in ("complete", "cut_off", "incomplete"):
         assert d["answer_chars"] > 0
-    if end == "none":
+    if end == "none" and state not in ("failed", "interrupted"):   # H's endings count what streamed (v1.2)
         assert d["answer_chars"] == 0
 
 

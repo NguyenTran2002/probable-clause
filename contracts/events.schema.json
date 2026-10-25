@@ -1234,6 +1234,7 @@
             "no_credit",
             "protocol",
             "unreadable",
+            "internal",
             null
           ],
           "description": "The api/errors.ErrorKind behind a failed, error_stopped, refusal or incomplete ending; null otherwise (spend_limit carries its stop_kind instead)."

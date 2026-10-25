@@ -1,6 +1,6 @@
 # Interfaces contract
 
-**Version 1.1** (Oct 24, 2026). Version 1 was revised after the Opus xhigh review (P4.1) before any builder started; 1.1 adds `loop_messages.json` to §4.G's prompt files, has `scripts/embed_corpus.py` read passages through B's `Corpus` (§4.C), and settles the embedded header's section wording and the appendix labels (§3, §4.C, after the main session's review of the labels), all during Wave 1. Written by the main session for Phase 4. One writer, the main session; a change bumps the version and is announced to every builder and to the frontend session (P0.3). Where this contract and `docs/design/locked-decisions.md` differ, the decisions win and this file is fixed.
+**Version 1.2** (Oct 24, 2026). 1.2, after part H's review in Wave 2: the `internal` error kind, `interrupted`'s number when the page is ahead of Atlas, the extra HTTP error codes, `answer_chars` on H's endings, and the shutdown grace (§4.H, §5, §6). Version 1 was revised after the Opus xhigh review (P4.1) before any builder started; 1.1 adds `loop_messages.json` to §4.G's prompt files, has `scripts/embed_corpus.py` read passages through B's `Corpus` (§4.C), and settles the embedded header's section wording and the appendix labels (§3, §4.C, after the main session's review of the labels), all during Wave 1. Written by the main session for Phase 4. One writer, the main session; a change bumps the version and is announced to every builder and to the frontend session (P0.3). Where this contract and `docs/design/locked-decisions.md` differ, the decisions win and this file is fixed.
 
 Machine-checkable and shared code, all the main session's: `contracts/events.schema.json` (every event), `api/types.py` (shared types), `api/settings.py` (every figure and its basis), `api/errors.py` (errors and the closed error vocabulary), `api/retry.py` (our retries, T3.3), `api/protocols.py` (the Atlas store's interface). Builders import these and never redefine what they hold.
 
@@ -340,7 +340,9 @@ The caps need no check here, because the run's reservation already bounds what i
 
 **The two `run_ended` events H emits:**
 - **`failed`,** when `execute_run` raises an unexpected exception.
-- **`interrupted`,** on an instance that doesn't hold the run. It is sent on the stream only, never stored. Its `n` is the last stored event + 1, and its totals are summed from the stored `paid_call` events.
+- **`interrupted`,** on an instance that doesn't hold the run. It is sent on the stream only, never stored. Its `n` is one more than the larger of the last stored event and the page's `Last-Event-ID`, so the page always receives it (v1.2). Stored events are replayed only while their numbers run on without a gap. Its totals are summed from the stored `paid_call` events.
+
+**Shutdown (v1.2):** uvicorn runs with `--timeout-graceful-shutdown` of `SHUTDOWN_GRACE_S`, so after Cloud Run's SIGTERM the open streams close and the lifespan shutdown cancels the running runs and releases their reservations (a reservation with a paid call in flight stays counted) before the SIGKILL 10 s later.
 
 **Protections:** the body-size caps and the question cap (T3.7).
 
@@ -370,6 +372,8 @@ All JSON is UTF-8. Errors are `{"error": "<code>", "message": "<for logs, never 
 | `POST /runs` | `{"question": "<text>"}`, at most `REQUEST_BODY_MAX_BYTES` | `201 {"run_id": "<random, unguessable>"}`; `400 question_empty` / `question_too_long`; `413 body_too_large`; `503 paused_day` / `paused_month` / `atlas_unreachable` (authoritative over `/health`, T3.4; the spend-limit pause answers `paused_month`) |
 | `GET /runs/{id}/events` | `Last-Event-ID` header optional | `200 text/event-stream`: each event as `id: <n>`, `event: <kind>`, `data: <JSON envelope>`; a comment line every `KEEPALIVE_S`; the stream closes after `run_ended`. `404 run_unknown` (never existed or expired: T5.4's "no longer stored") |
 | `POST /runs/{id}/alive` | `{"last_event": <n>}` | `204`; `404 run_unknown` |
+
+**Other codes (v1.2):** `400 bad_request` (a body that isn't the JSON above), `404 not_found` (no such path), `405 method_not_allowed`, `500 internal`, and `503 atlas_unreachable` when Atlas fails on an events read or a heartbeat for a run held by another instance. The page shows any code it has no words for as T5.4's general failure.
 
 Control characters are stripped from the question, and an empty or whitespace-only question is refused before any paid call (T3.7). No cookies are set and no client IP is read (T3.5, T3.7).
 
@@ -435,7 +439,7 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
   - `console_spend_limit` / `tier_spend_cap` with `spend_limit`;
   - `time_limit` with `time_limit`.
 - **`answer_end: incomplete`** goes with state `answered` (the loop finished; the composition broke after its first block, T3.3), with `failure_reason` the error kind; `error_stopped` is only for a loop stopped by an error after retries, composed from what was kept (v1.1).
-- **`failure_reason`** is an `api/errors.ErrorKind` or null; `paused.since_ms` is the time since the last heartbeat and `resumed.since_ms` the time paused (v1.1).
+- **`failure_reason`** is an `api/errors.ErrorKind` or null; H's `failed` after an unexpected exception carries `internal` (v1.2). **`answer_chars`** is always the length of the `answer_block` text streamed, so H's `failed` and `interrupted` keep `answer_end: none` with the characters that did arrive (v1.2); `paused.since_ms` is the time since the last heartbeat and `resumed.since_ms` the time paused (v1.1).
 - **A failed attempt with no usage reported** has `usage: null` and `estimated: true` in its `paid_call`, priced from the caller's input estimate (T3.3, v1.1).
 
 ### 6.1 A passage in events
