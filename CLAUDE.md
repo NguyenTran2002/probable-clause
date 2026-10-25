@@ -41,7 +41,8 @@ More, each from the brief:
 - `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/research/retention.md`: what each provider keeps of what the page sends (Area 5, T5.5), quotes string-matched.
 - `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user), kept for the record.
-- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them.
+- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them; `scripts/render_run.py`: a saved run as a readable Markdown file.
+- `docs/design/wave3-design.md`: the Wave 3 design (update step beside composition, composition on Sonnet, no reservation, looser limits), a draft for the user's approval.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
@@ -86,16 +87,33 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, after P4.16 (12:42); the paid build tests ran at 12:29.*
+*Updated Oct 25, 2026, 13:31 CDT, before a planned compaction; the Wave 3 design waits for the user's approval.*
 
-- **The paid build tests are done** (BUILD_LOG, "Oct 25, 2026, 12:29 CDT"): four runs through `scripts/run_client.py` against `Probable_Clause_test`, $0.8078 of Anthropic, 4 Exa searches. Money, cache classes, citations, thinking and the out-of-scope path held. Events and the server log are under `data/verification/phase4/` (local).
-- **P4.16 locked and built** (12:42 entry): `submit_answer` alone in its turn, once, with the three approved texts; contract v1.8. The double-submit defect is fixed on the fakes; not yet re-run with money.
-- **Next, on the user's word:**
-  1. **P4.17 locked and built** (12:55 entry): the quotation check ignores letter case throughout; contract v1.9.
-  2. **Re-run after P4.16 and P4.17 done** (13:04 entry): one submit per run, 22 of 22 quotations found. **Open:** test 4's loop used 366,680 of `LOOP_INPUT_BUDGET` 370,000 in 8 rounds, for the user's decision. `spend_report.py --open-reservations` could not reach Atlas afterwards (the server had released every reservation); re-check it.
-  3. Any further paid run, which needs the user's approval (Phase 4 has $1.33 of Anthropic and 2 Exa searches left). The user reads answers first: `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
-  4. **Keep every run** (the user, after the paid tests): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
-  - Also reported, no action proposed: test 1 skipped its update search; test 3 answered with a scope note rather than nothing found; the loop's input budget would stop a research-heavy run at about round 7 or 8.
+- **Next: Wave 3,** per `docs/design/wave3-design.md` (a draft; nothing in it locked). In order:
+  1. **The user approves the design** and answers its §8 questions:
+     - `LOOP_INPUT_BUDGET` 800k or 2M (it counts input only, over every research call);
+     - `MAX_CONCURRENT_RUNS` 5;
+     - the update step's input (a short brief, recommended);
+     - the `busy` wording;
+     - Phase 4's paid-test limits for the runs after Wave 3.
+  2. **Lock P4.18 to P4.21,** each in its own BUILD_LOG entry with its `locked-decisions.md` entry, in the user's words:
+     - P4.18, looser limits;
+     - P4.19, the update step out of the research loop, run beside the composition, turned off by code when research never searched the corpus;
+     - P4.20, composition on Sonnet 5.5 high, uncached, kept passages only;
+     - P4.21, no reservation: admission under the caps, spend recorded per call, a cap on runs at once.
+  3. **The main session** writes contract v2.0, `events.schema.json`, settings, protocols and types, drafts the prompts for the user's review (T1.14), and updates the frontend brief (the frontend waits only for the step log, the band's timing, `declined`'s removal and `busy`).
+  4. **Wave 3a** (E, money and state, Sonnet 5.5 high; I's one line by the main session), then **Wave 3b** (G, Opus 5.5 xhigh, possibly split G1 and G2; H, Sonnet 5.5 high). Then a Sonnet review per part, one Opus xhigh review across the parts, fixtures regenerated, the whole suite.
+  5. **The paid tests again,** only on the user's approval of their limits.
+- **The user's direction for the design** is quoted in BUILD_LOG, "Oct 25, 2026, 13:31 CDT".
+- **Wave 3's agents (the user):** *"min effort is high, Sonnet 5.5 and Opus 5.5 only, no Haiku. Max effort is xhigh, no max allowed."* Agents never commit; the main session commits each part's paths by name (P4.1).
+- **Done today, all logged:**
+  - the paid build tests (12:29);
+  - P4.16, `submit_answer` alone in its turn (12:42 and 12:48, contract v1.8);
+  - P4.17, the quotation check ignoring letter case (12:55 and 12:57, contract v1.9);
+  - the re-runs (13:04): one submit per run, 22 of 22 quotations found; test 4's loop used 366,680 of 370,000.
+- **Open:** `spend_report.py --open-reservations` could not reach Atlas after the re-runs, though the server had released every reservation. Re-check it; Wave 3 removes the option.
+- **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
+- **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
 - **State:** Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.17** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
@@ -105,7 +123,8 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - the shared code (`api/types.py`, `settings.py`, `errors.py`, `retry.py`, `protocols.py`, `api/prompts/`);
   - BUILD_LOG's entries from "22:58" (Wave 2) on;
   - `tests/fixtures/README.md`;
-  - `docs/design/paid-build-tests.md` (the plan; budget approved).
+  - `docs/design/paid-build-tests.md` (the plan; run twice);
+  - **`docs/design/wave3-design.md`** (the draft for approval) and BUILD_LOG's entries from 12:29 on;
 - **Done in Phase 4 (all logged):**
   - Step 0 and the prompts (approved 21:55).
   - **Wave 1,** A to F.
