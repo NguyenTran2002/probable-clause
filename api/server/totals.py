@@ -17,6 +17,7 @@ def model_for(purpose: str) -> str:
     """The model each purpose is priced by when a call reported no usage (contract §6, T3.3)."""
     return {
         "loop": str(settings.LOOP_MODEL.value),
+        "update": str(settings.UPDATE_MODEL.value),
         "composition": str(settings.COMPOSITION_MODEL.value),
         "embed": str(settings.EMBED_MODEL.value),
         "rerank": str(settings.RERANK_MODEL.value),
@@ -24,8 +25,9 @@ def model_for(purpose: str) -> str:
     }[purpose]
 
 
-SERVICE_OF_PURPOSE = {"loop": "anthropic", "composition": "anthropic", "embed": "voyage", "rerank": "voyage",
-                      "update_search": "exa"}
+SERVICE_OF_PURPOSE = {"loop": "anthropic", "update": "anthropic", "composition": "anthropic", "embed": "voyage",
+                      "rerank": "voyage", "update_search": "exa"}
+CLAUDE_PURPOSES = ("loop", "update", "composition")          # cost_usd's keys (contract §6.2, v2.0)
 
 
 class Totals:
@@ -35,7 +37,7 @@ class Totals:
         self.cache_read = 0
         self.cache_write = 0
         self.output_tokens = 0
-        self.cost = {"loop": 0.0, "composition": 0.0}
+        self.cost = {"loop": 0.0, "update": 0.0, "composition": 0.0}
         self.exa_searches = 0
         self.exa_cost = 0.0
         self.voyage_requests = 0
@@ -65,7 +67,7 @@ class Totals:
         self.output_tokens += output
 
     def total_cost(self) -> float:
-        return round(self.cost["loop"] + self.cost["composition"] + self.exa_cost + self.voyage_cost, COST_DIGITS)
+        return round(sum(self.cost.values()) + self.exa_cost + self.voyage_cost, COST_DIGITS)
 
     def as_dict(self) -> dict:
         r = lambda x: round(x, COST_DIGITS)  # noqa: E731
@@ -73,7 +75,7 @@ class Totals:
             "claude": {"calls": self.claude_calls, "input_tokens": self.input_tokens,
                        "cache_read_tokens": self.cache_read, "cache_write_tokens": self.cache_write,
                        "output_tokens": self.output_tokens,
-                       "cost_usd": {"loop": r(self.cost["loop"]), "composition": r(self.cost["composition"])}},
+                       "cost_usd": {k: r(self.cost[k]) for k in CLAUDE_PURPOSES}},
             "exa": {"searches": self.exa_searches, "cost_usd": r(self.exa_cost)},
             "voyage": {"requests": self.voyage_requests, "cost_usd": r(self.voyage_cost)},
             "prices": price_sources(),
@@ -98,7 +100,7 @@ def totals_from_events(events: list[dict]) -> Totals:
         d = e.get("data") or {}
         service, purpose = d.get("service"), d.get("purpose")
         cost = d.get("cost_usd") or 0.0
-        if service == "anthropic" and purpose in ("loop", "composition"):
+        if service == "anthropic" and purpose in CLAUDE_PURPOSES:
             t.add("anthropic", purpose, None, cost)
             u = d.get("usage")
             if u is None and isinstance(d.get("estimated_usage"), dict):

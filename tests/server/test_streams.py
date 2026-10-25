@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 import pytest
 
 from api import settings
-from api.state.clock import CHICAGO
 from api.state.store import MemoryStore
-from tests.server.support import (EVENT_FIXTURES, QUESTION, START, VALIDATOR, FakeClock, FlakyStore, answered_script,
-                                  ended_data, event_fixture, lifespan, loop_call, make_app, run_started_data)
+from tests.server.support import (EVENT_FIXTURES, QUESTION, START, VALIDATOR, FakeClock, FlakyStore,
+                                  ended_data, event_fixture, everything_script, lifespan, loop_call, make_app,
+                                  record_run, round_data, run_started_data, stored_store)
 
 pytestmark = pytest.mark.anyio
 KEEPALIVE_S = float(settings.KEEPALIVE_S.value)
@@ -31,7 +31,7 @@ def gated_script(gate: asyncio.Event, clock):
     """run_started, round_started, a paid call; wait on `gate`; then an answer block and run_ended."""
     async def script(ctx, deps):
         await ctx.emit("run_started", run_started_data(ctx))
-        await ctx.emit("round_started", {"round": 1, "status_line": "Round 1 of 12 · 0 kept · update check not yet run"})
+        await ctx.emit("round_started", round_data(1))
         await loop_call(ctx)
         await gate.wait()
         await ctx.emit("answer_block", {"index": 0, "text": "Done.", "citations": []})
@@ -63,7 +63,7 @@ async def test_envelope_numbering_time_and_offset():
         await ctx.emit("run_started", run_started_data(ctx))
         for i in range(1, 4):
             await clock.sleep(1.2345)
-            await ctx.emit("round_started", {"round": i, "status_line": f"Round {i} of 12"})
+            await ctx.emit("round_started", round_data(i))
         await ctx.emit("run_ended", ended_data(ctx, state="no_sources", answer_end="none", rounds=3)
                        | {"no_sources_reason": "out_of_scope", "note": "Outside the corpus."})
 
@@ -74,7 +74,7 @@ async def test_envelope_numbering_time_and_offset():
         s.pump()
         evs = s.events()
         assert [e["n"] for e in evs] == [1, 2, 3, 4, 5]
-        assert all(e["v"] == 1 and e["run"] == run_id for e in evs)
+        assert all(e["v"] == 2 and e["run"] == run_id for e in evs)
         assert [e["t_ms"] for e in evs] == [0, 1234, 2469, 3703, 3703]
         for e in evs:
             assert AT.match(e["at"])
@@ -130,7 +130,7 @@ async def test_a_slow_atlas_never_holds_up_the_stream():
         run_id, s = await start(h)
         assert s.closed and s.events()[-1]["kind"] == "run_ended"
         assert await store.inner.read_events(run_id, 0) == []          # nothing copied yet
-        assert await store.inner.open_reservations(h.clock.now()) == []   # the money did not wait on the copy
+        assert (await store.inner.read_month("2026-10"))["spent"] > 0       # the money did not wait on the copy
         store.gates["append_events"].set()
         await h.clock.settle()
         assert [e["n"] for e in await store.inner.read_events(run_id, 0)] == [1, 2, 3, 4, 5]
@@ -160,7 +160,7 @@ async def test_atlas_down_for_the_whole_run(caplog):
         await h.clock.settle()
         assert s.closed and s.events()[-1]["data"]["state"] == "answered"
         assert await store.inner.get_run_record(run_id) is not None
-        assert await store.inner.open_reservations(h.clock.now()) == []
+        assert (await store.inner.read_month("2026-10"))["spent"] > 0
     assert "never copied" in caplog.text and "db.example.internal" not in caplog.text
 
 
@@ -239,52 +239,87 @@ async def test_another_instance_replays_a_finished_run_from_atlas():
 
 
 def _store_with(events: list[dict]) -> MemoryStore:
-    store = MemoryStore()
-    store._events[events[0]["run"]] = {e["n"]: {**e, "created": START} for e in events}
-    return store
+    return stored_store(events)
 
 
-async def test_interrupted_matches_the_fixture_exactly():
-    doc = event_fixture("interrupted-run.json")
-    stored, expected = doc["events"][:-1], doc["events"][-1]
+async def test_interrupted_is_the_runs_own_end_numbered_past_the_last_stored():
+    """A run cut before its run_ended: H's interrupted ending carries the totals summed from the stored paid calls,
+    the research rounds and the answer length that the run's own run_ended reported."""
+    evs = await record_run(everything_script)
+    stored, own_end = evs[:-1], evs[-1]
     store = _store_with(stored)
-    clock = FakeClock(datetime.fromisoformat(expected["at"]))
+    clock = FakeClock(datetime.fromisoformat(own_end["at"]))
     h = make_app(store=store, clock=clock)
     run_id = stored[0]["run"]
     async with lifespan(h.app):
         s = h.client.stream(f"/runs/{run_id}/events")
         await clock.settle()
         s.pump()
-        evs = s.events()
-        assert evs[:-1] == stored
-        assert evs[-1] == expected, "n is the last stored + 1; totals are summed from the stored paid calls"
-        assert s.closed
-        assert not list(VALIDATOR.iter_errors(evs[-1]))
+        got = s.events()
+        assert got[:-1] == stored
+        end = got[-1]
+        assert end["v"] == 2 and end["kind"] == "run_ended" and end["n"] == stored[-1]["n"] + 1 and s.closed
+        d = end["data"]
+        assert d["state"] == "interrupted" and d["stop_kinds"] == [] and d["answer_end"] == "none"
+        assert d["totals"] == own_end["data"]["totals"], "summed from the stored paid_call events, update included"
+        assert d["totals"]["claude"]["cost_usd"]["update"] > 0
+        assert d["rounds"] == own_end["data"]["rounds"] == 1, "research's rounds only"
+        assert d["answer_chars"] == own_end["data"]["answer_chars"]
+        assert not list(VALIDATOR.iter_errors(end))
         assert [e["n"] for e in await store.read_events(run_id, 0)] == [e["n"] for e in stored], "never stored"
         assert await store.get_run_record(run_id) is None
 
 
 # v1.2: the page always receives an end, numbered past whichever is larger, the last stored event or its own
-@pytest.mark.parametrize("header,ns", [("42", [43]), ("43", [44]), ("50", [51]), ("10", list(range(11, 44)))])
-async def test_interrupted_honours_last_event_id(header, ns):
-    doc = event_fixture("interrupted-run.json")
-    stored = doc["events"][:-1]
+@pytest.mark.parametrize("offset", [0, 1, 8, -2])
+async def test_interrupted_honours_last_event_id(offset):
+    evs = await record_run(everything_script)
+    stored = evs[:-1]
+    last = stored[-1]["n"]
     h = make_app(store=_store_with(stored))
     async with lifespan(h.app):
-        s = h.client.stream(f"/runs/{stored[0]['run']}/events", {"Last-Event-ID": header})
+        header = last + offset
+        s = h.client.stream(f"/runs/{stored[0]['run']}/events", {"Last-Event-ID": str(header)})
         await h.clock.settle()
         s.pump()
-        assert [e["n"] for e in s.events()] == ns and s.closed
+        assert [e["n"] for e in s.events()] == list(range(header + 1, last + 1)) + [max(last, header) + 1]
+        assert s.closed
+
+
+@pytest.mark.parametrize("cut", [4, 8, 10, 13])
+async def test_interrupted_totals_follow_the_stored_paid_calls_at_any_cut(cut):
+    """The totals the interrupted ending reports are exactly those of the paid_call events stored before the cut."""
+    evs = await record_run(everything_script)
+    stored = evs[:cut]
+    assert all(e["kind"] != "run_ended" for e in stored)
+    paid = [e["data"] for e in stored if e["kind"] == "paid_call"]
+    h = make_app(store=_store_with(stored))
+    async with lifespan(h.app):
+        s = h.client.stream(f"/runs/{stored[0]['run']}/events", {"Last-Event-ID": str(stored[-1]["n"])})
+        await h.clock.settle()
+        s.pump()
+        [ev] = s.events()
+        t = ev["data"]["totals"]
+        claude = [p for p in paid if p["service"] == "anthropic"]
+        assert t["claude"]["calls"] == len(claude)
+        for purpose in ("loop", "update", "composition"):
+            assert t["claude"]["cost_usd"][purpose] == pytest.approx(
+                sum(p["cost_usd"] for p in claude if p["purpose"] == purpose))
+        assert t["exa"]["searches"] == len([p for p in paid if p["service"] == "exa"])
+        assert t["voyage"]["requests"] == len([p for p in paid if p["service"] == "voyage"])
+        assert not list(VALIDATOR.iter_errors(ev))
 
 
 FIXTURES = sorted(p.name for p in EVENT_FIXTURES.glob("*.json") if "-after-" not in p.name)
 
 
 @pytest.mark.parametrize("name", FIXTURES)
-async def test_interrupted_totals_are_the_stored_paid_calls(name):
-    """Every fixture stream, cut before its run_ended: H's interrupted ending reports the totals, rounds and answer
-    length the stream's own run_ended reported."""
+async def test_interrupted_totals_are_the_stored_paid_calls_of_every_fixture(name):
+    """Every fixture stream, cut before its run_ended. The fixtures are v1 until the main session regenerates them for
+    v2 (the plan's step 4): a v1 recording is skipped, never served."""
     doc = event_fixture(name)
+    if doc["events"][0]["v"] != 2:
+        pytest.skip("a v1 recording, kept for the record (contract §6)")
     stored, end = doc["events"][:-1], doc["events"][-1]
     h = make_app(store=_store_with(stored))
     async with lifespan(h.app):
@@ -300,20 +335,19 @@ async def test_interrupted_totals_are_the_stored_paid_calls(name):
 
 
 async def test_alive_on_another_instance_writes_the_heartbeat_to_atlas():
-    doc = event_fixture("interrupted-run.json")
-    stored = doc["events"][:-1]
+    stored = (await record_run(everything_script))[:-1]
     store = _store_with(stored)
     h = make_app(store=store)
     run_id = stored[0]["run"]
     async with lifespan(h.app):
-        r = await h.client.post(f"/runs/{run_id}/alive", {"last_event": 42})
+        r = await h.client.post(f"/runs/{run_id}/alive", {"last_event": 12})
         assert r.status == 204 and await store.latest_heartbeat(run_id) == START
         r = await h.client.post(f"/runs/{run_id}/alive", {"last_event": 0})
         assert r.status == 204
         r = await h.client.post(f"/runs/{run_id}/alive", {"last_event": 900})     # a bogus number still finds the run
         assert r.status == 204
         store.unreachable = True
-        r = await h.client.post(f"/runs/{run_id}/alive", {"last_event": 42})
+        r = await h.client.post(f"/runs/{run_id}/alive", {"last_event": 12})
         assert r.status == 503 and r.json()["error"] == "atlas_unreachable"
 
 

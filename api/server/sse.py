@@ -76,7 +76,7 @@ def interrupted_event(stored: list[dict], n: int, clock: Clock) -> dict:
     start = datetime.fromisoformat(first["at"]) - timedelta(milliseconds=first["t_ms"])
     now = clock.now().astimezone(CHICAGO)
     t_ms = max(stored[-1]["t_ms"], int((now - start).total_seconds() * 1000))
-    return {"v": 1, "run": first["run"], "n": n, "t_ms": t_ms, "at": now.isoformat(timespec="milliseconds"),
+    return {"v": 2, "run": first["run"], "n": n, "t_ms": t_ms, "at": now.isoformat(timespec="milliseconds"),
             "kind": "run_ended",
             "data": {"state": "interrupted", "stop_kind": None, "stop_kinds": [], "no_sources_reason": None, "note": None,
                      "scope_note": None, "answer_end": "none", "failure_reason": None,

@@ -491,7 +491,8 @@ class RunRegistry: ...                    # runs on this instance; one stream pe
 `busy` isn't recorded in Atlas: it is not a budget stop. It is logged with the count.
 
 **Money:**
-- **`record_usage`** is the one place spend is priced, recorded and totalled, and the one emitter of `paid_call`, with `step = STEP_OF_PURPOSE[purpose]` (§2). After pricing, it calls `store.record_spend(admission, cost)`.
+- **`record_usage`** is the one place spend is priced, recorded and totalled, and the one emitter of `paid_call`, with `step = STEP_OF_PURPOSE[purpose]` (§2). It prices the call, adds it to the totals, emits `paid_call`, and only then awaits `store.record_spend(admission, cost)`. So a cancellation during the write never loses the event, and Atlas latency never moves `paid_call` against the other branch's events.
+- **A `record_usage` after the run's end** (a stray task) is logged as an error naming its amount.
 - **A failed `record_spend`** is logged and its cost kept.
   - After a run's first failure, H stops calling Atlas for that run's spend and keeps every later cost too, so a run against a dead Atlas doesn't spend its deadline on 5 s timeouts.
   - The kept costs are recorded once, as one sum, when the run ends, and logged as lost if that fails too. P4.21 accepts losing those calls' figures.
@@ -502,6 +503,7 @@ class RunRegistry: ...                    # runs on this instance; one stream pe
 
 **The run task:**
 - It starts when the first stream attaches, and attaching counts as a heartbeat.
+- **A watchdog (v2.0):** a run still in progress `RUN_WATCHDOG_S` after its task started is cancelled and ends `failed` (`internal`), so a hung run can't hold a slot for good. A run cancelled before its task first runs still goes through its end, so its slot is freed.
 - A run no stream ever attaches to expires after `UNATTACHED_RUN_EXPIRY_S` with no spend, and frees its slot (T3.1).
 
 **Counting by step (v2.0).** Wherever H counts from events (the per-run record, `failed` and `interrupted`):
@@ -711,7 +713,7 @@ Database `Probable_Clause` (`PC_ENV=live`) or `Probable_Clause_test` (`PC_ENV=te
 | Collection | Document | Index |
 |---|---|---|
 | `events` | the full envelope (`v`, `run`, `n`, `t_ms`, `at`, `kind`, `data`) plus `created` (BSON date) | unique (`run`, `n`); TTL on `created`, `EVENTS_TTL_S` |
-| `runs` | the per-run record of T3.7, with no question or answer text: run ID, Chicago start date and time, end state and `stop_kind`, `stop_kinds`, research's rounds, the update step's rounds and end, searches, keeps, tokens and cost by service and by step, retries, answer length, check flags, the Voyage warning, `corpus_label` | unique `run` |
+| `runs` | the per-run record of T3.7, with no question or answer text: run ID, Chicago start date and time, end state and `stop_kind`, research's rounds, the update step's rounds and end (`update_end` null when `update_started` had no `update_ended`), searches, keeps, tokens and cost by service and by step, retries, answer length, check flags, the Voyage warning, `corpus_label` | unique `run` |
 | `spend` | one per Chicago month, `_id` `"2026-10"`: `spent`, `days: {"2026-10-24": {spent, runs_started, stops: {<kind>: n}}}` (v2.0: no `reserved`, no `reservations`; older documents that have them are read without them, §4.E) | `_id` |
 | `budget_stops` | one per refusal or stop: Chicago date and time, run ID or null, `kind`, the day's and month's spent at that moment, `budget: true \| false` | `at` |
 | `heartbeats` | `run`, `last_event`, `at` (BSON date) | TTL on `at`, `HEARTBEATS_TTL_S` |

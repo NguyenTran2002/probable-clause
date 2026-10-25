@@ -8,11 +8,9 @@
   and no client address is read.
 """
 
-import asyncio
 import functools
 import json
 import logging
-import re
 import secrets
 import time
 import unicodedata
@@ -26,12 +24,11 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response, Streami
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import settings
-from api.protocols import Refusal, Reservation, Store
+from api.protocols import Admission, Refusal, Store
 from api.server.clock import Clock, RealClock
 from api.server.registry import RunRegistry
 from api.server.run import Run, _kind
 from api.server.sse import SSE_HEADERS, ascii_int, live_stream, parse_last_event_id, replay_stream, stored_frames
-from api.state.budget import worst_case_usd
 from api.state.records import RUN_ID
 from api.types import CorpusLabel
 
@@ -41,13 +38,29 @@ APP_NAME = "probable-clause"
 LIVE_STATES = ("open", "paused_day", "paused_month", "unknown")
 UPDATE_STATES = ("available", "unavailable", "unknown")
 
-# The refusals of POST /runs (contract §5; T3.4). The spend-limit pause answers paused_month.
+# The refusals of POST /runs (contract §5, v2.0; T3.4). The spend-limit pause answers paused_month. `busy` is H's own,
+# from the registry's count, and never reaches Atlas.
 REFUSALS = {
-    "daily_cap": ("paused_day", "The run's worst case would take today's spend past the daily cap."),
-    "monthly_cap": ("paused_month", "The run's worst case would take this month's spend past the monthly cap."),
+    "daily_cap": ("paused_day", "Today's spending has reached the daily cap, so no new question can start until midnight, "
+                                "Central Time."),
+    "monthly_cap": ("paused_month", "This month's spending has reached the monthly cap, so no new question can start "
+                                    "until the 1st."),
     "spend_limit_paused": ("paused_month", "Live research is paused until the 1st after the Anthropic spend limit was reached."),
     "atlas_unreachable": ("atlas_unreachable", "The spending records could not be reached, so no run was started."),
 }
+_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve")
+
+
+def busy_message(limit: int) -> str:
+    """Contract §5's text for `busy`, the number written out in words from MAX_CONCURRENT_RUNS."""
+    word = _WORDS[limit] if 0 <= limit < len(_WORDS) else str(limit)
+    if limit == 1:
+        return ("One question is being researched right now, the most this site handles at once. "
+                "Please try again in a minute.")
+    return (f"{word.capitalize()} questions are being researched right now, the most this site handles at once. "
+            "Please try again in a minute.")
+
+
 RUN_UNKNOWN = "No such run, or its events have expired."
 
 
@@ -176,7 +189,7 @@ def create_app(deps_factory: Callable[[], Awaitable[AppDeps]]) -> FastAPI:
             return PlainTextResponse("Service Unavailable", status_code=503)
         deps = state.deps
         try:
-            s = await deps.store.live_status(deps.clock.now(), worst_case_usd(), float(settings.ATLAS_HEALTH_TIMEOUT_S.value))
+            s = await deps.store.live_status(deps.clock.now(), float(settings.ATLAS_HEALTH_TIMEOUT_S.value))
         except Exception as e:
             log.warning("health: live status failed (%s)", _kind(e))
             s = {}
@@ -208,45 +221,55 @@ def create_app(deps_factory: Callable[[], Awaitable[AppDeps]]) -> FastAPI:
         run_id = secrets.token_urlsafe(16)
         while run_id in registry or not RUN_ID.match(run_id):
             run_id = secrets.token_urlsafe(16)
-        now = deps.clock.now()
-        try:
-            got = await deps.store.reserve(run_id, worst_case_usd(), now)     # T3.4: atomic, authoritative
-        except Exception as e:                    # fail closed
-            log.error("run %s: the reservation failed (%s)", run_id, _kind(e))
-            got = Refusal("atlas_unreachable")
-        if isinstance(got, Refusal):
-            code, message = REFUSALS.get(got.kind, REFUSALS["atlas_unreachable"])
-            log.info("run refused: %s", got.kind)
-            return _error(503, code, message)
-        if not isinstance(got, Reservation):
-            log.error("run %s: the store answered the reservation with something else", run_id)
-            return _error(503, "atlas_unreachable", REFUSALS["atlas_unreachable"][1])
 
+        # 2. busy (P4.21): the count of runs in progress, with no Atlas call. The slot is taken here, before Atlas is
+        # awaited, so two requests at once can never both pass a count one under the limit.
+        limit = int(settings.MAX_CONCURRENT_RUNS.value)
+        if not registry.take_slot(run_id):
+            log.info("run refused: busy (%d of %d runs in progress)", registry.in_progress, limit)
+            return _error(503, "busy", busy_message(limit))
+        run: Run | None = None
         try:
+            # 3. admission (T3.4, P4.21): authoritative, one conditional update in Atlas; fail closed
+            now = deps.clock.now()
+            try:
+                got = await deps.store.admit(run_id, now)
+            except Exception as e:
+                log.error("run %s: the admission failed (%s)", run_id, _kind(e))
+                got = Refusal("atlas_unreachable")
+            if isinstance(got, Refusal):
+                code, message = REFUSALS.get(got.kind, REFUSALS["atlas_unreachable"])
+                log.info("run refused: %s", got.kind)
+                registry.free_slot(run_id)
+                return _error(503, code, message)
+            if not isinstance(got, Admission):
+                log.error("run %s: the store answered the admission with something else", run_id)
+                registry.free_slot(run_id)
+                return _error(503, "atlas_unreachable", REFUSALS["atlas_unreachable"][1])
+
             try:
                 exa_out = await deps.store.flag_until("exa_out_of_credit", now) is not None
             except Exception as e:            # D reads the flag again before each search (contract §4.D)
                 log.warning("run %s: could not read the Exa credit flag (%s)", run_id, _kind(e))
                 exa_out = False
             run = Run(run_id=run_id, question=question, update_check_available=not exa_out,
-                      corpus_label=deps.corpus_label, store=deps.store, reservation=got, clock=deps.clock,
+                      corpus_label=deps.corpus_label, store=deps.store, admission=got, clock=deps.clock,
                       execute_run=deps.execute_run, loop_deps=deps.loop_deps, event_validator=deps.event_validator,
-                      on_expired=registry.discard)
+                      on_expired=registry.discard, release_slot=functools.partial(registry.free_slot, run_id))
             if exa_out:
                 run.flags.exa_unavailable = "no_credit"      # T2.4, P2.11: out of credit until the 1st
             registry.add(run)
             run.schedule_expiry()
-        except BaseException as e:            # a cancellation included: the reservation is never left behind
-            log.error("run %s: could not be created (%s); releasing its reservation", run_id, _kind(e))
-            try:
-                await asyncio.shield(deps.store.release(got))
-            except BaseException as e2:
-                log.error("run %s: the reservation could not be released (%s)", run_id, _kind(e2))
+        except BaseException as e:            # a cancellation included: the slot is never left taken
+            log.error("run %s: could not be created (%s); freeing its slot", run_id, _kind(e))
+            registry.free_slot(run_id)
+            if run is not None:
+                registry.discard(run)
             if not isinstance(e, Exception):
                 raise
             return _error(500, "internal", "The server could not handle the request.")
-        log.info("run %s created: %.3f USD reserved, update check %s", run_id, got.amount_usd,
-                 "available" if not exa_out else "unavailable")
+        log.info("run %s created: update check %s, %d of %d runs in progress", run_id,
+                 "available" if not exa_out else "unavailable", registry.in_progress, limit)
         return JSONResponse({"run_id": run_id}, status_code=201)
 
     # --- GET /runs/{id}/events (contract §5, T3.1) ------------------------------------------------------------------

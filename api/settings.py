@@ -39,6 +39,7 @@ UPDATE_INPUT_BUDGET = _s(2_000_000, "P4.18 (the user): the update step's input o
 UPDATE_OUTPUT_BUDGET = _s(6_000, "PLACEHOLDER (P4.18): the update step's output, summed over its calls")
 COMPOSITION_MAX_TOKENS = _s(16_000, "T1.11 amended by P4.18: 5,481 seen (46% of the old 12,000); a cut-off answer is the worst failure a visitor sees")
 RUN_DEADLINE_S = _s(600, "PLACEHOLDER (T3.5, 10 minutes)")
+RUN_WATCHDOG_S = _s(1_800, "PLACEHOLDER, main session's (H's review, v2.0): a run still in progress this long after its task started is cancelled and ends failed (internal), so a hung run never holds one of the MAX_CONCURRENT_RUNS slots for good. Above RUN_DEADLINE_S plus a composition's three attempts at COMPOSITION_CALL_DEADLINE_S and their waits (600 + 3 x 300 + 10 = 1,510 s)")
 VOYAGE_RUN_BOUND_USD = _s(0.03, "T3.4 (Voyage under $0.03 a run); used by the documented worst case")
 UPDATE_SEARCHES_PER_RUN = _s(5, "P2.7, T2.1, amended by P4.18: 3 of 3 used once")
 WORST_CASE_COMPOSITION_INPUT = _s(66_000, "main session's, for P4.21's documented worst case only, never a gate or a limit: the composition's largest input by G's estimator, 65,188 tokens (KEEP_CAP largest documents with full keep reasons, a question of QUESTION_MAX_CHARS and a note of NOTE_MAX_CHARS; tests/contract/test_composition_worst_case.py, Oct 25, 2026), rounded up. It was COMPOSITION_RESERVE_INPUT, removed as a reserve by P4.18")

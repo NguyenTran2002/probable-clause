@@ -17,10 +17,30 @@ class RunRegistry:
     def __init__(self, clock: Clock):
         self._clock = clock
         self._runs: dict[str, Run] = {}
+        self._slots: set[str] = set()            # runs in progress: slot taken at POST /runs, freed after the end (P4.21)
         self.closing = asyncio.Event()           # set when the lifespan shutdown begins
 
     def __contains__(self, run_id: str) -> bool:
         return run_id in self._runs
+
+    # --- the count of runs in progress (contract §4.H, P4.21) -------------------------------------------------------------
+    @property
+    def in_progress(self) -> int:
+        return len(self._slots)
+
+    def take_slot(self, run_id: str) -> bool:
+        """Take a place among the runs in progress, or False when MAX_CONCURRENT_RUNS are already in progress. There is
+        no await between the count and the take, so two requests at once can never both pass a count of 4."""
+        if run_id in self._slots:
+            return True
+        if len(self._slots) >= int(settings.MAX_CONCURRENT_RUNS.value):
+            return False
+        self._slots.add(run_id)
+        return True
+
+    def free_slot(self, run_id: str) -> None:
+        """Give a place back. Safe to call twice: a slot is freed on a refusal, on expiry, and after `run_ended`."""
+        self._slots.discard(run_id)
 
     def add(self, run: Run) -> None:
         self._prune()
@@ -45,9 +65,9 @@ class RunRegistry:
                 del self._runs[rid]
 
     async def shutdown(self) -> None:
-        """Close every stream, expire what never started and cancel what runs, all at once (contract v1.2). Waits at
-        most SHUTDOWN_GRACE_S: first for every reservation to be released (or kept counted, a paid call being in
-        flight), then for the rest of each run's end. What does not finish in time stays counted: the safe side."""
+        """Close every stream, expire what never started and cancel what runs, all at once (contract v1.2, v2.0). Waits
+        at most SHUTDOWN_GRACE_S for each run's end, which records its kept costs and frees its slot. A paid call in
+        flight that the grace does not cover is lost, as P4.21 accepts."""
         self.closing.set()
         runs = list(self._runs.values())
         for run in runs:
@@ -57,10 +77,7 @@ class RunRegistry:
             elif run.state == "running":
                 run.cancel()
         grace = float(settings.SHUTDOWN_GRACE_S.value)
-        t0 = self._clock.monotonic()
-        money = await wait_all([r.money_done for r in runs], grace, self._clock)
-        rest = await wait_all([r.finished for r in runs], grace - (self._clock.monotonic() - t0), self._clock)
-        open_ = sum(1 for r in runs if not r.reservation_released)
-        if not (money and rest):
-            log.error("shutdown: grace of %.0f s ran out (reservations settled: %s, runs ended: %s)", grace, money, rest)
-        log.info("shutdown: %d runs closed, %d reservations left counted", len(runs), open_)
+        ended = await wait_all([r.finished for r in runs], grace, self._clock)
+        if not ended:
+            log.error("shutdown: grace of %.0f s ran out before every run had ended", grace)
+        log.info("shutdown: %d runs closed, %d still in progress", len(runs), self.in_progress)

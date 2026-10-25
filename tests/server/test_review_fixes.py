@@ -1,6 +1,7 @@
-"""Part H's fixes after review, ruled in contract v1.2: a cancel mid-settle, estimated usage shown as null, a
-reachable and bounded shutdown, the reservation on a cancelled POST /runs, ASCII-only numbers, `interrupted`
-when the page is ahead or Atlas has a gap, the event tail before the record, `internal`, and the extra codes."""
+"""Part H's fixes after review, ruled in contract v1.2 and kept for v2.0: a cancel mid-write of a cost, estimated usage
+shown as null, a reachable and bounded shutdown, the slot on a cancelled POST /runs, ASCII-only numbers,
+`interrupted` when the page is ahead or Atlas has a gap, the event tail before the record, `internal`, and the extra
+codes."""
 
 import asyncio
 import json
@@ -8,11 +9,12 @@ import json
 import pytest
 
 from api import settings
+from api.state import rules
 from api.state.prices import failed_attempt_usage, price
-from api.state.store import MemoryStore
 from api.types import Usage
-from tests.server.support import (QUESTION, START, VALIDATOR, FakeClock, FlakyStore, answered_script, ended_data,
-                                  lifespan, loop_call, make_app, run_started_data)
+from tests.server.support import (LOOP_MODEL, QUESTION, START, VALIDATOR, FakeClock, FlakyStore,
+                                  ended_data, everything_script, lifespan, loop_call, make_app, record_run, round_data,
+                                  run_started_data, stored_store)
 
 pytestmark = pytest.mark.anyio
 GRACE = float(settings.SHUTDOWN_GRACE_S.value)
@@ -27,30 +29,30 @@ async def begin(h, headers=None):
     return run_id, s
 
 
-# 1. a cancel during record_usage's settle keeps the cost --------------------------------------------------------------
-async def test_a_cancel_mid_settle_keeps_the_billed_cost():
+# 1. a cancel while a cost is being written keeps the cost --------------------------------------------------------------
+async def test_a_cancel_mid_write_keeps_the_billed_cost():
     store = FlakyStore()
     clock = FakeClock()
 
     async def script(ctx, deps):
         await ctx.emit("run_started", run_started_data(ctx))
-        await loop_call(ctx)                         # its settle is held at the gate
+        await loop_call(ctx)                         # its record_spend is held at the gate
 
     h = make_app(script, store=store, clock=clock)
-    store.gates["settle"] = asyncio.Event()
+    store.gates["record_spend"] = asyncio.Event()
     async with lifespan(h.app):
         run_id, s = await begin(h)
         run = h.run(run_id)
-        assert store.calls.get("settle") == 1
-        run.cancel()                                 # the shutdown cancel lands mid-settle
+        assert store.calls.get("record_spend") == 1
+        run.cancel()                                 # the shutdown cancel lands mid-write
         await clock.settle()
-        store.gates["settle"].set()
+        store.gates["record_spend"].set()
         await clock.settle()
         assert run.finished.is_set()
     m = await store.inner.read_month("2026-10")
-    cost = price(Usage(service="anthropic", model="claude-sonnet-5-5", input_tokens=50, cache_write_1h_tokens=12000,
+    cost = price(Usage(service="anthropic", model=LOOP_MODEL, input_tokens=50, cache_write_1h_tokens=12000,
                        output_tokens=400))
-    assert m["spent"] == pytest.approx(cost), "the billed cost is counted, settled at the end"
+    assert m["spent"] == pytest.approx(cost), "the billed cost is counted, recorded at the end"
     assert run.totals()["claude"]["calls"] == 1
 
 
@@ -62,7 +64,7 @@ async def test_an_estimated_usage_is_shown_as_null():
         await ctx.record_usage(failed_attempt_usage("voyage", "rerank-3", 22229), purpose="rerank", attempt=1,
                                max_attempts=3, outcome="retrying", error_kind="server_error", duration_ms=330)
         await ctx.before_paid_call("anthropic", "loop")
-        await ctx.record_usage(failed_attempt_usage("anthropic", "claude-sonnet-5-5", 1000), purpose="loop",
+        await ctx.record_usage(failed_attempt_usage("anthropic", LOOP_MODEL, 1000), purpose="loop",
                                attempt=1, max_attempts=3, outcome="retrying", error_kind="overloaded",
                                duration_ms=10, raw_usage={"input_tokens": 1000}, call_no=1)
         await ctx.before_paid_call("voyage", "embed")
@@ -79,7 +81,7 @@ async def test_an_estimated_usage_is_shown_as_null():
 
 
 # 3. a shutdown that closes the streams and fits in the grace --------------------------------------------------------
-async def test_shutdown_closes_streams_and_releases_within_the_grace():
+async def test_shutdown_closes_streams_and_frees_the_slots_within_the_grace():
     store = FlakyStore()
     clock = FakeClock()
 
@@ -93,30 +95,31 @@ async def test_shutdown_closes_streams_and_releases_within_the_grace():
     await cm.__aenter__()
     run_id, s = await begin(h)
     unattached = (await h.client.post("/runs", {"question": QUESTION})).json()["run_id"]
+    assert h.registry.in_progress == 2
     for slow in ("append_events", "upsert_run_record", "record_stop"):    # Atlas ops that never answer
         store.gates[slow] = asyncio.Event()
     leaving = asyncio.ensure_future(cm.__aexit__(None, None, None))
     await clock.settle()
     s.pump()
     assert s.closed, "every open stream ends when the shutdown begins"
-    await clock.advance(GRACE - 0.01)
-    m = await store.inner.read_month("2026-10")
-    assert m["reservations"] == {}, "both reservations released inside the grace"
-    await clock.advance(0.02)
+    assert h.registry.in_progress == 0, "both slots freed: the unattached run expired, the running one ended"
+    await clock.advance(GRACE + 0.01)
     await leaving                                    # the lifespan shutdown returned within SHUTDOWN_GRACE_S
-    assert clock.t <= GRACE + 0.02 and h.run(run_id).reservation_released
-    assert unattached not in m["reservations"]
+    assert clock.t <= GRACE + 0.02
+    assert unattached not in h.registry and h.contexts and len(h.contexts) == 1, "the unattached run never ran"
 
 
-async def test_shutdown_releases_runs_at_once_not_one_after_another():
-    """Each release waiting ATLAS_OP_TIMEOUT_S still fits: the runs end concurrently."""
+async def test_shutdown_ends_the_runs_at_once_not_one_after_another():
+    """Each end waiting ATLAS_OP_TIMEOUT_S still fits: the runs end concurrently."""
     store = FlakyStore()
     clock = FakeClock()
+    real_upsert = store.inner.upsert_run_record
 
-    async def slow_release(r):
+    async def slow_upsert(record):
+        rules.check_run_record(record)           # refused at once, as the real stores do, before any trip to Atlas
         await clock.sleep(OP * 0.9)
-        await MemoryStore.release(store.inner, r)
-    store.inner.release = slow_release
+        await real_upsert(record)
+    store.inner.upsert_run_record = slow_upsert
 
     async def script(ctx, deps):
         await ctx.emit("run_started", run_started_data(ctx))
@@ -125,18 +128,18 @@ async def test_shutdown_releases_runs_at_once_not_one_after_another():
     h = make_app(script, store=store, clock=clock)
     cm = lifespan(h.app)
     await cm.__aenter__()
-    for _ in range(4):
-        await begin(h)
+    ids = [(await begin(h))[0] for _ in range(4)]
     leaving = asyncio.ensure_future(cm.__aexit__(None, None, None))
     try:
         await clock.advance(OP)
-        assert (await store.inner.read_month("2026-10"))["reservations"] == {}
+        for run_id in ids:
+            assert (await store.inner.get_run_record(run_id))["state"] == "interrupted"
     finally:
         await clock.advance(100 * OP)
         await asyncio.wait_for(leaving, 5)
 
 
-async def test_a_release_that_never_answers_cannot_hold_the_shutdown_past_the_grace():
+async def test_an_atlas_write_that_never_answers_cannot_hold_the_shutdown_past_the_grace():
     store = FlakyStore()
     clock = FakeClock()
 
@@ -148,19 +151,20 @@ async def test_a_release_that_never_answers_cannot_hold_the_shutdown_past_the_gr
     cm = lifespan(h.app)
     await cm.__aenter__()
     run_id, s = await begin(h)
-    store.gates["release"] = asyncio.Event()          # Atlas never answers the release
+    store.gates["upsert_run_record"] = asyncio.Event()          # Atlas never answers the record
     leaving = asyncio.ensure_future(cm.__aexit__(None, None, None))
     try:
         await clock.advance(GRACE + 0.01)
         assert leaving.done(), "the shutdown returns within SHUTDOWN_GRACE_S"
-        assert run_id in (await store.inner.read_month("2026-10"))["reservations"], "left counted: the safe side"
+        assert await store.inner.get_run_record(run_id) is None, "that record is lost, the log says so"
     finally:
-        store.gates["release"].set()
+        store.gates["upsert_run_record"].set()
         await clock.advance(1)
         await asyncio.wait_for(leaving, 5)
 
 
-async def test_shutdown_keeps_a_reservation_with_a_call_in_flight():
+async def test_shutdown_loses_a_paid_call_in_flight_and_says_nothing_of_it():
+    """P4.21 accepts it: a call cleared by the gate but not yet recorded when the instance stops is not recorded."""
     clock = FakeClock()
 
     async def script(ctx, deps):
@@ -175,25 +179,38 @@ async def test_shutdown_keeps_a_reservation_with_a_call_in_flight():
     leaving = asyncio.ensure_future(cm.__aexit__(None, None, None))
     await clock.advance(GRACE)
     await leaving
-    assert run_id in (await h.store.read_month("2026-10"))["reservations"]
+    assert (await h.store.read_month("2026-10"))["spent"] == 0
+    assert h.registry.in_progress == 0
 
 
-# 4. a cancelled POST /runs never leaves its reservation --------------------------------------------------------------
-async def test_a_cancelled_post_runs_releases_its_reservation():
+# 4. a cancelled POST /runs never leaves its slot ------------------------------------------------------------------------
+async def test_a_cancelled_post_runs_frees_its_slot():
     store = FlakyStore()
-    store.gates["flag_until"] = asyncio.Event()      # held after the reservation succeeded
+    store.gates["flag_until"] = asyncio.Event()      # held after the admission succeeded
     h = make_app(store=store)
     async with lifespan(h.app):
         post = asyncio.ensure_future(h.client.post("/runs", {"question": QUESTION}))
         await h.clock.settle()
-        assert len((await store.inner.read_month("2026-10"))["reservations"]) == 1
+        assert h.registry.in_progress == 1
         post.cancel()
         with pytest.raises(asyncio.CancelledError):
             await post
         await h.clock.settle()
-        m = await store.inner.read_month("2026-10")
-        assert m["reservations"] == {} and m["reserved"] == pytest.approx(0)
+        assert h.registry.in_progress == 0
         assert h.registry._runs == {}
+
+
+async def test_a_post_runs_that_fails_after_admission_frees_its_slot(monkeypatch):
+    import api.server.app as app_module
+
+    def broken(*a, **kw):
+        raise RuntimeError("could not build the run")
+    monkeypatch.setattr(app_module, "Run", broken)
+    h = make_app()
+    async with lifespan(h.app):
+        r = await h.client.post("/runs", {"question": QUESTION})
+        assert r.status == 500 and r.json()["error"] == "internal"
+        assert h.registry.in_progress == 0
 
 
 # 5. ASCII digits only --------------------------------------------------------------------------------------------------
@@ -222,21 +239,20 @@ async def test_a_bad_content_length_is_bad_request(value):
 
 
 # 6. interrupted: the page ahead, a gap, the tail before the record --------------------------------------------------
-def stored_run(ns, run="FMqJmdYSKLYoRICY4MO1ER"):
+def stored_run(ns, run="FMqJmdYSKLYoRICY4MO1ER", update_rounds=()):
+    """A stored run of events numbered `ns`: the first is run_started, the rest round_started (the numbers in
+    `update_rounds` are the update step's rounds)."""
     evs = []
     for n in ns:
         kind = "run_started" if n == 1 else "round_started"
-        data = ({"question": QUESTION, "limits": {"rounds": 12, "input_tokens": 400000, "output_tokens": 20000,
-                                                   "update_searches": 3, "deadline_s": 600},
-                 "coverage": {"latest_decision_full_pull": "2026-06-29", "latest_decision_in_corpus": "2026-06-29",
-                              "ingested": "2026-10-23"}, "update_check_available": True,
-                 "models": {"loop": "claude-sonnet-5-5", "composition": "claude-opus-5-5"}, "corpus_label": "full"}
-                if n == 1 else {"round": n, "status_line": f"Round {n} of 12"})
-        evs.append({"v": 1, "run": run, "n": n, "t_ms": n * 100,
+        if n == 1:
+            ctx = type("C", (), {"question": QUESTION, "update_check_available": True, "corpus_label": "full"})()
+            data = run_started_data(ctx)
+        else:
+            data = round_data(n, "update" if n in update_rounds else "research")
+        evs.append({"v": 2, "run": run, "n": n, "t_ms": n * 100,
                     "at": (START.replace(microsecond=0)).isoformat(timespec="milliseconds"), "kind": kind, "data": data})
-    store = MemoryStore()
-    store._events[run] = {e["n"]: {**e, "created": START} for e in evs}
-    return store, run
+    return stored_store(evs), run
 
 
 @pytest.mark.parametrize("ns,header,sent", [
@@ -257,6 +273,7 @@ async def test_interrupted_with_the_page_ahead_or_a_gap(ns, header, sent):
         assert [e["n"] for e in evs] == sent and s.closed
         assert evs[-1]["kind"] == "run_ended" and evs[-1]["data"]["state"] == "interrupted"
         assert evs[-1]["data"]["rounds"] == sum(1 for n in ns if n != 1)
+        assert evs[-1]["v"] == 2
         for e in evs:
             assert not list(VALIDATOR.iter_errors(e))
 
@@ -349,12 +366,11 @@ async def test_atlas_unreachable_on_events_and_on_alive_for_a_run_held_elsewhere
 
 
 async def test_a_page_holding_the_stored_end_gets_nothing_more():
-    from tests.server.support import event_fixture
-    doc = event_fixture("pause-and-resume.json")
-    store = MemoryStore()
-    run = doc["events"][0]["run"]
-    store._events[run] = {e["n"]: {**e, "created": START} for e in doc["events"]}
-    end = doc["events"][-1]["n"]
+    evs = await record_run(everything_script)
+    store = stored_store(evs)
+    run = evs[0]["run"]
+    end = evs[-1]["n"]
+    assert evs[-1]["kind"] == "run_ended"
     h = make_app(store=store)
     async with lifespan(h.app):
         for header, ns in ((str(end), []), (str(end + 3), []), (str(end - 1), [end])):
@@ -365,14 +381,14 @@ async def test_a_page_holding_the_stored_end_gets_nothing_more():
 
 
 # v1.4: call_not_billed and stop_kinds -------------------------------------------------------------------------------
-async def test_a_402_path_then_an_abnormal_end_releases_the_reservation():
-    """D clears the gate, Exa answers 402, nothing is billed: call_not_billed undoes the in-flight count, so a later
-    exception does not keep the whole reservation counted."""
+async def test_a_402_path_records_nothing_and_a_later_exception_ends_the_run_failed():
+    """D clears the gate, Exa answers 402, nothing is billed: call_not_billed records nothing (v2.0: with no
+    reservation there is nothing to undo), and a later exception fails the run and frees its slot."""
     async def script(ctx, deps):
         await ctx.emit("run_started", run_started_data(ctx))
         await ctx.before_paid_call("exa", "update_search")
         await ctx.call_not_billed("exa", "update_search")
-        await ctx.call_not_billed("exa", "update_search")     # never below zero
+        await ctx.call_not_billed("exa", "update_search")
         raise RuntimeError("a later bug")
 
     h = make_app(script)
@@ -380,22 +396,9 @@ async def test_a_402_path_then_an_abnormal_end_releases_the_reservation():
         run_id, s = await begin(h)
         await h.clock.settle()
         assert s.events()[-1]["data"]["state"] == "failed"
-        assert h.run(run_id).reservation_released and h.run(run_id)._in_flight == 0
-        assert (await h.store.read_month("2026-10"))["reservations"] == {}
+        assert h.registry.in_progress == 0
+        assert (await h.store.read_month("2026-10"))["spent"] == 0
         assert not [e for e in s.events() if e["kind"] == "paid_call"], "nothing is recorded"
-
-
-async def test_without_call_not_billed_the_reservation_stays():
-    async def script(ctx, deps):
-        await ctx.emit("run_started", run_started_data(ctx))
-        await ctx.before_paid_call("exa", "update_search")
-        raise RuntimeError("a later bug")
-
-    h = make_app(script)
-    async with lifespan(h.app):
-        run_id, s = await begin(h)
-        await h.clock.settle()
-        assert run_id in (await h.store.read_month("2026-10"))["reservations"]
 
 
 def ends_with(state, stop_kind, stop_kinds, answer_end="none", failure_reason=None):
@@ -437,6 +440,9 @@ def test_stops_recorded_elsewhere_are_skipped_and_repeats_dropped():
                                                            "tier_spend_cap"]}
     assert Run._stops_to_record(ended) == ["step_limit", "tier_spend_cap"]
     assert Run._stops_to_record({"stop_kind": None}) == []
+    # the update step's own stop is added when the list lacks it, once (v2.0)
+    assert Run._stops_to_record({"stop_kinds": ["step_limit"]}, "update_step_limit") == ["step_limit", "update_step_limit"]
+    assert Run._stops_to_record({"stop_kinds": ["update_time_limit"]}, "update_time_limit") == ["update_time_limit"]
 
 
 async def test_hs_own_endings_carry_empty_stop_kinds():

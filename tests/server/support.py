@@ -14,6 +14,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from api import settings
 from api.server import AppDeps, create_app
 from api.state.clock import CHICAGO
 from api.state.store import MemoryStore, StoreUnavailable
@@ -306,14 +307,27 @@ def make_app(script=None, *, store=None, clock=None, commit="fixture", corpus_la
 # --- scripted runs (stand-ins for G's execute_run) -------------------------------------------------------------------
 QUESTION = "Can police use a thermal imager on my house from the street?"
 COVERAGE = {"latest_decision_full_pull": "2026-06-29", "latest_decision_in_corpus": "2026-06-29", "ingested": "2026-10-23"}
+LOOP_MODEL = str(settings.LOOP_MODEL.value)
+UPDATE_MODEL = str(settings.UPDATE_MODEL.value)
+COMPOSITION_MODEL = str(settings.COMPOSITION_MODEL.value)
 
 
 def run_started_data(ctx) -> dict:
+    n = lambda name: int(getattr(settings, name).value)  # noqa: E731
     return {"question": ctx.question,
-            "limits": {"rounds": 12, "input_tokens": 400000, "output_tokens": 20000, "update_searches": 3,
-                       "deadline_s": 600},
+            "limits": {"rounds": n("MAX_ROUNDS"), "loop_input_tokens": n("LOOP_INPUT_BUDGET"),
+                       "loop_output_tokens": n("LOOP_OUTPUT_BUDGET"), "update_rounds": n("UPDATE_MAX_ROUNDS"),
+                       "update_input_tokens": n("UPDATE_INPUT_BUDGET"), "update_output_tokens": n("UPDATE_OUTPUT_BUDGET"),
+                       "update_searches": n("UPDATE_SEARCHES_PER_RUN"), "composition_max_tokens": n("COMPOSITION_MAX_TOKENS"),
+                       "deadline_s": n("RUN_DEADLINE_S")},
             "coverage": COVERAGE, "update_check_available": ctx.update_check_available,
-            "models": {"loop": "claude-sonnet-5-5", "composition": "claude-opus-5-5"}, "corpus_label": ctx.corpus_label}
+            "models": {"loop": LOOP_MODEL, "update": UPDATE_MODEL, "composition": COMPOSITION_MODEL},
+            "corpus_label": ctx.corpus_label}
+
+
+def round_data(n: int = 1, step: str = "research") -> dict:
+    total = int(settings.MAX_ROUNDS.value if step == "research" else settings.UPDATE_MAX_ROUNDS.value)
+    return {"step": step, "round": n, "status_line": f"Round {n} of {total}"}
 
 
 def ended_data(ctx, state="answered", *, stop_kind=None, answer_end="complete", rounds=1, answer_chars=0,
@@ -323,28 +337,88 @@ def ended_data(ctx, state="answered", *, stop_kind=None, answer_end="complete", 
             "answer_chars": answer_chars, "totals": ctx.totals()}
 
 
+def update_ended_data(end="submitted", *, stop_kind=None, failure_reason=None, rounds=2, searches=1) -> dict:
+    return {"end": end, "stop_kind": stop_kind, "failure_reason": failure_reason, "rounds": rounds,
+            "searches": searches}
+
+
 def raw_claude(inp=50, w5=0, w1=12000, read=0, out=400) -> dict:
     return {"input_tokens": inp, "cache_creation_input_tokens": w5 + w1, "cache_read_input_tokens": read,
             "cache_creation": {"ephemeral_5m_input_tokens": w5, "ephemeral_1h_input_tokens": w1},
             "output_tokens": out, "service_tier": "standard"}
 
 
-def claude_usage(model="claude-sonnet-5-5", inp=50, w5=0, w1=12000, read=0, out=400):
+def claude_usage(model=None, inp=50, w5=0, w1=12000, read=0, out=400):
     from api.types import Usage
-    return Usage(service="anthropic", model=model, input_tokens=inp, cache_write_5m_tokens=w5,
+    return Usage(service="anthropic", model=model or LOOP_MODEL, input_tokens=inp, cache_write_5m_tokens=w5,
                  cache_write_1h_tokens=w1, cache_read_tokens=read, output_tokens=out)
 
 
+async def claude_call(ctx, purpose="loop", call_no=1, *, outcome="ok", **tokens) -> float:
+    """One Claude attempt of any step: the gate, then `record_usage`."""
+    await ctx.before_paid_call("anthropic", purpose)
+    model = {"loop": LOOP_MODEL, "update": UPDATE_MODEL, "composition": COMPOSITION_MODEL}[purpose]
+    return await ctx.record_usage(claude_usage(model, **tokens), purpose=purpose, attempt=1, max_attempts=3,
+                                  outcome=outcome, error_kind=None if outcome == "ok" else "overloaded",
+                                  duration_ms=1500, raw_usage=raw_claude(**tokens), call_no=call_no)
+
+
 async def loop_call(ctx, call_no=1, *, outcome="ok", **tokens) -> float:
-    await ctx.before_paid_call("anthropic", "loop")
-    return await ctx.record_usage(claude_usage(**tokens), purpose="loop", attempt=1, max_attempts=3, outcome=outcome,
-                                  error_kind=None if outcome == "ok" else "overloaded", duration_ms=1500,
-                                  raw_usage=raw_claude(**tokens), call_no=call_no)
+    return await claude_call(ctx, "loop", call_no, outcome=outcome, **tokens)
 
 
 async def answered_script(ctx, deps) -> None:
     await ctx.emit("run_started", run_started_data(ctx))
-    await ctx.emit("round_started", {"round": 1, "status_line": "Round 1 of 12 · 0 kept · update check not yet run"})
+    await ctx.emit("round_started", round_data(1))
     await loop_call(ctx)
     await ctx.emit("answer_block", {"index": 0, "text": "An answer.", "citations": []})
     await ctx.emit("run_ended", ended_data(ctx, rounds=1, answer_chars=len("An answer.")))
+
+
+async def record_run(script, **kw) -> list[dict]:
+    """Run `script` on a fresh app and return the events its stream carried (v2, schema-checked)."""
+    h = make_app(script, **kw)
+    async with lifespan(h.app):
+        run_id = (await h.client.post("/runs", {"question": QUESTION})).json()["run_id"]
+        s = h.client.stream(f"/runs/{run_id}/events")
+        await h.clock.advance(1)
+        s.pump()
+        evs = s.events()
+    assert h.schema_errors == [], h.schema_errors
+    return evs
+
+
+def stored_store(events: list[dict], created=START) -> MemoryStore:
+    """A MemoryStore holding `events` as another instance wrote them."""
+    store = MemoryStore()
+    store._events[events[0]["run"]] = {e["n"]: {**e, "created": created} for e in events}
+    return store
+
+
+async def everything_script(ctx, deps) -> None:
+    """A run that uses every purpose and a failed attempt priced from an estimate, then answers (the update step
+    beside the composition is called in turn here; their concurrency is tested on its own)."""
+    from api.state.prices import failed_attempt_usage
+    from api.types import Usage
+    await ctx.emit("run_started", run_started_data(ctx))
+    await ctx.emit("round_started", round_data(1))
+    await ctx.before_paid_call("voyage", "embed")
+    await ctx.record_usage(Usage(service="voyage", model="voyage-law-2", input_tokens=28), purpose="embed", attempt=1,
+                           max_attempts=3, outcome="ok", error_kind=None, duration_ms=200)
+    await ctx.before_paid_call("voyage", "rerank")
+    await ctx.record_usage(None, purpose="rerank", attempt=1, max_attempts=3, outcome="retrying",
+                           error_kind="server_error", duration_ms=330)
+    await ctx.before_paid_call("anthropic", "loop")
+    await ctx.record_usage(failed_attempt_usage("anthropic", LOOP_MODEL, 12046), purpose="loop", attempt=1,
+                           max_attempts=3, outcome="retrying", error_kind="rate_limited", duration_ms=850, call_no=1)
+    await loop_call(ctx, call_no=1, inp=51, w1=12000, out=406)
+    await ctx.emit("update_started", {"kept": []})
+    await ctx.emit("round_started", round_data(1, "update"))
+    await claude_call(ctx, "update", 2, inp=19, w5=5027, w1=0, read=12052, out=491)
+    await ctx.before_paid_call("exa", "update_search")
+    await ctx.record_usage(Usage(service="exa", model="auto", exa_cost_usd=0.007), purpose="update_search", attempt=1,
+                           max_attempts=1, outcome="ok", error_kind=None, duration_ms=2100)
+    await claude_call(ctx, "composition", 3, inp=1892, w1=0, out=1875)
+    await ctx.emit("answer_block", {"index": 0, "text": "Answer.", "citations": []})
+    await ctx.emit("update_ended", update_ended_data(rounds=1, searches=1))
+    await ctx.emit("run_ended", ended_data(ctx, rounds=1, answer_chars=7))

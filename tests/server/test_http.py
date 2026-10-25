@@ -3,21 +3,29 @@
 import asyncio
 import json
 import re
-from datetime import datetime, timedelta
 
 import pytest
 
 from api import settings
-from api.state.budget import worst_case_usd
-from api.state.clock import CHICAGO
+from api.protocols import Admission
 from api.state.store import MemoryStore
 
-from tests.server.support import QUESTION, START, http_fixture, lifespan, make_app
+from tests.server.support import QUESTION, START, FakeClock, FlakyStore, http_fixture, lifespan, make_app
 
 pytestmark = pytest.mark.anyio
 RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 CAP = int(settings.REQUEST_BODY_MAX_BYTES.value)
 MAX_Q = int(settings.QUESTION_MAX_CHARS.value)
+SLOTS = int(settings.MAX_CONCURRENT_RUNS.value)
+EXPIRY = float(settings.UNATTACHED_RUN_EXPIRY_S.value)
+DAILY = float(settings.DAILY_CAP_USD.value)
+MONTHLY = float(settings.MONTHLY_CAP_USD.value)
+
+# contract §5 (v2.0): the texts of the refusals, which go in `message` for logs
+MSG_DAILY = "Today's spending has reached the daily cap, so no new question can start until midnight, Central Time."
+MSG_MONTHLY = "This month's spending has reached the monthly cap, so no new question can start until the 1st."
+MSG_BUSY = ("Five questions are being researched right now, the most this site handles at once. "
+            "Please try again in a minute.")
 
 
 def assert_matches(resp, name: str, *, body=True):
@@ -30,15 +38,14 @@ def assert_matches(resp, name: str, *, body=True):
     assert "set-cookie" not in resp.headers          # T3.7: no cookies
 
 
-def fill_day(store: MemoryStore, now=START):
-    """Leave less than one worst case of room today."""
-    return store.reserve("filler", float(settings.DAILY_CAP_USD.value) - worst_case_usd() + 0.5, now)
+async def fill_day(store: MemoryStore, now=START):
+    """Today's spend at the daily cap: the next admission is refused (strictly under the cap admits)."""
+    await store.record_spend(Admission("filler", "2026-10", "2026-10-24"), DAILY)
 
 
 async def fill_month(store: MemoryStore):
-    """Leave less than one worst case of room this month, with today still open."""
-    for day in range(1, 7):
-        await store.reserve(f"filler-{day}", 9.9, datetime(2026, 10, day, 12, tzinfo=CHICAGO))
+    """This month's spend at the monthly cap, on an earlier day, with today still open."""
+    await store.record_spend(Admission("filler", "2026-10", "2026-10-01"), MONTHLY)
 
 
 # --- /health ---------------------------------------------------------------------------------------------------------
@@ -120,14 +127,15 @@ async def test_post_runs_201():
         body = r.json()
         assert list(body) == ["run_id"] and RUN_ID.match(body["run_id"]) and len(body["run_id"]) >= 16
         month = await h.store.read_month("2026-10")
-        assert month["reservations"][body["run_id"]]["amount"] == pytest.approx(worst_case_usd())
         assert month["days"]["2026-10-24"]["runs_started"] == 1
+        assert "reservations" not in month and "reserved" not in month, "nothing is reserved (P4.21)"
+        assert month["spent"] == 0 and h.registry.in_progress == 1
 
 
 async def test_run_ids_are_distinct_and_unguessable():
     h = make_app()
     async with lifespan(h.app):
-        # four open reservations: well within the $15 day at P4.6's $2.106 (P4.11)
+        # four runs in progress: under the limit of MAX_CONCURRENT_RUNS
         ids = {(await h.client.post("/runs", {"question": f"{QUESTION} {i}"})).json()["run_id"] for i in range(4)}
         assert len(ids) == 4 and all(len(i) == 22 for i in ids)
 
@@ -137,7 +145,8 @@ async def test_post_runs_400_question_empty(question):
     h = make_app()
     async with lifespan(h.app):
         assert_matches(await h.client.post("/runs", {"question": question}), "post-runs-400-question-empty.json")
-        assert await h.store.read_month("2026-10") is None        # refused before any reservation
+        assert await h.store.read_month("2026-10") is None        # refused before any admission
+        assert h.registry.in_progress == 0
 
 
 async def test_post_runs_400_question_too_long():
@@ -164,19 +173,43 @@ async def test_post_runs_413_by_declared_length_and_by_streamed_body():
         assert (await h.client.post("/runs", exact + b" ")).status == 413
 
 
+def assert_refusal(resp, name: str, message: str):
+    """Status and headers from the fixture, the code from the fixture's body, the message from contract §5 v2.0."""
+    fx = http_fixture(name)
+    assert resp.status == fx["status"]
+    for k, v in fx["headers"].items():
+        assert resp.headers.get(k.lower()) == v, k
+    assert resp.json() == {"error": json.loads(fx["body"])["error"], "message": message}
+    assert "set-cookie" not in resp.headers
+
+
 async def test_post_runs_503_paused_day():
     h = make_app()
     await fill_day(h.store)
     async with lifespan(h.app):
-        assert_matches(await h.client.post("/runs", {"question": QUESTION}), "post-runs-503-paused-day.json")
-    assert [s["kind"] for s in await h.store.read_stops(day="2026-10-24")] == ["daily_cap"]   # recorded by reserve
+        assert_refusal(await h.client.post("/runs", {"question": QUESTION}), "post-runs-503-paused-day.json", MSG_DAILY)
+        assert h.registry.in_progress == 0, "the slot is freed on a refusal"
+    assert [s["kind"] for s in await h.store.read_stops(day="2026-10-24")] == ["daily_cap"]   # recorded by admit
 
 
 async def test_post_runs_503_paused_month():
     h = make_app()
     await fill_month(h.store)
     async with lifespan(h.app):
-        assert_matches(await h.client.post("/runs", {"question": QUESTION}), "post-runs-503-paused-month.json")
+        assert_refusal(await h.client.post("/runs", {"question": QUESTION}), "post-runs-503-paused-month.json",
+                       MSG_MONTHLY)
+        assert h.registry.in_progress == 0
+    assert [s["kind"] for s in await h.store.read_stops(day="2026-10-24")] == ["monthly_cap"]
+
+
+async def test_a_cap_is_strict_just_under_admits_at_the_cap_refuses():
+    h = make_app()
+    await h.store.record_spend(Admission("filler", "2026-10", "2026-10-24"), DAILY - 0.01)
+    async with lifespan(h.app):
+        assert (await h.client.post("/runs", {"question": QUESTION})).status == 201
+        await h.store.record_spend(Admission("filler", "2026-10", "2026-10-24"), 0.01)
+        r = await h.client.post("/runs", {"question": QUESTION})
+        assert r.status == 503 and r.json()["error"] == "paused_day"
 
 
 async def test_post_runs_spend_limit_pause_answers_paused_month():
@@ -195,14 +228,14 @@ async def test_post_runs_503_atlas_unreachable():
         assert_matches(await h.client.post("/runs", {"question": QUESTION}), "post-runs-503-atlas-unreachable.json")
 
 
-async def test_post_runs_fails_closed_when_reserve_raises():
-    from tests.server.support import FlakyStore
+async def test_post_runs_fails_closed_when_admit_raises():
     store = FlakyStore()
-    store.fail["reserve"] = -1
+    store.fail["admit"] = -1
     h = make_app(store=store)
     async with lifespan(h.app):
         r = await h.client.post("/runs", {"question": QUESTION})
         assert r.status == 503 and r.json()["error"] == "atlas_unreachable"
+        assert h.registry.in_progress == 0, "the slot is freed when Atlas fails"
 
 
 @pytest.mark.parametrize("body", [b"not json", b"[1, 2]", b'{"q": "x"}', b'{"question": 7}', b"\xff\xfe",
@@ -214,18 +247,96 @@ async def test_post_runs_400_bad_request(body):
         assert r.status == 400 and r.json()["error"] == "bad_request" and list(r.json()) == ["error", "message"]
 
 
-async def test_two_runs_racing_for_the_last_room_do_not_both_start():
-    h = make_app()
-    room = float(settings.DAILY_CAP_USD.value) - 1.5 * worst_case_usd()      # room for one worst case, not two
-    await h.store.reserve("filler", room, START)
+async def test_busy_at_the_limit_with_no_atlas_call():
+    store = FlakyStore()
+    h = make_app(store=store)
     async with lifespan(h.app):
-        a, b = await asyncio.gather(h.client.post("/runs", {"question": QUESTION}),
-                                    h.client.post("/runs", {"question": QUESTION + " again"}))
-        assert sorted([a.status, b.status]) == [201, 503]
-        refused = a if a.status == 503 else b
-        assert refused.json()["error"] == "paused_day"
-        month = await h.store.read_month("2026-10")
-        assert month["reserved"] <= float(settings.DAILY_CAP_USD.value) + 1e-9
+        ids = [(await h.client.post("/runs", {"question": f"{QUESTION} {i}"})).json()["run_id"] for i in range(SLOTS)]
+        assert store.calls["admit"] == SLOTS and h.registry.in_progress == SLOTS
+        before = dict(store.calls)
+        r = await h.client.post("/runs", {"question": QUESTION})
+        assert r.status == 503 and r.json() == {"error": "busy", "message": MSG_BUSY}
+        assert store.calls == before, "busy answers with no Atlas call"
+        assert await store.inner.read_stops(day="2026-10-24") == [], "busy is not recorded: it is not a budget stop"
+        assert len(ids) == len(set(ids))
+
+
+async def test_the_count_holds_under_concurrent_requests():
+    """Slots are taken before Atlas is awaited, so a burst never overshoots, however slow Atlas is."""
+    clock = FakeClock()
+    inner = MemoryStore(clock=lambda: clock.now(), latency_s=0)
+    store = FlakyStore(inner)
+    store.gates["admit"] = asyncio.Event()                 # every admission waits on Atlas
+    h = make_app(store=store, clock=clock)
+    async with lifespan(h.app):
+        burst = [asyncio.ensure_future(h.client.post("/runs", {"question": f"{QUESTION} {i}"})) for i in range(3 * SLOTS)]
+        await clock.settle()
+        assert h.registry.in_progress == SLOTS, "the slots were taken before Atlas answered"
+        assert store.calls["admit"] == SLOTS, "only the runs that got a slot reached Atlas"
+        refused = [t.result() for t in burst if t.done()]
+        assert len(refused) == 2 * SLOTS and all(r.status == 503 and r.json()["error"] == "busy" for r in refused)
+        store.gates["admit"].set()
+        results = await asyncio.gather(*burst)
+        assert sorted(r.status for r in results) == [201] * SLOTS + [503] * (2 * SLOTS)
+        assert h.registry.in_progress == SLOTS
+        month = await inner.read_month("2026-10")
+        assert month["days"]["2026-10-24"]["runs_started"] == SLOTS
+
+
+async def test_the_slot_is_freed_on_a_refusal_and_on_expiry():
+    store = FlakyStore()
+    h = make_app(store=store)
+    async with lifespan(h.app):
+        store.fail["admit"] = SLOTS                         # Atlas fails for the first SLOTS requests
+        for _ in range(SLOTS):
+            assert (await h.client.post("/runs", {"question": QUESTION})).json()["error"] == "atlas_unreachable"
+        assert h.registry.in_progress == 0
+        ids = [(await h.client.post("/runs", {"question": QUESTION})).json()["run_id"] for _ in range(SLOTS)]
+        assert (await h.client.post("/runs", {"question": QUESTION})).json()["error"] == "busy"
+        await h.clock.advance(EXPIRY + 1)                   # nothing attached to any of them
+        assert h.registry.in_progress == 0 and h.contexts == []
+        r = await h.client.post("/runs", {"question": QUESTION})
+        assert r.status == 201 and r.json()["run_id"] not in ids
+
+
+async def test_the_slot_is_freed_after_run_ended():
+    h = make_app()
+    async with lifespan(h.app):
+        for _ in range(SLOTS):
+            run_id = (await h.client.post("/runs", {"question": QUESTION})).json()["run_id"]
+            assert h.registry.in_progress == 1
+            s = h.client.stream(f"/runs/{run_id}/events")
+            await h.clock.settle()
+            s.pump()
+            assert s.closed and s.events()[-1]["kind"] == "run_ended"
+            assert h.registry.in_progress == 0, "freed once the run has ended"
+        # more runs than slots over the day, one after another: never busy
+        assert (await h.client.post("/runs", {"question": QUESTION})).status == 201
+
+
+async def test_five_broken_runs_cannot_lock_the_site():
+    async def broken(ctx, deps):
+        raise RuntimeError("a bug before anything")
+
+    h = make_app(broken)
+    async with lifespan(h.app):
+        for _ in range(2 * SLOTS):
+            r = await h.client.post("/runs", {"question": QUESTION})
+            assert r.status == 201, "the slot of a failed run was freed"
+            s = h.client.stream(f"/runs/{r.json()['run_id']}/events")
+            await h.clock.settle()
+            s.pump()
+            assert s.events()[-1]["data"]["state"] == "failed"
+        assert h.registry.in_progress == 0
+
+
+async def test_the_caps_look_at_what_was_spent_never_at_a_worst_case():
+    h = make_app()
+    await h.store.record_spend(Admission("filler", "2026-10", "2026-10-24"), DAILY - 0.5)
+    async with lifespan(h.app):
+        # fifty cents of room is enough: nothing is reserved, so no run needs a worst case to fit (P4.21)
+        for _ in range(3):
+            assert (await h.client.post("/runs", {"question": QUESTION})).status == 201
 
 
 async def test_control_characters_are_stripped_from_the_question():
