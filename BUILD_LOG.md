@@ -1163,3 +1163,18 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Its order matches what the earlier `MeaningIndex.search` returned, so the search uses the rerank's order.
 **Spend:** Voyage, 2,415 tokens, about $0.0001 at list price. Anthropic: none.
 **DECISION (user):** *"Do that comparison too just to confirm"*
+
+## Oct 24, 2026, 22:06 CDT — Phase 4: Build, the corpus embedded (voyage-law-2)
+**Asked:** *"Approved: run embed_corpus.py --confirm on the full corpus."*
+**Came back:**
+- `scripts/embed_corpus.py --confirm`: 2,462 passages in 39 batches, **524,853 tokens**, **$0.0630 at list price** (the dry run's over-estimate was 653,063 tokens and $0.0784).
+- Output: `data/vectors/voyage-law-2.f32` (10,084,352 bytes, as P4.2 expects: 2,462 × 1,024 × 4) and `manifest.json` (model voyage-law-2, dimension 1024, count 2,462, created 2026-10-24, one SHA-256 per embedded text).
+- **Checks:**
+  - `MeaningIndex.load` accepts the vectors against the full corpus and against the pre-*Chatrie* corpus (2,323 passages).
+  - Rows come in reading order.
+  - Every value is finite, and every row has unit norm.
+  - Nearest neighbours look sensible (katz-1-p1 → other *Katz* majority paragraphs; kyllo-1-p10 → *Kyllo*'s footnotes and dissent).
+  - 2,458 distinct rows. The six repeats are texts that are identical word for word: four "The Commission recommends:" rows in White's *Berger* appendix, and two *Olmstead* footnotes citing *Gouled*.
+- Whole suite: 2,364 passed, 41 skipped.
+**Spend:** Voyage, 524,853 tokens, $0.0630 at list price, likely within the account's 50M free tokens. Anthropic: none.
+**DECISION (user):** *"Approved: run embed_corpus.py --confirm on the full corpus."*
