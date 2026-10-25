@@ -263,9 +263,13 @@ def check_update_findings(findings: list[dict], overview: str | None, returned_i
     # T2.3 item 2: unknown source ID, a statement with no source, findings with no search run; T2.3's caps
 def copy_guard(texts: list[str], page_texts: list[str], n_words: int) -> list[str]
     # T2.3 item 3: n or more consecutive words of any returned page, ignoring case, punctuation and spacing
+def copy_guard_report(statements: list[str], overview: str | None, pages: Mapping[str, str],
+                      n_words: int) -> CopyGuardReport
+    # what G calls (v1.1): problems naming statements and page IDs, plus flagged_statements (0-based) and
+    # overview_flagged, so G can withhold them in the stored tool_call (P4.3)
 ```
 
-Each returned string is a problem written to Claude. It names the statement by its number and the page by its ID, and **never quotes the page's words** (the message is stored in events). The checks run on the text exactly as streamed.
+**Quotation and name rules settled in review (v1.1):** a quotation is a double-quoted span (a multi-paragraph quotation by the legal convention included) or a Markdown blockquote; a bracketed alteration stands for at most `QUOTATION_BRACKET_MAX_SOURCE_WORDS` source words and never adds or removes a negation; a full name's right party must equal the manifest's; a full name immediately followed by a U.S. Reports citation of a different corpus case flags the citation. A quotation that cannot be decided in bounded time is flagged, never passed. Offsets are Python code points; the page converts them for JavaScript strings. Each returned string is a problem written to Claude. It names the statement by its number and the page by its ID, and **never quotes the page's words** (the message is stored in events). The checks run on the text exactly as streamed.
 
 ### G. The research loop and composition: `api/loop/`, `tests/loop/`; prompt text in `api/prompts/` (the main session's)
 

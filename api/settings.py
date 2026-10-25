@@ -67,6 +67,7 @@ EXA_MESSAGE_MAX_CHARS = _s(500, "PLACEHOLDER, main session's: Exa's own error me
 
 # Answer checks (T1.12)
 QUOTATION_MIN_WORDS = _s(4, "PLACEHOLDER (T1.12)")
+QUOTATION_BRACKET_MAX_SOURCE_WORDS = _s(6, "PLACEHOLDER, main session's: how many source words one bracketed alteration may stand for (T1.12); held low because a wider bracket can hide a change of meaning")
 
 # Calls, deadlines and retries (T3.3)
 LOOP_CALL_DEADLINE_S = _s(120, "PLACEHOLDER (T3.3)")
