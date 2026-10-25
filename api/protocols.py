@@ -1,0 +1,52 @@
+"""The Atlas store's interface (contract §4.E, §8). Owned by the main session.
+
+E implements it twice (MongoStore, MemoryStore); every other part codes against
+this protocol, so Wave 1 parts never wait on each other.
+"""
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Literal, Protocol
+
+StopKind = Literal[
+    "daily_cap", "monthly_cap", "step_limit", "token_ceiling_input", "token_ceiling_output",
+    "composition_max_tokens", "console_spend_limit", "tier_spend_cap", "exa_no_credit", "time_limit",
+    "atlas_unreachable",
+]
+BUDGET_STOPS: frozenset[str] = frozenset(StopKind.__args__) - {"atlas_unreachable", "time_limit"}  # T3.4
+
+
+@dataclass(frozen=True)
+class Reservation:
+    run_id: str
+    month: str          # "2026-10", Chicago
+    day: str            # "2026-10-24", Chicago
+    amount_usd: float
+
+
+@dataclass(frozen=True)
+class Refusal:
+    kind: Literal["daily_cap", "monthly_cap", "atlas_unreachable", "spend_limit_paused"]
+
+
+class Store(Protocol):
+    async def ensure_indexes(self) -> None: ...
+    # events (TTL 24 h) and heartbeats (TTL 10 min)
+    async def append_events(self, run_id: str, events: list[dict]) -> None: ...
+    async def read_events(self, run_id: str, after: int) -> list[dict]: ...
+    async def put_heartbeat(self, run_id: str, last_event: int, now: datetime) -> None: ...
+    async def latest_heartbeat(self, run_id: str) -> datetime | None: ...
+    # per-run records, no question or answer text (T3.7)
+    async def upsert_run_record(self, record: dict) -> None: ...
+    # money (T3.4)
+    async def reserve(self, run_id: str, worst_case_usd: float, now: datetime) -> Reservation | Refusal: ...
+    async def settle(self, r: Reservation, cost_usd: float) -> None: ...
+    async def release(self, r: Reservation) -> None: ...
+    async def open_reservations(self, now: datetime) -> list[dict]: ...
+    async def record_stop(self, kind: StopKind, run_id: str | None, now: datetime, detail: dict) -> None: ...
+    async def count_run_started(self, now: datetime) -> None: ...
+    # flags (T2.4, T3.3)
+    async def flag_until(self, name: Literal["exa_out_of_credit", "anthropic_spend_limit"], now: datetime) -> datetime | None: ...
+    async def set_flag(self, name: Literal["exa_out_of_credit", "anthropic_spend_limit"], now: datetime) -> None: ...
+    # /health (T3.4)
+    async def live_status(self, now: datetime, worst_case_usd: float, timeout_s: float) -> dict: ...

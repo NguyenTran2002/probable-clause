@@ -936,3 +936,18 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **Spend:** none (token counting is free).
 **DECISION (user):**
 - *"Start Phase 4, step 0 of P4.1: the scaffold, T1.5, then contract v1."*
+
+## Oct 24, 2026, 20:42 CDT — Phase 4: Build, step 0 (interfaces contract v1, reviewed)
+**Asked:** Contract v1, after the scaffold and T1.5 (P4.1, step 0).
+**Came back:**
+- **Contract v1** (`docs/design/contract.md`), with `contracts/events.schema.json` and the main session's shared code: `api/types.py`, `api/settings.py` (every figure with its basis; 39 marked placeholder), `api/errors.py` (a closed vocabulary of error kinds), `api/retry.py` (T3.3's retries, with tests), `api/protocols.py` (the Atlas store's interface). Parts A to I with paths, signatures and ownership; endpoints and the wake protocol; every event kind; Atlas collections; prices; reader, replay, `corpus.json` and `config.json` formats; fakes and fixtures. Tests: 25 passed.
+- **Review:** an Opus 5.5 xhigh subagent, not shown the main session's reasoning, checked the draft (commit f00905a) against P0.1 to P4.1, the brief, the design note, the corpus and the prototype: 48 items (8 blocking, 22 significant, 18 minor). It confirmed by script the passage counts, the vectors size, *Carpenter* as the latest case without *Chatrie*, and the opinion-group mapping. Main ones, all fixed in the contract except the two left to the user:
+  - opinion IDs: the manifest's `id` counts from 0, T1.6 from 1 (checked: `katz-0` … `katz-4`); the contract now numbers from 1 and never uses the manifest's;
+  - Exa page text would have reached stored events through the tool result's text; now replaced by a placeholder (T2.2, P1.7);
+  - one emitter of spend events (`record_usage`), totals on the run context, who emits the run's end, the run deadline still composing (T3.5), the error vocabulary and retry-after, the full event stored in Atlas, TTL fields as dates;
+  - budget-stop recording assigned, the Console spend-limit pause given a flag, the worst-case formula written out ($1.674, T3.4), the `/health` rule, per-run flags for Voyage and Exa unavailability, the section-label rule, *Chatrie*'s slip pages, joiners "not printed" (P1.18), the pre-*Chatrie* switch's live guard, the wake protocol (brief §3, §8.5), `corpus.json`, the local same-origin route, the deploy-time reservation check, fixtures per P0.3.
+- **A count corrected:** the corpus has 2,462 passages (1,964 paragraphs, 498 footnotes); Phase 3's "2,748 units" (T3.6) also counted 286 section headings, which T1.6 says are never passages. The vectors file is about 10.1 MB, not 11.3 MB.
+- **Open for the user (contract §14):** a submit refused by the copy guard carries page text into the stored `tool_call` event (T3.1 against T2.2 and P1.7); and whether to record the 2,462 correction as a superseding entry (P2.12).
+- `tests/fixtures/sentences/hardest.json`: the ten passages of `scripts/probe_chunking.py`, committed for the splitter's tests.
+**Spend:** none (the review subagent made no paid calls).
+**DECISION (user):** none new; working under *"Start Phase 4, step 0 of P4.1: the scaffold, T1.5, then contract v1."*

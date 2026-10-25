@@ -1,55 +1,61 @@
 # Interfaces contract
 
-**Version 1** (Oct 24, 2026). Written by the main session for Phase 4 (P4.1). One writer, the main session; a change bumps the version and is announced to every builder and to the frontend session (P0.3). Where this contract and `docs/design/locked-decisions.md` differ, the decisions win and this file is fixed.
+**Version 1** (Oct 24, 2026), revised after the Opus xhigh review (P4.1) before any builder started. Written by the main session for Phase 4. One writer, the main session; a change bumps the version and is announced to every builder and to the frontend session (P0.3). Where this contract and `docs/design/locked-decisions.md` differ, the decisions win and this file is fixed.
 
-Machine-checkable parts: `contracts/events.schema.json` (every event), `api/types.py` (shared types), `api/settings.py` (every figure and its basis). Builders import those three and never redefine what they hold.
+Machine-checkable and shared code, all the main session's: `contracts/events.schema.json` (every event), `api/types.py` (shared types), `api/settings.py` (every figure and its basis), `api/errors.py` (errors and the closed error vocabulary), `api/retry.py` (our retries, T3.3), `api/protocols.py` (the Atlas store's interface). Builders import these and never redefine what they hold.
 
 ---
 
 ## 1. Conventions for every builder
 
 - **Python 3.13, async throughout** (`async def` for anything that waits on the network or Atlas). FastAPI and uvicorn for the server; `httpx2` for plain HTTP (Voyage); the `anthropic` SDK for Claude; the `mcp` package for Exa; `pymongo`'s `AsyncMongoClient` for Atlas; `numpy` for vectors. No other dependency without asking the main session (only it touches `pyproject.toml`).
-- **Tests first**, with pytest, under `tests/<area>/`. No test makes a network call: every outside service has a fake (§12). No builder holds a key or makes a paid call.
-- **Figures** come from `api/settings.py` only. A timeout, retry count or wait names its basis there (brief §10.7). A figure not in `settings.py` is asked for, not invented.
-- **SDK clients** are created with their own retries off (`max_retries=0`); retries are ours (§4.E, T3.3). A paid call is retried only where T3.3 says.
-- **Dates shown to a person are America/Chicago**, computed with `zoneinfo` (brief §10.7). Stored timestamps are ISO 8601 with their offset. The only exception is Exa's published dates, kept as written (T2.2).
+- **Tests first**, with pytest under `tests/<area>/`; async tests use anyio's pytest plugin (`@pytest.mark.anyio`, backend asyncio). Tests import in `importlib` mode (set in `pyproject.toml`), so two folders may hold files with the same name. No test makes a network call: every outside service has a fake (§12). No builder holds a key or makes a paid call.
+- **Figures** come from `api/settings.py` only, each with its basis (brief §10.7). A figure not there is asked for, not invented.
+- **SDK clients** are created with their own retries off (`max_retries=0`). Retries are `api/retry.py`'s, only where T3.3 says.
+- **Dates shown to a person are America/Chicago**, computed with `zoneinfo` (brief §10.7). Timestamps in events and records are ISO 8601 strings with their offset. **Fields a TTL index reads are BSON dates** (`events.created`, `heartbeats.at`), since MongoDB expires only dates. Exa's published dates are kept as written (T2.2).
 - **Logs** hold run IDs, states, timings, costs and error kinds, never the question, Claude's queries, the answer or page text (T3.7).
 - **Text is data.** Passage and web text are never instructions (T1.14); nothing from a visitor, Claude, the corpus or the web is ever inserted as HTML (T3.7).
+- **No web page text is ever stored or streamed** (T2.2, P1.3, P1.7): not in events, Atlas, logs or replays. §6 says where it is replaced.
 - **No absolute local paths** in committed files; paths are built from the repository root.
 - **Ownership:** each builder writes only its own paths (§13). Builders never commit; the main session commits after review.
 
-## 2. Shared types
+## 2. Shared types and errors
 
-`api/types.py` holds: `Passage`, `Filters`, `Hit`, `Usage`, `WebPage`, `KeptPassage`, `RunTotals`, the `RunContext` protocol and `RunStopped`. Their fields and meanings are as documented there; §3 says how a `Passage` is derived.
-
-Two errors every tool part uses, defined in `api/errors.py` (main session):
-
-```python
-class ToolInputError(Exception):   # bad input from Claude: becomes an error tool_result, shown as a step (T3.7)
-    message: str                    # written to Claude: says what was wrong and how to fix it
-class ServiceError(Exception):     # an outside service failed after our handling
-    service: Service; kind: str; status: int | None; message: str
-```
+`api/types.py`: `Passage`, `Filters`, `Hit`, `Usage`, `WebPage`, `RunFlags`, `KeptPassage`, the `RunContext` protocol and `RunStopped`. `api/errors.py`: `ToolInputError` (bad input from Claude; its `message` is written to Claude and becomes an error tool result, T3.7) and `ServiceError(service, kind, status, message, retry_after_s)`, where `kind` is one of the closed `ErrorKind` values. **Every client classifies its failures into `ErrorKind`**; `api/retry.py` decides from it what is retried. Mapping for Anthropic: 429 → `rate_limited`, except the usage tier's spend-cap 429 → `spend_cap`; 400 → `bad_request`, except the Console spend limit → `spend_limit`; 500 → `server_error`; 504 → `gateway_timeout`; 529 → `overloaded`; our deadline → `deadline`; the `refusal` stop reason → `refusal`. How the two special cases are told apart is read from Anthropic's error docs by the builder of G and cited in a comment.
 
 ## 3. The corpus as passages (T1.6, T1.9)
 
 Source: `data/corpus/cases/<key>.json` and `data/corpus/manifest.json`, committed and frozen (changed only through `scripts/corrections.json`).
 
-- **Opinion IDs** are the manifest's (`katz-3`), counted from 1 within a case in the manifest's order.
-- **Paragraph passages:** every paragraph whose `kind` is not `section` (kinds `text`, `quote`, `appendix`), numbered from 1 within its opinion: `katz-3-p1`. Section paragraphs are never passages and are never returned by search (T1.6).
-- **Footnote passages:** each footnote of an opinion is **one** passage, numbered from 1 in the opinion's `footnotes` order (by order, never by label: labels repeat, as in *Boyd*): `katz-3-n1`. Its text is its paragraphs joined with `"\n\n"`; a paragraph join is always a sentence boundary. *(Claude's call: one passage per footnote, not per footnote paragraph.)*
-- **Counts, by script** (Oct 24, 2026, after T1.5): 1,964 paragraph passages and 498 footnote passages, **2,462 passages**. Phase 3's "2,748 units" counted the 286 section headings as well; T3.6's 11.3 MB vectors figure becomes about 10.1 MB (2,462 × 1,024 × 4 bytes).
-- **Text** is the corpus text exactly. Nothing is added to it. The loop's view adds footnote markers (`[n. 3]`) at each reference, after the referencing character (`footnote_refs[].offset`), resolved to footnote IDs in reading order; the composition call and the page get the text without markers (T1.6).
-- **Section label:** the stack of numbered headings in force at the passage (Roman numerals, capital letters, arabic numerals, as printed: "II", "III-A"), or an appendix title; omission rows and letterhead lines that the corpus types as sections are not labels (T1.6). `None` before the first heading.
-- **Pages:** `page_start` from the paragraph (or footnote's `page`); `page_end` from the last page break inside it.
-- **Opinion groups** (T1.4): majority → majority; plurality → plurality; any type containing "concurring" or "concurrence" → concurrence; any containing "dissent" → dissent; a type with both maps to both.
+- **Opinion IDs** are `<case_key>-<k>`, k counted **from 1** in the manifest's order (T1.6). The manifest's own `id` field counts from 0 (`katz-0` there is `katz-1` here) and is never used as an ID.
+- **Paragraph passages:** every paragraph whose `kind` is not `section` (kinds `text`, `quote`, `appendix`), numbered from 1 within its opinion: `katz-1-p1`. Section paragraphs are never passages and never returned by search (T1.6).
+- **Footnote passages:** each footnote is **one** passage, numbered from 1 in the opinion's `footnotes` order (by order, never by label: labels repeat, as in *Boyd*): `katz-1-n1`. Its text is its paragraphs joined with `"\n\n"`; that join is always a sentence boundary. *(The main session's call.)*
+- **Counts, by script** (Oct 24, 2026, after T1.5): 1,964 paragraph passages and 498 footnote passages, **2,462 passages**. Phase 3's "2,748 units" (T3.6) also counted the 286 section headings; the vectors file is therefore about 10.1 MB (2,462 × 1,024 × 4 bytes), not 11.3 MB.
+- **Text** is the corpus text exactly. The loop's view adds footnote markers `[n. <label>]` at each reference (after the character at `footnote_refs[].offset`), each reference resolved to a footnote ID: an opinion's references match its footnotes one to one in label order (checked by script). The composition call and the page get the text without markers (T1.6).
+- **Section label** (T1.6). It is part of the text Voyage embeds (§4.C), so it is fixed before the embedding and never changed after without re-embedding. The rule:
+  - **Numbered headings:** level and numeral are read as `scripts/check_structure.py`'s `level()` reads them. That is the existing reading of I/V/C/D, which can be numerals or letters.
+  - **Joining:** the heading stack is joined with "-", with trailing periods dropped ("I." → "I", so Part III subpart A is "III-A").
+  - **A letter heading with a title** ("A. TITLE I—THE RECORDKEEPING REQUIREMENTS") contributes its letter only.
+  - **Unnumbered title rows** inside an appendix ("PROOF OF CRIMINAL VIOLATION") do not change the label.
+  - **Appendix paragraphs** take the appendix's title row ("APPENDIX TO OPINION OF STEVENS, J.") as their label, or "Appendix" where the corpus has no title row (the *Kyllo* and *Carpenter* dissents).
+  - **Not labels:** omission rows and letterhead lines typed as sections.
+  - Before the first heading the label is `None`.
+  - **Check before embedding:** B's tests print every distinct label per opinion, and the main session reviews that list before the embedding runs.
+- **Pages:** `page_start` from the paragraph (a footnote's `page`); `page_end` from the last page break inside it. *Chatrie* is a slip opinion (`slip_opinion: true`): its pages are slip pages and restart at 1 in each of its five opinions.
+- **Opinion groups** (T1.4): majority → majority; plurality → plurality; a type containing "concurring" or "concurrence" → concurrence; a type containing "dissent" → dissent; a type with both maps to both.
+- **Joiners** carry the manifest's `joined_by_source`; where it says "not printed", an empty `joined_by` means unknown, never "joined by nobody" (P1.18).
 - **Sentences:** `api/corpus/sentences.split_sentences(text)` (§4.A) at load; offsets stored on the `Passage`.
-- **The corpus catalog** for the system prompt (T1.6): each case's key, name, citation and decision date; each opinion's ID, exact type, author, joiners, paragraph and footnote counts with their ID ranges, page range; one line saying the filter groups types and results show the exact type.
-- **Coverage** (brief §2): the three dates from the manifest. With the recording-only switch (T5.6, `exclude=("chatrie",)`), the case leaves the passages, both indexes, the catalog and the coverage: the latest decision in the corpus and in the full pull become *Carpenter*'s, 2018-06-22; the ingestion date stays.
+- **The corpus catalog** for the system prompt (T1.6): each case's key, name, citation and decision date; each opinion's ID, exact type, author, joiners (or "not printed"), paragraph and footnote counts with their ID ranges, page range (marked as slip pages for *Chatrie*); one line saying the filter groups types and results show the exact type.
+- **Coverage** (brief §2): the three dates from the manifest.
+- **The recording-only switch** (T5.6): `Corpus.load(..., exclude=("chatrie",))`, label `before_chatrie`. The case leaves the passages, both indexes, the catalog, the manifest the checks use, and the coverage. The latest decision in the corpus and in the full pull become *Carpenter*'s, 2018-06-22; the ingestion date stays. H turns it on only with `PC_CORPUS=before_chatrie` and refuses to start with it when `PC_ENV=live`.
 
 ## 4. The parts, their paths and interfaces
 
-Each part lists its paths, its public interface and its tests. A builder may add private helpers in its own paths. Signatures are binding; internals are the builder's.
+Signatures are binding; internals are the builder's; a builder may add private helpers in its own paths.
+
+### R. Retries (the main session's, written): `api/retry.py`
+
+`with_retries(attempt, policy, before_attempt, on_retry, sleep=asyncio.sleep)` runs `attempt(n)` until it returns, calling `before_attempt(n)` first each time (the caller passes `ctx.before_paid_call`) and `on_retry(next_attempt, error, wait_s)` before each wait (the caller records the failed attempt with `ctx.record_usage(..., outcome="retrying")`). `ANTHROPIC_POLICY` and `VOYAGE_POLICY` hold T3.3's retryable kinds, counts and waits; a `retry_after_s` on the error wins over the wait. Exa has no policy: never retried by our code (T2.4).
 
 ### A. The sentence splitter (T1.9): `api/corpus/sentences.py`, `scripts/check_sentences.py`, `tests/corpus/test_sentences.py`
 
@@ -60,25 +66,29 @@ def split_sentences(text: str) -> list[tuple[int, int]]:
 LEGAL_ABBREVIATIONS: frozenset[str]   # e.g. "U. S.", "How.", "Cal.", "Pen.", "Stat.", "supra", "e. g."
 ```
 
-The rule (T1.9): split only where a sentence plainly ends: `.`, `?` or `!` (or one followed by a closing quotation mark or bracket) then whitespace then a capital letter or an opening quotation mark or bracket, **and** the token before the stop is a lowercase word that is not an abbreviation, a number, a closing bracket or quotation mark, or a capitalised word of five or more letters not on the abbreviation list. In doubt, do not split. Ellipsis rows (`. . .`) never end a sentence on their own.
+The rule (T1.9): split only where a sentence plainly ends: `.`, `?` or `!` (or one followed by a closing quotation mark or bracket), then whitespace, then a capital letter or an opening quotation mark or bracket, **and** the token before the stop is a lowercase word that is not an abbreviation, a number, a closing bracket or quotation mark, or a capitalised word of five or more letters not on the abbreviation list. In doubt, do not split. Ellipsis rows (`. . .`) never end a sentence on their own.
 
-`scripts/check_sentences.py` runs the splitter over every passage, asserts the tiling for all 2,462, and writes `data/verification/sentences/report.json` (local) listing suspicious splits (a split before a capital that follows a short capitalised word, an initial, a section sign, "v.", "No.", a reporter abbreviation or a number) for the main session's sampled review (T1.9; no subagent). Tests use the ten hardest passages chosen by `scripts/probe_chunking.py` and the citation forms it found broken.
+`scripts/check_sentences.py` runs the splitter over every passage (it builds passage texts from `data/corpus/` itself, by §3's rules, so it does not wait on B), asserts the tiling for all 2,462, and writes `data/verification/sentences/report.json` (local) listing suspicious splits: a split before a capital that follows a short capitalised word, an initial, a section sign, "v.", "No.", a reporter abbreviation or a number. The main session reviews a sample (T1.9; no subagent). Tests use `tests/fixtures/sentences/hardest.json` (the ten passages `scripts/probe_chunking.py` chose; committed).
 
-### B. The corpus index: `api/corpus/store.py`, `api/corpus/filters.py`, `api/corpus/keyword.py`, `api/corpus/reader_files.py`, `scripts/build_reader_files.py`, `tests/corpus/`
+### B. The corpus index: `api/corpus/store.py`, `api/corpus/filters.py`, `api/corpus/keyword.py`, `api/corpus/web_data.py`, `scripts/build_web_data.py`, `tests/corpus/`
 
 ```python
 class Corpus:
     @classmethod
     def load(cls, root: Path, exclude: tuple[str, ...] = ()) -> "Corpus": ...
+    label: CorpusLabel                    # "full", or "before_chatrie" when exclude == ("chatrie",)
     passages: dict[str, Passage]          # insertion order = reading order (case, opinion, paragraphs then footnotes)
+    manifest: dict                        # the manifest with excluded cases removed (used by the checks)
     coverage: dict                        # {"latest_decision_full_pull", "latest_decision_in_corpus", "ingested"}
     catalog_text: str
     case_keys: frozenset[str]
     def loop_text(self, passage_id: str) -> str          # text with "[n. <label>]" markers (§3)
+    def attached_footnotes(self, passage_id: str) -> list[Passage]   # the footnotes a paragraph cites (T1.6)
     def read(self, target: str, before: int, after: int) -> list[Passage]
-        # target: a passage ID, or "<case_key>:<U.S. Reports page>" (every passage on that page, in reading order,
-        # across opinions). before/after 0..READ_AROUND_MAX within the target's opinion and kind.
-        # Raises ToolInputError naming the valid range for an unknown ID or page (T1.6).
+        # target: a passage ID; or "<case_key>:<page>" (every passage on that U.S. Reports page, in reading
+        # order, across the case's opinions); or, for a slip opinion, "<opinion_id>:<slip page>" (a case-level
+        # page target is refused there with a message naming the opinion form). before/after 0..READ_AROUND_MAX
+        # within the target passage's opinion and kind. Raises ToolInputError naming the valid range (T1.6).
 
 def parse_filters(raw: dict | None, corpus: Corpus) -> Filters      # validates; raises ToolInputError (T1.4)
 def matches(p: Passage, f: Filters) -> bool                          # every filter but none_of
@@ -92,19 +102,21 @@ class KeywordIndex:                       # SQLite FTS5, porter + unicode61, bui
     def compile(all_of, any_of, none_of) -> str                     # the FTS5 query; Claude never writes syntax
 ```
 
-`parse_filters` treats an empty list, or a filter set to every value, as unset (T1.4); a year is the whole year. `KeywordIndex.search` raises `ToolInputError` when both `all_of` and `any_of` are empty or a list exceeds `KEYWORD_ITEMS_PER_LIST`. A quoted item is a phrase; word forms match (porter).
+`parse_filters` treats an empty list, or a filter set to every value, as unset (T1.4). `KeywordIndex.search` raises `ToolInputError` when both `all_of` and `any_of` are empty or a list exceeds `KEYWORD_ITEMS_PER_LIST`; a quoted item is a phrase; word forms match (porter). The caller asks for `limit = max_results + len(already seen)` so it can top up (T1.6).
 
-`scripts/build_reader_files.py --out <dir>` writes the reader files (§11.1) for every opinion, used when the web image is built (T4.3). `--exclude chatrie` is not offered: the reader serves the full corpus.
+`scripts/build_web_data.py --out <dir>` writes, for the web image: the reader files (§11.1), `corpus.json` (§11.3) and `config.json` (§5.1). It always uses the full corpus.
 
-### C. Meaning search: `api/search/voyage.py`, `api/search/meaning.py`, `scripts/embed_corpus.py`, `data/vectors/` (written only by the main session running the script), `tests/search/`
+### C. Meaning search: `api/search/voyage.py`, `api/search/meaning.py`, `scripts/embed_corpus.py`, `tests/search/`
+
+C depends only on `api/types.py`, `api/errors.py`, `api/retry.py` and `api/settings.py`: its tests build `Passage` objects directly, so it never waits on B.
 
 ```python
 class VoyageClient(Protocol):
     async def embed(self, texts: list[str], input_type: Literal["query", "document"]) -> tuple[list[list[float]], Usage]: ...
-    async def rerank(self, query: str, documents: list[str], top_k: int) -> tuple[list[tuple[int, float]], Usage]: ...
+    async def rerank(self, query: str, documents: list[str]) -> tuple[list[tuple[int, float]], Usage]: ...  # every document, best first
 
-class HttpVoyageClient(VoyageClient):     # https://api.voyageai.com/v1, bearer VOYAGE_API_KEY, VOYAGE_TIMEOUT_S, no retries
-    ...
+class HttpVoyageClient(VoyageClient):     # VOYAGE_BASE_URL, bearer VOYAGE_API_KEY, VOYAGE_TIMEOUT_S, no retries;
+    ...                                   # failures raised as ServiceError with an ErrorKind
 class FakeVoyageClient(VoyageClient): ... # deterministic vectors from a hash; scripted failures
 
 def embedded_text(p: Passage) -> str:
@@ -112,22 +124,23 @@ def embedded_text(p: Passage) -> str:
 
 class MeaningIndex:
     @classmethod
-    def load(cls, vectors_dir: Path, corpus: Corpus) -> "MeaningIndex": ...
-        # reads voyage-law-2.f32 and manifest.json; raises if the model, dimension, count or any
-        # passage's embedded-text hash disagrees with the corpus (T3.6). Rows of an excluded case are dropped.
-    async def search(self, query: str, f: Filters, limit: int, ctx: RunContext,
+    def load(cls, vectors_dir: Path, passages: Iterable[Passage]) -> "MeaningIndex": ...
+        # reads voyage-law-2.f32 and manifest.json; raises if the model, dimension or any passage's
+        # embedded-text hash disagrees; rows of passages not given (an excluded case) are dropped (T3.6)
+    async def search(self, query: str, keep: Callable[[Passage], bool], ctx: RunContext,
                      voyage: VoyageClient) -> "MeaningResult": ...
+        # `keep` is the caller's filter (B's matches and excluded_by_none_of)
 
 @dataclass
 class MeaningResult:
-    hits: list[Hit]                      # best first, at most SEMANTIC_CANDIDATES before the caller's top-up
+    hits: list[Hit]                      # every reranked candidate (up to SEMANTIC_CANDIDATES), best first; the caller tops up
     status: Literal["ok", "not_reranked", "unavailable"]
-    message_for_claude: str | None       # "not reranked" note, or the error saying keyword search still works
+    message_for_claude: str | None       # the "not reranked" note, or the error saying keyword search still works
 ```
 
-Search order (T1.4, T3.3): apply `matches` and `excluded_by_none_of`; embed the query (`input_type="query"`); brute-force dot product over unit-normalised rows; take `SEMANTIC_CANDIDATES`; rerank with `rerank-3` over their embedded texts; return the reranked order. Each Voyage request goes through `ctx.before_paid_call("voyage", ...)`, the retry policy of T3.3 (`api/state/retry.py`, §4.E) and `ctx.record_usage`. Rerank failing after retries → embedding order, `not_reranked`. Embed failing after retries → `unavailable`, no hits. A 401 → `unavailable` for the rest of the run (logged as configuration fault).
+Order (T1.4, T3.3): filter with `keep`; embed the query (`input_type="query"`); brute-force dot product over unit-normalised rows; take `SEMANTIC_CANDIDATES`; rerank them all with `rerank-3` over their embedded texts. Each Voyage request: `with_retries(..., VOYAGE_POLICY, before_attempt=lambda n: ctx.before_paid_call("voyage", purpose), ...)`, each attempt recorded with `ctx.record_usage` (purpose `embed` or `rerank`). Rerank still failing → embedding order, `not_reranked`, `ctx.flags.meaning_degraded = True`. Embed still failing → `unavailable`, no hits, `ctx.flags.meaning_unavailable_once = True`. A 401 → also `ctx.flags.voyage_unavailable = True`, and every later search in the run returns `unavailable` without calling Voyage (logged as configuration fault).
 
-`scripts/embed_corpus.py` embeds every passage's `embedded_text` with `input_type="document"`, in batches paced under Voyage's Tier 1 limits (read from Voyage's docs; the figures go in the script's docstring with their source), caching each batch under `data/cache/voyage/` (gitignored) so a rerun never pays twice. It prints the token count and the cost at list price and **spends only with `--confirm`**. Output: `data/vectors/voyage-law-2.f32` (row-major float32, rows in `Corpus.passages` order) and `data/vectors/manifest.json` (`model`, `dimension`, `count`, `created` as a Chicago date, `units`: `[{id, sha256}]` of each embedded text).
+`scripts/embed_corpus.py` embeds every passage's `embedded_text` with `input_type="document"`, in batches paced under Voyage's Tier 1 limits (read from Voyage's docs; figures and source in the docstring), caching each batch under `data/cache/voyage/` (gitignored) so a rerun never pays twice. It prints the token count and the cost at list price and **spends only with `--confirm`**; the main session runs it. Output: `data/vectors/voyage-law-2.f32` (row-major float32, rows in passage reading order) and `data/vectors/manifest.json` (`model`, `dimension`, `count`, `created` as a Chicago date, `units`: `[{id, sha256}]` of each embedded text). Until B lands, the script builds passages by §3 with a minimal reader of its own, replaced by `Corpus` at merge.
 
 ### D. The update check: `api/web_updates/params.py`, `api/web_updates/exa.py`, `api/web_updates/format.py`, `tests/web_updates/`
 
@@ -144,8 +157,9 @@ class WebSearchParams:                    # our wrapper's fields (T2.1), validat
     num_results: int                      # 1..10, default 10, clamped
 
 def parse_params(raw: dict) -> WebSearchParams    # raises ToolInputError (refused by our code, not counted, T2.4)
-def to_exa_arguments(p: WebSearchParams) -> dict  # snake_case to Exa's tool argument names, plus our fixed
-                                                  # settings: text cut at EXA_TEXT_CHARS, no highlights, no summaries
+def to_exa_arguments(p: WebSearchParams) -> dict  # snake_case to Exa's tool argument names. Fixed settings are applied
+                                                  # by omission (no highlights, no summaries are simply not requested),
+                                                  # except the text cap EXA_TEXT_CHARS, sent explicitly
 
 class ExaTransport(Protocol):
     async def call(self, arguments: dict, timeout_s: float) -> dict: ...     # Exa's parsed JSON; raises ServiceError
@@ -157,70 +171,81 @@ class FakeExaTransport(ExaTransport): ... # scripted results and every failure k
 class WebSearchOutcome:
     kind: Literal["ok", "refused_by_exa", "failed", "unavailable"]
     unavailable_reason: Literal["no_credit", "key_refused"] | None
-    pages: list[WebPage]                  # all returned, in Exa's order; repeats carry their first ID
-    repeats: list[str]                    # IDs of pages an earlier search returned
+    pages: list[WebPage]                  # new pages, in Exa's order
+    repeats: list[str]                    # IDs of pages an earlier search in this run returned (T2.2)
     undated: int
     exa_message: str | None               # Exa's own message, for refused_by_exa
-    usage: Usage | None                   # costDollars, or list price for failed (T2.4)
+    cost_usd: float                       # informational: already recorded through ctx.record_usage
 
 class UpdateSearch:
-    def __init__(self, transport: ExaTransport, store: "Store"): ...
+    def __init__(self, transport: ExaTransport, store: Store): ...
     async def search(self, p: WebSearchParams, search_no: int, seen_urls: dict[str, str],
                      ctx: RunContext) -> WebSearchOutcome: ...
     async def schema_check(self) -> list[str]: ...    # warnings; never blocks (T2.5)
 
-def format_for_claude(p: WebSearchParams, o: WebSearchOutcome) -> str      # T2.2: opening line, headers, data markers
+def format_for_claude(p: WebSearchParams, o: WebSearchOutcome) -> str        # T2.2, with page text in data markers
+def format_for_events(p: WebSearchParams, o: WebSearchOutcome) -> str        # the same text, each page's text replaced
+                                                                             # by "[page text: <n> characters, not stored]"
 ```
 
-The four failure kinds, the 402 flag (checked before a session opens, set on the first 402, until the 1st of the next Chicago month), the 401 run-only unavailability, the 30 s timeout covering the handshake, and no retries by our code: T2.4 and T2.5. Text inside the data markers has any copy of the closing marker escaped (T2.2). Page text is returned in `WebPage.text` for Claude and the copy guard only; it never reaches an event (T2.2).
+`search` calls `ctx.before_paid_call("exa", "update_search")` and `ctx.record_usage(...)` itself (once: no retries). It checks the out-of-credit flag (`store.flag_until("exa_out_of_credit")`) and `ctx.flags.exa_unavailable` before opening a session; on the first 402 it sets the flag (until the 1st of the next Chicago month), records the stop `exa_no_credit`, and sets `ctx.flags.exa_unavailable = "no_credit"`; a 401 sets `ctx.flags.exa_unavailable = "key_refused"` for this run only (T2.4). Four failure kinds, the 30 s timeout covering the handshake, list price for a failed search: T2.4, T2.5. A published date that is not a parseable `YYYY-MM-DD` date part becomes `None` (counted as undated); a result whose URL is not `http` or `https` is dropped. Any copy of the closing data marker inside page text is escaped (T2.2).
 
-### E. Money and state: `api/state/store.py`, `api/state/budget.py`, `api/state/prices.py`, `api/state/retry.py`, `api/state/clock.py`, `scripts/spend_report.py`, `tests/state/`
+### E. Money and state: `api/state/store.py`, `api/state/budget.py`, `api/state/prices.py`, `api/state/clock.py`, `scripts/spend_report.py`, `tests/state/`
 
 ```python
-class Store(Protocol):                    # every Atlas read and write the app makes (§8)
-    async def ensure_indexes(self) -> None: ...
-    async def append_events(self, run_id: str, events: list[dict]) -> None: ...
-    async def read_events(self, run_id: str, after: int) -> list[dict]: ...
-    async def put_heartbeat(self, run_id: str, last_event: int) -> None: ...
-    async def latest_heartbeat(self, run_id: str) -> datetime | None: ...
-    async def upsert_run_record(self, record: dict) -> None: ...
-    async def reserve(self, run_id: str, worst_case_usd: float, now: datetime) -> "Reservation | Refusal": ...
-    async def settle(self, r: "Reservation", cost_usd: float) -> None: ...
-    async def release(self, r: "Reservation") -> None: ...
-    async def record_stop(self, kind: str, run_id: str | None, now: datetime, detail: dict) -> None: ...
-    async def count_run_started(self, now: datetime) -> None: ...
-    async def exa_flag(self, now: datetime) -> bool: ...          # True while out of credit (T2.4)
-    async def set_exa_flag(self, now: datetime) -> None: ...
-    async def live_status(self, now: datetime, timeout_s: float) -> dict: ...  # for /health (T3.4)
-class MongoStore(Store): ...              # pymongo AsyncMongoClient; database ATLAS_DB_LIVE or ATLAS_DB_TEST
-class MemoryStore(Store): ...             # the fake every other part tests against
+class MongoStore(Store): ...              # api/protocols.Store; pymongo AsyncMongoClient; ATLAS_OP_TIMEOUT_S
+class MemoryStore(Store): ...             # the fake every other part tests against; same semantics
 
-def worst_case_usd() -> float             # from the per-run ceilings and the price table (T3.4); about $1.67
-def price(u: Usage) -> float              # list price (T3.4); a failed attempt as T3.3
-PRICE_TABLE: dict                         # §10, with source and date
+def worst_case_usd() -> float             # the formula below; about $1.67 (T3.4)
+def price(u: Usage) -> float              # list price (T3.4); a failed attempt with no usage as T3.3
+def list_price_exa(type: str) -> float
+PRICE_TABLE: dict                         # §10, one source and date per provider
 
-async def with_retries(attempt: Callable[[int], Awaitable[T]], policy: RetryPolicy,
-                       before_attempt: Callable[[int], Awaitable[None]],
-                       on_retry: Callable[[int, ServiceError, float], Awaitable[None]]) -> T
-ANTHROPIC_POLICY: RetryPolicy             # T3.3: which errors, how many, which waits; retry-after honoured
-VOYAGE_POLICY: RetryPolicy
-
-def chicago_now() -> datetime; def chicago_day(dt) -> str; def chicago_month(dt) -> str   # "2026-10-24", "2026-10"
+def chicago_now() -> datetime; def chicago_day(dt) -> str; def chicago_month(dt) -> str; def next_month_start(dt) -> datetime
 ```
 
-`reserve` is **one conditional update** of the month's document (T3.4, B1): it succeeds only if, for the Chicago day and for the month, spent + reserved + `worst_case_usd` stays within `DAILY_CAP_USD` and `MONTHLY_CAP_USD`; else it returns `Refusal(kind="daily_cap" | "monthly_cap")` and records the stop. Atlas unreachable → `Refusal(kind="atlas_unreachable")`, recorded as not a budget stop where it can be. `settle` moves a call's cost from reserved to spent; `release` frees the rest at run end; spend counts toward the day and month the run started in. Every budget-stop kind of T3.4 has a `record_stop` kind (§8). `scripts/spend_report.py --day YYYY-MM-DD | --month YYYY-MM` is read-only.
+**The worst case** (T3.4), with Sonnet prices for the loop and Opus prices for composition:
+- **Loop input:** `FIXED_PREFIX_TOKENS_ESTIMATE` at the 1-hour cache-write price, plus the rest of `LOOP_INPUT_BUDGET` at the 5-minute write price.
+- **Loop output:** `LOOP_OUTPUT_BUDGET` at the output price.
+- **Composition:** `COMPOSITION_RESERVE_INPUT` uncached input plus `COMPOSITION_MAX_TOKENS` output.
+- **Two failed composition attempts:** another 2 × `COMPOSITION_RESERVE_INPUT` of input.
+- **Exa:** `UPDATE_SEARCHES_PER_RUN` × the `auto` price.
+- **Voyage:** `VOYAGE_RUN_BOUND_USD`.
 
-### F. The answer checks: `api/checks/quotations.py`, `api/checks/citations.py`, `api/checks/update_findings.py`, `api/checks/summary.py`, `tests/checks/`
+Total: 0.943 + 0.08 + 0.36 + 0.24 + 0.021 + 0.03 = **$1.674**. A test asserts it.
+
+**`reserve`** is one conditional update of the month's document (T3.4, B1). It succeeds only if, for the Chicago day and for the month, spent + reserved + worst case stays within `DAILY_CAP_USD` and `MONTHLY_CAP_USD`. Otherwise:
+- It returns `Refusal("daily_cap")` or `Refusal("monthly_cap")` and records that stop itself.
+- While the `anthropic_spend_limit` flag is set, it returns `Refusal("spend_limit_paused")`.
+- If Atlas can't be reached, it returns `Refusal("atlas_unreachable")` and records it, marked not a budget stop, where it can.
+
+**`settle`, `release` and attribution:**
+- `settle` moves a call's cost from reserved to spent.
+- `release` frees the rest when the run ends.
+- A reservation that is never settled stays counted.
+- Spend counts toward the Chicago day and month the run started in.
+
+**`live_status`** (for `/health`) reports:
+- `paused_month` while the spend-limit flag is set, or when the month's spent + reserved + worst case would exceed the monthly cap;
+- otherwise `paused_day` when the day's would exceed the daily cap;
+- otherwise `open`;
+- `unknown` past `ATLAS_HEALTH_TIMEOUT_S`.
+
+It also reports whether the update check is available: not while the Exa flag is set.
+
+**Scripts:** `scripts/spend_report.py --day YYYY-MM-DD | --month YYYY-MM | --open-reservations` is read-only. The last option is for the deploy check (T3.5).
+
+### F. The answer checks: `api/checks/quotations.py`, `api/checks/citations.py`, `api/checks/update_findings.py`, `tests/checks/`
 
 ```python
 @dataclass
 class Flag:
-    block: int; start: int; end: int      # position in the answer blocks
+    block: int; start: int; end_block: int; end: int    # from (block, start) to (end_block, end) in the answer blocks
     kind: Literal["quotation_not_found", "not_in_corpus"]
     text: str
 
 @dataclass
-class CheckResult:
+class CheckResult:                        # the `checks` event's data, field for field (§6)
     quotations_checked: int; quotations_found: int
     citations_checked: int; citations_found: int
     not_in_corpus: list[str]              # the names or citations, as written
@@ -228,50 +253,106 @@ class CheckResult:
 
 def check_answer(blocks: list[str], kept_texts: list[str], manifest: dict) -> CheckResult
     # quotations of QUOTATION_MIN_WORDS or more words must appear in the kept passages, allowing the quoting
-    # conventions of T1.12; every full "X v. Y" name and every U.S. Reports citation ("389 U. S. 347") must
-    # resolve to the manifest, else "not in this corpus" (P1.10). Short names are not checked.
-def check_line(r: CheckResult) -> dict    # the parts of T5.2's line as numbers and names; the page writes the words
+    # conventions of T1.12 (a quotation may span blocks); every full "X v. Y" name and every U.S. Reports citation
+    # ("389 U. S. 347") must resolve to the given manifest, else "not in this corpus" (P1.10). Short names unchecked.
 
 def check_update_findings(findings: list[dict], overview: str | None, returned_ids: set[str],
                           searches_run: int) -> list[str]
-    # T2.3 item 2: unknown source ID, a statement with no source, findings with no search run; caps of T2.3
+    # T2.3 item 2: unknown source ID, a statement with no source, findings with no search run; T2.3's caps
 def copy_guard(texts: list[str], page_texts: list[str], n_words: int) -> list[str]
     # T2.3 item 3: n or more consecutive words of any returned page, ignoring case, punctuation and spacing
 ```
 
-Each returned string is a problem written to Claude, naming the statement and what to fix. The checks run on the text exactly as streamed.
+Each returned string is a problem written to Claude. It names the statement by its number and the page by its ID, and **never quotes the page's words** (the message is stored in events). The checks run on the text exactly as streamed.
 
-### G. The research loop and composition: `api/loop/`, `api/prompts/` (text by the main session), `tests/loop/`
+### G. The research loop and composition: `api/loop/`, `tests/loop/`; prompt text in `api/prompts/` (the main session's)
 
 ```python
 @dataclass
 class LoopDeps:
     corpus: Corpus; keyword: KeywordIndex; meaning: MeaningIndex; voyage: VoyageClient
-    updates: UpdateSearch; anthropic: "AnthropicStreamer"; manifest: dict
+    updates: UpdateSearch; anthropic: "AnthropicStreamer"
 
 class AnthropicStreamer(Protocol):        # the one place the SDK is called (streamed, max_retries=0, T3.3)
     async def stream(self, request: dict, deadline_s: float, on_block: Callable | None) -> "StreamResult": ...
+        # raises ServiceError with an ErrorKind (§2)
 class FakeAnthropic(AnthropicStreamer): ...   # scripted turns: tool calls, text blocks with citations, errors
 
 async def execute_run(ctx: RunContext, deps: LoopDeps) -> None
-    # emits run_started ... run_ended; never raises for an expected stop; RunStopped ends the run with its state
+    # emits run_started ... run_ended; returns normally for every expected end, RunStopped included
 ```
 
-G owns: the six tool definitions and their validation (T1.2 to T1.10, T2.1, T2.3, T3.7; strict mode only where T3.7 allows, counted); result formatting for Claude (T1.6, T2.2) and the per-turn status line (T1.14); the "matched again" top-up (T1.6); the keep rules (T1.7); the rejection rules in order (T1.10, T2.3); the token budget and its estimate before each loop call (T3.3); caching (T1.14: one-hour breakpoint on tools, system prompt and catalog); composition (T1.8, T1.9, T1.11) with custom content documents of our sentences and `context`; mapping each citation's block range back to the passage ID and sentence range; the fallbacks and stop states (T1.11, T3.3, T3.5); running F's checks; working out the band's outcome (T2.3 item 4); and every event of §6 except those H emits. Prompts and tool descriptions are read from `api/prompts/` (`loop_system.md`, `composition_system.md`, `tools.json` descriptions, `rejections.json`); placeholders until the main session's drafts land, and the user reviews them before the first paid run (T1.14).
+**What G owns:**
+- **Tools:** the six tool definitions and their validation (T1.2 to T1.10, T2.1, T2.3, T3.7). Strict mode only where T3.7 allows it, with the count of strict tools recorded.
+- **What Claude sees:** result formatting (T1.6, T2.2), the per-turn status line (T1.14), and the "matched again" top-up (T1.6).
+- **Keeping and submitting:** the keep rules (T1.7), and the rejection rules in order: rule 1, then the findings checks and copy guard, then rules 2 to 4 (T1.10, T2.3).
+- **Budget and caching:** the token budget and its estimate before each loop call (T3.3), and caching (T1.14: a one-hour breakpoint on tools, system prompt and catalog).
+- **Claude calls:** every one runs through `with_retries(ANTHROPIC_POLICY, ...)`, with each attempt recorded by `ctx.record_usage` (with `raw_usage` and `call_no`).
+- **Composition** (T1.8, T1.9, T1.11): custom content documents of our sentences, metadata and keep reason in `context`. Each citation's block range maps back to a passage ID and an inclusive sentence range.
+- **Ends:** the fallbacks and stop states (T1.11, T3.3, T3.5). On `RunStopped("deadline")` G composes from what was kept and ends `time_limit`. On `RunStopped("abandoned")` it composes nothing and ends `abandoned`. On a `spend_limit` or `spend_cap` error it ends `spend_limit` with that `stop_kind`.
+- **After the answer:** running F's checks, working out the band's outcome (§6, T2.3 item 4), and every event of §6 except `paused` and `resumed`, plus `run_ended` in H's two cases.
+
+Prompts and tool descriptions are read from `api/prompts/`: `loop_system.md`, `composition_system.md`, `tools.json` (the descriptions) and `rejections.json`. They are placeholders until the main session's drafts land, and the user reviews them before the first paid run (T1.14).
 
 ### H. The API and the run lifecycle: `api/server/`, `api/main.py`, `tests/server/`
 
 ```python
 def create_app(deps_factory: Callable[[], Awaitable["AppDeps"]]) -> FastAPI
-class Run(RunContext): ...                # state, event buffer, Atlas copy queue, heartbeat, deadline, reservation
+class Run(RunContext): ...                # state, event buffer, Atlas copy queue, heartbeat, deadline, reservation, totals
 class RunRegistry: ...                    # runs on this instance; one stream per run
 ```
 
-H owns the endpoints (§5); start-up loading before the port opens, each step timed and logged with the time since process start (T3.6); the reservation at `POST /runs` and its release at the end (T3.4); the run task starting when the first stream attaches, and expiry of a run never attached (T3.1); the event buffer, numbering, the copy to Atlas in order without blocking the stream, replay from memory or from Atlas on reconnect (T3.1); `Last-Event-ID`; one stream per run; the keep-alive comment (`KEEPALIVE_S`); `X-Accel-Buffering: no`; heartbeats, attended, pause and resume events, abandonment at `ABANDON_AFTER_S` (T3.2); the other-instance heartbeat through Atlas and the `interrupted` end (T3.1, T3.2); the run deadline (T3.5); body size caps and the question cap (T3.7); the per-run record (T3.7). `before_paid_call` checks, in order: abandoned → `RunStopped("abandoned")`; past the deadline → `RunStopped("deadline")`; unattended → emit `paused`, wait for a heartbeat (emit `resumed`) or abandonment.
+**Start-up and endpoints:**
+- The endpoints are §5.
+- Everything loads before the port opens, each step timed and logged with the time since the process started (T3.6).
+- `PC_ENV` (`live` or `test`, default `test`) chooses the database. `PC_CORPUS=before_chatrie` is refused when `PC_ENV=live` (T5.6). `PC_COMMIT` is the short commit SHA, set when the image is built.
+
+**Money:**
+- The reservation is made at `POST /runs` and released at the end (T3.4).
+- `record_usage` is the one place spend is priced, settled and totalled, and the one emitter of `paid_call`.
+
+**The run task:**
+- It starts when the first stream attaches, and attaching counts as a heartbeat.
+- A run no stream ever attaches to expires after `UNATTACHED_RUN_EXPIRY_S` with no spend, and its reservation is released (T3.1).
+
+**Events and streams:**
+- H keeps the event buffer and the numbering, and copies events to Atlas in order without holding up the stream: the full envelope plus `created` (§8).
+- A reconnect replays from memory, or from Atlas when it reaches another instance (T3.1). It honours `Last-Event-ID`.
+- One stream per run. A keep-alive comment every `KEEPALIVE_S`, and the `X-Accel-Buffering: no` header.
+
+**`before_paid_call`**, in order:
+1. If the run is abandoned, raise `RunStopped("abandoned")`.
+2. If the purpose is not `composition` and the run is past its deadline, raise `RunStopped("deadline")`. Composition always proceeds, so T3.5's time limit still composes.
+3. If the run is unattended (no heartbeat for `ATTENDED_WINDOW_S`), emit `paused` and wait. Heartbeats come from this instance or, polled every `HEARTBEAT_POLL_S`, from Atlas. On one, emit `resumed`. If none comes, the run is abandoned at `ABANDON_AFTER_S` after the last heartbeat (T3.2).
+
+The caps need no check here, because the run's reservation already bounds what it can spend (T3.4).
+
+**At the end:**
+- H writes the per-run record (T3.7).
+- It records the budget or limit stop named by `run_ended.stop_kind` (§8; T3.4).
+- On `spend_limit` it sets the `anthropic_spend_limit` flag until the 1st of the next Chicago month, which pauses live research (T3.3, T5.4).
+
+**The two `run_ended` events H emits:**
+- **`failed`,** when `execute_run` raises an unexpected exception.
+- **`interrupted`,** on an instance that doesn't hold the run. It is sent on the stream only, never stored. Its `n` is the last stored event + 1, and its totals are summed from the stored `paid_call` events.
+
+**Protections:** the body-size caps and the question cap (T3.7).
 
 ### I. Images and the deploy script: `deploy/`, `tests/deploy/`
 
-`deploy/api.Dockerfile` (Python 3.13, uv, the committed corpus and vectors, FTS5 checked at build), `deploy/web.Dockerfile` (nginx at an exact pinned version, `web/` as served, the reader files from `scripts/build_reader_files.py`, the replays, the `.woff2` fonts with the OFL text; `Cache-Control: no-cache` on every response; T4.2, T5.5), `deploy/nginx.conf` (written from scratch, no goodnight code, T3.5), `deploy/deploy.sh` (both services, every setting explicit, `--scaling=auto`, Secret Manager references, one service account per service, T3.5; **written, never run** by anyone but the main session on the user's green light), and `deploy/local.sh`, which builds both images and runs them locally on ports 8000 and 8080 against `Probable_Clause_test` for the user's review (P4.1).
+**Files:**
+- **`deploy/api.Dockerfile`:** Python 3.13 with uv; the committed corpus and vectors; FTS5 checked at build; `PC_COMMIT` baked in.
+- **`deploy/web.Dockerfile`:** nginx at an exact pinned version. It serves `web/` as is, plus `scripts/build_web_data.py`'s output, the replays from `replays/`, and the `.woff2` fonts with the OFL text that the frontend session places under `web/fonts/` (T4.2, T5.5). Every response carries `Cache-Control: no-cache`.
+- **`deploy/nginx.conf`:** written from scratch, with no goodnight code (T3.5).
+- **`deploy/deploy.sh`:**
+  - deploys both services, every setting explicit from `api/settings.py`'s Cloud Run block, with `--scaling=auto`, Secret Manager references and one service account per service (T3.5);
+  - first runs `scripts/spend_report.py --open-reservations` and stops if any reservation is open (T3.5);
+  - **is written, never run**, except by the main session on the user's green light.
+- **`deploy/local.sh`:** builds both images and runs them for the user's local review (P4.1):
+  - the API on port 8000 with `PC_ENV=test`;
+  - the web service on port 8080, whose local nginx profile proxies `/api/` to the API.
+
+**How the page reaches the API:** the page always calls `api/...` relative to its own URL. In production that resolves to `/probable-clause/api/`, which goodnight routes. Locally it resolves to `http://localhost:8080/api/`, which the local profile proxies. Either way it is the same origin, with no CORS.
 
 ## 5. HTTP endpoints (API root; goodnight strips `/probable-clause/api`)
 
@@ -279,16 +360,31 @@ All JSON is UTF-8. Errors are `{"error": "<code>", "message": "<for logs, never 
 
 | Method and path | Body | Answers |
 |---|---|---|
-| `GET /health` | — | `200 {"app": "probable-clause", "ready": true, "live_research": "open" \| "paused_day" \| "paused_month" \| "unknown", "update_check": "available" \| "unavailable" \| "unknown", "commit": "<short sha>"}` only when loading is complete (T3.6); Atlas read with `ATLAS_HEALTH_TIMEOUT_S`, else `"unknown"` |
-| `POST /runs` | `{"question": "<text>"}`, at most `REQUEST_BODY_MAX_BYTES` | `201 {"run_id": "<random, unguessable>"}`; `400 question_empty` / `question_too_long`; `413 body_too_large`; `503 paused_day` / `paused_month` / `atlas_unreachable` (authoritative over `/health`, T3.4) |
-| `GET /runs/{id}/events` | `Last-Event-ID` header optional | `200 text/event-stream`: each event as `id: <n>`, `event: <kind>`, `data: <JSON envelope>`; a comment line every `KEEPALIVE_S`; the stream closes after `run_ended`. `404 run_unknown` (never existed or expired, T5.4 "no longer stored") |
+| `GET /health` | — | `200 {"app": "probable-clause", "ready": true, "live_research": "open" \| "paused_day" \| "paused_month" \| "unknown", "update_check": "available" \| "unavailable" \| "unknown", "commit": "<short sha>"}`, only once loading is complete (T3.6) |
+| `POST /runs` | `{"question": "<text>"}`, at most `REQUEST_BODY_MAX_BYTES` | `201 {"run_id": "<random, unguessable>"}`; `400 question_empty` / `question_too_long`; `413 body_too_large`; `503 paused_day` / `paused_month` / `atlas_unreachable` (authoritative over `/health`, T3.4; the spend-limit pause answers `paused_month`) |
+| `GET /runs/{id}/events` | `Last-Event-ID` header optional | `200 text/event-stream`: each event as `id: <n>`, `event: <kind>`, `data: <JSON envelope>`; a comment line every `KEEPALIVE_S`; the stream closes after `run_ended`. `404 run_unknown` (never existed or expired: T5.4's "no longer stored") |
 | `POST /runs/{id}/alive` | `{"last_event": <n>}` | `204`; `404 run_unknown` |
 
-Control characters are stripped from the question and an empty or whitespace-only question is refused before any paid call (T3.7). No cookies are set; no client IP is read (T3.5, T3.7).
+Control characters are stripped from the question, and an empty or whitespace-only question is refused before any paid call (T3.7). No cookies are set and no client IP is read (T3.5, T3.7).
+
+### 5.1 The wake protocol (brief §8.5, T3.6), on the page
+
+The page reads its figures from `config.json` (§11.3), generated from `api/settings.py`: `WAKE_CHECK_TIMEOUT_S`, `WAKE_CHECK_GAP_S`, `LONG_WAIT_S`, `WAKE_GIVE_UP_S`, `HEARTBEAT_INTERVAL_S`, `PAGE_WATCHDOG_S`, `QUESTION_MAX_CHARS`.
+
+1. **One `/health` check in flight at a time.** Each waits up to `WAKE_CHECK_TIMEOUT_S`, with `WAKE_CHECK_GAP_S` between checks. Never a second check while one is open, and never parallel retries.
+2. **Any answer that isn't our JSON means still starting** and leads to the next serial check: Cloud Run's plain-text 429, 500 or 503, goodnight's HTML error pages, or a network error.
+3. **One check on landing,** fire and forget (brief §2). The live-research wake joins it if it is still open.
+4. **A fresh `/health` right before `POST /runs`,** and `POST /runs` only after `/health` has answered our JSON. `POST /runs` is **never retried automatically** (brief §8.5 rule 2).
+5. **The long wait** (T4.4, T5.4):
+   - the elapsed time shows from the start;
+   - at `LONG_WAIT_S` the "taking longer" step appears, with the recorded runs offered;
+   - at `WAKE_GIVE_UP_S` checking stops and **Try again** appears, which starts a fresh check, never a run.
+6. **A stream that can't reconnect** runs this protocol before reattaching (T3.1, T3.6).
+7. **Heartbeats** every `HEARTBEAT_INTERVAL_S` while the stream is open (T3.2). The page reconnects after `PAGE_WATCHDOG_S` of silence, and keeps the run ID in sessionStorage to reattach after a reload.
 
 ## 6. Events (T3.1, T4.3, T4.5)
 
-Every event, live or replayed, is one envelope; `contracts/events.schema.json` is the binding definition and both the backend tests and the frontend's fixtures validate against it (P0.3).
+Every event, live or replayed, is one envelope; `contracts/events.schema.json` is the binding definition, and both the backend tests and the frontend's fixtures validate against it (P0.3).
 
 ```json
 {"v": 1, "run": "<id>", "n": 7, "t_ms": 12840, "at": "2026-10-24T20:31:05.123-05:00", "kind": "tool_result", "data": { } }
@@ -296,30 +392,53 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
 
 `n` counts from 1 with no gaps; `t_ms` is since the run started (replays play at this pace); `at` carries its offset.
 
+**Order:** a passage's `passage` event comes before the first event that names it. Every passage whose text is sent to Claude gets one, **attached footnotes included**. A tool's `tool_call` comes before its `tool_result`. Each Claude call's `paid_call` comes after the response is complete. `api_fragment` events for a request come before the call's `paid_call`, and those for a response after it.
+
 | Kind | Emitted by | `data` (summary; the schema has every field) |
 |---|---|---|
-| `run_started` | G | question, limits, coverage dates, `update_check_available`, models, `corpus_label` (`full` or `before_chatrie`) |
+| `run_started` | G | question, limits, coverage dates, `update_check_available`, models, `corpus_label` |
 | `round_started` | G | round number, the status line sent to Claude (T1.14) |
-| `tool_call` | G | `tool_use_id`, tool name, the exact input Claude sent |
-| `passage` | G | the first time a passage appears in a run: the passage (§6.1) |
-| `tool_result` | G | `tool_use_id`, name, `is_error`, the exact text sent to Claude, and by tool: `found` / `matched_again` IDs (searches), `read` IDs, `kept` / `replaced` / `refused` (keep), `web` (each page's ID, title, URL, domain, published, author: never text), `submit` (`accepted`, `rule` when refused) |
-| `paid_call` | G (Claude), C, D via `record_usage` | `call_no` (Claude calls only), service, purpose (`loop`, `composition`, `embed`, `rerank`, `update_search`), attempt, outcome (`ok`, `retrying`, `failed`), `error_kind`, duration, the exact `usage` object for Claude, cost in dollars |
-| `api_fragment` | G | for one passage: `call_no`, `role` (`request` or `response`), `path` (`messages[4].content[2]`), the exact JSON at that path (T4.3) |
+| `tool_call` | G | `round`, `tool_use_id`, tool name, the exact input Claude sent (see §14, open item 1) |
+| `passage` | G | the passage (§6.1) |
+| `tool_result` | G | `tool_use_id`, name, `is_error`, `content` (the text sent to Claude; for `search_web_updates`, `format_for_events`'s text, with page text replaced); by tool: `found` (the matched passages only, not attached footnotes) and `matched_again` (searches), `not_reranked`, `target` and `read` (reads), `kept` (each with `replaced`) and `refused` and `kept_count` (keep), `web` and `web_repeats` and `web_status` and `search_no` (update search: page details, never text), `submit` (`accepted`, and `rule` when refused) |
+| `paid_call` | H, from `record_usage` (called by C, D and G) | `call_no` (Claude calls only), service, purpose, attempt, `max_attempts`, outcome (`ok`, `retrying`, `failed`), `error_kind`, `duration_ms`, Claude's exact `usage` object, cost in dollars, `estimated` |
+| `api_fragment` | G | for one passage: `call_no`, `role` (`request` or `response`), `path` (`messages[4].content[2]`), the exact JSON at that path (T4.3); never for web results |
 | `paused`, `resumed` | H | `since_ms` |
-| `warning` | G | `meaning_search_degraded` or `meaning_search_unavailable` (T3.3) |
-| `composition_started` | G | the kept passage IDs in document order (T1.11) |
-| `answer_block` | G | `index`, the block's text, its citations (`passage_id`, first and last sentence index, `cited_text`, the response `call_no` and `path`) |
-| `checks` | G (via F) | `CheckResult` as numbers, names and flags |
-| `update_band` | G | `outcome` (`found`, `nothing_relevant`, `skipped`, `declined`, `unavailable`, `not_summarised`, `not_run`), `reason`, the searches (every field Claude set, our fixed settings, `status`), findings (statement, source IDs), overview, every page returned (ID, title, URL, domain, published) |
-| `run_ended` | G, or H for `abandoned`, `interrupted`, `failed` | `state` (`answered`, `no_sources`, `step_limit`, `token_ceiling`, `time_limit`, `error_stopped`, `abandoned`, `interrupted`, `failed`, `refusal`, `spend_limit`), `no_sources_reason` (`out_of_scope`, `nothing_found`), `note` (Claude's note to the visitor, T1.10), `scope_note`, `answer_end` (`complete`, `cut_off`, `incomplete`, `none`), `failure_reason`, totals (§6.2), `rounds`, `answer_chars` |
+| `warning` | G | `meaning_search_degraded` or `meaning_search_unavailable` (T3.3), once each, from `ctx.flags` |
+| `composition_started` | G | `call_no`, the kept passage IDs in document order (T1.11) |
+| `answer_block` | G | `index`, the block's text, its citations: `passage_id`, `first_sentence` and `last_sentence` (both **inclusive** indexes into the passage's `sentences`; the API's end index is exclusive, so `last_sentence = end_block_index − 1`), `cited_text`, the response's `call_no` and `path` |
+| `checks` | G (F's `CheckResult`) | exactly `CheckResult`'s fields |
+| `update_band` | G | `outcome`, `reason`, the searches (every wrapper field Claude could set, unset ones null; our fixed settings; `status`; counts), findings, overview, every page returned (details, never text) |
+| `run_ended` | G; H for `failed` and `interrupted` | `state`, `stop_kind`, `no_sources_reason`, `note`, `scope_note`, `answer_end`, `failure_reason`, `rounds`, `answer_chars`, `totals` (§6.2) |
+
+**The band's outcome** (T2.3 item 4, worked out by code):
+- **`found`:** at least one finding.
+- **`nothing_relevant`:** an update search ran and the findings are empty, or were left out.
+- **`skipped`:** `update_skip_reason` was given; `reason` is that text.
+- **`declined`:** accepted after rule 4's reminder with no reason. `reason` is null, and the page shows no reason line.
+- **`unavailable`:** no search could run; `reason` is `no_credit` or `key_refused`.
+- **`not_summarised`:** searches ran, but the run stopped before a submit.
+- **`not_run`:** no search and no submit, for example abandoned early.
+
+**`run_ended` fields:**
+- **`note`** is only for no-sources replies (T1.10).
+- **`scope_note`** is only for a normal answer's scope note.
+- **`stop_kind`** is one of `api/protocols.StopKind` for a budget or limit stop, else null:
+  - `step_limit` and `token_ceiling_input` / `token_ceiling_output` with those states;
+  - `composition_max_tokens` with `answer_end: cut_off`;
+  - `console_spend_limit` / `tier_spend_cap` with `spend_limit`;
+  - `time_limit` with `time_limit`.
 
 ### 6.1 A passage in events
 
-`{"id", "kind", "case_key", "case_name", "citation", "decided", "opinion_id", "opinion_type", "authors", "joined_by", "section", "page_start", "page_end", "paragraph_kind", "footnote_label", "footnotes", "cited_by", "text", "sentences"}`: the `Passage` of §3, with `sentences` as `[[start, end], ...]`. Text is the citable text, no markers.
+`{"id", "kind", "case_key", "case_name", "citation", "decided", "slip_opinion", "opinion_id", "opinion_type", "authors", "joined_by", "joined_by_source", "section", "page_start", "page_end", "paragraph_kind", "footnote_label", "footnotes", "cited_by", "text", "sentences"}`: the `Passage` of §3, with `sentences` as `[[start, end], ...]`. The text is the citable text, with no markers.
 
 ### 6.2 Totals (T4.5)
 
-`{"claude": {"calls", "input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens", "cost_usd": {"loop", "composition"}}, "exa": {"searches", "cost_usd"}, "voyage": {"requests", "cost_usd"}, "prices": {"source", "date"}}`. The page shows Claude and Exa only (T4.5); Voyage is carried for the record and the caps.
+`{"claude": {"calls", "input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens", "cost_usd": {"loop", "composition"}}, "exa": {"searches", "cost_usd"}, "voyage": {"requests", "cost_usd"}, "prices": {"anthropic": {"source", "date"}, "exa": {...}, "voyage": {...}}}`.
+- `calls` and `requests` count attempts, since each is billed.
+- `input_tokens` is all input: uncached + cache writes + cache reads (T4.5's "186,000 input tokens, 142,000 from cache").
+- The page shows Claude and Exa only (T4.5). Voyage is carried for the record and the caps.
 
 ## 7. The tools Claude sees (names and fields; descriptions in `api/prompts/`)
 
@@ -327,7 +446,7 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
 |---|---|---|
 | `search_meaning` | `query`, `filters?`, `max_results?` | T1.4; §4.C |
 | `search_exact` | `all_of?`, `any_of?`, `none_of?`, `filters?`, `max_results?` | T1.2, T1.4; at least one item in `all_of` or `any_of` |
-| `read_passages` | `target`, `before?`, `after?` | T1.3, T1.6; one target a call |
+| `read_passages` | `target`, `before?`, `after?` | T1.3, T1.6; one target a call; target forms in §4.B |
 | `keep_passages` | `keep: [{id, reason}]` | T1.7; only IDs already shown; reason ≤ `KEEP_REASON_MAX_CHARS`; cap `KEEP_CAP` |
 | `search_web_updates` | the fields of §4.D | T2.1; 3 a run; counting as T2.1 |
 | `submit_answer` | `out_of_scope`, `note?`, `update_skip_reason?`, `update_findings?`, `update_overview?` | T1.10, T2.3; rule 1, then the findings checks and copy guard, then rules 2 to 4 |
@@ -336,52 +455,110 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
 
 ## 8. Atlas (T3.4, T3.5, T3.7)
 
-Database `Probable_Clause` (live) or `Probable_Clause_test` (local and test runs, chosen by `PC_ENV=live|test`; default `test`).
+Database `Probable_Clause` (`PC_ENV=live`) or `Probable_Clause_test` (`PC_ENV=test`, the default, for local and test runs).
 
 | Collection | Document | Index |
 |---|---|---|
-| `events` | one per event: `run`, `n`, `kind`, `data`, `at`, `created` | unique (`run`, `n`); TTL on `created`, `EVENTS_TTL_S` |
-| `runs` | per-run record of T3.7 (no question or answer text): run ID, Chicago start date and time, end state, rounds, searches, keeps, tokens and cost by service, retries, answer length, check flags, the Voyage warning | unique `run` |
+| `events` | the full envelope (`v`, `run`, `n`, `t_ms`, `at`, `kind`, `data`) plus `created` (BSON date) | unique (`run`, `n`); TTL on `created`, `EVENTS_TTL_S` |
+| `runs` | the per-run record of T3.7, with no question or answer text: run ID, Chicago start date and time, end state and `stop_kind`, rounds, searches, keeps, tokens and cost by service, retries, answer length, check flags, the Voyage warning, `corpus_label` | unique `run` |
 | `spend` | one per Chicago month, `_id` `"2026-10"`: `spent`, `reserved`, `days: {"2026-10-24": {spent, reserved, runs_started, stops: {<kind>: n}}}`, `reservations: {<run>: {day, amount}}` | `_id` |
-| `budget_stops` | one per refusal or stop: Chicago date and time, run ID or null, `kind`, spent and reserved then, `budget: true\|false` | `at` |
-| `heartbeats` | `run`, `last_event`, `at` | TTL on `at`, `HEARTBEATS_TTL_S` |
-| `flags` | `_id: "exa_out_of_credit"`, `until` (the 1st of the next Chicago month) | `_id` |
+| `budget_stops` | one per refusal or stop: Chicago date and time, run ID or null, `kind`, spent and reserved at that moment, `budget: true \| false` | `at` |
+| `heartbeats` | `run`, `last_event`, `at` (BSON date) | TTL on `at`, `HEARTBEATS_TTL_S` |
+| `flags` | `_id: "exa_out_of_credit"` or `"anthropic_spend_limit"`, `until` (the 1st of the next Chicago month) | `_id` |
 
-Budget-stop kinds (T3.4): `daily_cap`, `monthly_cap`, `step_limit`, `token_ceiling_input`, `token_ceiling_output`, `composition_max_tokens`, `console_spend_limit`, `tier_spend_cap`, `exa_no_credit`; and `atlas_unreachable` with `budget: false`. Also recorded as a limit stop: `time_limit` (T3.5).
+**Stop kinds** (`api/protocols.StopKind`; T3.4):
+- **Budget stops:** `daily_cap`, `monthly_cap`, `step_limit`, `token_ceiling_input`, `token_ceiling_output`, `composition_max_tokens`, `console_spend_limit`, `tier_spend_cap`, `exa_no_credit`.
+- **Limit stop:** `time_limit` (T3.5).
+- **Not a budget stop:** `atlas_unreachable`.
+
+**Who records them:**
+- `reserve` records the cap refusals.
+- D records `exa_no_credit`.
+- H records the rest from `run_ended.stop_kind`.
 
 ## 9. Settings
 
-`api/settings.py` is the table: every figure, its value and its basis ("PLACEHOLDER" until Phase 5 measures it). Two figures there are the main session's placeholders for gaps the decisions left: `UNATTACHED_RUN_EXPIRY_S` (120 s, T3.1's expiry) and `REQUEST_BODY_MAX_BYTES` (16 KB, T3.7's size cap).
+`api/settings.py` is the table: every figure, its value and its basis. "PLACEHOLDER" means until Phase 5 measures it, and "main session's" marks a figure the decisions left open, chosen here. Those gap-fills:
+- `UNATTACHED_RUN_EXPIRY_S`, 120 s;
+- `HEARTBEAT_POLL_S`, 2 s;
+- `REQUEST_BODY_MAX_BYTES`, 16 KB;
+- `ATLAS_HEALTH_TIMEOUT_S`, 2 s;
+- `ATLAS_OP_TIMEOUT_S`, 5 s.
+
+The Cloud Run figures of T3.5 are there too, and are used only by `deploy/deploy.sh`.
 
 ## 10. Prices (T3.4)
 
-In `api/state/prices.py`, each with its source and date:
+In `api/state/prices.py`, one source and date per provider:
+- **Claude** (Anthropic's pricing page, Oct 24, 2026, as T3.4 records them; per million tokens):
 
-- **Claude** (Anthropic's pricing page, Oct 24, 2026, as T3.4 records them; per million tokens): Sonnet 5.5: input $2, output $10, 5-minute cache write $2.50, 1-hour cache write $4, cache read $0.10. Opus 5.5: input $4, output $20, 5-minute write $5, 1-hour write $8, read $0.20. The main session re-reads the pricing page before the first paid build test and records the date.
-- **Exa** (Phase 2 findings §4, observed): `auto` $0.007 and `lite` $0.004 a search with text; `costDollars` wins when reported.
-- **Voyage** (MongoDB's billing page, to be read again before the embedding run): `voyage-law-2` and `rerank-3` per million tokens; the exact figures are filled from the page with its date before `embed_corpus.py --confirm` runs. Until then, `voyage-law-2` $0.12 (the top of the documented range) and `rerank-3` $0.05, marked unconfirmed.
+  | Model | Input | Output | 5-minute cache write | 1-hour cache write | Cache read |
+  |---|---|---|---|---|---|
+  | Sonnet 5.5 | $2 | $10 | $2.50 | $4 | $0.10 |
+  | Opus 5.5 | $4 | $20 | $5 | $8 | $0.20 |
+
+  The main session re-reads the pricing page before the first paid build test and records the date.
+- **Exa** (Phase 2 findings §4, observed): `auto` $0.007 and `lite` $0.004 a search with text. `costDollars` wins when it is reported.
+- **Voyage** (MongoDB's billing page): `voyage-law-2` and `rerank-3` per million tokens, filled from the page with its date before `embed_corpus.py --confirm` runs. Until then they are marked unconfirmed: `voyage-law-2` $0.12 (the top of the documented range) and `rerank-3` $0.05.
 
 ## 11. Static files
 
 ### 11.1 Reader files (T4.3)
 
 One per opinion, `opinions/<opinion_id>.json`, generated from `data/corpus/` into the web image:
-`{"opinion_id", "case": {"key", "name", "citation", "decided", "slip_opinion", "source_kind", "credit": "courtlistener" | "us_reports" | "slip_opinion"}, "type", "authors", "joined_by", "joined_by_note", "heading", "paragraphs": [{"id" | null for sections, "kind", "text", "page_start", "page_breaks": [{"offset", "page"}], "footnote_refs": [{"offset", "label", "footnote_id"}]}], "footnotes": [{"id", "label", "page", "paragraphs", "page_breaks"}]}`. The `credit` code selects T5.1's reader credit line.
+
+`{"opinion_id", "case": {"key", "name", "citation", "decided", "slip_opinion", "credit": "courtlistener" | "us_reports" | "slip_opinion"}, "type", "authors", "joined_by", "joined_by_source", "joined_by_note", "heading", "paragraphs": [{"id" | null for sections, "kind", "text", "page_start", "page_breaks": [{"offset", "page"}], "footnote_refs": [{"offset", "label", "footnote_id"}]}], "footnotes": [{"id", "label", "page", "paragraphs", "page_breaks"}]}`
+
+The `credit` code selects T5.1's reader credit line.
 
 ### 11.2 Replay files (brief §7.4, T5.6)
 
-`replays/<slug>.json`: `{"format": 1, "slug", "question", "recorded_at" (Chicago ISO), "commit", "models": {"loop", "composition"}, "prices": {"source", "date"}, "corpus_label": "full" | "before_chatrie", "events": [<envelopes as §6>]}`. Exported from a real run's events by script in Phase 5, never edited (T5.6). Web page text never appears (T2.2).
+`replays/<slug>.json` in the repository, written by the main session's export script in Phase 5 and copied into the web image. `replays/index.json` lists the chips in order (`slug`, `question`, `recorded_at`, `corpus_label`).
 
-## 12. Fakes and test seams
+Each replay file: `{"format": 1, "slug", "question", "recorded_at" (Chicago ISO), "commit", "models": {"loop", "composition"}, "prices": {...as §6.2}, "corpus_label": "full" | "before_chatrie", "events": [<envelopes as §6>]}`. Each replay is a real run's events, never edited (T5.6). It holds no web page text (§1).
 
-Every outside service has a protocol and a fake, owned by the part that owns the real client: `FakeVoyageClient` (C), `FakeExaTransport` (D), `MemoryStore` (E), `FakeAnthropic` (G). `tests/fixtures/events/` (main session) holds hand-written event streams for the frontend session's mock (P0.3): an answered run, a no-sources reply, a step-limit stop, a pause and resume, an abandoned run, an interrupted run, a refused submit, check flags, each band outcome, the Voyage warning, a replay. `tests/contract/test_events_schema.py` (main session) validates every fixture and every event the backend tests emit.
+### 11.3 `corpus.json` and `config.json`
+
+Both are written by `scripts/build_web_data.py`.
+- **`corpus.json`:** what the landing page and credits need before any run (T5.1, T5.2): `cases`, `earliest_decided`, the three coverage dates, and the case counts by text source.
+- **`config.json`:** the page's figures from `api/settings.py` (§5.1).
+
+## 12. Fakes, fixtures and test seams
+
+**Fakes:** every outside service has a protocol and a fake, owned by the part that owns the real client:
+- `FakeVoyageClient` (C);
+- `FakeExaTransport` (D);
+- `MemoryStore` (E);
+- `FakeAnthropic` (G).
+
+**Fixtures for the frontend session's mock** (P0.3), the main session's, in the replay format of §11.2:
+- **`tests/fixtures/events/`** holds one stream for each of:
+  - an answered run;
+  - each no-sources reply;
+  - a step-limit stop;
+  - a pause and resume;
+  - an abandoned run;
+  - an interrupted run;
+  - a refused submit;
+  - check flags;
+  - each band outcome;
+  - the Voyage warning;
+  - a reconnect partway (the events after a `Last-Event-ID`);
+  - a replay.
+- **`tests/fixtures/http/`** holds:
+  - `/health` answers: ready, `paused_day`, `paused_month`, `unknown`;
+  - Cloud Run's plain-text 429, 500 and 503, and goodnight's HTML 502;
+  - the `POST /runs` refusals, the daily cap included;
+  - a 404 for an expired run.
+
+**Contract test:** `tests/contract/test_events_schema.py` validates every fixture and every event the backend tests emit.
 
 ## 13. Ownership
 
 | Part | Builder | Writes only |
 |---|---|---|
 | A | Opus 5.5, xhigh | `api/corpus/sentences.py`, `scripts/check_sentences.py`, `tests/corpus/test_sentences.py` |
-| B | Sonnet 5.5, high | `api/corpus/` except `sentences.py`, `scripts/build_reader_files.py`, `tests/corpus/` except `test_sentences.py` |
+| B | Sonnet 5.5, high | `api/corpus/` except `sentences.py`, `scripts/build_web_data.py`, `tests/corpus/` except `test_sentences.py` |
 | C | Sonnet 5.5, high | `api/search/`, `scripts/embed_corpus.py`, `tests/search/` |
 | D | Sonnet 5.5, xhigh | `api/web_updates/`, `tests/web_updates/` |
 | E | Sonnet 5.5, xhigh | `api/state/`, `scripts/spend_report.py`, `tests/state/` |
@@ -389,7 +566,16 @@ Every outside service has a protocol and a fake, owned by the part that owns the
 | G | Opus 5.5, xhigh | `api/loop/`, `tests/loop/` |
 | H | Opus 5.5, high | `api/server/`, `api/main.py`, `tests/server/` |
 | I | Sonnet 5.5, high | `deploy/`, `tests/deploy/` |
-| Main session | — | this file, `api/types.py`, `api/settings.py`, `api/errors.py`, `api/__init__.py`, `api/prompts/`, `contracts/`, `tests/contract/`, `tests/fixtures/`, `data/vectors/` (by running C's script), `pyproject.toml`, `uv.lock`, every shared document |
-| Frontend session | its own model | `web/`, `docs/sessions/frontend-log.md` |
+| Main session | — | this file, `api/__init__.py`, `api/types.py`, `api/settings.py`, `api/errors.py`, `api/retry.py`, `api/protocols.py`, `api/prompts/`, `contracts/`, `tests/contract/`, `tests/fixtures/`, `replays/`, `data/vectors/` (by running C's script), `pyproject.toml`, `uv.lock`, every shared document |
+| Frontend session | its own model | `web/` (fonts under `web/fonts/`), `docs/sessions/frontend-log.md` |
 
-Wave 1 (A to F) runs in parallel against this contract and the fakes; A and B meet at `split_sentences` (B calls it; until A lands, B's tests use a trivial splitter behind the same signature). Wave 2 (G, H, I) starts after Wave 1 is merged.
+**Wave 1 (A to F)** runs in parallel. Each part depends only on the main session's shared files, plus:
+- **B** calls `split_sentences`. Until A lands, B's tests use a trivial splitter behind the same signature.
+- **D** codes against `api/protocols.Store`, with a minimal fake of its own until `MemoryStore` lands.
+
+The main session merges Wave 1 and runs the whole suite. **Wave 2 (G, H, I)** starts after that.
+
+## 14. Open items (the user's to rule on, before Wave 2)
+
+1. **A refused submit's `tool_call` and page text.** T3.1 has the `tool_call` event carry exactly what Claude sent. A submit refused by the copy guard holds 10 or more consecutive words of a page, and T2.2 and P1.7 forbid storing page text. Until the user rules, G must not be started.
+2. **T3.6's unit count.** "2,748 units" should read 2,462 passages (§3). The figure is a count, not a decision, but P2.12 asks for a superseding entry.

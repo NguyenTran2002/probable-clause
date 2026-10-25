@@ -22,8 +22,8 @@ def envelope(n, kind, data):
 
 PASSAGE = {
     "id": "katz-1-p3", "kind": "paragraph", "case_key": "katz", "case_name": "Katz v. United States",
-    "citation": "389 U.S. 347", "decided": "1967-12-18", "opinion_id": "katz-1", "opinion_type": "majority",
-    "authors": ["Stewart"], "joined_by": [], "section": None, "page_start": 351, "page_end": 352,
+    "citation": "389 U.S. 347", "decided": "1967-12-18", "slip_opinion": False, "opinion_id": "katz-1", "opinion_type": "majority",
+    "authors": ["Stewart"], "joined_by": [], "joined_by_source": "not printed", "section": None, "page_start": 351, "page_end": 352,
     "paragraph_kind": "text", "footnote_label": None, "footnotes": ["katz-1-n8"], "cited_by": [],
     "text": "For the Fourth Amendment protects people, not places. What a person knowingly exposes...",
     "sentences": [[0, 55], [55, 87]],
