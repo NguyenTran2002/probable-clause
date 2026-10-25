@@ -893,3 +893,19 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T5.5: *"Open topic 5. Read the retention pages yourself, no subagent."* Then *"I checked myself, and goodnight keeps request logs for 30 days, the default, so your note's "30 days by default" is correct. Voyage AI is also dropped out as well."* Then *"Add the query rule and self-host the fonts (amending T4.1). Lock the privacy note as T5.5."*
 - T5.6: *"Lock topic 6 as T5.6: the four recommended questions, the pre-Chatrie replay as the fifth, and the recording rules as proposed."*
 - Close: *"Lock area 5. Close it and prepare for the compaction."*
+
+## Oct 24, 2026, 19:58 CDT — Phase 3: Architecture, the Phase 4 build plan (P4.1)
+**Asked:** After the compaction, propose an efficient subagent-driven build plan, using Sonnet 5.5 and Opus 5.5 subagents at no effort below high and never max; then add a local review of the whole stack before any deploy; then lock it and proceed.
+**Came back:**
+- The plan, proposed in chat and locked as P4.1:
+  - Step 0, main session only: the scaffold (LICENSE, `api/`, `tests/`, `contracts/`, every dependency added at once), T1.5, interfaces contract v1 with `contracts/events.schema.json` (checked against T1.1 to T5.6 by an Opus xhigh subagent not shown the main session's reasoning), and the prompt drafts for the user's review.
+  - Wave 1, six subagents in parallel against fakes, no paid calls: the sentence splitter (Opus xhigh), the corpus index (Sonnet high), meaning search (Sonnet high), the Exa wrapper (Sonnet xhigh), money and state (Sonnet xhigh), the answer checks (Sonnet xhigh).
+  - Wave 2: the research loop and composition (Opus xhigh), the API and run lifecycle (Opus high), the images and the deploy script, written and never run (Sonnet high). The goodnight block stays with the main session, on the user's green light.
+  - A Sonnet high review after each builder; one Opus xhigh review of the honesty-critical paths at the end. Agents never commit; the main session commits each agent's paths by name after running the tests.
+  - The frontend is built by the frontend session (P0.3), from the prototype against contract v1.
+  - Integration: the offline suite, the paid build tests (Anthropic ceiling $3 for Phase 4, the corpus embedding on Voyage, at most 10 Exa searches, each priced first), the user's prompt review, then **the whole stack run locally for the user's review**, then deploy and the first cold-start sample only on the user's sign-off and a separate green light.
+- The design note (Phase 3's gate) is still to be written; "proceed" read as writing it next.
+**DECISION (user):**
+- *"Propose an efficient subagent driven build plan to me. You're allowed to use both Sonnet 5.5 and Opus 5.5 subagents. Never use any effort level below high, and you're also barred from ever using max effort level as well (for both models)."*
+- *"Plan looks right, but I want to add that we have to spin things up locally for review first before any deploy."*
+- *"Lock. Proceed."*
