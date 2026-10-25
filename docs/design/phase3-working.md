@@ -23,8 +23,8 @@
 | 1. The research loop | T1 | **Closed** Oct 24, 17:05 CDT (T1.1 to T1.14) |
 | 2. The update check (Exa wrapper) | T2 | **Closed** Oct 24, 17:46 CDT (T2.1 to T2.5) |
 | 3. Run lifecycle and infrastructure | T3 | **Closed** Oct 24, 18:38 CDT (T3.1 to T3.7) |
-| 4. The interface | T4 | **Open** (five topics; the prototype is the baseline) |
-| 5. The user's wording and the replays | T5 | Not started |
+| 4. The interface | T4 | **Closed** Oct 24, 19:00 CDT (T4.1 to T4.5) |
+| 5. The user's wording and the replays | T5 | **Next**, after the compaction |
 | Design note (Phase 3's gate) | — | After Area 5 |
 
 Proposed by the main session on Oct 24, 2026; the user started on it with *"Let's start with Area 1, the research loop."* What each area covers is in the BUILD_LOG entry that closes it; the Area 1 list is below.
@@ -320,3 +320,30 @@ Facts in brief §7, the frontend direction folded into `BUILD_LOG.md` (Oct 23, 2
 - **Locked T4.4**, 18:56 CDT (log entry of that time), as proposed; T3.7's follow-up question settled. **Next: topic 5, whether each call's cost is shown — the last topic of Area 4.**
 - **Topic 5 opened, 18:57 CDT** (whether each call's cost is shown). Facts: T3.1's events carry each paid call's tokens and cost; costs are computed by our code from the usage fields and the T3.4 price table (list prices, not an invoice); Exa from `costDollars`, Voyage at list price; Phase 2 runs cost $0.14 and $0.24 of Claude, about $0.19 to $0.31 with Opus composition (T1.8); the audience is a technical visitor (T4.1). Options: (A) nothing shown; (B) one run-total line when the run ends, per service on expand; (C) tokens and cost on every step as well; (D) the exact `usage` object of each response inside "View API calls" (part of T4.3's exact fragments). Proposed B with D; per-step figures left out to keep the step log readable; replays show their recorded figures, labelled with the recording date's prices.
 - **Locked T4.5**, 19:00 CDT (log entry of that time): B and D, the total for Claude and Exa only, labelled so; T3.4 still counts Voyage. **All five Area 4 topics locked (T4.1 to T4.5).**
+
+---
+
+## Area 4 closed (Oct 24, 2026, 19:00 CDT): what carries forward
+
+Decisions: T4.1 to T4.5 in `locked-decisions.md`; the closing log entry is "Oct 24, 2026, 19:00 CDT — Phase 3: Architecture, Area 4 closed (the interface)".
+
+**The interface as locked:** the machinery prototype in Evergreen is the baseline (T4.1); plain JavaScript modules, no build, markdown-it vendored, a pinned nginx web service (T4.2); the changes forced by Areas 1 to 3, with per-opinion files for the reader and exact API fragments in the events (T4.3, T3.1 amended); every new state placed in the prototype's elements (T4.4); a run total for Claude and Exa and each response's `usage` (T4.5).
+
+**Build (Phase 4), for the interfaces contract:** event fields for the exact fragments (request or response number, message path) and each response's `usage` (T4.3, T4.5); the per-opinion file format and the script that generates it from `data/corpus/` into the web image (T4.3); card states and the "Found by" list derived from events (T4.3); the run-total computation for Claude and Exa (T4.5); `/health` and refusal shapes the landing reads (T4.4); replay files with their recording date and prices (T4.4, T4.5). The frontend session (P0.3) starts after contract v1, working from the prototype.
+
+**Build tests and Phase 5:** every T4.4 state reached in fixtures and on the real stack; layout at 1440×900, 393×852 and 852×393 by element rectangles (T4.1); text never inserted as HTML (T4.2); the straddle fixture (T1.11); reader page numbers against the corpus; the API window's fragments byte-identical to what was sent (T4.3); caches revalidating after a deploy (T4.2).
+
+**Carried into Area 5:** wording for everything T4.1 to T4.5 left as placeholder: the landing pitch, the not-legal-advice line, the AI disclosure and affiliation lines (P1.4, P1.5), the answer key, the check line (T1.12), the band's honesty label and its replacement guarantee sentence, never calling source links verified (T2.3), the band's outcomes and "unavailable", "not summarised", "did not complete" (T2.3, T2.4), every T4.4 state and stop label, the out-of-scope and nothing-found messages (T1.10), the Voyage warning (T3.3), the cost line's label (T4.5), the reader's credit line per source (T4.3), the "researched from scratch" line (T4.4); the privacy note (T3.7), with Anthropic's, Voyage's and Exa's retention read and cited and Cloud Logging's default retention checked; the replays (brief §7.4).
+
+## Area 5: the user's wording and the replays (to open after the compaction)
+
+Facts in brief §6.4, §7.2, §7.4, §10.6 and §12, P1.4, P1.5, P1.10, and the carried items above and in Areas 1 to 3. Proposed topics, to confirm with the user when the area opens:
+
+| # | Topic | Status | Notes |
+|---|---|---|---|
+| 1 | The standing lines | Open | Landing pitch; not-legal-advice line; AI disclosure (on its own line, T4.1); affiliation (P1.5); "Sources and credits" and the reader's credit per source (T4.3); whether "live" may be used (brief default 6, §10.6) |
+| 2 | The guarantee, coverage and checks | Open | "This passage appears verbatim in this opinion." (brief §7.2); the coverage line; the answer key; the check line and flag notes, "not in this corpus" (T1.12, P1.10); the cost line's label (T4.5) |
+| 3 | The update-check band | Open | Honesty label (brief §6.4); a replacement for §6.4's guarantee sentence; links never called verified; the outcomes and failure lines (T2.3, T2.4) |
+| 4 | Run states and stop labels | Open | Every T4.4 state; the stop labels (T1.11, T3.3, T3.5); out-of-scope and nothing-found messages (T1.10); the Voyage warning (T3.3); "researched from scratch" |
+| 5 | The privacy note | Open | T3.7's contents; Anthropic, Voyage and Exa retention read and cited; Cloud Logging's default retention; goodnight's request logs (T3.5) |
+| 6 | The replays | Open | Questions chosen by the user; at least one where the update check finds something (brief §2); whether one replay uses a corpus frozen before *Chatrie* (brief §7.4) |
