@@ -13,10 +13,10 @@ _PER_M = 1_000_000
 
 PRICE_TABLE: dict = {
     "anthropic": {
-        # T3.4: "Anthropic's pricing page, Oct 24, 2026". The main session re-reads the page before the first
-        # paid build test and records the date (contract §10).
-        "source": "Anthropic's pricing page (https://platform.claude.com/docs/en/about-claude/pricing), as recorded in T3.4",
-        "date": "2026-10-24",
+        # T3.4: "Anthropic's pricing page, Oct 24, 2026". Re-read by the main session before the first paid build
+        # test, Oct 25, 2026, 12:21 CDT: every figure unchanged (contract §10).
+        "source": "Anthropic's pricing page (https://platform.claude.com/docs/en/about-claude/pricing), as recorded in T3.4, re-read Oct 25, 2026",
+        "date": "2026-10-25",
         "confirmed": True,
         "unit": "USD per million tokens",
         # Exact ids only. No dated snapshot id is known, so none is listed; add one here explicitly if it is ever seen.

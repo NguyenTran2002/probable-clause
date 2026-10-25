@@ -36,7 +36,7 @@ def test_anthropic_prices_are_t3_4s():
     m = PRICE_TABLE["anthropic"]["models"]
     assert m[SONNET] == {"input": 2.0, "output": 10.0, "cache_write_5m": 2.5, "cache_write_1h": 4.0, "cache_read": 0.10}
     assert m[OPUS] == {"input": 4.0, "output": 20.0, "cache_write_5m": 5.0, "cache_write_1h": 8.0, "cache_read": 0.20}
-    assert PRICE_TABLE["anthropic"]["date"] == "2026-10-24"
+    assert PRICE_TABLE["anthropic"]["date"] == "2026-10-25"
 
 
 def test_exa_list_prices():
