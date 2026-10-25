@@ -1126,3 +1126,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Keep T5.6's five replay questions, recorded after the local review on the final code. Don't commit data/verification."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:46 CDT — Phase 4: Build, the replays: T5.6's five, recorded after the local review (P4.32)"
+
+### P4.33 The frontend build plan is approved (P4.28)
+
+- **Decision:** `docs/sessions/frontend-plan.md` as written: step 0's calls under P4.31; step 1, the two downloads on the user's OK, the skeleton and the mock; steps 2 to 7, the build, the run model first; step 8, an Opus 5.5 xhigh review of the honesty paths and a Sonnet 5.5 high review of the states, layout and accessibility; step 9, the local stand-up for the user's testing, then the sign-off. The deploy green light stays separate.
+- **User's words:** *"The frontend plan looks good. Approved."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:49 CDT — Phase 4: Build, the frontend build plan approved (P4.33)"

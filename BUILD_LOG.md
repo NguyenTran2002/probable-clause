@@ -2166,3 +2166,16 @@ Then: *"The budget for paid build tests are sound."*
 - `data/verification/` stays uncommitted. Its run files are kept on this machine, as the keep-every-run rule says.
 **Spend:** none now. T5.6's estimate for the recordings was $2 to $3, approved when they run.
 **DECISION (user):** *"Keep T5.6's five replay questions, recorded after the local review on the final code. Don't commit data/verification."*
+
+## Oct 25, 2026, 16:49 CDT — Phase 4: Build, the frontend build plan approved (P4.33)
+**Asked:** the user's approval of `docs/sessions/frontend-plan.md` (proposed 16:48, 7b8e67b), before a planned compaction.
+**Came back:** the plan as written. The steps:
+- **Step 0:** the main session's calls under P4.31, logged at the start: the step log's two groups after research, the band's new unavailable lines, `busy` as the run's last step, the cost line's split, Sonnet in the credits, withheld text shown as it is, and the new `config.json` figures.
+- **Step 1:** the two downloads, on the user's OK; the skeleton; the mock server in `webdev/`.
+- **Steps 2 to 7:** the run model from the events first, Node-tested over every fixture; then the screens, sources and answer, the band, checks and costs, the two modals, and every other state.
+- **Step 8:** an Opus 5.5 xhigh review of the honesty paths, and a Sonnet 5.5 high review of the states, layout and accessibility.
+- **Step 9:** `deploy/local.sh`, and the user testing as a visitor; then the sign-off.
+
+The deploy green light stays separate.
+**Spend:** none.
+**DECISION (user):** *"The frontend plan looks good. Approved."*

@@ -1,6 +1,6 @@
 # The frontend build plan: the real page, built and stood up by the main session
 
-*Proposed Oct 25, 2026 by the main session, for the user's approval before the compaction (P4.28). After the compaction, the main session follows it from step 1. Nothing in it spends money until step 9, the user's local review.*
+*Proposed Oct 25, 2026 by the main session; **approved by the user at 16:49 CDT** ("The frontend plan looks good. Approved."), P4.33. After the compaction, the main session follows it from step 1. Nothing in it spends money until step 9, the user's local review.*
 
 ## What is being built, and against what
 
