@@ -836,6 +836,38 @@
           ],
           "description": "Claude's exact usage object (T4.5)"
         },
+        "estimated_usage": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "v1.6: the tokens an estimated Claude attempt was priced at (ours, never Claude's usage); null otherwise",
+          "additionalProperties": false,
+          "required": [
+            "input_tokens",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "output_tokens"
+          ],
+          "properties": {
+            "input_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cache_creation_input_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cache_read_input_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "output_tokens": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
         "cost_usd": {
           "$ref": "#/$defs/usd"
         },

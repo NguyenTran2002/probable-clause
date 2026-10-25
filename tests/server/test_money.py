@@ -66,8 +66,8 @@ async def test_record_usage_prices_settles_and_emits():
         [p] = paid(s)
         assert p == {"call_no": 1, "service": "anthropic", "purpose": "loop", "attempt": 1, "max_attempts": 3,
                      "outcome": "ok", "error_kind": None, "duration_ms": 1500,
-                     "usage": raw_claude(inp=51, w1=12000, out=406), "cost_usd": round(expected, 10),
-                     "estimated": False}
+                     "usage": raw_claude(inp=51, w1=12000, out=406), "estimated_usage": None,
+                     "cost_usd": round(expected, 10), "estimated": False}
         await assert_released(h.store, [expected])
     assert h.schema_errors == []
 

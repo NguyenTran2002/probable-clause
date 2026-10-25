@@ -1,5 +1,5 @@
 {
-  "description": "POST /runs accepted: a random, unguessable run ID.",
+  "description": "POST /runs accepted: a random, unguessable run ID (here the out-of-scope-reply stream's).",
   "method": "POST",
   "path": "/runs",
   "status": 201,

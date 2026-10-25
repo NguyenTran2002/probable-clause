@@ -87,8 +87,9 @@ def _int(v) -> int:
 def totals_from_events(events: list[dict]) -> Totals:
     """The totals of the stored `paid_call` events (the `interrupted` ending, contract §4.H).
 
-    A Claude attempt stored with `usage: null` was priced from its estimated input at the uncached price (T3.3),
-    so its input tokens are recovered from its cost, as the fixtures' consistency test does.
+    A Claude attempt priced from an estimate is stored with `usage: null` and its priced tokens in
+    `estimated_usage` (v1.6). An event without that field (written before v1.6) was priced from its estimated
+    input at the uncached price (T3.3), so its input tokens are recovered from its cost.
     """
     t = Totals()
     for e in events:
@@ -100,6 +101,8 @@ def totals_from_events(events: list[dict]) -> Totals:
         if service == "anthropic" and purpose in ("loop", "composition"):
             t.add("anthropic", purpose, None, cost)
             u = d.get("usage")
+            if u is None and isinstance(d.get("estimated_usage"), dict):
+                u = d["estimated_usage"]
             if u is None:
                 per_m = PRICE_TABLE["anthropic"]["models"][model_for(purpose)]["input"]
                 t.add_tokens(round(cost * 1_000_000 / per_m), 0, 0, 0)

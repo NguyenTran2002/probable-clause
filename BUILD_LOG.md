@@ -1586,3 +1586,55 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Whole suite: 3,361 passed, 49 skipped.**
 **Spend:** none.
 **DECISION (user):** none new. This carries out P4.6 to P4.10.
+
+## Oct 25, 2026, 02:22 CDT — Phase 4: Build, overnight steps 4 and 5: fixtures from the real code, contract v1.6, the frontend brief
+**Asked:**
+- **Step 4:** regenerate the fixtures by driving the real backend on fakes. One builder, Opus 5.5 at high effort, writing only `tests/fixtures/`.
+- **Step 5:** update the frontend brief for v1.2 to v1.5.
+**Came back:**
+- **`tests/fixtures/make_fixtures.py` rewritten.** Every stream is H's real app and `Run` around G's real `execute_run`, with the real B to F parts. Only Anthropic, Voyage, Exa and Atlas are faked, with `MemoryStore`, H's `FakeClock`, and a simulated page that sends heartbeats every 10 s of virtual time.
+  - **Patched at run time, restored after each stream:**
+    - the run ID: a fixed hash of the slug, so the old IDs are kept;
+    - `time.monotonic` in the loop, meaning search and Exa;
+    - the loop's retry sleep;
+    - the checks' thread call, made inline.
+
+    The script re-runs itself with `PYTHONHASHSEED=0`.
+  - **Two runs are byte-identical** (52 checksums; checked again by the main session after its own changes).
+- **All 30 streams and 19 HTTP answers are kept** under the same names. The reconnect cut at `n = 185` still falls in round 5, so its name stands. 17 HTTP bodies are unchanged; `get-events-200-stream` and `post-runs-201` now carry H's real output.
+- **Three new streams:** `out-of-scope-no-update-check` (P4.7), `note-refused-copy-guard` (P4.8) and `note-too-long` (P4.6). The size is 33 event files, 3.57 MB.
+- **What changed in substance:**
+  - tool-result text is G's real format;
+  - `input_tokens` is 436,000;
+  - every `run_ended` carries `stop_kinds`;
+  - the answered run is about 113 s and $0.26;
+  - `pause-and-resume` adds a read so its keep is accepted;
+  - `abandoned-run` is abandoned at 70 s;
+  - `interrupted-run` keeps one passage, to stay at 42 stored events;
+  - `submit-refused-basic-rules-then-declined` adds the null rule and `no_note`.
+- **The builder's observation:** at the loop's own estimator ratio, `step-limit-stop` hit the input ceiling at round 11, so twelve moderate rounds barely fit 370,000. Worth measuring in the paid build tests.
+- **A real defect it found, fixed by the main session (contract v1.6):**
+  - **The defect:** H never shows an estimate as Claude's usage (v1.2). So an attempt priced from what it streamed (P4.5, P4.10) was stored with `usage: null`, and H's `interrupted` ending rebuilt its tokens from the cost as if all input. For the broken-composition stream that gave 46,975 input and 1,435 output tokens, against the run's own 46,025 and 1,625. The costs were right.
+  - **The fix:** `paid_call.estimated_usage` holds the tokens an estimated Claude attempt was priced at (null otherwise). H fills it (`api/server/run.py`, `estimated_usage()`) and `totals_from_events` reads it, falling back as before for older events. The schema and contract §4.H and §6 are updated. The loop tests' `FakeCtx` emits it too.
+  - **The mutation check:** removing the read fails `test_interrupted_totals_are_the_stored_paid_calls[composition-incomplete-stream-broken.json]`.
+- **The main session's test updates for v1.5 and v1.6:**
+  - `tests/contract/test_fixtures.py`: `not_run` allows an accepted out-of-scope submit; the withheld check includes the note; the coverage covers all eight rules plus null; the totals use `estimated_usage`;
+  - `tests/server/test_streams.py`: the `stop_kinds` fill-in is gone;
+  - `tests/server/test_money.py`: the new field.
+- **The frontend brief, §5:**
+  - withholding on any refused submit, the note included;
+  - the `submit.rule` values;
+  - the note cap;
+  - `not_run` for an out-of-scope reply;
+  - `stop_kinds`;
+  - the `answer_end` pairings;
+  - `failure_reason` `internal`;
+  - `answer_chars`;
+  - the extra HTTP codes, any unknown one shown as T5.4's general failure;
+  - `estimated_usage`;
+  - a line saying the fixtures now come from the real code.
+
+  `docs/sessions/frontend-log.md` has no new entries to fold in.
+- **Whole suite: 3,415 passed, 49 skipped.**
+**Spend:** none.
+**DECISION (user):** none new.

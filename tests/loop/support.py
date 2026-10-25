@@ -17,6 +17,7 @@ from api.checks import check_answer
 from api.loop import LoopDeps
 from api.loop.streamer import FakeAnthropic, FakeTurn, raw_usage
 from api.state.prices import PRICE_TABLE, failed_attempt_usage, price, price_sources
+from api.server.run import estimated_usage   # v1.6: as H emits it
 from api.state.store import MemoryStore
 from api.types import RunFlags, RunStopped, Usage
 from api.web_updates.exa import FakeExaTransport, UpdateSearch, exa_response, exa_result
@@ -85,7 +86,8 @@ class FakeCtx:
             data["call_no"] = call_no
         data.update({"service": service, "purpose": purpose, "attempt": attempt, "max_attempts": max_attempts,
                      "outcome": outcome, "error_kind": error_kind, "duration_ms": max(0, int(duration_ms)),
-                     "usage": shown, "cost_usd": cost, "estimated": bool(priced.estimated)})
+                     "usage": shown, "estimated_usage": estimated_usage(priced) if service == "anthropic" else None,
+                     "cost_usd": cost, "estimated": bool(priced.estimated)})
         self.paid.append({**data, "_usage": priced})
         self._log.append((service, purpose, priced, cost))
         await self.emit("paid_call", data)

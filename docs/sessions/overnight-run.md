@@ -45,6 +45,8 @@ Each one targets 5 minutes after a known reset.
 
 - 01:55 CDT: **step 4 running**, an Opus 5.5 high builder in the background, writing only `tests/fixtures/` (if cut off by the limit, restart it from the step 4 brief: real backend on fakes, deterministic, all 30 streams and 19 HTTP answers kept, three new streams `out-of-scope-no-update-check`, `note-refused-copy-guard`, `note-too-long`).
 
+- 02:22 CDT: **steps 4 and 5 done** (fixtures from the real code, contract v1.6 `estimated_usage` fix, frontend brief), committed. API image rebuilt after the loop merge and rechecked offline. Next: step 7, the final Opus 5.5 xhigh verification review; then step 8 (the paid-test plan draft is written, uncommitted: `docs/design/paid-build-tests.md`).
+
 ## Standing limits (unchanged by the night)
 - **No paid call of any kind:** no Anthropic, Voyage, Exa or Atlas call from this session or any agent. The new texts also await the user's review before the first paid run (T1.14).
 - **No deploy, no `gcloud`, nothing to goodnight, no `git push`, no edit to `web/`** (the frontend session's).

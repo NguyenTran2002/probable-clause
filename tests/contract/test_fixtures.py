@@ -296,10 +296,18 @@ def test_totals_are_the_sum_of_the_paid_calls(path):
     cost = {"loop": 0.0, "composition": 0.0}
     for p in claude:
         model = doc["models"]["loop" if p["purpose"] == "loop" else "composition"]
-        if p["usage"] is None:       # an attempt that reported no usage: input estimated at the uncached price (T3.3)
+        if p["usage"] is None:       # an attempt priced from an estimate (T3.3, P4.5, P4.10): never shown as Claude's
             assert p["estimated"] is True and p["outcome"] in ("retrying", "failed")
-            input_tokens += round(p["cost_usd"] * 1e6 / PRICE_TABLE["anthropic"]["models"][model]["input"])
+            e = p["estimated_usage"]   # v1.6: the tokens it was priced at
+            input_tokens += e["input_tokens"] + e["cache_creation_input_tokens"] + e["cache_read_input_tokens"]
+            cache_read += e["cache_read_input_tokens"]
+            cache_write += e["cache_creation_input_tokens"]
+            output += e["output_tokens"]
+            if not (e["cache_creation_input_tokens"] or e["cache_read_input_tokens"] or e["output_tokens"]):
+                assert p["cost_usd"] == pytest.approx(e["input_tokens"] * PRICE_TABLE["anthropic"]["models"][model]["input"]
+                                                      / 1e6, rel=1e-6), "input estimated at the uncached price"
         else:
+            assert p["estimated_usage"] is None or p["estimated"]   # H never shows an estimate as usage (v1.2)
             u = p["usage"]
             cc = u["cache_creation"]
             assert u["cache_creation_input_tokens"] == cc["ephemeral_5m_input_tokens"] + cc["ephemeral_1h_input_tokens"]
@@ -432,7 +440,10 @@ def test_the_band_matches_what_the_run_did(path):
     elif o == "declined":
         assert band["reason"] is None and not counted and submits
     elif o == "not_run":
-        assert not counted and not submits and not any(r["web_status"] == "unavailable" for r in results)
+        # no search and no submit, or (P4.7, v1.5) an out-of-scope reply with no search
+        calls = {e["data"]["tool_use_id"]: e["data"]["input"] for e in events if e["kind"] == "tool_call"}
+        assert not counted and not any(r["web_status"] == "unavailable" for r in results)
+        assert all(calls[s["tool_use_id"]].get("out_of_scope") is True for s in submits)
     assert band["reason"] is None or o in ("skipped", "unavailable")
 
 
@@ -496,7 +507,8 @@ def test_refused_submits_withhold_flagged_statements(path):
                 assert d["is_error"] and sub["rule"] in ("same_turn", "findings", "copy_guard", "no_search", "nothing_kept",
                                                          "no_update_check", "no_note", "note_too_long", None)   # None: bad input (v1.3)
             inp = calls[d["tool_use_id"]]["input"]
-            texts = [f["statement"] for f in inp.get("update_findings") or []] + [inp.get("update_overview") or ""]
+            texts = ([f["statement"] for f in inp.get("update_findings") or []] + [inp.get("update_overview") or ""]
+                     + [inp.get("note") or ""])      # the note too (P4.8, v1.5)
             withheld = [t for t in texts if t == WITHHELD]
             if sub.get("rule") == "copy_guard":
                 assert withheld, "a submit refused by the copy guard is stored with its flagged statements withheld (P4.3)"
@@ -553,7 +565,8 @@ def test_the_set_covers_every_state_stop_kind_and_outcome():
     assert {r["name"] for r in results} == set(defs["tool_result"]["properties"]["name"]["enum"])
     assert {r["web_status"] for r in results if "web_status" in r} == set(defs["tool_result"]["properties"]["web_status"]["enum"])
     assert {r["submit"]["rule"] for r in results if r.get("submit") and not r["submit"]["accepted"]} == {
-        "same_turn", "findings", "copy_guard", "no_search", "nothing_kept", "no_update_check"}
+        "same_turn", "findings", "copy_guard", "no_search", "nothing_kept", "no_update_check", "no_note", "note_too_long",
+        None}
     assert {e["data"]["code"] for e in events if e["kind"] == "warning"} == {"meaning_search_degraded", "meaning_search_unavailable"}
     paid = [e["data"] for e in events if e["kind"] == "paid_call"]
     assert {p["outcome"] for p in paid} == {"ok", "retrying", "failed"}

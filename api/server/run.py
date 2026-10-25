@@ -53,6 +53,16 @@ def _kind(e: BaseException) -> str:
     return e.kind if isinstance(e, ServiceError) else type(e).__name__
 
 
+
+def estimated_usage(priced: Usage) -> dict | None:
+    """v1.6: the tokens an estimated Claude attempt was priced at, ours and never shown as Claude's `usage`, so the
+    totals can be summed again from the stored events (the `interrupted` ending)."""
+    if not priced.estimated:
+        return None
+    return {"input_tokens": priced.input_tokens,
+            "cache_creation_input_tokens": priced.cache_write_5m_tokens + priced.cache_write_1h_tokens,
+            "cache_read_input_tokens": priced.cache_read_tokens, "output_tokens": priced.output_tokens}
+
 class Run:
     """A run held by this instance. States: created (reserved, nothing attached), running, finished; or expired
     (nothing ever attached, T3.1)."""
@@ -349,7 +359,8 @@ class Run:
             data["call_no"] = call_no
         data.update({"service": service, "purpose": purpose, "attempt": attempt, "max_attempts": max_attempts,
                      "outcome": outcome, "error_kind": error_kind, "duration_ms": max(0, int(duration_ms)),
-                     "usage": shown, "cost_usd": cost, "estimated": bool(priced.estimated)})
+                     "usage": shown, "estimated_usage": estimated_usage(priced) if service == "anthropic" else None,
+                     "cost_usd": cost, "estimated": bool(priced.estimated)})
         await self.emit("paid_call", data)
         log.info("run %s paid call: %s %s attempt %d %s, %.6f USD, %d ms", self.run_id, service, purpose, attempt,
                  outcome, cost, max(0, int(duration_ms)))

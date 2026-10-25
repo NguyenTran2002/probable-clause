@@ -77,6 +77,7 @@ Load the **frontend-design** skill before designing anything new.
 - `tests/fixtures/events/*.json`: one run per state, in the replay format of contract §11.2, with real corpus passages, real check results and real prices. The README there says what each shows.
 - `tests/fixtures/http/*.json`.
 - If they are still being written when you start, the main session will tell the user when they land.
+- **Since Oct 25, 2026** the event streams are produced by driving the real backend (the loop, the API and the checks) on fakes, so tool-result texts, check results and prices are the code's own; `tests/fixtures/README.md` says how each was made.
 
 ## 5. Contract details easy to miss
 
@@ -84,7 +85,17 @@ Load the **frontend-design** skill before designing anything new.
 - **Check flags** run from (`block`, `start`) to (`end_block`, `end`) and may span answer blocks. **Offsets are Python code points;** convert them for JavaScript strings, which count UTF-16 units, so a character outside the Basic Multilingual Plane doesn't shift the marks.
 - **Reader files:** a footnote's `page_starts` and `page_breaks` are per paragraph, in the order of its `paragraphs`. Paragraphs with a null `id` are section headings.
 - **Per curiam:** `authors` is empty and `joined_by_source` says so. Write "per curiam". When `joined_by_source` is "not printed", an empty `joined_by` means **unknown**, never "joined by nobody" (P1.18).
-- **A refused submit** may show "[statement withheld: it repeated a page's words]" in place of a statement (P4.3). Show it as it is.
+- **A refused submit** may show "[statement withheld: it repeated a page's words]" in place of a statement (P4.3). Show it as it is. Since contract v1.3 this applies to **any** refused submit, whichever rule refused it, and since v1.5 the overview and the **note** may be withheld the same way (P4.8: a no-sources reply's note repeating a page that a search returned).
+- **`submit.rule`** on a refused `submit_answer` result is one of `same_turn`, `findings`, `copy_guard`, `no_search`, `nothing_kept`, `no_update_check`, `no_note` (out of scope without a note, v1.3), `note_too_long` (v1.5), or **null** for bad input (v1.3). Show the refusal text from `content` under "Submission refused by this site's rules" (T5.4); don't word it from the rule.
+- **The note is capped** at `NOTE_MAX_CHARS` (1,000 characters, P4.6), so a `run_ended.note` or `scope_note` is never longer.
+- **An out-of-scope reply needs no update check** (P4.7): with no search run, the band's outcome is `not_run`.
+- **`run_ended` (contract §6):**
+  - `stop_kinds` (v1.4) lists every budget or limit stop in order; `stop_kind` is among them. A loop limit then a cut-off composition keeps the loop limit's `stop_kind` with `answer_end: cut_off`.
+  - `answer_end: incomplete` goes with state `answered` (or with `step_limit`, `token_ceiling`, `time_limit` and `error_stopped`, v1.3) when the composition broke after its first block, with `failure_reason` the error's kind.
+  - `failure_reason` is an error kind or null; a `failed` run after an unexpected server error carries `internal` (v1.2).
+  - `answer_chars` is always the length of the `answer_block` text that streamed, so a `failed` or `interrupted` run keeps `answer_end: none` with the characters that did arrive (v1.2).
+- **`paid_call.estimated_usage`** (v1.6): on a Claude attempt priced from our estimate, the tokens it was priced at; `usage` is then null. In "View API calls", label it as our estimate, never as Claude's usage.
+- **HTTP error codes (contract §5, v1.2):** besides the ones listed there, `400 bad_request`, `404 not_found`, `405 method_not_allowed`, `500 internal` and `503 atlas_unreachable`. **Show any code you have no words for as T5.4's general failure.**
 - **The band** never shows page text, only titles, domains, URLs and dates as written (T2.2): "published <date> (Exa's estimate)".
 - **`api_fragment`** events carry the exact JSON for "View API calls" (T4.3(7)). Show them as they are; never rebuild them.
 - **Costs (T4.5):** one total line for Claude and Exa from `run_ended.totals`, expandable into the loop, the answer and Exa. Voyage is not shown.
