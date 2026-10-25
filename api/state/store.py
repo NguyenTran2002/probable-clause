@@ -3,15 +3,18 @@
 Both implement `api.protocols.Store` with the same meaning, which `tests/state/cases.py` states once and runs
 against both (and against the real Atlas test database when PC_ATLAS_TEST=1).
 
-Money (T3.4):
-- `reserve` is one conditional update of the month's document: it succeeds only if, for the Chicago day and the
-  month, spent + reserved + the run's worst case stays within the caps. It counts `runs_started` in the same update.
-  A refusal is diagnosed afterwards from the document and recorded as a budget stop.
-- `settle` moves a call's cost from the run's reservation to spent, never moving more than the reservation holds
-  (spend beyond it is still counted); `release` frees what is left. A reservation never settled stays counted, and
-  spend counts toward the Chicago day and month the run started in (the `Reservation` carries both).
+Money (T3.4 amended by P4.21; contract v2.0): there is no reservation.
+- `admit` reads the spend-limit flag, then makes ONE conditional update of the month's document (never an upsert:
+  Atlas refuses $expr in an upsert's filter; the day's entry is created inside the update, and a month with no
+  document is first created by a plain `_id` upsert): it succeeds only while the month's spent and the Chicago day's spent are strictly under
+  the caps, and counts `runs_started` in the same update. A refusal is diagnosed afterwards from the document and
+  recorded as a budget stop with the spend at that moment. A cap is a threshold on spend so far, so two concurrent
+  admissions may both pass while spend is under it; the update is atomic, so no start is ever lost.
+- `record_spend` adds one paid call's cost, atomically, to the month's and the admitted day's spent. Runs in
+  progress always finish: nothing here refuses a call of an admitted run.
 - If Atlas cannot be reached the run is refused (fail closed) and that is recorded, where it can be, as not a
   budget stop.
+- Documents written before v2.0 hold `reserved` and `reservations`: they are read without them and never written.
 
 Beyond the protocol, both classes offer what tests and scripts/spend_report.py read: `read_month`, `read_stops`,
 `get_run_record`.
@@ -24,22 +27,22 @@ Error messages and logs never carry the URI, a host, or Atlas's own error text. 
 outside the `except` block that caught the driver's error, so no pymongo, bson or asyncio error is left in its
 `__cause__` or `__context__`.
 
-Known safe-side leak: an `update_one` that times out on our side but still lands after `_undo_reserve` has read the
-document leaves a reservation counted until it is cleaned by hand. It cannot overspend (only reserved money is
-over-counted, never spent money under-counted), and `scripts/spend_report.py --open-reservations` lists it with its age.
+Known, safe side: an admission whose reply is lost after Atlas applied it leaves `runs_started` one higher than the
+runs that began. Spend is never affected.
 """
 
 import asyncio
 import copy
 import logging
+import time
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from pymongo import AsyncMongoClient
-from pymongo.errors import BulkWriteError, DuplicateKeyError, OperationFailure, PyMongoError
+from pymongo.errors import BulkWriteError, DuplicateKeyError, OperationFailure
 
 from api import settings
-from api.protocols import Refusal, Reservation, StopKind
+from api.protocols import Admission, Refusal, StopKind
 from api.state import mongo_docs as md
 from api.state import rules
 from api.state.clock import CHICAGO, chicago_day, chicago_month, next_month_start
@@ -82,8 +85,8 @@ def _check_events(run_id: str, events: list[dict]) -> None:
 
 
 def _tries() -> int:
-    """Compare-and-swap rounds, and upsert attempts, before Atlas counts as unreachable (api/settings.py)."""
-    return int(settings.ATLAS_RESERVE_TRIES.value)
+    """Rounds of admit's diagnosis, and upsert attempts, before Atlas counts as unreachable (api/settings.py)."""
+    return int(settings.ATLAS_ADMIT_TRIES.value)
 
 
 def _clean_stop(doc: dict) -> dict:
@@ -101,17 +104,6 @@ def _stops_matching(docs: list[dict], day: str | None, month: str | None) -> lis
     else:
         sel = [d for d in docs if d["date"].startswith(month + "-")]
     return sorted((_clean_stop(d) for d in sel), key=lambda d: d["at"])
-
-
-def _open_from(docs: list[dict], now: datetime) -> list[dict]:
-    out = []
-    for doc in docs:
-        for run, entry in (doc.get("reservations") or {}).items():
-            at = _aware(entry["at"]).astimezone(CHICAGO) if entry.get("at") else None
-            out.append({"run": run, "month": doc["_id"], "day": entry["day"], "amount": entry["amount"], "at": at,
-                        "age_s": (now - at).total_seconds() if at else None})
-    out.sort(key=lambda o: (o["at"] is None, o["at"]))
-    return out
 
 
 # ======================================================================================================================
@@ -220,63 +212,37 @@ class MemoryStore:
         return copy.deepcopy(r) if r else None
 
     # --- money ---------------------------------------------------------------------------------------------------------
-    async def reserve(self, run_id: str, worst_case_usd: float, now: datetime) -> Reservation | Refusal:
+    async def admit(self, run_id: str, now: datetime) -> Admission | Refusal:
         rules.check_run_id(run_id)
-        worst = rules.check_worst(worst_case_usd)
         month, day = _keys(now)
         try:
             await self._io()
         except StoreUnavailable:
-            self._write_stop("atlas_unreachable", run_id, now, None, {})
-            return Refusal("atlas_unreachable")
+            return Refusal("atlas_unreachable")        # a dead Atlas writes nothing: no stop record, no month document
         # nothing below awaits: like one conditional update, it cannot be interleaved
         if self._flag_until("anthropic_spend_limit", now):
             return Refusal("spend_limit_paused")
         doc = self._spend.get(month)
-        if doc and run_id in doc["reservations"]:
-            raise ValueError("this run already holds a reservation")
-        verdict = rules.cap_verdict(doc, day, worst)
+        try:
+            verdict = rules.cap_verdict(doc, day)
+            totals = rules.day_totals(doc, day)
+        except rules.MalformedDocument:
+            return Refusal("atlas_unreachable")        # fail closed on a document that cannot be read
         if verdict:
-            self._write_stop(verdict, run_id, now, rules.day_totals(doc, day), {})
+            self._write_stop(verdict, run_id, now, totals, {})
             return Refusal(verdict)
-        doc = self._month(month)
-        d = self._day(doc, day)
-        doc["reserved"] += worst
-        d["reserved"] += worst
-        d["runs_started"] += 1
-        doc["reservations"][run_id] = {"day": day, "amount": worst, "at": now.astimezone(UTC)}
-        return Reservation(run_id, month, day, worst)
+        self._day(self._month(month), day)["runs_started"] += 1
+        return Admission(run_id, month, day)
 
-    async def settle(self, r: Reservation, cost_usd: float) -> None:
-        rules.check_run_id(r.run_id)
+    async def record_spend(self, a: Admission, cost_usd: float) -> None:
+        rules.check_admission(a)
         cost = rules.check_cost(cost_usd)
-        await self._io()
         if cost == 0:
-            return
-        doc = self._month(r.month)
-        d = self._day(doc, r.day)
-        entry = doc["reservations"].get(r.run_id)
-        moved = min(cost, entry["amount"]) if entry else 0.0
+            return                                    # as MongoStore: a zero cost never touches the store
+        await self._io()
+        doc = self._month(a.month)
         doc["spent"] += cost
-        d["spent"] += cost
-        if moved > 0:
-            doc["reserved"] -= moved
-            d["reserved"] -= moved
-            entry["amount"] -= moved
-
-    async def release(self, r: Reservation) -> None:
-        rules.check_run_id(r.run_id)
-        await self._io()
-        doc = self._spend.get(r.month)
-        entry = doc["reservations"].pop(r.run_id, None) if doc else None
-        if entry:
-            doc["reserved"] -= entry["amount"]
-            self._day(doc, entry["day"])["reserved"] -= entry["amount"]
-
-    async def open_reservations(self, now: datetime) -> list[dict]:
-        _keys(now)
-        await self._io()
-        return _open_from(copy.deepcopy(list(self._spend.values())), now)
+        self._day(doc, a.day)["spent"] += cost
 
     async def record_stop(self, kind: StopKind, run_id: str | None, now: datetime, detail: dict) -> None:
         rules.check_stop_kind(kind)
@@ -301,15 +267,15 @@ class MemoryStore:
         await self._io()
         self._flags[name] = {"until": until.astimezone(UTC), "set_at": now.astimezone(UTC)}
 
-    async def live_status(self, now: datetime, worst_case_usd: float, timeout_s: float) -> dict:
+    async def live_status(self, now: datetime, timeout_s: float) -> dict:
         month, day = _keys(now)
         try:
             async with asyncio.timeout(timeout_s):
                 await self._io()
                 return rules.health_view(self._spend.get(month),
                                          self._flag_until("anthropic_spend_limit", now) is not None,
-                                         self._flag_until("exa_out_of_credit", now) is not None, day, worst_case_usd)
-        except (TimeoutError, StoreUnavailable):
+                                         self._flag_until("exa_out_of_credit", now) is not None, day)
+        except (TimeoutError, StoreUnavailable, rules.MalformedDocument):
             return dict(rules.UNKNOWN_HEALTH)
 
     # --- reads for reports and tests ---------------------------------------------------------------------------------------
@@ -467,94 +433,67 @@ class MongoStore:
         return await self._op(self._c("runs").find_one({"run": run_id}, {"_id": 0}))
 
     # --- money ---------------------------------------------------------------------------------------------------------
-    async def reserve(self, run_id: str, worst_case_usd: float, now: datetime) -> Reservation | Refusal:
+    async def admit(self, run_id: str, now: datetime) -> Admission | Refusal:
         rules.check_run_id(run_id)
-        worst = rules.check_worst(worst_case_usd)
         month, day = _keys(now)
         spend = self._c("spend")
+        started = time.monotonic()
         try:
             if await self._flag_active("anthropic_spend_limit", now):
                 return Refusal("spend_limit_paused")
-            await self._upsert(spend, {"_id": month}, md.ensure_month_update())
             for _ in range(_tries()):
-                try:
-                    res = await self._op(spend.update_one(md.reserve_filter(month, day, run_id, worst),
-                                                          md.reserve_update(day, run_id, worst, now)))
-                except StoreUnavailable:
-                    # the update may have been applied with the reply lost: take it back if we can, so a run that
-                    # is refused does not leave a reservation counted
-                    await self._undo_reserve(month, day, run_id)
-                    raise
+                # the one conditional update, never an upsert: Atlas refuses $expr in an upsert's filter (code 224)
+                res = await self._op(spend.update_one(md.admit_filter(month, day), md.admit_update(day)))
                 if res.matched_count == 1:
-                    return Reservation(run_id, month, day, worst)
+                    return Admission(run_id, month, day)
                 doc = await self._op(spend.find_one({"_id": month}))
-                if doc and run_id in (doc.get("reservations") or {}):
-                    raise ValueError("this run already holds a reservation")
-                verdict = rules.cap_verdict(doc, day, worst)
+                verdict, totals = self._read_verdict(doc, day)
                 if verdict:
-                    await self._record_stop(verdict, run_id, now, rules.day_totals(doc, day), {}, may_fail=True)
+                    await self._record_stop(verdict, run_id, now, totals, {}, may_fail=True)
                     return Refusal(verdict)
-                # no cap is broken now, so the document changed between the update and the read: try again
+                if doc is None:
+                    # a month with no document counts as $0 spent: create it (a plain _id upsert, which may race
+                    # another creator and is retried by _upsert), then make the conditional update again
+                    await self._upsert(spend, {"_id": month}, md.ensure_month_update())
+                # else a rival created the month between our update and our read (or the document changed
+                # under us): no cap is reached, so try again, up to the shared bound
             raise StoreUnavailable("no consistent answer from Atlas")
         except StoreUnavailable:
-            await self._record_stop("atlas_unreachable", run_id, now, None, {}, may_fail=True)
-            return Refusal("atlas_unreachable")
+            pass
+        # Atlas could not answer: refuse (fail closed) and record that where it can, within the one operation
+        # timeout the whole admission is allowed, so a dead Atlas costs a visitor one timeout, not two
+        await self._record_unreachable(run_id, now, started)
+        return Refusal("atlas_unreachable")
 
-    async def _undo_reserve(self, month: str, day: str, run_id: str) -> None:
+    @staticmethod
+    def _read_verdict(doc, day):
+        """The cap verdict and the day's totals from a document read back; a figure that is not a number fails
+        closed as StoreUnavailable (the document cannot be trusted)."""
+        problem = None
         try:
-            await self._release_run(month, day, run_id, uncount_start=True)
-        except StoreUnavailable:
-            log.warning("could not take back a reservation after an unacknowledged update (run %s)", run_id)
+            return rules.cap_verdict(doc, day), rules.day_totals(doc, day)
+        except rules.MalformedDocument:
+            problem = "a spend document could not be read"
+        raise StoreUnavailable(problem)
 
-    async def _release_run(self, month: str, day: str, run_id: str, uncount_start: bool = False) -> None:
-        spend = self._c("spend")
-        for _ in range(_tries()):
-            doc = await self._op(spend.find_one({"_id": month}, {f"reservations.{run_id}": 1}))
-            entry = ((doc or {}).get("reservations") or {}).get(run_id)
-            if not entry:
-                return                                    # nothing held, or already released
-            remaining = entry["amount"]
-            res = await self._op(spend.update_one(md.release_filter(month, run_id, remaining),
-                                                  md.release_update(entry.get("day", day), run_id, remaining, uncount_start)))
-            if res.matched_count == 1:
-                return
-        # still counted, which is the safe side; the caller is told
-        raise StoreUnavailable("a reservation could not be released")
+    async def _record_unreachable(self, run_id: str, now: datetime, started: float) -> None:
+        remaining = self._timeout - (time.monotonic() - started)
+        if remaining <= 0:
+            log.warning("did not record the atlas_unreachable stop (run %s): the operation timeout was spent", run_id)
+            return
+        try:
+            async with asyncio.timeout(remaining):
+                await self._record_stop("atlas_unreachable", run_id, now, None, {}, may_fail=True)
+        except TimeoutError:
+            log.warning("could not record the atlas_unreachable stop (run %s) in the time left", run_id)
 
-    async def settle(self, r: Reservation, cost_usd: float) -> None:
-        rules.check_run_id(r.run_id)
+    async def record_spend(self, a: Admission, cost_usd: float) -> None:
+        rules.check_admission(a)
         cost = rules.check_cost(cost_usd)
         if cost == 0:
             return
-        spend = self._c("spend")
-        # the usual case in one atomic update: the reservation still holds the whole cost
-        res = await self._op(spend.update_one(md.settle_full_filter(r.month, r.run_id, cost),
-                                              md.settle_full_update(r.day, r.run_id, cost)))
-        if res.matched_count == 1:
-            return
-        # the cost exceeds what is left (or nothing is left): spend all of it, move only what the reservation holds
-        for _ in range(_tries()):
-            doc = await self._op(spend.find_one({"_id": r.month}, {f"reservations.{r.run_id}": 1}))
-            if doc is None:
-                break
-            entry = (doc.get("reservations") or {}).get(r.run_id)
-            remaining = entry["amount"] if entry else None
-            moved = min(cost, remaining) if remaining is not None else 0.0
-            res = await self._op(spend.update_one(md.settle_clamped_filter(r.month, r.run_id, remaining),
-                                                  md.settle_clamped_update(r.day, r.run_id, cost, moved)))
-            if res.matched_count == 1:
-                return
-        # no document, or the swap kept losing: the spend must not be lost; the reservation stays counted
-        await self._upsert(spend, {"_id": r.month}, md.settle_spent_only_update(r.day, cost))
-
-    async def release(self, r: Reservation) -> None:
-        rules.check_run_id(r.run_id)
-        await self._release_run(r.month, r.day, r.run_id)
-
-    async def open_reservations(self, now: datetime) -> list[dict]:
-        _keys(now)
-        docs = await self._op(self._c("spend").find({}, {"reservations": 1}).to_list(None))
-        return _open_from(docs, now)
+        # one atomic $inc of both totals; the upsert creates a month that has no document yet
+        await self._upsert(self._c("spend"), {"_id": a.month}, md.spend_update(a.day, cost))
 
     async def record_stop(self, kind: StopKind, run_id: str | None, now: datetime, detail: dict) -> None:
         rules.check_stop_kind(kind)
@@ -595,15 +534,15 @@ class MongoStore:
         rules.check_flag_name(name)
         await self._upsert(self._c("flags"), {"_id": name}, md.flag_update(name, next_month_start(now), now))
 
-    async def live_status(self, now: datetime, worst_case_usd: float, timeout_s: float) -> dict:
+    async def live_status(self, now: datetime, timeout_s: float) -> dict:
         month, day = _keys(now)
         try:
             async with asyncio.timeout(timeout_s):
                 doc = await self._op(self._c("spend").find_one({"_id": month}))
                 spend_limit = await self._flag_active("anthropic_spend_limit", now)
                 exa = await self._flag_active("exa_out_of_credit", now)
-            return rules.health_view(doc, spend_limit, exa, day, worst_case_usd)
-        except (TimeoutError, StoreUnavailable):
+            return rules.health_view(doc, spend_limit, exa, day)
+        except (TimeoutError, StoreUnavailable, rules.MalformedDocument):
             return dict(rules.UNKNOWN_HEALTH)
 
     # --- reads for reports and tests -----------------------------------------------------------------------------------------

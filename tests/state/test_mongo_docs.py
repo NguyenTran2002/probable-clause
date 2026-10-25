@@ -1,6 +1,6 @@
 """api/state/mongo_docs.py: the filters and updates MongoStore sends, built by pure functions (no network).
 
-The reserve filter is also checked against the shared rule (`rules.cap_verdict`) over a grid of states, using
+The admit filter is also checked against the shared rule (`rules.cap_verdict`) over a grid of states, using
 the fake database's matcher, which follows MongoDB's null ordering.
 """
 
@@ -18,121 +18,95 @@ from tests.state.fakes import matches
 CHI = ZoneInfo("America/Chicago")
 NOW = datetime(2030, 5, 14, 12, 0, tzinfo=CHI)
 DAY, MONTH = "2030-05-14", "2030-05"
-W = 1.674        # an amount to reserve (T3.4's worst case before P4.6); the documents take what they are given
 
 
-# --- reserve ---------------------------------------------------------------------------------------------------
+# --- admit ---------------------------------------------------------------------------------------------------
 
-def test_reserve_filter_is_one_document_that_names_the_month_and_the_run():
-    f = md.reserve_filter(MONTH, DAY, "run-a", W)
-    assert f["_id"] == MONTH
-    assert f["reservations.run-a"] == {"$exists": False}
-    assert "$expr" in f
+def test_admit_filter_is_one_document_that_names_the_month():
+    f = md.admit_filter(MONTH, DAY)
+    assert set(f) == {"_id", "$expr"} and f["_id"] == MONTH            # no run id in it, no reservation to look for
 
 
-def test_reserve_filter_guards_every_field_read_with_ifnull():
+def test_admit_filter_guards_every_field_read_with_ifnull():
     import json
-    text = json.dumps(md.reserve_filter(MONTH, DAY, "run-a", W)["$expr"])
-    # four reads: month spent and reserved, day spent and reserved; each wrapped
-    assert text.count('"$ifNull"') == 4
-    for path in ("$spent", "$reserved", f"$days.{DAY}.spent", f"$days.{DAY}.reserved"):
+    text = json.dumps(md.admit_filter(MONTH, DAY)["$expr"])
+    # two reads: the month's spent and the day's spent; each wrapped
+    assert text.count('"$ifNull"') == 2
+    for path in ("$spent", f"$days.{DAY}.spent"):
         assert f'["{path}", 0]' in text
+    assert "reserved" not in text
 
 
-def test_reserve_update_moves_the_worst_case_into_reserved_and_counts_the_start():
-    u = md.reserve_update(DAY, "run-a", W, NOW)
-    assert u["$inc"]["reserved"] == W and u["$inc"][f"days.{DAY}.reserved"] == W
-    assert u["$inc"][f"days.{DAY}.runs_started"] == 1
-    assert u["$inc"][f"days.{DAY}.spent"] == 0.0            # creates the field so the day always has its full shape
-    entry = u["$set"]["reservations.run-a"]
-    assert entry["day"] == DAY and entry["amount"] == W and entry["at"] == NOW.astimezone(UTC)
-    assert entry["at"].tzinfo is not None
+def test_admit_filter_is_strictly_under_each_cap():
+    # tests/state/conftest.py pins the daily cap at $10; the filter reads the settings when it is built
+    f = md.admit_filter(MONTH, DAY)["$expr"]["$and"]
+    assert [list(c) for c in f] == [["$lt"], ["$lt"]]                   # $lt, never $lte
+    assert f[0]["$lt"][1] == pytest.approx(float(settings.MONTHLY_CAP_USD.value), abs=1e-6)
+    assert f[1]["$lt"][1] == pytest.approx(float(settings.DAILY_CAP_USD.value), abs=1e-6)
+    assert f[0]["$lt"][1] < float(settings.MONTHLY_CAP_USD.value) and f[1]["$lt"][1] < float(settings.DAILY_CAP_USD.value)
+
+
+def test_admit_update_counts_the_start_and_creates_the_whole_shape():
+    u = md.admit_update(DAY)
+    assert u == {"$inc": {"spent": 0.0, f"days.{DAY}.spent": 0.0, f"days.{DAY}.runs_started": 1}}
+    assert set(u) == {"$inc"}                                           # no $set of a reservation
 
 
 def test_ensure_month_only_sets_defaults_on_insert():
+    assert rules.month_defaults() == {"spent": 0.0} and rules.day_defaults() == {"spent": 0.0, "runs_started": 0}
     u = md.ensure_month_update()
-    assert set(u) == {"$setOnInsert"}
-    assert u["$setOnInsert"] == {"spent": 0.0, "reserved": 0.0, "reservations": {}}
+    assert u == {"$setOnInsert": {"spent": 0.0, "days": {}}}              # the shape MemoryStore makes, days included
 
 
-@pytest.mark.parametrize("ms,mr,ds,dr,has_day,worst", list(itertools.product(
-    [0.0, 20.0, 50.0, 58.3, 58.4, 60.0], [0.0, 5.0, 8.4], [0.0, 3.0, 8.3, 8.4], [0.0, 1.0], [True, False], [0.4, W, 11.0])))
-def test_reserve_filter_agrees_with_the_shared_rule(ms, mr, ds, dr, has_day, worst):
-    doc = {"_id": MONTH, "spent": ms, "reserved": mr, "reservations": {}}
-    doc["days"] = {DAY: {"spent": ds, "reserved": dr, "runs_started": 0}} if has_day else {}
-    ok = matches(doc, md.reserve_filter(MONTH, DAY, "run-a", worst))
-    assert ok == (rules.cap_verdict(doc, DAY, worst) is None)
+@pytest.mark.parametrize("ms,ds,has_day", list(itertools.product(
+    [0.0, 20.0, 59.99, 59.9999999999, 60.0, 61.0], [0.0, 3.0, 9.99, 9.9999999999, 10.0, 16.0], [True, False])))
+def test_admit_filter_agrees_with_the_shared_rule(ms, ds, has_day):
+    doc = {"_id": MONTH, "spent": ms}
+    doc["days"] = {DAY: {"spent": ds, "runs_started": 0}} if has_day else {}
+    ok = matches(doc, md.admit_filter(MONTH, DAY))
+    assert ok == (rules.cap_verdict(doc, DAY) is None)
 
 
-def test_reserve_filter_refuses_a_run_that_already_holds_a_reservation():
-    doc = {"_id": MONTH, "spent": 0, "reserved": 1.0, "days": {}, "reservations": {"run-a": {"day": DAY, "amount": 1.0}}}
-    assert not matches(doc, md.reserve_filter(MONTH, DAY, "run-a", 0.5))
-    assert matches(doc, md.reserve_filter(MONTH, DAY, "run-b", 0.5))
+def test_admit_filter_ignores_old_reserved_fields():
+    doc = {"_id": MONTH, "spent": 1.0, "reserved": 59.0, "days": {DAY: {"spent": 1.0, "reserved": 14.0, "runs_started": 1}},
+           "reservations": {"old": {"day": DAY, "amount": 59.0}}}
+    assert matches(doc, md.admit_filter(MONTH, DAY))
 
 
-def test_reserve_filter_on_a_partial_document_is_still_checked():
+def test_admit_filter_on_a_partial_document_is_still_checked():
     doc = {"_id": MONTH, "days": {DAY: {"stops": {"atlas_unreachable": 1}}}}
-    assert matches(doc, md.reserve_filter(MONTH, DAY, "run-a", W))
-    assert not matches(doc, md.reserve_filter(MONTH, DAY, "run-a", 11.0))
-    assert not matches(doc, md.reserve_filter(MONTH, DAY, "run-a", 61.0))
+    assert matches(doc, md.admit_filter(MONTH, DAY))                   # a missing spent counts as zero
+    assert not matches({"_id": MONTH, "spent": 60.0, "days": {}}, md.admit_filter(MONTH, DAY))
+    assert not matches({"_id": MONTH, "days": {DAY: {"spent": 10.0}}}, md.admit_filter(MONTH, DAY))
 
 
 def test_the_filter_for_another_month_never_matches():
-    doc = {"_id": "2030-06", "spent": 0, "reserved": 0, "days": {}, "reservations": {}}
-    assert not matches(doc, md.reserve_filter(MONTH, DAY, "run-a", W))
+    doc = {"_id": "2030-06", "spent": 0, "days": {}}
+    assert not matches(doc, md.admit_filter(MONTH, DAY))
 
 
-# --- settle and release ----------------------------------------------------------------------------------------------
+# --- record_spend --------------------------------------------------------------------------------------------------
 
-def test_settle_full_move_is_one_conditional_update_on_what_is_left_of_the_reservation():
-    f = md.settle_full_filter(MONTH, "run-a", 0.5)
-    assert f == {"_id": MONTH, "reservations.run-a.amount": {"$gte": 0.5}}
-    u = md.settle_full_update(DAY, "run-a", 0.5)
-    assert u == {"$inc": {"spent": 0.5, f"days.{DAY}.spent": 0.5, "reserved": -0.5, f"days.{DAY}.reserved": -0.5,
-                          "reservations.run-a.amount": -0.5}}
-
-
-def test_settle_clamped_moves_only_what_the_reservation_still_holds():
-    f = md.settle_clamped_filter(MONTH, "run-a", 0.3)
-    assert f == {"_id": MONTH, "reservations.run-a.amount": 0.3}
-    u = md.settle_clamped_update(DAY, "run-a", cost=0.5, moved=0.3)
-    assert u["$inc"] == {"spent": 0.5, f"days.{DAY}.spent": 0.5, "reserved": -0.3, f"days.{DAY}.reserved": -0.3,
-                         "reservations.run-a.amount": -0.3}
-
-
-def test_settle_with_no_reservation_left_counts_spend_only():
-    f = md.settle_clamped_filter(MONTH, "run-a", None)
-    assert f == {"_id": MONTH, "reservations.run-a": {"$exists": False}}
-    u = md.settle_clamped_update(DAY, "run-a", cost=0.5, moved=0.0)
-    assert u["$inc"] == {"spent": 0.5, f"days.{DAY}.spent": 0.5}
-
-
-def test_settle_spent_only_upsert_creates_the_month_with_defaults():
-    u = md.settle_spent_only_update(DAY, 0.5)
-    assert u["$inc"] == {"spent": 0.5, f"days.{DAY}.spent": 0.5}
-    assert u["$setOnInsert"] == {"reserved": 0.0, "reservations": {}}
-
-
-def test_release_is_a_compare_and_swap_on_the_remaining_amount():
-    assert md.release_filter(MONTH, "run-a", 1.174) == {"_id": MONTH, "reservations.run-a.amount": 1.174}
-    u = md.release_update(DAY, "run-a", 1.174)
-    assert u == {"$inc": {"reserved": -1.174, f"days.{DAY}.reserved": -1.174}, "$unset": {"reservations.run-a": ""}}
-
-
-def test_undoing_a_reservation_also_uncounts_the_start():
-    u = md.release_update(DAY, "run-a", 1.674, uncount_start=True)
-    assert u["$inc"][f"days.{DAY}.runs_started"] == -1
+def test_spend_update_is_one_increment_of_both_totals_that_also_fills_the_day_shape():
+    u = md.spend_update(DAY, 0.5)
+    assert u == {"$inc": {"spent": 0.5, f"days.{DAY}.spent": 0.5, f"days.{DAY}.runs_started": 0}}
 
 
 def test_no_update_names_a_path_and_its_parent():
     # MongoDB refuses conflicting paths; the fake does too, so build each and apply it to a document
     from tests.state.fakes import _apply
-    doc = {"_id": MONTH, "spent": 0.0, "reserved": 5.0, "days": {DAY: {"spent": 0.0, "reserved": 5.0, "runs_started": 1}},
-           "reservations": {"run-a": {"day": DAY, "amount": 5.0}}}
-    for u in (md.reserve_update(DAY, "run-b", W, NOW), md.settle_full_update(DAY, "run-a", 0.5),
-              md.settle_clamped_update(DAY, "run-a", 0.5, 0.3), md.release_update(DAY, "run-a", 5.0, uncount_start=True),
-              md.stop_count_update(DAY, "daily_cap"), md.settle_spent_only_update(DAY, 0.5)):
+    doc = {"_id": MONTH, "spent": 0.0, "days": {DAY: {"spent": 0.0, "runs_started": 1}}}
+    for u in (md.admit_update(DAY), md.spend_update(DAY, 0.5), md.stop_count_update(DAY, "daily_cap")):
         _apply(doc, u, inserting=False)
+        _apply({}, u, inserting=True)
+
+
+def test_an_upsert_through_the_updates_makes_a_whole_month():
+    from tests.state.fakes import _apply
+    for u in (md.admit_update(DAY), md.spend_update(DAY, 0.5), md.stop_count_update(DAY, "daily_cap")):
+        doc = {"_id": MONTH}
+        _apply(doc, u, inserting=True)
+        assert set(doc) == {"_id", "spent", "days"} and {"spent", "runs_started"} <= set(doc["days"][DAY])
 
 
 # --- stop counts, flags, heartbeats ------------------------------------------------------------------------------------
@@ -140,9 +114,9 @@ def test_no_update_names_a_path_and_its_parent():
 def test_stop_count_update_counts_the_kind_on_the_day_and_defaults_the_month():
     u = md.stop_count_update(DAY, "daily_cap")
     assert u["$inc"][f"days.{DAY}.stops.daily_cap"] == 1
-    assert u["$inc"][f"days.{DAY}.spent"] == 0.0 and u["$inc"][f"days.{DAY}.reserved"] == 0.0
+    assert u["$inc"][f"days.{DAY}.spent"] == 0.0 and f"days.{DAY}.reserved" not in u["$inc"]
     assert u["$inc"][f"days.{DAY}.runs_started"] == 0
-    assert u["$setOnInsert"] == {"spent": 0.0, "reserved": 0.0, "reservations": {}}
+    assert u["$setOnInsert"] == {"spent": 0.0}
 
 
 def test_flag_update_stores_the_lapse_time_as_a_bson_date():

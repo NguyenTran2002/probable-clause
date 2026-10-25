@@ -495,6 +495,7 @@ class RunRegistry: ...                    # runs on this instance; one stream pe
 - **A failed `record_spend`** is logged and its cost kept.
   - After a run's first failure, H stops calling Atlas for that run's spend and keeps every later cost too, so a run against a dead Atlas doesn't spend its deadline on 5 s timeouts.
   - The kept costs are recorded once, as one sum, when the run ends, and logged as lost if that fails too. P4.21 accepts losing those calls' figures.
+  - `record_spend` isn't idempotent. A call whose `$inc` reached Atlas but whose reply was lost is counted again in that sum. The error errs high, so it is accepted (E's review, v2.0).
 - **`before_paid_call` never checks the caps.** A run in progress always finishes (P4.21).
 - **Totals** have `cost_usd.loop`, `cost_usd.update` and `cost_usd.composition` (§6.2), and the per-run record (§8) gains the update step's cost.
 - **Concurrency:** `record_usage`, `emit` and `before_paid_call` may be called by the update step and the composition at once (§4.G). Event numbers follow the order of the `emit` calls, with no gap. One pause emits one `paused` and one `resumed`, however many calls wait on it.

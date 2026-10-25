@@ -9,6 +9,7 @@ Fidelity points that matter to the money code:
 - `$expr` follows MongoDB's rules where null is involved: `$add` with a missing operand gives null, and null sorts
   below every number, so `{"$lte": [null, cap]}` is true. MongoStore must guard every field read with `$ifNull`.
 - an update that names a path and its parent (or the same path twice) is refused, as MongoDB refuses it.
+- `$expr` in an upsert's filter raises WriteError code 224, as Atlas does (matched or not)
 - a unique index (and `_id`) raises DuplicateKeyError; insert_many(ordered=False) raises BulkWriteError.
 """
 
@@ -16,7 +17,7 @@ import asyncio
 import copy
 from datetime import datetime
 
-from pymongo.errors import BulkWriteError, DuplicateKeyError, OperationFailure
+from pymongo.errors import BulkWriteError, DuplicateKeyError, OperationFailure, WriteError
 
 MISSING = object()
 
@@ -32,13 +33,16 @@ def get_path(doc, path):
 
 
 def set_path(doc, path, value):
+    """Create the path; like MongoDB, refuse to go through a value that is not a document (code 28)."""
     parts = path.split(".")
     cur = doc
     for part in parts[:-1]:
         nxt = cur.get(part)
-        if not isinstance(nxt, dict):
+        if nxt is None and part not in cur:
             nxt = {}
             cur[part] = nxt
+        elif not isinstance(nxt, dict):
+            raise OperationFailure(f"fake: cannot create field {part!r} in an element that is not a document", code=28)
         cur = nxt
     cur[parts[-1]] = value
 
@@ -175,6 +179,8 @@ def _apply(doc, update, inserting):
         for path, v in fields.items():
             if op == "$inc":
                 cur = get_path(doc, path)
+                if cur is not MISSING and (isinstance(cur, bool) or not isinstance(cur, (int, float))):
+                    raise OperationFailure("fake: cannot apply $inc to a value of non-numeric type", code=14)
                 set_path(doc, path, v if cur is MISSING else cur + v)
             elif op == "$set":
                 set_path(doc, path, copy.deepcopy(v))
@@ -189,6 +195,20 @@ def _apply(doc, update, inserting):
                     set_path(doc, path, v)
             else:
                 raise OperationFailure(f"fake: unsupported update operator {op}", code=9)
+
+
+def _has_expr(flt) -> bool:
+    if isinstance(flt, dict):
+        return any(k == "$expr" or _has_expr(v) for k, v in flt.items())
+    if isinstance(flt, list):
+        return any(_has_expr(v) for v in flt)
+    return False
+
+
+def _refuse_expr_in_upsert(flt):
+    """Atlas: WriteError 224 "$expr is not allowed in the query predicate for an upsert", matched or not."""
+    if _has_expr(flt):
+        raise WriteError("$expr is not allowed in the query predicate for an upsert", code=224)
 
 
 class _Result:
@@ -300,6 +320,8 @@ class FakeCollection:
         if isinstance(update, list):
             raise OperationFailure("fake: pipeline updates are not implemented", code=9)
         await self._enter("update_one", filter=flt, update=update, upsert=upsert)
+        if upsert:
+            _refuse_expr_in_upsert(flt)
         for d in self.docs:
             if matches(d, flt):
                 before = copy.deepcopy(d)
@@ -319,10 +341,13 @@ class FakeCollection:
         base.setdefault("_id", f"fake-{len(self.docs)}-{id(base)}")
         self._check_unique(base)
         self.docs.append(base)
+        await self._leave("update_one", filter=flt, update=update)
         return _Result(upserted_id=base["_id"])
 
     async def replace_one(self, flt, replacement, upsert=False, **kw):
         await self._enter("replace_one", filter=flt, replacement=replacement, upsert=upsert)
+        if upsert:
+            _refuse_expr_in_upsert(flt)
         for d in self.docs:
             if matches(d, flt):
                 new = copy.deepcopy(replacement)

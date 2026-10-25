@@ -2,15 +2,19 @@
 
 Pure functions on the shape of the month document, so both stores answer the same way:
 
-    {"_id": "2026-10", "spent": 0.0, "reserved": 0.0,
-     "days": {"2026-10-24": {"spent", "reserved", "runs_started", "stops": {<kind>: n}}},
-     "reservations": {<run>: {"day", "amount", "at"}}}
+    {"_id": "2026-10", "spent": 0.0,
+     "days": {"2026-10-24": {"spent", "runs_started", "stops": {<kind>: n}}}}
 
 A missing field reads as zero. MongoDB sorts a missing (null) number below every number, so a comparison that
-forgot this would pass any cap; `mongo_docs.reserve_filter` guards each read with $ifNull for the same reason.
+forgot this would pass any cap; `mongo_docs.admit_filter` guards each read with $ifNull for the same reason.
+
+No reservation (P4.21, contract v2.0): a run is admitted while the month's and the day's spend are strictly under
+the caps. Documents written before v2.0 may still hold `reserved` and `reservations` fields: nothing here reads
+them as spend, and nothing here writes them.
 """
 
 import math
+import re
 from collections import namedtuple
 from datetime import datetime
 from typing import Literal
@@ -30,15 +34,15 @@ FLAG_NAMES = ("exa_out_of_credit", "anthropic_spend_limit")
 
 UNKNOWN_HEALTH = {"live_research": "unknown", "update_check": "unknown"}
 
-Totals = namedtuple("Totals", "month_spent month_reserved day_spent day_reserved")
+Totals = namedtuple("Totals", "month_spent day_spent")
 
 
 def month_defaults() -> dict:
-    return {"spent": 0.0, "reserved": 0.0, "reservations": {}}
+    return {"spent": 0.0}
 
 
 def day_defaults() -> dict:
-    return {"spent": 0.0, "reserved": 0.0, "runs_started": 0}
+    return {"spent": 0.0, "runs_started": 0}
 
 
 # --- validation -------------------------------------------------------------------------------------------------------
@@ -53,13 +57,6 @@ def _number(x, what: str) -> float:
     if isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x):
         raise ValueError(f"{what} must be a finite number")
     return float(x)
-
-
-def check_worst(x) -> float:
-    x = _number(x, "the worst case")
-    if x <= 0:
-        raise ValueError("the worst case must be positive")
-    return x
 
 
 def check_cost(x) -> float:
@@ -81,34 +78,72 @@ def check_flag_name(name) -> str:
     return name
 
 
+MONTH_KEY = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+DAY_KEY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def check_admission(a) -> None:
+    """An Admission's month and day go into a dotted path (`days.<day>.spent`): refuse any other shape."""
+    check_run_id(a.run_id)
+    if not isinstance(a.month, str) or not MONTH_KEY.match(a.month):
+        raise ValueError("an admission's month is YYYY-MM")
+    if not isinstance(a.day, str) or not DAY_KEY.match(a.day) or not a.day.startswith(a.month + "-"):
+        raise ValueError("an admission's day is YYYY-MM-DD, in its month")
+
+
 # --- the caps ---------------------------------------------------------------------------------------------------------
 
+class MalformedDocument(ValueError):
+    """A spend document whose figures cannot be read (a string where a number belongs). The stores fail closed on it:
+    admit refuses as atlas_unreachable and live_status says unknown. The message never carries a value."""
+
+
+def _spent(x) -> float:
+    """A stored `spent`: missing or null reads as zero, as `$ifNull` does in the Atlas filter; anything else that is
+    not a finite number is malformed."""
+    if x is None:
+        return 0.0
+    if isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x):
+        raise MalformedDocument("a spend document holds a figure that is not a number")
+    return float(x)
+
+
 def day_totals(doc: dict | None, day: str) -> Totals:
+    """Spent so far, this month and this Chicago day; a missing document, day or field (or a null one) reads as zero.
+    Old `reserved` fields are not read. Raises MalformedDocument for a figure that is not a number."""
     doc = doc or {}
-    d = (doc.get("days") or {}).get(day) or {}
-    return Totals(doc.get("spent", 0.0), doc.get("reserved", 0.0), d.get("spent", 0.0), d.get("reserved", 0.0))
+    days = doc.get("days")
+    if days is not None and not isinstance(days, dict):
+        raise MalformedDocument("a spend document's days are not a mapping")
+    d = (days or {}).get(day)
+    if d is not None and not isinstance(d, dict):
+        raise MalformedDocument("a spend document's day is not a mapping")
+    return Totals(_spent(doc.get("spent")), _spent((d or {}).get("spent")))
 
 
-def cap_verdict(doc: dict | None, day: str, worst: float) -> Literal["monthly_cap", "daily_cap"] | None:
-    """Which cap a run of this worst case would break, if any (T3.4; P2.7).
+def under_cap(spent: float, cap: float) -> bool:
+    """Strictly under (P4.21): at or over the cap is not. EPS keeps float noise from deciding it: a sum that
+    reaches the cap but for rounding error (25 x $0.60 against $15) counts as at the cap."""
+    return spent < cap - EPS
 
-    spent + reserved + worst must stay within the cap for the Chicago day and for the month. The month is named
-    first: when both are broken the longer pause is the true one.
-    """
+
+def cap_verdict(doc: dict | None, day: str) -> Literal["monthly_cap", "daily_cap"] | None:
+    """Which cap the spend so far has reached, if any (P4.21; P2.7). It looks at what has been spent, never at what a
+    run might spend. The month is named first: when both are reached the longer pause is the true one."""
     t = day_totals(doc, day)
-    if t.month_spent + t.month_reserved + worst > float(settings.MONTHLY_CAP_USD.value) + EPS:
+    if not under_cap(t.month_spent, float(settings.MONTHLY_CAP_USD.value)):
         return "monthly_cap"
-    if t.day_spent + t.day_reserved + worst > float(settings.DAILY_CAP_USD.value) + EPS:
+    if not under_cap(t.day_spent, float(settings.DAILY_CAP_USD.value)):
         return "daily_cap"
     return None
 
 
-def health_view(doc: dict | None, spend_limit_active: bool, exa_flag_active: bool, day: str, worst: float) -> dict:
+def health_view(doc: dict | None, spend_limit_active: bool, exa_flag_active: bool, day: str) -> dict:
     """The two /health fields the store knows (contract §5, §4.E)."""
     if spend_limit_active:
         live = "paused_month"
     else:
-        verdict = cap_verdict(doc, day, worst)
+        verdict = cap_verdict(doc, day)
         live = {"monthly_cap": "paused_month", "daily_cap": "paused_day", None: "open"}[verdict]
     return {"live_research": live, "update_check": "unavailable" if exa_flag_active else "available"}
 
@@ -117,12 +152,13 @@ def health_view(doc: dict | None, spend_limit_active: bool, exa_flag_active: boo
 
 def stop_document(kind: str, run_id: str | None, now: datetime, totals: Totals | None, detail: dict) -> dict:
     """One small record per refusal or stop (T3.4): Chicago date and time, run ID or null, which limit, spent and
-    reserved at that moment, and whether it was a budget stop. `totals` None means unknown (Atlas unreachable)."""
+    at that moment (the month's and the day's), and whether it was a budget stop. `totals` None means unknown (Atlas
+    unreachable)."""
     check_stop_kind(kind)
     if run_id is not None:
         check_run_id(run_id)
     check_stop_detail(detail)
-    t = totals if totals is not None else Totals(None, None, None, None)
+    t = totals if totals is not None else Totals(None, None)
     return {
         "at": now,
         "date": chicago_day(now),
@@ -131,8 +167,6 @@ def stop_document(kind: str, run_id: str | None, now: datetime, totals: Totals |
         "kind": kind,
         "budget": kind in BUDGET_STOPS,
         "month_spent": t.month_spent,
-        "month_reserved": t.month_reserved,
         "day_spent": t.day_spent,
-        "day_reserved": t.day_reserved,
         "detail": dict(detail),
     }
