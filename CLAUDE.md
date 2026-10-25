@@ -91,9 +91,9 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 16:50 CDT, before a planned compaction: the frontend build starts after it.*
+*Updated Oct 25, 2026, 16:48 CDT, before a planned compaction: the frontend build starts after it.*
 
-- **Next: the frontend build,** following `docs/sessions/frontend-plan.md` (proposed 16:50 for the user's approval; once approved, start at its step 0, then step 1). The main session builds `web/` and `webdev/` itself (P4.28), with no parallel builders; fresh subagents only review. The spec is `docs/sessions/frontend-brief.md` §4 to §6 and §5a, T4.1 to T4.5, T5.1 to T5.6, contract v2.0 §5, §5.1, §6, §11, and the v2.0 fixtures.
+- **Next: the frontend build,** following `docs/sessions/frontend-plan.md` (proposed 16:48 for the user's approval; once approved, start at its step 0, then step 1). The main session builds `web/` and `webdev/` itself (P4.28), with no parallel builders; fresh subagents only review. The spec is `docs/sessions/frontend-brief.md` §4 to §6 and §5a, T4.1 to T4.5, T5.1 to T5.6, contract v2.0 §5, §5.1, §6, §11, and the v2.0 fixtures.
   - **Step 1 asks the user first** for two downloads (the three font families as `.woff2` with the OFL texts, from google/fonts; markdown-it at an exact version, from npm), each named with its source, version and size.
   - **The calls P4.31 leaves to the main session:** step 0 of the plan lists them; log each, and the user refines afterwards.
   - **Step 9 is the user's local review:** `deploy/local.sh`, the user testing as a visitor (paid runs on the development key and `Probable_Clause_test`; P4.22 has $2.46 and 17 Exa left; ask before going past it). Then the user's sign-off; the deploy green light is separate.
