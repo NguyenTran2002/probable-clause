@@ -11,7 +11,10 @@ from typing import Literal, Protocol
 OpinionGroup = Literal["majority", "plurality", "concurrence", "dissent"]
 Service = Literal["anthropic", "voyage", "exa"]
 PassageKind = Literal["paragraph", "footnote"]
-Purpose = Literal["loop", "composition", "embed", "rerank", "update_search"]
+Purpose = Literal["loop", "update", "composition", "embed", "rerank", "update_search"]
+Step = Literal["research", "update", "composition"]     # contract v2.0, §6: the step an event belongs to
+STEP_OF_PURPOSE: dict[str, str] = {"loop": "research", "embed": "research", "rerank": "research",
+                                   "update": "update", "update_search": "update", "composition": "composition"}
 CallOutcome = Literal["ok", "retrying", "failed"]
 CorpusLabel = Literal["full", "before_chatrie"]
 
@@ -119,11 +122,13 @@ class RunContext(Protocol):
     flags: RunFlags
 
     async def emit(self, kind: str, data: dict) -> int:
-        """Store and stream one event; returns its number. Never blocks on Atlas."""
+        """Store and stream one event; returns its number. Never blocks on Atlas. Safe to call from the update step
+        and the composition at once: numbers follow the order of the calls, with no gap (contract v2.0)."""
 
     async def before_paid_call(self, service: Service, purpose: Purpose) -> None:
         """Wait while paused; raise RunStopped("abandoned") if abandoned, or RunStopped("deadline")
-        past the run deadline (never for purpose "composition", contract §4.H)."""
+        past the run deadline (never for purpose "composition", contract §4.H). Safe to call from the update step
+        and the composition at once: one `paused` and one `resumed` per pause (contract v2.0)."""
 
     async def call_not_billed(self, service: Service, purpose: Purpose) -> None:
         """A call `before_paid_call` cleared was refused before anything was billed (Exa's 402 or 401, T2.4), so no
@@ -132,8 +137,9 @@ class RunContext(Protocol):
     async def record_usage(self, usage: Usage | None, *, purpose: Purpose, attempt: int, max_attempts: int,
                            outcome: CallOutcome, error_kind: str | None, duration_ms: int,
                            raw_usage: dict | None = None, call_no: int | None = None) -> float:
-        """The one emitter of `paid_call` events: prices the attempt (T3.3, T3.4), settles it against the
-        reservation, adds it to the totals, emits the event, and returns its cost in dollars."""
+        """The one emitter of `paid_call` events: prices the attempt (T3.3, T3.4), records its cost to the day's
+        and month's spend (P4.21), adds it to the totals, emits the event with the `step` of its purpose
+        (STEP_OF_PURPOSE), and returns its cost in dollars."""
 
     def totals(self) -> dict:
         """The run's totals in contract §6.2's shape, kept by record_usage."""

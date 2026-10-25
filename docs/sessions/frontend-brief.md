@@ -8,7 +8,7 @@
 
 You are the **frontend session** of Probable Clause. The **main session** works in this same folder and branch. It builds the backend (Wave 2 of P4.1 is starting: the research loop, the API and the deploy files) and owns every shared document.
 
-**Your job:** build the real page under `web/`, from the locked prototype (T4.1) and against **interfaces contract v1.1**. Drive it from a local mock that plays the main session's fixtures.
+**Your job:** build the real page under `web/`, from the locked prototype (T4.1) and against **interfaces contract v2.0** (Wave 3, Oct 25, 2026; §5a below says what changed). Drive it from a local mock that plays the main session's fixtures.
 
 **You are done when:**
 - every fixture plays correctly through your mock;
@@ -25,7 +25,7 @@ Deploying is not yours. The page later runs against the real API in the local re
    - **the look and the stack:** T4.1 (the prototype is the baseline), T4.2 (plain ES modules, markdown-it, no build step), T4.3 (the seven changes to the prototype), T4.4 (new pieces), T4.5 (costs);
    - **every wording entry:** T5.1 to T5.6. The texts there are final; use them exactly;
    - **the behaviours behind the page:** T1.6, T1.7, T1.9 to T1.12, T2.2 to T2.4, T3.1, T3.2, T3.6 and T3.7, and P4.3.
-3. `docs/design/contract.md` (v1.1). It is the spec you build against:
+3. `docs/design/contract.md` (v2.0). It is the spec you build against:
    - §5: the endpoints;
    - §5.1: the wake protocol, which the page implements;
    - §6: every event. `contracts/events.schema.json` is binding;
@@ -79,7 +79,57 @@ Load the **frontend-design** skill before designing anything new.
 - If they are still being written when you start, the main session will tell the user when they land.
 - **Since Oct 25, 2026** the event streams are produced by driving the real backend (the loop, the API and the checks) on fakes, so tool-result texts, check results and prices are the code's own; `tests/fixtures/README.md` says how each was made.
 
+## 5a. Contract v2.0 (Wave 3): what changes, and what to wait for
+
+*Added Oct 25, 2026 by the main session. Wave 3 (`docs/design/wave3-design.md`, P4.18 to P4.21) changes the run. Contract v2.0 is written, and the backend is being rebuilt to it. **The fixtures in `tests/fixtures/` are still v1.9's until the main session regenerates them at the end of the wave; the user will tell you when.***
+
+**What changes in a run:**
+- **Research, then two branches side by side.** Research (the corpus loop) ends with `submit_answer`. Then the **update step** (the web check) and the **composition** (the answer) run at the same time, and their events **interleave** in one stream.
+- **Place events by their `step` field, not by position.** `step` is `research`, `update` or `composition`, on `round_started`, `tool_call`, `tool_result`, `paid_call` and `api_fragment`.
+  - `update_started` and `update_ended` bound the update step, and `composition_started` opens the composition.
+  - The update step's rounds count from 1 again, with their own status line, "Update step · round 1 of 8 · …".
+- **The step log** needs a way to show the update step apart from research: two lanes, or the update step grouped after research. That's your design call, within T4.1 and T4.3.
+- **The band's timing:**
+  - When the update step runs, `update_band` comes right after `update_ended`, which may be before or after the answer finishes.
+  - When it doesn't run (an out-of-scope reply, a run that never searched the corpus, a research limit or failure, or Exa unavailable), `update_band` comes at once, before the answer starts.
+  - `run_ended` is always last, after both branches.
+  - A stream can end after `update_started` with no `update_ended` or `update_band`: a `failed` run cancels the update step, and an `interrupted` one is cut short. Close the update step's part of the log on `run_ended`.
+
+**What changes in the events** (the schema has every field):
+- **The envelope's `v` is 2.**
+- **`run_started`:**
+  - `limits` becomes `rounds`, `loop_input_tokens`, `loop_output_tokens`, `update_rounds`, `update_input_tokens`, `update_output_tokens`, `update_searches` (now 5), `composition_max_tokens` and `deadline_s`;
+  - `models` gains `update`.
+- **The band loses `declined`.** `unavailable`'s `reason` may now also be the update step's stop kind or error kind, when the step failed before any search (contract §6). Show it as T5.3's unavailable line, with no reason text for a code you have no words for.
+- **Tools:**
+  - research's `submit_answer` keeps only `out_of_scope` and `note`;
+  - the findings, overview and skip reason move to the new **`submit_update`**, in the update step;
+  - the tool names now include `submit_update`.
+- **`submit.rule`:**
+  - on `submit_answer`: `same_turn`, `no_search`, `nothing_kept`, `no_note`, `note_too_long`, `wrong_step`, or null;
+  - on `submit_update`: `same_turn`, `findings`, `copy_guard`, `no_check`, `wrong_step`, or null;
+  - `no_update_check` is gone.
+- **The withheld text** (P4.3) now appears only in a `submit_update`'s statements, overview or skip reason. A note is never withheld.
+- **`wrong_step: true`** on a `tool_result` marks a tool its step refuses (a web search during research, a corpus search during the update step). Show it like any refused call, with the text from `content`.
+- **`run_ended`:**
+  - `stop_kinds` may hold the update step's stops (`update_step_limit`, `update_token_ceiling_input`, `update_token_ceiling_output`, `update_time_limit`), which never change the run's `state`;
+  - `rounds` is research's;
+  - `totals.claude.cost_usd` gains `update`. The cost line's breakdown becomes the loop, the update check, the answer and Exa (T4.5).
+- **`POST /runs`** has a new refusal, **`503 busy`**: five questions already in progress. Suggested words, the main session's (design §5):
+  - **busy:** "Five questions are being researched right now, the most this site handles at once. Please try again in a minute."
+  - **The caps, reworded** since nothing is reserved any more:
+    - daily (`paused_day`): "Today's spending has reached the daily cap, so no new question can start until midnight, Central Time.";
+    - monthly (`paused_month`): "This month's spending has reached the monthly cap, so no new question can start until the 1st."
+
+  Where T5.4 already has a line for a code, T5.4 wins.
+
+**Go on now with** everything that doesn't depend on the above: the sources panel, the answer and its citations, the reader, the checks, the costs line's look, replays and the wake protocol.
+
+**Wait for the v2.0 fixtures for** the step log's two steps, the band's timing, `declined`'s removal and the `busy` refusal.
+
 ## 5. Contract details easy to miss
+
+*Written for v1.x. Where §5a differs, §5a wins.*
 
 - **Citations** carry `passage_id`, `first_sentence` and `last_sentence`, both **inclusive** indexes into the passage's `sentences`, plus `cited_text`. The sources panel always shows the cited sentences lit inside the full paragraph (T1.9).
 - **Check flags** run from (`block`, `start`) to (`end_block`, `end`) and may span answer blocks. **Offsets are Python code points;** convert them for JavaScript strings, which count UTF-16 units, so a character outside the Basic Multilingual Plane doesn't shift the marks.

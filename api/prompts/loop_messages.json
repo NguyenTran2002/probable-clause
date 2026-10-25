@@ -1,12 +1,8 @@
 {
-  "_about": "Lines our code adds to the loop's user turns (T1.14, T2.4), outside the cached system prompt. Angle-bracket fields are filled by builder G; fields in double braces are setting names in api/settings.py. Draft by the main session, for the user's review before the first paid run (T1.14). Added Oct 24, 2026 from builder G's drafts, for the same review: unknown_tool, submit_accepted_note, submit_accepted_answer (<passages> is \"1 kept passage\" or \"<n> kept passages\"), and the composition request's composition_scope_note and composition_coverage lines (the question line there is first_message).",
+  "_about": "Lines our code adds to the loop's user turns (T1.14, T2.4), outside the cached system prompt. Angle-bracket fields are filled by builder G; fields in double braces are setting names in api/settings.py. Draft by the main session, for the user's review before the first paid run (T1.14). Added Oct 24, 2026 from builder G's drafts, for the same review: unknown_tool, submit_accepted_note, submit_accepted_answer (<passages> is \"1 kept passage\" or \"<n> kept passages\"), and the composition request's composition_scope_note and composition_coverage lines (the question line there is first_message). Contract v2.0 (P4.19), drafts for the user's review before Wave 3's first paid run: update_start and update_start_note (the accepted submit_answer's result that opens the update step, with something kept or nothing kept; <passages> as in submit_accepted_answer), status_line without the update count, status_line_update, submit_update_accepted; update_check_unavailable and update_unavailable_reason removed, since research no longer has an update check.",
   "first_message": "The visitor's question:\n\n<question>",
-  "update_check_unavailable": "The update check is unavailable for this run: <reason>. search_web_updates will not run, and no update check is required before submitting.",
-  "update_unavailable_reason": {
-    "no_credit": "this site's Exa search credit has run out for this month",
-    "key_refused": "Exa refused this site's key"
-  },
-  "status_line": "Round <round> of {{MAX_ROUNDS}} · <kept> kept · <update_status>",
+  "status_line": "Round <round> of {{MAX_ROUNDS}} · <kept> kept",
+  "status_line_update": "Update step · round <round> of {{UPDATE_MAX_ROUNDS}} · <update_status>",
   "status_update": {
     "not_run": "update check not yet run",
     "some_run": "update searches <n> of {{UPDATE_SEARCHES_PER_RUN}}",
@@ -15,6 +11,9 @@
   "unknown_tool": "There is no tool named <name>. The tools are: <tools>.",
   "submit_accepted_note": "Submission accepted. No answer will be written from the corpus; the note goes to the visitor.",
   "submit_accepted_answer": "Submission accepted. The answer is being written from the <passages>.",
+  "update_start": "Submission accepted. Research is finished: the answer is being written from the <passages>, and nothing more can be read or kept. Now the update step: check the web with search_web_updates for anything published after the corpus's coverage that bears on the question, or decide that no check is needed. End with submit_update, giving update_findings if you searched or update_skip_reason if you did not. Only search_web_updates and submit_update work from here on.",
+  "update_start_note": "Submission accepted. Research is finished: no answer will be written from the corpus, and the note goes to the visitor. Now the update step: check the web with search_web_updates for anything published after the corpus's coverage that bears on the question, or decide that no check is needed. End with submit_update, giving update_findings if you searched or update_skip_reason if you did not. Only search_web_updates and submit_update work from here on.",
+  "submit_update_accepted": "Submission accepted. The update step is finished.",
   "composition_scope_note": "Scope note from the research step: <scope_note>",
   "composition_coverage": "Coverage: the latest decision in the full pull is <latest_decision_full_pull>, the latest decision in this corpus is <latest_decision_in_corpus>, and the text was ingested on <ingested>."
 }

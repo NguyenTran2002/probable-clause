@@ -7,7 +7,8 @@ from pathlib import Path
 from api import settings
 
 PROMPTS = Path(__file__).resolve().parents[2] / "api" / "prompts"
-TOOLS = ["search_meaning", "search_exact", "read_passages", "keep_passages", "search_web_updates", "submit_answer"]
+TOOLS = ["search_meaning", "search_exact", "read_passages", "keep_passages", "submit_answer", "search_web_updates",
+         "submit_update"]
 CORPUS_FIELDS = {"case_count", "catalog", "latest_decision_full_pull", "latest_decision_in_corpus", "ingested"}
 
 

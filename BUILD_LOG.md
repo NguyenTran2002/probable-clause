@@ -1958,3 +1958,30 @@ Then: *"The budget for paid build tests are sound."*
 - Production never counts development spend: it has its own Atlas database (`Probable_Clause`, `PC_ENV=live`) and its own Console workspace and key with the $60 monthly limit (T3.4). The two must not share a key.
 **Spend:** none.
 **DECISION (user):** *"Development allowance as you restated it: a fresh tally at $0, $3 Anthropic and 20 Exa searches."*, approved with the design.
+
+## Oct 25, 2026, 14:17 CDT — Phase 4: Build, Wave 3 step 0 (contract v2.0, shared code, prompt drafts)
+**Asked:** the user, after the compaction: *"Proceed with Wave 3."* (`docs/sessions/wave3-plan.md`, step 0 items 2 to 7).
+**Came back:**
+- **Contract v2.0** (`docs/design/contract.md`) and `contracts/events.schema.json`. The envelope is `v: 2`, with `step`, `update_started` and `update_ended`; the band loses `declined`; `submit_update` and `wrong_step`; `cost_usd.update`; `503 busy`.
+- **The shared code:** `api/settings.py` holds P4.18's figures, `UPDATE_*` and `MAX_CONCURRENT_RUNS`; the removed settings are gone; `ATLAS_RESERVE_TRIES` is now `ATLAS_ADMIT_TRIES`. `api/types.py` gains `Purpose` `update`, `Step` and `STEP_OF_PURPOSE`. `api/protocols.py` replaces `reserve`/`settle`/`release`/`open_reservations` with `admit` and `record_spend`, adds `Admission`, and gains four update stop kinds.
+- **Prompt drafts** for the user's review before the first paid run (T1.14):
+  - `loop_system.md` is shared by both steps, with a new "After research: the update step" section;
+  - `tools.json` has seven tools, `submit_update` among them;
+  - `loop_messages.json` adds `update_start`, `update_start_note`, `status_line_update` and `submit_update_accepted`;
+  - `rejections.json` adds `submit_update` (`no_check` new) and `wrong_step`.
+- **Two calls of the main session's, for the user to check:**
+  - `WORST_CASE_COMPOSITION_INPUT` (66,000) feeds only the documented worst case and is never a gate;
+  - a fourth update stop kind, `update_time_limit`.
+- **The Opus 5.5 xhigh contract review** found 15 items, all applied before any builder started:
+  - **Honesty:** a refused call in the update step (a wrong-step `submit_answer` note, a malformed `submit_update`) could store a page's words. Every refused call's stored input there now goes through the copy guard once a page was returned. This carries §1, T2.2 and P4.3 to v2.0; no decision changes.
+  - **Prompts:** `update_start_note` for a nothing-found reply.
+  - **Cancellation:** await the cancelled branch; record an attempt in flight; nothing after `run_ended`.
+  - **Admission:** the busy slot is freed in a `finally`.
+  - **The band:** its order of precedence.
+  - **`stop_kinds`:** each kind once.
+  - **The worst case corrected to $11.161 a run (about $55.81 for 5),** counting the composition's output on all three attempts (P4.10). It was $10.841 and about $54 in the design.
+  - **Wording:** the deploy script's use of `spend_report.py`; counting by step in H; the cache-prefix test byte for byte; the wrong-step result fields; streams with no `update_ended`.
+- **The frontend brief** gains §5a: what v2.0 changes, and what waits for the new fixtures.
+- **The whole suite is expected to fail** from this commit until the wave's parts land (contract §13).
+**Spend:** none.
+**DECISION (user):** none needed. The design and plan were approved at 13:47; the prompt drafts await the user's review before step 6.

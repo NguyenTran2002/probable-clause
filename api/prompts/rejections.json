@@ -1,16 +1,22 @@
 {
-  "_about": "Texts our code writes to Claude when it refuses a tool call (T1.7, T1.10, T2.1, T2.3, T2.4). Each is stored in events and shown in the step log under \"Submission refused by this site's rules\" (T5.4), so none ever quotes a web page's words. Angle-bracket fields are filled by builder G; fields in double braces are setting names in api/settings.py. Draft by the main session, for the user's review before the first paid run (T1.14). Added Oct 25, 2026 for P4.6 and P4.8, drafts for the same review: submit.note_too_long and submit.copy_guard_note (<pages> is \"page <id>\" or \"pages <id>, <id> and <id>\", page IDs only). Added Oct 25, 2026 for P4.13: submit.copy_guard_skip_reason, mirroring the approved copy_guard_note (P4.15).",
+  "_about": "Texts our code writes to Claude when it refuses a tool call (T1.7, T1.10, T2.1, T2.3, T2.4). Each is stored in events and shown in the step log under \"Submission refused by this site's rules\" (T5.4), so none ever quotes a web page's words. Angle-bracket fields are filled by builder G; fields in double braces are setting names in api/settings.py. Draft by the main session, for the user's review before the first paid run (T1.14). Added Oct 25, 2026 for P4.6 and P4.8, drafts for the same review: submit.note_too_long and submit.copy_guard_note (<pages> is \"page <id>\" or \"pages <id>, <id> and <id>\", page IDs only). Added Oct 25, 2026 for P4.13: submit.copy_guard_skip_reason, mirroring the approved copy_guard_note (P4.15). Contract v2.0 (P4.19), drafts for the user's review before Wave 3's first paid run: research's submit loses rule_4_no_update_check, copy_guard_note and the findings texts; submit_update holds its rule 1, the findings and copy-guard texts (moved, unchanged) and the new no_check; wrong_step holds the two wrong-step refusals (<name> is the tool's name).",
   "submit": {
     "rule_1_same_turn": "Not accepted: submit_answer must be the only call in its turn, and sent once. The other calls in this turn ran as usual and their results are with this one. Review them, then send submit_answer alone, with every field in that one call.",
-    "findings_problems": "Not accepted: the update findings have these problems:\n<problems>\nFix each one, then submit again.",
-    "copy_guard": "Not accepted: some of the update findings repeat a web page's wording.\n<problems>\nRewrite each one in your own words, describing what the page reports, then submit again.",
     "rule_2_no_search": "Not accepted: no corpus search has been run. Search the corpus with search_meaning or search_exact before submitting. If the question is outside the corpus's subject, set out_of_scope and write a note to the visitor instead.",
     "rule_3_nothing_kept": "Not accepted: no passages are kept, and there is no note. Keep the passages the answer rests on with keep_passages, or, if no passage bears on the question, explain why in note, written to the visitor.",
-    "rule_4_no_update_check": "Not accepted: no update check has been run. Run one with search_web_updates, or explain in update_skip_reason why it isn't needed, then submit again.",
     "out_of_scope_no_note": "Not accepted: 'note' is required when 'out_of_scope' is true. Write the visitor two or three plain sentences on what the corpus covers and why the question falls outside it, then submit again.",
-    "note_too_long": "Not accepted: the note is <length> characters; at most {{NOTE_MAX_CHARS}} are allowed. Shorten it, then submit again.",
-    "copy_guard_note": "Not accepted: the note repeats {{COPY_GUARD_WORDS}} or more consecutive words of <pages>. Rewrite it in your own words, then submit again.",
-    "copy_guard_skip_reason": "Not accepted: the update skip reason repeats {{COPY_GUARD_WORDS}} or more consecutive words of <pages>. Rewrite it in your own words, then submit again."
+    "note_too_long": "Not accepted: the note is <length> characters; at most {{NOTE_MAX_CHARS}} are allowed. Shorten it, then submit again."
+  },
+  "submit_update": {
+    "rule_1_same_turn": "Not accepted: submit_update must be the only call in its turn, and sent once. The other calls in this turn ran as usual and their results are with this one. Review them, then send submit_update alone, with every field in that one call.",
+    "findings_problems": "Not accepted: the update findings have these problems:\n<problems>\nFix each one, then submit again.",
+    "copy_guard": "Not accepted: some of the update findings repeat a web page's wording.\n<problems>\nRewrite each one in your own words, describing what the page reports, then submit again.",
+    "copy_guard_skip_reason": "Not accepted: the update skip reason repeats {{COPY_GUARD_WORDS}} or more consecutive words of <pages>. Rewrite it in your own words, then submit again.",
+    "no_check": "Not accepted: no update search has been run, and no skip reason was given. Run a search with search_web_updates, or explain in update_skip_reason why no update check is needed, then submit again."
+  },
+  "wrong_step": {
+    "research_tool": "Not run: research is finished, so <name> is refused in the update step. Only search_web_updates and submit_update work now.",
+    "update_tool": "Not run: <name> belongs to the update step, which comes after research. Finish research and send submit_answer first; the update step follows if the question calls for it."
   },
   "findings_problem": {
     "unknown_source": "Statement <n> names <id>, which no update search in this run returned.",
