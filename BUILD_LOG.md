@@ -1227,3 +1227,16 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - **Whole suite:** 2,907 passed, 47 skipped (the reconnect fixture's checks that need a stream's first events, and the Atlas-gated tests).
 **Spend:** none.
 **DECISION (user):** *"Proceed on to the fixtures and the frontend brief update"*
+
+## Oct 24, 2026, 22:51 CDT — Phase 4: Build, ground prepared for a compaction before Wave 2
+**Asked:** *"We'll compact before wave 2. Prep the ground first."*
+**Came back:** CLAUDE.md's "Current state and next step" rewritten for resuming at Wave 2:
+- what to read;
+- what Phase 4 has done, with commits;
+- the Wave 1 brief recipe, to be reused;
+- the notes Wave 1 left for G, H and I (failed-attempt usage, P4.3 withholding, the schema check, record shapes, run-ID form, the web image's contents);
+- the sequence after Wave 2;
+- spend so far.
+The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `webdev/` and `web/_generated/`. Tree clean, nothing pushed. Wave 2 waits for the user's go after the compaction.
+**Spend:** none.
+**DECISION (user):** *"We'll compact before wave 2. Prep the ground first."*
