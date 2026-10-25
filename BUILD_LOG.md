@@ -967,3 +967,36 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - *"On copy guard, can you give me more context here?"*
 - *"Lock option A: redact only the flagged statements in the stored and streamed event."*
+
+## Oct 24, 2026, 21:12 CDT — Phase 4: Build, Wave 1 started; prompt drafts; part C merged
+**Asked:** *"Start wave 1 let's go!"*
+**Came back:**
+- **Wave 1 launched:** six background builders, each on its own paths per contract §13, with no keys, network, paid calls or commits:
+  - A, the sentence splitter, Opus 5.5 xhigh;
+  - B, the corpus index, Sonnet 5.5 high;
+  - C, meaning search, Sonnet 5.5 high;
+  - D, the Exa wrapper, Sonnet 5.5 xhigh;
+  - E, money and state, Sonnet 5.5 xhigh;
+  - F, the answer checks, Sonnet 5.5 xhigh.
+- **Prompt drafts** (23f1ca2) in `api/prompts/`, for the user's review before the first paid run (T1.14):
+  - the loop system prompt, with T5.5's query rule;
+  - the composition prompt (T1.11);
+  - the tool descriptions (T1.4, T2.1);
+  - the rejection texts (T1.7, T1.10, T2.3, T2.4), none quoting a page;
+  - the loop messages.
+  - Figures are setting placeholders, checked by `tests/contract/test_prompts.py`.
+- **Contract v1.1** (23f1ca2, 222f14a):
+  - `loop_messages.json` is added to G's prompt files.
+  - `embed_corpus.py` reads passages through B's `Corpus` and prices through E's `price`.
+  - The embedded header writes "Part" only before numbered labels.
+  - Appendix titles stay verbatim as labels, and footnotes take their citing paragraph's label. These were settled after the main session read B's label list: 102 opinions, 37 distinct labels, counts summing to 2,462.
+- **Shared code** (222f14a):
+  - `RETRY_AFTER_MAX_S`, 30 s (a placeholder): a longer retry-after is not waited out inside a run.
+  - `VOYAGE_BATCH_TIMEOUT_S`, 120 s (a placeholder), for the embedding's never-retried batches.
+- **Part C merged:** `api/search/`, `scripts/embed_corpus.py`, `tests/search/`.
+  - The Sonnet 5.5 high review found no blocking defect. Its fixes were made by the builder: the batch timeout, no key read on a fully cached rerun, tests for one HTTP call per failure and for the default timeout.
+  - Tests: 117 passed (search and contract).
+  - Not run with `--confirm`.
+  - Voyage's docs disagree on whether `rerank-3` exists: it is listed in the reranker guide and the rate-limit table, but not in the API reference's model list. To confirm before the first live run.
+**Spend:** none.
+**DECISION (user):** *"Start wave 1 let's go!"*
