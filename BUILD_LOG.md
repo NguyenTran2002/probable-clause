@@ -2157,3 +2157,12 @@ Then: *"The budget for paid build tests are sound."*
 **Came back:** the main session decides each during the frontend build, records each call in the log, and the user refines afterwards.
 **Spend:** none.
 **DECISION (user):** *"You can proceed with your judgement for these during the frontend stand up, and I will refine afterward if needed."*
+
+## Oct 25, 2026, 16:46 CDT — Phase 4: Build, the replays: T5.6's five, recorded after the local review (P4.32)
+**Asked:** whether Wave 3's paid runs become the production replays, and whether to commit `data/verification/`.
+**Came back:**
+- The replays stay T5.6's five questions, recorded after the user's local review on the final code, under T5.6's recording rules (the user reviews each before it is published).
+- Replays reach the site as `replays/<slug>.json` (contract §11.2), exported and committed.
+- `data/verification/` stays uncommitted. Its run files are kept on this machine, as the keep-every-run rule says.
+**Spend:** none now. T5.6's estimate for the recordings was $2 to $3, approved when they run.
+**DECISION (user):** *"Keep T5.6's five replay questions, recorded after the local review on the final code. Don't commit data/verification."*

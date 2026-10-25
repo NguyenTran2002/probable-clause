@@ -1119,3 +1119,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"You can proceed with your judgement for these during the frontend stand up, and I will refine afterward if needed."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:43 CDT — Phase 4: Build, the frontend's design questions left to the main session (P4.31)"
+
+### P4.32 The replays: T5.6's five, recorded after the local review on the final code (T5.6)
+
+- **Decision:** The production replays are T5.6's five questions, recorded after the user's local review on the final code, under T5.6's rules, and exported to `replays/` (contract §11.2). Wave 3's paid runs are not replays. `data/verification/` is not committed; its run files stay on this machine.
+- **User's words:** *"Keep T5.6's five replay questions, recorded after the local review on the final code. Don't commit data/verification."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:46 CDT — Phase 4: Build, the replays: T5.6's five, recorded after the local review (P4.32)"
