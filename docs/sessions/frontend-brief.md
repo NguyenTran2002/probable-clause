@@ -94,6 +94,8 @@ Load the **frontend-design** skill before designing anything new.
   - When it doesn't run (an out-of-scope reply, a run that never searched the corpus, a research limit or failure, or Exa unavailable), `update_band` comes at once, before the answer starts.
   - `run_ended` is always last, after both branches.
   - A stream can end after `update_started` with no `update_ended` or `update_band`: a `failed` run cancels the update step, and an `interrupted` one is cut short. Close the update step's part of the log on `run_ended`.
+  - In such a stream a `tool_call` may never get its `tool_result` (a search cancelled mid-flight). Close it on `run_ended` too, never as a spinner left running.
+  - **`paused` and `resumed` are run-wide** and carry no `step`: one pause holds both branches.
 
 **What changes in the events** (the schema has every field):
 - **The envelope's `v` is 2.**
@@ -109,7 +111,13 @@ Load the **frontend-design** skill before designing anything new.
   - on `submit_answer`: `same_turn`, `no_search`, `nothing_kept`, `no_note`, `note_too_long`, `wrong_step`, or null;
   - on `submit_update`: `same_turn`, `findings`, `copy_guard`, `no_check`, `wrong_step`, or null;
   - `no_update_check` is gone.
-- **The withheld text** (P4.3) now appears only in a `submit_update`'s statements, overview or skip reason. A note is never withheld.
+- **Withheld text** (P4.3, contract v2.0 §4.G.2) can appear in any update-step event, once a page has come back:
+  - any string in a `tool_call`'s input, a research tool's note or reason included, as "[statement withheld: it repeated a page's words]";
+  - a key, as "[field withheld <k>]";
+  - a refused result's `content` or `target`, replaced whole;
+  - a search's query in the band's `searches[].params`.
+
+  Research's own events are never withheld. Show withheld text as it is.
 - **`wrong_step: true`** on a `tool_result` marks a tool its step refuses (a web search during research, a corpus search during the update step). Show it like any refused call, with the text from `content`.
 - **`run_ended`:**
   - `stop_kinds` may hold the update step's stops (`update_step_limit`, `update_token_ceiling_input`, `update_token_ceiling_output`, `update_time_limit`), which never change the run's `state`;

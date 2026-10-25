@@ -582,3 +582,35 @@ async def test_an_accepted_call_that_quotes_a_page_is_withheld_too(world):
     later = fakes["anthropic"].requests_for("update")[-1]["messages"]
     assert any(b.get("input", {}).get("query") == COPIED for m in later if m["role"] == "assistant"
                for b in m["content"])
+
+
+async def test_an_exa_refusal_echoing_a_page_is_guarded_in_the_event(world):
+    """Exa's own message is part of a refused search's event content; once a page was returned, a message that
+    repeats one is withheld there, as a refused result's content is (§4.G.2). Claude still gets Exa's message."""
+    from api.errors import ServiceError
+    echo = ServiceError("exa", "bad_request", 400, "Invalid query: " + COPIED)
+    update = [web(), web(1, query="thermal imaging appeal"), sub(update_findings=[{"statement": CLEAN,
+                                                                                 "sources": ["web-1-1"]}])]
+    ctx, fakes = await run_loop(world, research(), update=update, comp=answer(world), exa=[page(), echo])
+    refused = ctx.results("search_web_updates")[1]
+    assert refused["web_status"] == "refused_by_exa" and refused["search_no"] == 2
+    assert refused["content"] == WITHHELD
+    sent = fakes["anthropic"].requests_for("update")[2]["messages"][-1]["content"][0]["content"][0]["text"]
+    assert COPIED in sent and "Exa refused" in sent
+    assert ctx.of("update_band")[0]["searches"][1]["status"] == "refused_by_exa"
+
+
+@pytest.mark.parametrize("reason", ["max_tokens", "model_context_window_exceeded"])
+async def test_a_call_cut_by_the_context_window_ends_the_update_step_at_its_output_ceiling(world, baseline, reason,
+                                                                                            caplog):
+    import logging
+    caplog.set_level(logging.WARNING)
+    cut = FakeTurn(content=[{"type": "thinking", "thinking": "", "signature": "s"},
+                            tu("search_web_updates", query="never run")], stop_reason=reason,
+                   usage=update_usage())
+    ctx, fakes = await run_loop(world, research(), update=[cut], comp=answer(world))
+    assert ctx.of("update_ended")[0] == {"end": "stopped", "stop_kind": "update_token_ceiling_output",
+                                         "failure_reason": None, "rounds": 1, "searches": 0}
+    assert not ctx.results("search_web_updates") and fakes["exa"].calls == []
+    assert answer_end(ctx) == baseline and ctx.ended()["stop_kinds"] == ["update_token_ceiling_output"]
+    assert reason in caplog.text

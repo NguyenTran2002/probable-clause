@@ -23,7 +23,7 @@ from api import settings  # noqa: E402
 
 OUT = ROOT / "data" / "verification" / "wave3"
 RECONNECTS = 3           # placeholder: the stream is re-opened with Last-Event-ID if it drops before run_ended
-RUN_TIMEOUT_S = 1_200    # placeholder: a run's own deadline is shorter; this only stops a hung client
+RUN_TIMEOUT_S = int(settings.RUN_WATCHDOG_S.value) + 300   # above the server's watchdog, which ends any run first; this only stops a hung client
 
 
 def parse_frames(buffer: str) -> tuple[list[dict], str]:

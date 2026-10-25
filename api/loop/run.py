@@ -96,6 +96,11 @@ LIMIT_STATE = {"step_limit": "step_limit", "token_ceiling_input": "token_ceiling
                "token_ceiling_output": "token_ceiling", "time_limit": "time_limit"}
 UPDATE_STOPS = frozenset({"update_step_limit", "update_time_limit", "update_token_ceiling_output",
                           "update_token_ceiling_input"})                                   # §4.G.4
+# Stop reasons that end a step at its output ceiling, as T3.3 says of `max_tokens`. `model_context_window_exceeded` is
+# named by the installed SDK (`anthropic` 2.3.0, `types/stop_reason.py` and the `stop_reason` docstring in
+# `types/message.py`: "we exceeded the model's context window"); treating it like `max_tokens` is the cross-part
+# review's ruling (Oct 25, 2026): the turn is cut, so its tool calls never run and the step stops rather than loop.
+OUTPUT_STOP_REASONS = ("max_tokens", "model_context_window_exceeded")
 WARNINGS = (("meaning_degraded", "meaning_search_degraded"), ("meaning_unavailable_once", "meaning_search_unavailable"))
 
 
@@ -606,8 +611,10 @@ class _Conversation:
                 if res.stop_reason == "refusal":
                     return _End("refusal", failure_reason="refusal")
                 self.run.messages.append({"role": "assistant", "content": res.content})
-                if res.stop_reason == "max_tokens":
-                    return _End(self.lim.stop_output)       # T3.3: a call stopped by max_tokens
+                if res.stop_reason in OUTPUT_STOP_REASONS:   # T3.3: a call stopped by max_tokens, or the window
+                    log.warning("run %s: %s call %d stopped (%s); the step ends at its output ceiling",
+                                self.ctx.run_id, self.step, call_no, res.stop_reason)
+                    return _End(self.lim.stop_output)
                 results, accepted = await self.run_tools(res, call_no)
                 if accepted:
                     self.accepted_results = results
@@ -1157,8 +1164,14 @@ class _Update(_Conversation):
                  "web_status": outcome.kind}
         if outcome.kind != "unavailable":
             extra["search_no"] = search_no       # an unavailable search is not counted (T2.4), so it has no number
-        return _Out([format_for_claude(params, outcome)], outcome.kind != "ok", extra,
-                    event_content=format_for_events(shown, outcome))
+        out = _Out([format_for_claude(params, outcome)], outcome.kind != "ok", extra,
+                   event_content=format_for_events(shown, outcome))
+        if outcome.kind == "ok":
+            return out
+        # A search that did not return pages: its event content carries Exa's own message (refused_by_exa), which can
+        # echo a query that repeats a page, so it is guarded as a refused result's content is (§4.G.2). An ok
+        # search's content is our header and the pages' details (T2.2), left as D formats it.
+        return self.guard_out(out)
 
     def start_schema_check(self) -> None:
         """T2.5: Exa's tool listing, compared once per instance on its first update search; warnings logged only."""

@@ -112,8 +112,14 @@ def test_tool_calls_precede_their_results(path):
             assert calls.get(d["tool_use_id"]) == d["name"], f"result without its call at n={e['n']}"
             assert d["tool_use_id"] not in results
             results.add(d["tool_use_id"])
-    if load(path).get("after", 0) == 0:
-        assert results == set(calls), "every tool call has a result"
+    doc = load(path)
+    if doc.get("after", 0) == 0:
+        open_calls = set(calls) - results
+        if open_calls:   # contract v2.0 §4.G.1: only a cancelled update branch, before H's failed or interrupted end
+            assert doc["events"][-1]["data"]["state"] in ("failed", "interrupted")
+            steps = {e["data"]["tool_use_id"]: e["data"]["step"] for e in doc["events"] if e["kind"] == "tool_call"}
+            assert {steps[t] for t in open_calls} == {"update"}, "a research call always has its result"
+        assert results <= set(calls)
 
 
 def names_in(e):
@@ -448,15 +454,15 @@ def test_the_band_matches_what_the_run_did(path):
                and not e["data"].get("wrong_step")]
     assert all(e["data"].get("step") == "update" for e in events if e["kind"] == "tool_result"
                and e["data"]["name"] == "search_web_updates" and not e["data"].get("wrong_step"))
-    counted = [r for r in results if r["web_status"] in ("ok", "refused_by_exa", "failed")]
+    counted = [r for r in results if r.get("web_status") in ("ok", "refused_by_exa", "failed")]
     # the band lists every search that reached our wrapper's call (an unavailable one too, uncounted and with no
     # search_no in its tool_result, since §4.H counts searches from search_no)
     assert [s["search_no"] for s in band["searches"] if s["status"] != "unavailable"] == [
         r["search_no"] for r in results if "search_no" in r]
-    assert len(band["searches"]) == sum(1 for r in results if r["web_status"] != "refused_by_us")
+    assert len(band["searches"]) == sum(1 for r in results if r.get("web_status") not in ("refused_by_us", None))
     accepted = [e["data"] for e in events if e["kind"] == "tool_result" and e["data"]["name"] == "submit_update"
                 and e["data"]["submit"]["accepted"]]
-    unavailable = any(r["web_status"] == "unavailable" for r in results)
+    unavailable = any(r.get("web_status") == "unavailable" for r in results)
     o = band["outcome"]
     if counted:
         assert o == ("not_summarised" if not accepted else "found" if band["findings"] else "nothing_relevant")
@@ -605,8 +611,10 @@ def test_the_set_covers_every_state_stop_kind_and_outcome():
     assert any(r.get("wrong_step") for r in results if r["step"] == "research")
     assert any(r.get("wrong_step") for r in results if r["step"] == "update")
     ends_upd = [e["data"] for e in events if e["kind"] == "update_ended"]
-    assert {u["end"] for u in ends_upd} >= {"submitted", "stopped", "failed"}
-    assert {k for e in ends for k in e["stop_kinds"]} >= {"update_step_limit", "console_spend_limit"}
+    assert {u["end"] for u in ends_upd} == {"submitted", "stopped", "failed", "abandoned"}
+    assert {k for e in ends for k in e["stop_kinds"]} >= {"update_step_limit", "update_time_limit", "console_spend_limit"}
+    assert any(e["kind"] == "update_started" for d in ALL.values() for e in d["events"]
+               if d["events"][-1]["data"]["state"] == "failed")          # a cancelled update branch (v2.0 §4.G.1)
     assert {e["data"]["code"] for e in events if e["kind"] == "warning"} == {"meaning_search_degraded", "meaning_search_unavailable"}
     paid = [e["data"] for e in events if e["kind"] == "paid_call"]
     assert {p["outcome"] for p in paid} == {"ok", "retrying", "failed"}

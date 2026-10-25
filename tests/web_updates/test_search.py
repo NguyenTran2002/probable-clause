@@ -494,18 +494,22 @@ async def test_titles_and_authors_are_cut_to_the_header_limit(transport, searche
     lambda: BaseExceptionGroup("tasks", [asyncio.CancelledError()]),
     lambda: BaseExceptionGroup("tasks", [asyncio.CancelledError(), RuntimeError("also failed")]),
 ])
-async def test_a_cancellation_during_the_search_propagates_and_records_nothing(transport, searcher, ctx, store, make):
+async def test_a_cancellation_during_the_search_propagates_and_records_a_failed_search(transport, searcher, ctx, store, make):
+    # contract v2.0: the update branch can be cancelled mid-search; a search that was sent is recorded at list price
+    # before the cancellation goes on, so no billed search is left out of the spend (v1.x's reservation covered it)
     transport.push(make())
     seen = {}
     with pytest.raises(BaseException) as e:
         await searcher.search(P, 1, seen, ctx)
     assert isinstance(e.value, (asyncio.CancelledError, BaseExceptionGroup))
-    assert ctx.usages == [] and ctx.flags.exa_unavailable is None and seen == {}
+    [u] = ctx.usages
+    assert u["usage"] == Usage(service="exa", model="auto", estimated=True) and u["outcome"] == "failed"
+    assert ctx.flags.exa_unavailable is None and seen == {}
     assert store.names() == ["flag_until"]                           # no flag set, no stop recorded
     assert len(transport.calls) == 1                                 # and nothing retried
 
 
-async def test_cancelling_the_task_while_exa_is_slow_records_nothing(transport, searcher, ctx, store):
+async def test_cancelling_the_task_while_exa_is_slow_records_a_failed_search(transport, searcher, ctx, store):
     started = asyncio.Event()
 
     async def hang(_args):
@@ -518,7 +522,10 @@ async def test_cancelling_the_task_while_exa_is_slow_records_nothing(transport, 
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
-    assert ctx.usages == [] and ctx.flags.exa_unavailable is None and store.names() == ["flag_until"]
+    [u] = ctx.usages
+    assert u["usage"] == Usage(service="exa", model="auto", estimated=True)
+    assert (u["outcome"], u["attempt"], u["max_attempts"]) == ("failed", 1, 1)
+    assert ctx.flags.exa_unavailable is None and store.names() == ["flag_until"]
 
 
 async def test_a_failing_ledger_after_a_good_search_propagates_and_leaves_seen_urls_alone(transport, searcher, ctx):

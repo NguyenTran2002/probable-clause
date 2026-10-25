@@ -10,6 +10,7 @@ Rules this module keeps:
   - Logs hold run IDs, numbers, states and error kinds, never queries or page text (T3.7).
 """
 
+import asyncio
 import copy
 import inspect
 import json
@@ -482,6 +483,15 @@ class UpdateSearch:
             error = ServiceError("exa", "timeout", None, "the search timed out")
         except Exception as e:
             error = ServiceError("exa", "protocol", None, type(e).__name__)
+        except BaseException:
+            # Contract v2.0: the update branch can be cancelled mid-search (the composition raising, H's watchdog or
+            # shutdown), as a plain CancelledError or inside a task group's BaseExceptionGroup. The search was sent and
+            # may be billed, so it is recorded as a failed search at list price (T2.4), as a timeout is, before the
+            # cancellation goes on (the main session, after the cross-part review).
+            ms = int((time.monotonic() - started) * 1000)
+            await ctx.record_usage(Usage(service="exa", model=p.type, estimated=True), purpose="update_search", attempt=1,
+                                   max_attempts=1, outcome="failed", error_kind="connection", duration_ms=ms)
+            raise
         ms = int((time.monotonic() - started) * 1000)
 
         if error is None:

@@ -278,6 +278,10 @@ def check_stream(events: list[dict], corpus, *, page_texts: list[str] = ()) -> N
     assert events[0]["kind"] == "run_started"
     kinds = [e["kind"] for e in events]
     assert kinds.count("run_ended") == 1 and kinds[-1] == "run_ended"
+    # §4.G.1 item 6, §6: when the composition raises (or the watchdog or shutdown cancels the run), the cancelled update
+    # branch emits nothing more, so H's `failed` or an `interrupted` run_ended may follow an update step that has no
+    # update_ended, no update_band, and calls with no result. Only then, and only for the update step's calls.
+    cut_short = events[-1]["data"]["state"] in ("failed", "interrupted")
 
     # tool_call before tool_result, one result per call, in the same step
     calls, results = {}, set()
@@ -292,7 +296,9 @@ def check_stream(events: list[dict], corpus, *, page_texts: list[str] = ()) -> N
             results.add(d["tool_use_id"])
             if d.get("wrong_step"):
                 assert d["is_error"] is True and "search_no" not in d
-    assert results == set(calls), "every tool call has a result"
+    open_calls = set(calls) - results
+    assert not open_calls or (cut_short and all(calls[t][1] == "update" for t in open_calls)), \
+        "every tool call has a result (an update-step call may lack one only when the run then failed or was interrupted)"
 
     # a passage's event before anything naming it
     seen = set()
@@ -409,9 +415,17 @@ def check_stream(events: list[dict], corpus, *, page_texts: list[str] = ()) -> N
         if step_of(e) in ("update", "composition"):
             assert i > research_last, f"{e['kind']} at n={e['n']} before research ended"
     bands = [i for i, k in enumerate(kinds) if k == "update_band"]
-    assert len(bands) == 1, "one update_band"
-    band = bands[0]
-    if "update_started" in kinds:
+    if "update_started" in kinds and "update_ended" not in kinds:
+        # the update branch was cancelled: allowed only before a failed or interrupted run_ended (§4.G.1 item 6)
+        assert cut_short, "an update step with no update_ended in a run that neither failed nor was interrupted"
+        assert kinds.count("update_started") == 1 and bands == [], "a cancelled update branch emits nothing more"
+        start = kinds.index("update_started")
+        for i, e in enumerate(events):
+            if step_of(e) == "update" and e["kind"] != "update_started":
+                assert i > start, f"update-step {e['kind']} at n={e['n']} before update_started"
+    elif "update_started" in kinds:
+        assert len(bands) == 1, "one update_band"
+        band = bands[0]
         start, end = kinds.index("update_started"), kinds.index("update_ended")
         assert kinds.count("update_started") == kinds.count("update_ended") == 1
         assert band == end + 1, "update_band right after update_ended"
@@ -423,6 +437,8 @@ def check_stream(events: list[dict], corpus, *, page_texts: list[str] = ()) -> N
                                       and e["data"]["step"] == "update")
         assert ended["searches"] == sum(1 for e in events if e["kind"] == "tool_result" and "search_no" in e["data"])
     else:
+        assert len(bands) == 1, "one update_band"
+        band = bands[0]
         assert "update_ended" not in kinds
         assert not [e for e in events if step_of(e) == "update"], "update-step events with no update step"
         assert band > research_last and ("composition_started" not in kinds or band < kinds.index("composition_started"))

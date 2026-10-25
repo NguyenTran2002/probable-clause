@@ -347,7 +347,7 @@ async def execute_run(ctx: RunContext, deps: LoopDeps) -> None
    - G re-raises the original exception (never an `ExceptionGroup`), so H ends the run `failed`.
 
    A cancelled branch emits nothing more: no `update_ended` and no `update_band`. Nothing is emitted after H's `run_ended`.
-7. **A Claude attempt in flight when its task is cancelled** is still recorded before the cancellation propagates, priced from what it streamed and reported (P4.5, P4.10). That covers cancellation by G (item 6) and by H's shutdown. At shutdown the recording happens within `SHUTDOWN_GRACE_S`, and one the grace doesn't cover is lost, as P4.21 accepts.
+7. **A Claude attempt or an Exa search in flight when its task is cancelled** is still recorded before the cancellation propagates: a Claude attempt priced from what it streamed and reported (P4.5, P4.10), an Exa search as a failed search at list price (T2.4; D, after the cross-part review). That covers cancellation by G (item 6) and by H's shutdown. At shutdown the recording happens within `SHUTDOWN_GRACE_S`, and one the grace doesn't cover is lost, as P4.21 accepts.
 
 #### G.2 One conversation, one cache (P4.19)
 
@@ -507,7 +507,7 @@ class RunRegistry: ...                    # runs on this instance; one stream pe
 
 **The run task:**
 - It starts when the first stream attaches, and attaching counts as a heartbeat.
-- **A watchdog (v2.0):** a run still in progress `RUN_WATCHDOG_S` after its task started is cancelled and ends `failed` (`internal`), so a hung run can't hold a slot for good. A run cancelled before its task first runs still goes through its end, so its slot is freed.
+- **A watchdog (v2.0):** a run still in progress `RUN_WATCHDOG_S` (2,400 s) after its task started is cancelled and ends `failed` (`internal`), so a hung run can't hold a slot for good. A run paused for a long time can still reach it. A run cancelled before its task first runs still goes through its end, so its slot is freed.
 - A run no stream ever attaches to expires after `UNATTACHED_RUN_EXPIRY_S` with no spend, and frees its slot (T3.1).
 
 **Counting by step (v2.0).** Wherever H counts from events (the per-run record, `failed` and `interrupted`):

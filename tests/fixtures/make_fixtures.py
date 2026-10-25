@@ -168,6 +168,7 @@ class Comp:
     fail: tuple | None = None                      # every attempt failed before its first block
     break_after: int | None = None                 # the stream breaks after this many answer blocks
     cut: bool = False                              # stops at max_tokens; the last block is cut mid-word
+    crash: bool = False                            # our own code raises while it waits (an unexpected exception)
 
 
 @dataclass
@@ -185,6 +186,7 @@ class Scenario:
     interrupt: bool = False
     expect: dict = field(default_factory=dict)
     spare_rounds: bool = False                     # a limit ends the loop before every scripted round was used
+    spare_update: bool = False                     # the same for the update step's rounds
     patch: dict = field(default_factory=dict)      # api.loop.run constants lowered for this stream only
 
 
@@ -416,6 +418,8 @@ class FixtureClaude:
         think = self.rng.randint(1_800, 3_600)
         out = int(request["max_tokens"]) if comp.cut else think + sum(est(b["text"]) for b in blocks)
         await self.clock.sleep(round(think / COMP_THINKING_PER_S, 3))       # thinking before the first block
+        if comp.crash:
+            raise RuntimeError("fixture: an unexpected error in our own code")    # not a ServiceError: H's `failed`
 
         async def slow_block(i, b):
             await self.clock.sleep(round(max(0.25, est(b["text"]) / COMP_TOKENS_PER_S), 3))
@@ -574,7 +578,8 @@ async def record(sc: Scenario, order: int) -> Recorded:
         check_stream(events, corpus, page_texts=page_texts(sc))      # G's checker: the schema and contract §6's order rules
         if not sc.spare_rounds:
             assert not claude.loop, f"{sc.slug}: {len(claude.loop)} scripted research calls were left unused"
-        assert not claude.update, f"{sc.slug}: {len(claude.update)} scripted update calls were left unused"
+        if not sc.spare_update:
+            assert not claude.update, f"{sc.slug}: {len(claude.update)} scripted update calls were left unused"
         assert not claude.comp, f"{sc.slug}: scripted composition calls were left unused"
         assert not transport._script, f"{sc.slug}: scripted Exa answers were left unused"
     check_expectations(sc, events)
@@ -1674,6 +1679,55 @@ def main():
         asyncio.run(write_all_http(next(r for r in recorded if r.sc.slug == "out-of-scope-reply")))
         total = sum(p.stat().st_size for p in EVENTS_DIR.glob("*.json"))
         print(f"{len(docs)} event files, {total} bytes; {len(list(HTTP_DIR.glob('*.json')))} http files")
+
+
+
+@scenario
+def update_branch_cancelled():
+    """The composition raises an unexpected exception while the update step's search is still in flight: G cancels and
+    awaits the update task, the search is recorded as a failed search at list price, and H ends the run `failed`.
+    The search's tool_call never gets a tool_result, and there is no update_ended or update_band."""
+    return Scenario("update-branch-cancelled", PHONE_Q, [
+        Round(phone_search_calls()),
+        Round([phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")]),
+        Round([submit()]),
+    ], Comp(PHONE_ANSWER, crash=True), update=[
+        Round([Call("search_web_updates", {"query": "cell phone search arrest court decision", "start_published_date": "2026-06-30", "num_results": 3},
+                    web=Web(pages=[page("Notes on phone searches after arrest", "news.example.test", "phone-notes", "2026-07-30", 2600)], seconds=60.0))]),
+    ], expect={"state": "failed", "answer_end": "none", "failure_reason": "internal", "band": None})
+
+
+@scenario
+def update_step_abandoned():
+    """The page stops sending heartbeats once research has ended: the composition finishes, and the update step's next
+    paid call pauses and is abandoned before any counted search. The run stays answered; band not_run."""
+    return Scenario("update-step-abandoned", THERMAL_Q, [
+        Round(thermal_search_calls()),
+        Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER), update=[
+        # never sent: the search's gate pauses and the run is abandoned (web=None, so Exa is never scripted)
+        Round([Call("search_web_updates", {"query": "thermal imaging warrant ruling", "start_published_date": "2026-06-30", "num_results": 3})],
+              seconds=45.0),
+    ], heartbeat=lambda t: t <= 20, expect=answered(band="not_run"))
+
+
+@scenario
+def update_time_limit():
+    """Research ends close to the run's deadline; the update step searches once, then its next round would start past
+    RUN_DEADLINE_S: update_time_limit. The composition proceeds past the deadline (contract §4.H); the run stays answered."""
+    secs = [96.0, 98.0, 97.0, 95.0, 99.0]
+    rounds = [phone_search_calls(),
+              [phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")],
+              [Call("read_passages", {"target": "riley-1-p26", "before": 1, "after": 1})],
+              [Call("search_exact", {"any_of": ["\"search incident to arrest\""], "filters": {"cases": ["riley"]}, "max_results": 3})],
+              [submit()]]
+    return Scenario("update-time-limit", PHONE_Q, [Round(c, seconds=x) for c, x in zip(rounds, secs)], Comp(PHONE_ANSWER), update=[
+        Round([Call("search_web_updates", {"query": "cell phone search arrest court decision", "start_published_date": "2026-06-30", "num_results": 3},
+                    web=Web(pages=[page("Notes on phone searches after arrest", "news.example.test", "phone-notes", "2026-07-30", 2600)], seconds=20.0))],
+              seconds=95.0),
+        Round([submit_update(update_findings=[])]),       # never sent: the deadline has passed
+    ], spare_update=True, expect=answered(band="not_summarised"))
 
 
 if __name__ == "__main__":

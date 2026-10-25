@@ -326,3 +326,17 @@ async def test_a_label_mismatch_is_refused_before_any_event(world):
     with pytest.raises(ValueError):
         await execute_run(ctx, deps)
     assert ctx.events == []
+
+
+async def test_a_call_cut_by_the_context_window_ends_research_at_its_output_ceiling(world, caplog):
+    """Like max_tokens (T3.3): the cut turn's tool calls never run, research stops, and what was kept is composed."""
+    import logging
+    caplog.set_level(logging.WARNING)
+    cut = FakeTurn(content=[{"type": "thinking", "thinking": "", "signature": "s"},
+                            tu("search_exact", any_of=["booth"])], stop_reason="model_context_window_exceeded",
+                   usage=raw_usage(40, read=200_000, output=300))
+    ctx, fakes = await run_loop(world, [read_and_search(), keep("katz-1-p6"), cut], comp=[answer(world)])
+    end = ctx.ended()
+    assert (end["state"], end["stop_kind"], end["answer_end"]) == ("token_ceiling", "token_ceiling_output", "complete")
+    assert len(ctx.of("tool_call")) == 3 and end["rounds"] == 3          # the cut call's tool use never runs
+    assert "model_context_window_exceeded" in caplog.text and fakes["anthropic"].requests_for("update") == []

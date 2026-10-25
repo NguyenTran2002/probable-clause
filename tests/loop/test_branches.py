@@ -391,3 +391,62 @@ async def test_a_failure_before_the_request_is_handed_over_records_no_attempt(wo
     sent = fakes["anthropic"].requests_for("composition" if purpose == "composition" else "research")
     recorded = [p for p in ctx.of("paid_call") if p["purpose"] == purpose]
     assert len(recorded) == len(sent)                        # one record per request actually sent, no more
+
+
+async def _failed_like_h(ctx, state="failed"):
+    """H's `run_ended` after execute_run raised (contract §4.H), or an `interrupted` one, built from the stream."""
+    research_rounds = sum(1 for e in ctx.events if e["kind"] == "round_started" and e["data"]["step"] == "research")
+    await ctx.emit("run_ended", {"state": state, "stop_kind": None, "stop_kinds": [], "no_sources_reason": None,
+                                 "note": None, "scope_note": None, "answer_end": "none",
+                                 "failure_reason": "internal" if state == "failed" else None,
+                                 "rounds": research_rounds, "answer_chars": 0, "totals": ctx.totals()})
+
+
+async def test_a_composition_that_raises_while_a_search_is_in_flight_leaves_an_open_update_call(world):
+    """§4.G.1 item 6, §6: the update branch is cancelled with its Exa search in flight, so the search's tool_call has
+    no tool_result, and there is no update_ended or update_band; H's `failed` run_ended follows. check_stream allows
+    exactly that, and only for the update step's calls in a failed or interrupted run."""
+    searching = asyncio.Event()
+
+    async def exa_hangs(arguments):
+        searching.set()
+        await asyncio.Event().wait()
+
+    async def comp_raises(request):
+        await searching.wait()
+        raise RuntimeError("an unexpected error in our own code")
+
+    ctx = FakeCtx()
+    deps, fakes = make_deps(world, research(), update=[update()[0]], comp=[comp_raises], exa=[exa_hangs])
+    with pytest.raises(RuntimeError):
+        await execute_run(ctx, deps)
+    kinds = ctx.kinds()
+    assert "update_started" in kinds and "update_ended" not in kinds and "update_band" not in kinds
+    calls = {d["tool_use_id"]: d for d in ctx.of("tool_call")}
+    results = {d["tool_use_id"] for d in ctx.of("tool_result")}
+    (open_id,) = set(calls) - results
+    assert calls[open_id]["name"] == "search_web_updates" and calls[open_id]["step"] == "update"
+    events = copy.deepcopy(ctx.events)
+    for state in ("failed", "interrupted"):
+        ctx.events = copy.deepcopy(events)
+        await _failed_like_h(ctx, state)
+        check_stream(ctx.events, world.corpus, page_texts=[PAGE])
+    # not for a run that ended any other way
+    ctx.events = copy.deepcopy(events)
+    await _failed_like_h(ctx, "abandoned")
+    with pytest.raises(AssertionError, match="every tool call has a result"):
+        check_stream(ctx.events, world.corpus)
+
+
+async def test_a_research_call_with_no_result_is_never_allowed(world):
+    """Research's calls always have results, even before a failed run_ended."""
+    ctx, _ = await run_loop(world, research(), update=update(), comp=answer(world), exa=exa(), check=False)
+    events = [e for e in ctx.events if e["kind"] != "run_ended"]
+    tid = next(e["data"]["tool_use_id"] for e in events if e["kind"] == "tool_call" and e["data"]["step"] == "research")
+    events = [e for e in events if not (e["kind"] == "tool_result" and e["data"]["tool_use_id"] == tid)]
+    for i, e in enumerate(events, 1):
+        e["n"] = i
+    ctx.events = events
+    await _failed_like_h(ctx)
+    with pytest.raises(AssertionError, match="every tool call has a result"):
+        check_stream(ctx.events, world.corpus)
