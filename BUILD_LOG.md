@@ -909,3 +909,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - *"Propose an efficient subagent driven build plan to me. You're allowed to use both Sonnet 5.5 and Opus 5.5 subagents. Never use any effort level below high, and you're also barred from ever using max effort level as well (for both models)."*
 - *"Plan looks right, but I want to add that we have to spin things up locally for review first before any deploy."*
 - *"Lock. Proceed."*
+
+## Oct 24, 2026, 20:01 CDT — Phase 3: Architecture, closed (the design note approved)
+**Asked:** Write the design note (Phase 3's gate) after the build plan was locked; then, once approved, close Phase 3.
+**Came back:**
+- `docs/design/design-note.md` (commit ef38f1c), about 1,800 words: what is built and the narrow guarantee (T5.2); a run end to end (T1.1 to T1.14, T2.1 to T2.5); lifecycle and infrastructure (T3.1 to T3.7); the interface (T4.1 to T4.5); the wording and the replays (T5.1 to T5.6); limits and costs as measured (P2.7, findings §3, T1.8, T3.4); accepted risks and open edges (P1.3, P1.7, P1.4, T5.5, cold starts, what the checks do not cover); the placeholders to measure in Phase 5; the user's actions before live runs; what Phase 4 starts with (P4.1).
+- Phase 3 in all: five areas, 37 T-entries (T1.1 to T5.6), the build plan P4.1, and the design note. The tree is clean, no worktrees were left by the phase, and the frontend session's last commit (45ccae0) is already folded in.
+- The tag `phase-3-done` waits on the user's word that the frontend session is idle (CLAUDE.md, P0.3).
+**Spend:** none this sitting; Phase 3's only paid call was `scripts/probe_chunking.py` ($0.1422, T1.9).
+**DECISION (user):**
+- *"Design note approved. Close Phase 3."*
