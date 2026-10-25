@@ -1,8 +1,9 @@
 """A saved run's events (scripts/run_client.py) as one Markdown file a person can read: the question, the answer with
-numbered citations, the checks' flags, the scope note, the update band, every submit Claude sent, the research trail
-and the cost. Read-only; makes no call.
+numbered citations, the checks' flags, the scope note, the update band, every submit Claude sent, the trail of each
+step (research, then the update step, contract v2.0) and the cost. Read-only; makes no call. Reads v1 recordings too,
+whose events have no `step` (all research then).
 
-    uv run python scripts/render_run.py data/verification/phase4/t1-*.jsonl
+    uv run python scripts/render_run.py data/verification/wave3/w3-t1-*.jsonl
 
 Each file is written next to its events under `answers/` (local only, like the events), never over an older one.
 """
@@ -10,6 +11,8 @@ Each file is written next to its events under `answers/` (local only, like the e
 import json
 import sys
 from pathlib import Path
+
+SUBMITS = ("submit_answer", "submit_update")
 
 
 def render(events: list[dict]) -> str:
@@ -72,30 +75,45 @@ def render(events: list[dict]) -> str:
 
     calls = {e["tool_use_id"]: e for e in by_kind("tool_call")}
     results = {e["tool_use_id"]: e for e in by_kind("tool_result")}
-    submits = [c for c in calls.values() if c["name"] == "submit_answer"]
+    submits = [c for c in calls.values() if c["name"] in SUBMITS]
     if submits:
-        out += ["## Every submit_answer Claude sent", ""]
+        out += ["## Every submit Claude sent", ""]
         for c in submits:
             r = results.get(c["tool_use_id"], {})
             verdict = "refused" if r.get("is_error") else "accepted"
-            out += [f"**Round {c['round']}, {verdict}:**", "", "```json",
+            rule = (r.get("submit") or {}).get("rule")
+            out += [f"**{c.get('step', 'research').capitalize()} round {c['round']}, `{c['name']}`, {verdict}"
+                    + (f" ({rule})" if rule else "") + ":**", "", "```json",
                     json.dumps(c["input"], ensure_ascii=False, indent=2), "```"]
-            if r.get("is_error"):
-                out += ["", f"> {r.get('content', '').strip()}"]
+            if r.get("is_error") or c.get("step") == "update" or "update_start" in r.get("content", ""):
+                out += ["", "> " + r.get("content", "").strip().replace("\n", "\n> ")]
             out.append("")
 
-    out += ["## Research trail", ""]
-    for c in calls.values():
-        if c["name"] != "submit_answer":
-            out.append(f"- Round {c['round']}: `{c['name']}` {json.dumps(c['input'], ensure_ascii=False)}")
-    out.append("")
+    upd = first("update_ended")
+    for step, title in (("research", "Research trail"), ("update", "Update step trail")):
+        trail = [c for c in calls.values() if c.get("step", "research") == step and c["name"] not in SUBMITS]
+        if step == "update" and not trail and upd is None:
+            continue
+        out += [f"## {title}", ""]
+        if step == "update" and upd is not None:
+            out += [f"Ended **{upd['end']}** after {upd['rounds']} rounds and {upd['searches']} counted searches"
+                    + (f", stop {upd['stop_kind']}" if upd.get("stop_kind") else "")
+                    + (f", failure {upd['failure_reason']}" if upd.get("failure_reason") else "") + ".", ""]
+        for c in trail:
+            r = results.get(c["tool_use_id"], {})
+            mark = " *(refused: wrong step)*" if r.get("wrong_step") else ""
+            out.append(f"- Round {c['round']}: `{c['name']}` {json.dumps(c['input'], ensure_ascii=False)}{mark}")
+        out.append("")
 
     t = end.get("totals") or {}
     if t:
         cl = t["claude"]
+        cost = cl["cost_usd"]
         out += ["## Cost", "",
-                f"- Claude: {cl['calls']} calls, ${cl['cost_usd']['loop']:.4f} loop + "
-                f"${cl['cost_usd']['composition']:.4f} composition",
+                f"- Claude: {cl['calls']} calls, ${cost['loop']:.4f} research + ${cost.get('update', 0.0):.4f} update step + "
+                f"${cost['composition']:.4f} composition",
+                f"- Claude tokens: {cl['input_tokens']:,} input ({cl['cache_read_tokens']:,} cache reads, "
+                f"{cl['cache_write_tokens']:,} cache writes), {cl['output_tokens']:,} output",
                 f"- Exa: {t['exa']['searches']} searches, ${t['exa']['cost_usd']:.4f}",
                 f"- Voyage: {t['voyage']['requests']} requests, ${t['voyage']['cost_usd']:.4f}", ""]
     return "\n".join(out)

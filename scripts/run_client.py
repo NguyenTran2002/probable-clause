@@ -5,7 +5,7 @@ The client makes no paid call itself; the server does. It reads no secret.
 
     uv run python scripts/run_client.py --label t1 "Can police use a thermal imager on my house from the street?"
 
-Events go to `data/verification/phase4/<label>-<run_id>.jsonl` (local only), one envelope per line, and a summary
+Events go to `data/verification/wave3/<label>-<run_id>.jsonl` (local only; Phase 4's runs stay under `phase4/`), one envelope per line, and a summary
 to `<label>-<run_id>.summary.json`. Exit 0 when `run_ended` arrived, 2 when the run was refused, 1 otherwise.
 """
 
@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from api import settings  # noqa: E402
 
-OUT = ROOT / "data" / "verification" / "phase4"
+OUT = ROOT / "data" / "verification" / "wave3"
 RECONNECTS = 3           # placeholder: the stream is re-opened with Last-Event-ID if it drops before run_ended
 RUN_TIMEOUT_S = 1_200    # placeholder: a run's own deadline is shorter; this only stops a hung client
 
@@ -42,6 +42,7 @@ def summarise(run_id: str, events: list[dict]) -> dict:
     blocks = [e["data"] for e in events if e["kind"] == "answer_block"]
     end = next((e["data"] for e in events if e["kind"] == "run_ended"), None)
     band = next((e["data"] for e in events if e["kind"] == "update_band"), None)
+    update = next((e["data"] for e in events if e["kind"] == "update_ended"), None)
     kinds: dict[str, int] = {}
     for e in events:
         kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
@@ -55,9 +56,10 @@ def summarise(run_id: str, events: list[dict]) -> dict:
         "rounds": end and end.get("rounds"),
         "totals": end and end.get("totals"),
         "update_band": band and band.get("outcome"),
+        "update_step": update,
         "answer_blocks": len(blocks),
         "citations": sum(len(b.get("citations") or []) for b in blocks),
-        "paid_calls": [{k: p.get(k) for k in ("service", "purpose", "cost_usd", "estimated", "usage")} for p in paid],
+        "paid_calls": [{k: p.get(k) for k in ("step", "service", "purpose", "cost_usd", "estimated", "usage")} for p in paid],
     }
 
 
@@ -97,7 +99,8 @@ async def read_stream(client: httpx2.AsyncClient, run_id: str, events: list[dict
                         sink.write(json.dumps(env, ensure_ascii=False) + "\n")
                         sink.flush()
                         if not quiet:
-                            print(f"  {env['n']:>4} {env['t_ms']:>7} ms  {env['kind']}")
+                            step = env["data"].get("step") if isinstance(env.get("data"), dict) else None
+                            print(f"  {env['n']:>4} {env['t_ms']:>7} ms  {env['kind']}" + (f"  [{step}]" if step else ""))
                         if env["kind"] == "run_ended":
                             return True
         except httpx2.HTTPError as e:
@@ -131,7 +134,7 @@ async def run(base: str, question: str, label: str, out: Path, quiet: bool) -> i
                 await beat
         summary = summarise(run_id, events)
         path.with_suffix(".summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps({k: summary[k] for k in ("state", "answer_end", "stop_kind", "rounds", "update_band",
+        print(json.dumps({k: summary[k] for k in ("state", "answer_end", "stop_kind", "rounds", "update_band", "update_step",
                                                  "answer_blocks", "citations", "totals")}, indent=2))
         return 0 if ended else 1
 
