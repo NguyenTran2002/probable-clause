@@ -2123,3 +2123,37 @@ Then: *"The budget for paid build tests are sound."*
 - There is no deploy green light until then. P4.1 is unchanged.
 **Spend:** none.
 **DECISION (user):** *"I want you to stand up the app locally for me to test it as an user."* and *"No deployment green light yet till I have tested the app locally."*
+
+## Oct 25, 2026, 16:43 CDT — Phase 4: Build, the live key's name (P4.29)
+**Asked:** what the live Anthropic key (P4.24) is named in `.env`.
+**Came back:**
+- The name is `ANTHROPIC_API_KEY_LIVE`, distinct from the development `ANTHROPIC_API_KEY`, so local runs can never use the live key.
+- It is added to `.env.example` for the user to fill, and to `scripts/check_env.py` (needed from phase 5, the deploy; it reports only set, empty or missing).
+**Spend:** none.
+**DECISION (user):** *"Live key name ANTHROPIC_API_KEY_LIVE. Edit .env.example so I can put it in."*
+
+## Oct 25, 2026, 16:43 CDT — Phase 4: Build, the cloud setup script deferred (P4.30)
+**Asked:** when the script that creates the registry, the service accounts, the secrets and their access rule is written and run (P4.25).
+**Came back:**
+- The user green-lights writing it, but deferred: after the frontend, right before deployment.
+- Running it creates cloud resources, so it still runs only with the deploy green light (CLAUDE.md).
+**Spend:** none.
+**DECISION (user):** *"Green light on writing the set up script. Defer this till after the frontend and right before deployment though, no rush."*
+
+## Oct 25, 2026, 16:43 CDT — Phase 4: Build, goodnight's location (P4.26)
+**Asked:** where goodnight's repository is, for P4.26's change.
+**Came back:**
+- It lives in `~/Documents/Developer/framedbytran` (present on this machine).
+- **The main session's restated reading of P4.26, which the user did not correct:** the block is written and committed in that repository and shown to the user. It goes live only with the deploy green light, once the services' addresses exist. That repository is never pushed without the user's word.
+**Spend:** none.
+**DECISION (user):** *"Developer/framedbytran"*
+
+## Oct 25, 2026, 16:43 CDT — Phase 4: Build, the frontend's design questions left to the main session (P4.31)
+**Asked:** the questions the v2.0 page raises:
+- how the update step shows beside the answer;
+- the wording for the new "update check unavailable" reasons;
+- where `busy` appears;
+- whether the cost line shows the update step separately.
+**Came back:** the main session decides each during the frontend build, records each call in the log, and the user refines afterwards.
+**Spend:** none.
+**DECISION (user):** *"You can proceed with your judgement for these during the frontend stand up, and I will refine afterward if needed."*

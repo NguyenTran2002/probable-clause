@@ -1083,6 +1083,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Green light to modify goodnight to incorporate this site."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, green light to modify goodnight (P4.26)"
+- **Where and how** (16:43): goodnight is `~/Documents/Developer/framedbytran`; the block is written and committed there and shown to the user, goes live only with the deploy green light, and that repository is never pushed without the user's word. Log: `BUILD_LOG.md`, "Oct 25, 2026, 16:43 CDT — Phase 4: Build, goodnight's location (P4.26)".
 
 ### P4.27 Exa's terms: the risk accepted without a reply (P1.3)
 
@@ -1097,3 +1098,24 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"The previous arrangements are only meant to develop the frontend prototype in parallel, the merge and final stand up are always meant to be in the main thread. I agree with you building the frontend yourself without parallel builders."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, the main session builds and stands up the frontend (P4.28)"
+
+### P4.29 The live key's name: ANTHROPIC_API_KEY_LIVE (P4.24)
+
+- **Decision:** The live Anthropic key is `ANTHROPIC_API_KEY_LIVE` in `.env`, distinct from the development `ANTHROPIC_API_KEY`; in `.env.example` and `scripts/check_env.py` (needed from phase 5).
+- **User's words:** *"Live key name ANTHROPIC_API_KEY_LIVE. Edit .env.example so I can put it in."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:43 CDT — Phase 4: Build, the live key's name (P4.29)"
+
+### P4.30 The cloud setup script: written after the frontend, right before deployment (P4.25)
+
+- **Decision:** Green light to write the script that creates the registry, service accounts, secrets and their access rule, deferred until after the frontend and right before deployment. Running it creates cloud resources, so it runs only with the deploy green light.
+- **User's words:** *"Green light on writing the set up script. Defer this till after the frontend and right before deployment though, no rush."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:43 CDT — Phase 4: Build, the cloud setup script deferred (P4.30)"
+
+### P4.31 The frontend's v2.0 design questions: the main session's judgement, refined by the user afterwards (P4.28)
+
+- **Decision:** How the update step shows beside the answer, the new unavailable reasons' wording, where `busy` appears, and the cost line's breakdown are decided by the main session during the frontend build, each call logged; the user refines afterwards.
+- **User's words:** *"You can proceed with your judgement for these during the frontend stand up, and I will refine afterward if needed."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:43 CDT — Phase 4: Build, the frontend's design questions left to the main session (P4.31)"

@@ -25,6 +25,7 @@ REQUIRED = {
     "EXA_API_KEY": 2,
     "MONGODB_URI": 4,
     "VOYAGE_API_KEY": 4,
+    "ANTHROPIC_API_KEY_LIVE": 5,       # the live site's key, needed only to deploy (P4.24, P4.29)
 }
 
 LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$")
