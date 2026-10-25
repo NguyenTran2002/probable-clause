@@ -3,7 +3,8 @@
 Corpus quotation marks are straight (P1.17); Claude's text may be curly. Only what
 T1.12 lists is allowed: punctuation inside the closing mark, nested quotes changed
 between double and single, ellipses for omitted words, bracketed alterations
-(including those already in the source). Nothing else is forgiven.
+(including those already in the source). Letter case is ignored throughout (P4.17).
+Nothing else is forgiven.
 """
 
 import pytest
@@ -166,9 +167,51 @@ def test_changed_capital_in_the_other_direction():
     assert (r.quotations_checked, r.quotations_found) == (1, 1)
 
 
-def test_unbracketed_change_of_capital_is_not_forgiven():
+# --- letter case (P4.17: the comparison ignores it throughout)
+
+def test_an_unbracketed_lower_case_start_is_found():
+    # Source "What a person knowingly exposes": Claude lowers the W with no brackets.
     r = check('It held that "what a person knowingly exposes to the public, even in his own home" here.')
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_an_unbracketed_capital_start_is_found():
+    # The paid build tests, test 1: Kyllo has "is presumptively unreasonable without a warrant."
+    r = check('**"Presumptively unreasonable without a warrant."** The holding treats it so.',
+              kept=["the surveillance is a 'search' and is presumptively unreasonable without a warrant."])
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_a_change_of_case_mid_quotation_is_found():
+    r = check('It said "for the fourth amendment protects People, not places" there.')
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_a_change_of_case_after_an_ellipsis_is_found():
+    r = check('It said "the problem presented by this case . . . The Fourth Amendment protects people" there.')
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_ignoring_case_still_flags_a_changed_word():
+    # control: the same quotation as above with one word changed is still not found
+    r = check('It held that "What a person knowingly reveals to the public, even in his own home" here.')
     assert (r.quotations_checked, r.quotations_found) == (1, 0)
+
+
+def test_ignoring_case_still_refuses_a_stripped_negating_prefix():
+    # control: "Intrusive" quoted out of "non-intrusive", whatever the case
+    kept = ["The officers used a non-intrusive scan of the home from the street that night."]
+    for q in ('"Intrusive scan of the home from the street"', '"intrusive scan of the home from the street"'):
+        r = check(f"It described an {q} there.", kept=kept)
+        assert (r.quotations_checked, r.quotations_found) == (1, 0), q
+    r = check('It described a "Non-intrusive scan of the home from the street" there.', kept=kept)
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_the_answer_keeps_the_quotation_as_written():
+    # P4.17: only the comparison ignores case; a flag quotes the answer's own text
+    r = check('It held that "What a person knowingly REVEALS to the public, even in his own home" here.')
+    assert r.flags and "REVEALS" in r.flags[0].text
 
 
 def test_bracketed_replacement_of_words():

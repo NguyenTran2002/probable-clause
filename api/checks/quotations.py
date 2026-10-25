@@ -181,9 +181,10 @@ def _strip_marks(s: str) -> str:
 
 def prepare_source(text: str) -> str:
     """A kept passage as the comparison sees it: marks stripped, brackets already in the source dropped
-    (their content stays), whitespace collapsed."""
+    (their content stays), whitespace collapsed, lower-cased (P4.17: the comparison ignores letter case; the
+    answer keeps the quotation as written)."""
     s = _strip_marks(text.replace("[", "").replace("]", ""))
-    return re.sub(r"\s+", " ", s).strip()
+    return re.sub(r"\s+", " ", s).strip().lower()
 
 
 def _parse(s: str):
@@ -280,8 +281,8 @@ def count_words(inner: str) -> int:
 
 def compile_quotation(inner: str) -> CompiledQuotation:
     """The quotation as ordered pieces with what may lie between them. `pieces` is empty if no source word is left
-    to check (a quotation made of brackets alone)."""
-    s = re.sub(r"\s+", " ", _strip_marks(inner)).strip()
+    to check (a quotation made of brackets alone). Lower-cased, like the sources (P4.17)."""
+    s = re.sub(r"\s+", " ", _strip_marks(inner)).strip().lower()
     segments = _parse(s)
 
     flat = "".join(" " if kind == "e" else value for kind, value in segments)

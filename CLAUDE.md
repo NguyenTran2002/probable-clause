@@ -91,16 +91,16 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **The paid build tests are done** (BUILD_LOG, "Oct 25, 2026, 12:29 CDT"): four runs through `scripts/run_client.py` against `Probable_Clause_test`, $0.8078 of Anthropic, 4 Exa searches. Money, cache classes, citations, thinking and the out-of-scope path held. Events and the server log are under `data/verification/phase4/` (local).
 - **P4.16 locked and built** (12:42 entry): `submit_answer` alone in its turn, once, with the three approved texts; contract v1.8. The double-submit defect is fixed on the fakes; not yet re-run with money.
 - **Next, on the user's word:**
-  1. **A capitalised first letter fails the quotation check** (the 12:29 entry's item 2; T1.12 read strictly, "[P]resumptively" is the convention).
+  1. **P4.17 locked and built** (12:55 entry): the quotation check ignores letter case throughout; contract v1.9.
   2. Any further paid run, which needs the user's approval. The user reads answers first: `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
   3. **Keep every run** (the user, after the paid tests): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
   - Also reported, no action proposed: test 1 skipped its update search; test 3 answered with a scope note rather than nothing found; the loop's input budget would stop a research-heavy run at about round 7 or 8.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.16** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.17** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
-  - `locked-decisions.md`, P4.1 to P4.16 above all;
-  - `docs/design/contract.md` (**v1.8**) and `contracts/events.schema.json`;
+  - `locked-decisions.md`, P4.1 to P4.17 above all;
+  - `docs/design/contract.md` (**v1.9**) and `contracts/events.schema.json`;
   - the shared code (`api/types.py`, `settings.py`, `errors.py`, `retry.py`, `protocols.py`, `api/prompts/`);
   - BUILD_LOG's entries from "22:58" (Wave 2) on;
   - `tests/fixtures/README.md`;
@@ -133,7 +133,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.17). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.18). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** loop `claude-sonnet-5-5` high (P2.1); composition `claude-opus-5-5` high (T1.8).
   - **Limits:** 12 steps; run input **436,000** (P4.6), with the loop 370,000 and the composition reserve 66,000; output 20,000; 3 update searches; **$15 a day** (P4.11), $60 a month.
