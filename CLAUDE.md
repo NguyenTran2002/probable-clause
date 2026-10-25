@@ -88,11 +88,10 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 16:10 CDT: Wave 3 is built and reviewed (steps 0 to 5); step 6 waits for the user.*
+*Updated Oct 25, 2026, 16:20 CDT: Wave 3 is built, reviewed and paid-tested (steps 0 to 6).*
 
-- **Next: Wave 3's step 6, only on the user's go.**
-  1. The user reviews the prompt drafts (T1.14): `api/prompts/loop_system.md` (its new "After research: the update step" section), `tools.json` (seven tools; `submit_update`), `loop_messages.json` (`update_start`, `update_start_note`, `status_line_update`, `submit_update_accepted`) and `rejections.json` (`submit_update`, `wrong_step`). The `busy` and cap refusal texts are in contract §5.
-  2. Then, on the user's go, the four paid tests again (`w3-t1` to `w3-t4`, the same questions), under P4.22's allowance ($3.00 of Anthropic and 20 Exa searches, a fresh tally in `data/verification/wave3/spend.jsonl`). `scripts/run_client.py` now writes to `data/verification/wave3/`. Check after each test; stop before a test that could pass either allowance. Watch: the update step's first call reading research's cache, the update output (`UPDATE_OUTPUT_BUDGET` 6,000), the cost per run, and the composition's quality on Sonnet for the user to judge.
+- **Done:** step 6 ran (BUILD_LOG "Oct 25, 2026, 16:20 CDT"): all four tests behaved as designed; the update step's first call read research's cache each time; answered runs cost about 45% less than the morning's (t1 $0.18, t4 $0.25); Atlas spend matches the paid calls to the cent. **Wave 3's tally: Anthropic $0.5383 of $3.00, Exa 3 of 20** (`data/verification/wave3/spend.jsonl`). The prompt drafts were approved as P4.23.
+- **Next, on the user's word:** the user judges the composition's quality on Sonnet (P4.20) from `data/verification/wave3/answers/`, t1's skip of the update search, and t2's note's grammar slip. Then, as before Wave 3: the frontend session on the v2.0 fixtures (frontend brief §5a); the cloud setup questions; the user's actions before live runs (below); the local review; a separate deploy green light (P4.1).
 - **Built in Wave 3** (BUILD_LOG "Oct 25, 2026, 14:17 CDT" and "16:10 CDT"):
   - contract **v2.0** and the schema (5642d5f);
   - E (46eb3e9, 5b080db), H (3a6b16e), I (83b1ab1), G (ac2c86d);

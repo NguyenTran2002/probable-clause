@@ -2028,3 +2028,40 @@ Then: *"The budget for paid build tests are sound."*
 - the `busy` and cap refusal texts of contract §5.
 **Spend:** none.
 **DECISION (user):** *"The prompt drafts are approved. Run the four Wave 3 paid tests under P4.22's allowance."*
+
+## Oct 25, 2026, 16:20 CDT — Phase 4: Build, Wave 3's paid tests (w3-t1 to w3-t4)
+**Asked:** the user: *"The prompt drafts are approved. Run the four Wave 3 paid tests under P4.22's allowance."*
+**Came back:** the four questions of `docs/design/paid-build-tests.md`, run through the local API (`PC_ENV` unset, `Probable_Clause_test`) with `scripts/run_client.py` on the v2.0 code (51cc3f4). Anthropic's pricing page was re-read first, and its Sonnet 5.5 row matches the price table. Events, summaries and rendered answers are under `data/verification/wave3/` (local, kept).
+- **w3-t1, the thermal imager:**
+  - `answered`, 3 research rounds, 49 blocks, 24 citations; quotations 10 of 10 found and citations 4 of 4.
+  - The update step skipped the web search: *"The question is governed by a 2001 decision (Kyllo) already in the corpus."* Band `skipped`.
+  - **$0.1841** (the morning's re-run: $0.3355), 39 s.
+- **w3-t2, "hello":**
+  - `no_sources` / `out_of_scope` in one call that read the 1-hour prefix; no update step, band `not_run`.
+  - **$0.0048**. The note has a grammar slip: "Does police need a warrant".
+- **w3-t3, a 2027 onboard-computer case:**
+  - `no_sources` / `nothing_found` in 2 research rounds; no composition.
+  - The update step still ran: 2 searches, 5 findings, an overview, band `found`.
+  - **$0.1307**, 22 s. The morning's re-run answered this question from kept passages; this run kept none.
+- **w3-t4, phone location without a warrant:**
+  - `answered`, 6 research rounds, 61 blocks, 30 citations; quotations 10 of 10, citations 4 of 4.
+  - One update search, and empty findings with an overview: band `nothing_relevant`.
+  - **$0.2452** (the morning's re-run: $0.4104), 51 s.
+  - Research's input was 234,236, against the morning's 366,680 with web pages in research.
+- **The cache works as designed (P4.19):** each update step's first call read research's whole conversation from cache, since its cache read equals research's last read plus write:
+  - t1: 33,653 = 30,449 + 3,204;
+  - t3: 25,730;
+  - t4: 48,846.
+- **No limit came near:**
+  - research input at most 234,236 of 2,000,000;
+  - update input at most 120,526 of 2,000,000;
+  - update output at most 1,040 of 6,000;
+  - composition output at most 3,435 of 16,000.
+- **No faults:** no mapping faults, tracebacks or error lines in `server.log`; no refused submits; every submit was sent alone.
+- **Atlas agrees to the cent:** `Probable_Clause_test` went from $1.7435 to $2.3084, the four runs' paid calls summed ($0.5649 with Exa and Voyage), and runs started from 8 to 12. Per-call spend recording (P4.21) works on the real database.
+- **For the user to judge:**
+  - the composition's quality on Sonnet (P4.20), from `data/verification/wave3/answers/`;
+  - t1's skip of the update search;
+  - t2's grammar slip.
+**Spend:** Wave 3's tally (P4.22, `data/verification/wave3/spend.jsonl`, 23 lines): **Anthropic $0.5383 of $3.00, Exa 3 of 20 searches** ($0.021). Voyage $0.0057 at list price.
+**DECISION (user):** pending: the composition's quality on Sonnet.
