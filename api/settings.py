@@ -100,6 +100,7 @@ REQUEST_BODY_MAX_BYTES = _s(16_384, "PLACEHOLDER, main session's (T3.7: POST /ru
 EVENTS_TTL_S = _s(86_400, "T3.7 (24 hours)")
 HEARTBEATS_TTL_S = _s(600, "T3.7 (10 minutes)")
 ATLAS_HEALTH_TIMEOUT_S = _s(2, "PLACEHOLDER, main session's (T3.4: a short timeout)")
+ATLAS_RESERVE_TRIES = _s(5, "PLACEHOLDER, main session's: compare-and-swap rounds in reserve, settle and release before Atlas counts as unreachable")
 ATLAS_OP_TIMEOUT_S = _s(5, "PLACEHOLDER, main session's: every other Atlas operation, so a reservation never waits pymongo's 30 s default")
 
 # Caps (P2.7, T3.4)
