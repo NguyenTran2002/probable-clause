@@ -273,13 +273,7 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
 .composer .primary { padding: 0.55rem 1rem; }
 body:not(.replaying) #skip, body.replaying #send { display: none; }
 .status { min-height: 1.3rem; margin-top: 0 !important; margin-bottom: 0.4rem !important; font-size: 0.8125rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; }
-.status.working::before {
-  content: "";
-  flex: none;
-  width: 0.5rem; height: 0.5rem; border-radius: 50%;
-  background: var(--brand);
-  animation: pulse 1.2s ease-in-out infinite;
-}
+/* no pulsing dot here: the working step in the log already pulses (the user, Oct 25, 2026) */
 @keyframes pulse { 50% { opacity: 0.25; } }
 .disclaimer { margin-top: 0.5rem !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
 .disclaimer p { margin: 0; }

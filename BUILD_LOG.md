@@ -2318,3 +2318,19 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the two quotes above.
+
+## Oct 25, 2026, 18:36 CDT — Frontend: the user's review, round 3 (the pace at 3 s; the status dot removed; testing during iteration)
+**Asked:**
+- *"1 second is still too abrupt. Increase it to 3 seconds (except for the very first step where we don't need any artificial delay) because each tool call still has a lot of content."*
+- Remove the pulsing dot beside the status line ("Recorded run…"), which repeats the working step's own pulsing dot.
+- A change of workflow for the iteration rounds (below).
+**Came back:**
+- **`TOOL_CALL_GAP_MS` is 3,000.** The first tool call of a run is never held (the pacer starts with no previous item), so only later calls and the stage after research wait.
+- **The status line's dot is gone** (`.status.working::before` removed), in live runs and replays alike. The working step's dot and the group heads' dots stay.
+- **The pace tests:** the unit tests keep an explicit 1 s gap; the fixture test checks the page's own figure.
+- **Checked:** only what changed, per the user's new rule. `webdev/test/pace.test.mjs` passes (6 tests), and the rebuilt stack serves the new figure and stylesheet.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):**
+- The 3 s gap, quoted above.
+- On testing: *"Since we're doing quick iterations, you don't need to run exhaustive test after each iteration. Instead, run tests for what matters only. Once we've finished iterating, we will run the full suite. This is so we can speed up during the iteration process."* Saved to the main session's memory. The full suite (Python and Node) and the browser sweep run once iterating ends, before the sign-off.

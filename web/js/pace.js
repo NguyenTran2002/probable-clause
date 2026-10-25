@@ -6,7 +6,9 @@
 // waiting, quietly.
 // No DOM: `now` and the timer functions are seams for Node's tests.
 
-export const TOOL_CALL_GAP_MS = 1000;  // the user's figure, Oct 25, 2026 (0.5 s first, then 1 s: "still feel too abrupt")
+// the user's figure, Oct 25, 2026: 0.5 s, then 1 s, then 3 s ("each tool call still has a lot of content"); the
+// first tool call is never held
+export const TOOL_CALL_GAP_MS = 3000;
 // the first of these is the stage after research beginning; only that first one is paced
 const STAGE = new Set(['update_started', 'composition_started', 'update_band']);
 
