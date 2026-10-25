@@ -42,8 +42,8 @@ More, each from the brief:
 - `docs/research/retention.md`: what each provider keeps of what the page sends (Area 5, T5.5), quotes string-matched.
 - `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user), kept for the record.
 - `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them; `scripts/render_run.py`: a saved run as a readable Markdown file.
-- `docs/design/wave3-design.md`: the Wave 3 design (update step beside composition, composition on Sonnet, no reservation, looser limits), a draft for the user's approval.
-- `docs/sessions/wave3-plan.md`: the main session's plan for building Wave 3 (steps 0 to 6, agents, reviews, the paid tests), proposed for the user's approval.
+- `docs/design/wave3-design.md`: the Wave 3 design (update step beside composition, composition on Sonnet, no reservation, looser limits), approved Oct 25, 13:47 (P4.18 to P4.22).
+- `docs/sessions/wave3-plan.md`: the main session's plan for building Wave 3 (steps 0 to 6, agents, reviews, the paid tests), approved Oct 25, 13:47.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
@@ -88,20 +88,17 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 13:31 CDT, before a planned compaction; the Wave 3 design waits for the user's approval.*
+*Updated Oct 25, 2026, 13:48 CDT, before a planned compaction; Wave 3 starts after it.*
 
-- **Next: Wave 3,** per `docs/design/wave3-design.md` (a draft; nothing in it locked), built by `docs/sessions/wave3-plan.md` (proposed; follow its steps 0 to 6 once approved). In order:
-  1. **The user approves the design.** Its §8 is fully answered (13:38 and 13:41 entries): the loop's input 2M, the update step's input 2M, 5 runs at once, the update step continuing the research conversation, refusal wording by the main session, and the development allowance (a fresh tally at $0; $3 of Anthropic and 20 Exa searches; ledger `data/verification/wave3/spend.jsonl`).
-  2. **Lock P4.18 to P4.22,** each in its own BUILD_LOG entry with its `locked-decisions.md` entry, in the user's words:
-     - P4.18, looser limits;
-     - P4.19, the update step out of the research loop, run beside the composition, continuing the research conversation for its cache (one tool list and one system prompt), turned off by code when research never searched the corpus;
-     - P4.20, composition on Sonnet 5.5 high, uncached, kept passages only;
-     - P4.21, no reservation: admission under the caps, spend recorded per call, a cap on runs at once;
-     - P4.22, the development allowance for Wave 3's paid tests.
-  3. **The main session** writes contract v2.0, `events.schema.json`, settings, protocols and types, drafts the prompts for the user's review (T1.14), and updates the frontend brief (the frontend waits only for the step log, the band's timing, `declined`'s removal and `busy`).
-  4. **Wave 3a** (E, money and state, Sonnet 5.5 high; I's one line by the main session), then **Wave 3b** (G, Opus 5.5 xhigh, possibly split G1 and G2; H, Sonnet 5.5 high). Then a Sonnet review per part, one Opus xhigh review across the parts, fixtures regenerated, the whole suite.
-  5. **The paid tests again,** only on the user's approval of their limits.
-- **The user's direction for the design** is quoted in BUILD_LOG, "Oct 25, 2026, 13:31 CDT" "13:38 CDT" and "13:41 CDT".
+- **Next: Wave 3,** following `docs/sessions/wave3-plan.md` (approved 13:47) to build `docs/design/wave3-design.md` (approved 13:47). **P4.18 to P4.22 are locked** (BUILD_LOG, the five "Oct 25, 2026, 13:47 CDT" entries). Start at **the plan's step 0, item 2**:
+  1. Step 0, the main session alone: contract v2.0 and `events.schema.json`; `api/settings.py`, `protocols.py`, `types.py` and `errors.py`; the prompt drafts for the user's review (T1.14); one Opus 5.5 xhigh review of the contract; the frontend brief; one commit.
+  2. Step 1, Wave 3a in parallel: **E** (Sonnet 5.5 high) and **G** (Opus 5.5 xhigh, one agent: research, the update step and the two branches share `run.py`).
+  3. Step 2: **H** (Sonnet 5.5 high) after E is merged; **I's** `deploy.sh` line by the main session.
+  4. Step 3: one review per part (E and H Sonnet 5.5 high, G Opus 5.5 high).
+  5. Step 4: the main session's fixtures, contract tests, run client and renderer.
+  6. Step 5: one Opus 5.5 xhigh review across the parts, the whole suite, the offline Docker check, the free Atlas check, a BUILD_LOG entry.
+  7. Step 6, **only on the user's go** and after the user approves the prompt drafts: the four paid tests again (`w3-t1` to `w3-t4`) under P4.22's allowance.
+- **The user's direction for the design** is quoted in BUILD_LOG, "Oct 25, 2026, 13:31 CDT", "13:38 CDT" and "13:41 CDT"; the locks at "13:47 CDT".
 - **Wave 3's agents (the user):** *"min effort is high, Sonnet 5.5 and Opus 5.5 only, no Haiku. Max effort is xhigh, no max allowed."* Agents never commit; the main session commits each part's paths by name (P4.1).
 - **Done today, all logged:**
   - the paid build tests (12:29);
@@ -112,16 +109,16 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
 - **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.17** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.22** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
-  - `locked-decisions.md`, P4.1 to P4.17 above all;
+  - `locked-decisions.md`, P4.1 to P4.22 above all (P4.18 to P4.22 amend or supersede 14 earlier entries, marked in their headings);
   - `docs/design/contract.md` (**v1.9**) and `contracts/events.schema.json`;
   - the shared code (`api/types.py`, `settings.py`, `errors.py`, `retry.py`, `protocols.py`, `api/prompts/`);
   - BUILD_LOG's entries from "22:58" (Wave 2) on;
   - `tests/fixtures/README.md`;
   - `docs/design/paid-build-tests.md` (the plan; run twice);
-  - **`docs/design/wave3-design.md`** (the draft for approval) and BUILD_LOG's entries from 12:29 on;
+  - **`docs/design/wave3-design.md`** and **`docs/sessions/wave3-plan.md`** (both approved), and BUILD_LOG's entries from 12:29 on;
 - **Done in Phase 4 (all logged):**
   - Step 0 and the prompts (approved 21:55).
   - **Wave 1,** A to F.
@@ -150,11 +147,11 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.18). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.23). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
-  - **Models:** loop `claude-sonnet-5-5` high (P2.1); composition `claude-opus-5-5` high (T1.8).
-  - **Limits:** 12 steps; run input **436,000** (P4.6), with the loop 370,000 and the composition reserve 66,000; output 20,000; 3 update searches; **$15 a day** (P4.11), $60 a month.
-  - **Worst case reserved:** about **$2.11** (P4.6; was $1.674); seven reservations fit in the $15 day at once.
+  - **Models:** loop `claude-sonnet-5-5` high (P2.1); composition `claude-opus-5-5` high (T1.8) **until Wave 3 builds P4.20** (Sonnet 5.5 high).
+  - **Limits as built today:** 12 steps; run input 436,000 (loop 370,000, composition reserve 66,000); output 20,000; 3 update searches. **Locked for Wave 3 (P4.18):** loop input 2M, update input 2M, loop output 16,000, composition output 16,000, 5 update searches, update rounds 8, update output 6,000; no run-wide limit. **$15 a day** (P4.11), $60 a month, unchanged.
+  - **Worst case reserved:** about $2.11 as built today; **Wave 3 removes the reservation (P4.21):** admission under the caps, spend recorded per call, at most 5 runs at once.
   - **Places:** GCP project `probable-clause` (1066460440617), us-central1; Atlas `Probable_Clause` and `Probable_Clause_test`; Voyage at `https://api.voyageai.com/v1` (platform key); repo `NguyenTran2002/probable-clause`; page at `nguyennhattran.com/probable-clause`.
 - **The SDK, read from Anthropic's docs** (G's report, 23:52 and 00:46 entries):
   - adaptive thinking; `output_config.effort` "high"; a 1-hour breakpoint on the system block plus the top-level automatic one;
@@ -168,6 +165,6 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - Exa's reply or the risk accepted (P1.3);
   - **the review of the prompt drafts** (T1.14);
   - sign-off on the local review, then a separate deploy green light (P4.1).
-- **Spend so far:** Anthropic ledger $0.6964 (Phases 2 and 3); Phase 4 Anthropic $1.6729 of its $3 ceiling (ledger `data/verification/phase4/spend.jsonl`); Voyage in Phase 4 about $0.078 at list price; Exa in Phase 4 8 of its 10 searches.
+- **Spend so far:** Anthropic ledger $0.6964 (Phases 2 and 3); Phase 4 closed at Anthropic $1.6729 and Exa 8 searches (ledger `data/verification/phase4/spend.jsonl`); Voyage in Phase 4 about $0.078 at list price. **Wave 3's tally starts at $0** (P4.22): $3.00 of Anthropic and 20 Exa searches, ledger `data/verification/wave3/spend.jsonl`.
 - **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py`, `fetch_official_pdfs.py`, `build_corpus.py` (`CORPUS_OUT=<dir>`), `verify_corpus.py` (`VERIFY_OUT=<dir>`), `verify_lineup.py`, `build_manifest.py`, `filter_check.py`.
 - **Known, left as built** (P1.22 and later): "supersensitive" (*Jardines*); paragraph division inside the *Kyllo* and *Carpenter* appendices and one *Shultz* footnote; one *Ciraolo* footnote marker one character early; `lineup.json`'s *White* and *Chatrie* lineups (report only); *Kyllo*'s `header_footnotes_dropped`; *Chatrie*'s "Pet. for. Cert." typo (the splitter guards against it).
