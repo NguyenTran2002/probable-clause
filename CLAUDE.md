@@ -90,21 +90,18 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 *Updated Oct 25, 2026, 13:31 CDT, before a planned compaction; the Wave 3 design waits for the user's approval.*
 
 - **Next: Wave 3,** per `docs/design/wave3-design.md` (a draft; nothing in it locked). In order:
-  1. **The user approves the design** and answers its §8 questions:
-     - `LOOP_INPUT_BUDGET` 800k or 2M (it counts input only, over every research call);
-     - `MAX_CONCURRENT_RUNS` 5;
-     - the update step's input (a short brief, recommended);
-     - the `busy` wording;
-     - Phase 4's paid-test limits for the runs after Wave 3.
+  1. **The user approves the design.** Its §8 is answered (13:38 entry): the loop's input at 2M, 5 runs at once, the update step continuing the research conversation, refusal wording by the main session. **Two items are still open:**
+     - `UPDATE_INPUT_BUDGET` 1.2M or 2M;
+     - the restated development allowance: a fresh tally at $0, with $3 of Anthropic and 20 Exa suggested.
   2. **Lock P4.18 to P4.21,** each in its own BUILD_LOG entry with its `locked-decisions.md` entry, in the user's words:
      - P4.18, looser limits;
-     - P4.19, the update step out of the research loop, run beside the composition, turned off by code when research never searched the corpus;
+     - P4.19, the update step out of the research loop, run beside the composition, continuing the research conversation for its cache (one tool list and one system prompt), turned off by code when research never searched the corpus;
      - P4.20, composition on Sonnet 5.5 high, uncached, kept passages only;
      - P4.21, no reservation: admission under the caps, spend recorded per call, a cap on runs at once.
   3. **The main session** writes contract v2.0, `events.schema.json`, settings, protocols and types, drafts the prompts for the user's review (T1.14), and updates the frontend brief (the frontend waits only for the step log, the band's timing, `declined`'s removal and `busy`).
   4. **Wave 3a** (E, money and state, Sonnet 5.5 high; I's one line by the main session), then **Wave 3b** (G, Opus 5.5 xhigh, possibly split G1 and G2; H, Sonnet 5.5 high). Then a Sonnet review per part, one Opus xhigh review across the parts, fixtures regenerated, the whole suite.
   5. **The paid tests again,** only on the user's approval of their limits.
-- **The user's direction for the design** is quoted in BUILD_LOG, "Oct 25, 2026, 13:31 CDT".
+- **The user's direction for the design** is quoted in BUILD_LOG, "Oct 25, 2026, 13:31 CDT" and "13:38 CDT".
 - **Wave 3's agents (the user):** *"min effort is high, Sonnet 5.5 and Opus 5.5 only, no Haiku. Max effort is xhigh, no max allowed."* Agents never commit; the main session commits each part's paths by name (P4.1).
 - **Done today, all logged:**
   - the paid build tests (12:29);

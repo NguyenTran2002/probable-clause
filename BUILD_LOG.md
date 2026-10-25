@@ -1879,3 +1879,15 @@ Then: *"The budget for paid build tests are sound."*
 - five open questions: the loop budget (800k or 2M), `MAX_CONCURRENT_RUNS` 5, the update step's input (a short brief recommended over the research conversation), the `busy` wording, Phase 4's paid-test limits.
 **Spend:** none.
 **DECISION (user):** none locked yet. The direction above is recorded for the design; each of P4.18 to P4.21 is locked in its own entry on the user's approval of the design.
+
+## Oct 25, 2026, 13:38 CDT — Phase 4: Build, the user's answers to the Wave 3 design's questions (nothing locked)
+**Asked:** the design's five open questions (13:31 entry).
+**Came back:** the user's answers, in their words:
+1. *"2M for the loop's input."*
+2. *"5 runs at once? You mean 5 paid runs? What is "runs" here?"* The main session: a run is one visitor's question being researched and answered, from `POST /runs` to `run_ended`. Then: *"I also want to up maximum parallel runs to 5."*
+3. *"Update step's input should take advantage of the cached research conversation at maximum. We're just separating them so that we have finer control."* The main session's recommendation of a short brief is withdrawn. The design now continues the research conversation, which needs one tool list of seven and one system prompt for both steps, with code refusing each step's tools in the other.
+4. *"Wording when too many runs are in progress: you can write the polished version."* The main session wrote `busy` and, since nothing is reserved now, reworded `daily_cap` and `monthly_cap` (design §5).
+5. *"Reset the limit to 0 for our development. Additionally, Development cost should not count once we deploy production."* This reads two ways, so it is restated in the design (§8) for the user to confirm: a fresh development tally at $0 in a new ledger, with an allowance the user states (the main session suggests $3 of Anthropic and 20 Exa searches); and production already never counts development spend (its own Atlas database and its own Console workspace and key, T3.4).
+- **New question from answer 3:** `UPDATE_INPUT_BUDGET` 1.2M or 2M. Each update call re-sends the research conversation, so the heaviest plausible update step is about 1.06M. The catastrophic overrun for 5 runs is about $44 at 1.2M, or $54 at 2M.
+**Spend:** none.
+**DECISION (user):** none locked yet. These answers go into P4.18 to P4.21 when the design is approved.

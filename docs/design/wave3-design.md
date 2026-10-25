@@ -16,9 +16,9 @@ The aim **(user)**: every normal run passes smoothly. Each limit is a backstop t
 ## 2. A run, end to end
 
 1. **Admission.** `POST /runs` admits the run if all of these hold: today's spend is under the daily cap, the month's is under the monthly cap, the Anthropic spend-limit flag is clear, and fewer than `MAX_CONCURRENT_RUNS` runs are in progress. Nothing is reserved. If Atlas can't be reached, the run is refused, as today (fail closed).
-2. **Research** (Sonnet 5.5, high effort): the loop as today, without the update check. Its tools are `search_meaning`, `search_exact`, `read_passages`, `keep_passages` and `submit_answer(out_of_scope, note?)`.
+2. **Research** (Sonnet 5.5, high effort): the loop as today, without the update check. It may use `search_meaning`, `search_exact`, `read_passages`, `keep_passages` and `submit_answer(out_of_scope, note?)`; the two update tools are in its list (for the shared cache) but refused until it submits.
 3. **When research is accepted, two branches start at once:**
-   - **The update step** (Sonnet 5.5, high effort): its own short loop with `search_web_updates` and `submit_update`. It decides whether to search. It ends with its findings, an overview, or a reason for skipping.
+   - **The update step** (Sonnet 5.5, high effort): the research conversation continued, reading its cache, with its own limits and only `search_web_updates` and `submit_update` allowed. It decides whether to search. It ends with its findings, an overview, or a reason for skipping.
    - **Composition** (Sonnet 5.5, high effort): unchanged except for the model. Only the kept passages go in as sources, uncached.
 4. **The checks** run on the answer when it finishes; **the band** is built from the update step's submit.
 5. **`run_ended`** is sent when both branches are done.
@@ -33,7 +33,7 @@ The aim **(user)**: every normal run passes smoothly. Each limit is a backstop t
 
 | Setting | Now | New | Basis |
 |---|---|---|---|
-| `LOOP_INPUT_BUDGET` | 370,000 | **800,000 or 2,000,000: the user to confirm** (see below) | test 4 used 366,680 in 8 rounds |
+| `LOOP_INPUT_BUDGET` | 370,000 | **2,000,000** (user) | test 4 used 366,680 in 8 rounds |
 | `LOOP_OUTPUT_BUDGET` | 8,000 | 16,000 | 4,574 seen (57%) |
 | `COMPOSITION_MAX_TOKENS` | 12,000 | 16,000 | 5,481 seen (46%); a cut-off answer is the worst failure a visitor sees |
 | `UPDATE_SEARCHES_PER_RUN` | 3 | 5 | 3 of 3 used once |
@@ -49,23 +49,31 @@ The aim **(user)**: every normal run passes smoothly. Each limit is a backstop t
 
 `RUN_INPUT_TOKENS`, `RUN_OUTPUT_TOKENS`, `COMPOSITION_RESERVE_INPUT` and `FIXED_PREFIX_TOKENS_ESTIMATE` are removed. They existed so the loop left room for the composition inside one run-wide limit, and to price the reservation. Each step now has its own limits (§4).
 
-### P4.19 The update check leaves the research loop (user; the step's shape is the main session's)
+### P4.19 The update check leaves the research loop and continues its conversation (user; the mechanics are the main session's)
 
 - **Research's `submit_answer`** keeps `out_of_scope` and `note`. It loses `update_skip_reason`, `update_findings` and `update_overview`.
   - Its rules become: rule 1 (alone in its turn and sent once, P4.16), rule 2 (a corpus search unless out of scope), rule 3 (nothing kept needs a note), `no_note` (out of scope needs a note), and the note cap.
   - **Rule 4 goes**, and with it P4.7's waiver and the reminder logic.
   - **The copy guard on the note goes** (P4.8, P4.13 for the note). Research no longer sees any web page, so it can't copy one.
 - **The update step** **(main session)**:
-  - **Its input:** a short brief built by our code, not the research conversation. It holds the question, the coverage dates, research's note or scope note, and the kept passages' IDs, case names, decision dates and keep reasons. No passage text is included.
-    - *Why not continue the research conversation for its cache:* the cache only hits when the tools and system prompt are identical. Research would then have to carry the update tools (refused while researching) and the update's instructions in its own system prompt. The web search doesn't need passage text, and the brief is a few thousand tokens.
+  - **Its input (user): the research conversation itself, for its cache.** *"Update step's input should take advantage of the cached research conversation at maximum. We're just separating them so that we have finer control."* The update step's first call is the research conversation as it stands, then the accepted `submit_answer`'s result, carrying the update step's instructions as a user turn. Every update call after that adds to the same conversation.
+    - **What sharing the cache needs** (main session): a cache entry is reused only when everything before it is identical: the tool list, then the system prompt, then the messages. So:
+      - **One tool list for both steps:** research and the update step both send all seven tools. Our code refuses `search_web_updates` and `submit_update` during research ("the update step comes after you submit"), and the four research tools and `submit_answer` during the update step ("research is finished").
+      - **One system prompt for both:** `loop_system.md` describes both steps, so the update guidance moves into a short section of it rather than a separate file.
+      - The update step's first call then reads the whole research conversation from cache at $0.10 per million tokens. Only the instructions turn and each search's pages are new.
+    - **The 1-hour breakpoint stays on the system prompt;** the automatic 5-minute one covers the growing conversation in both steps, as today.
+    - **Research still never sees a web page:** pages arrive only in the update step, after research has ended, so dropping the copy guard on research's note stays sound.
   - **Its tools:** `search_web_updates` (at most 5 a run, unchanged inside) and `submit_update(update_findings?, update_overview?, update_skip_reason?)`.
   - **Its rules:**
     - `same_turn`, as P4.16;
     - `no_check`: refused when no search ran and no skip reason was given (this replaces rule 4, with no reminder state);
     - the findings checks (T2.3);
     - the copy guard on statements, overview and skip reason (P4.3, P4.13, with P4.9's corpus exemption).
-  - **Its own system prompt**, with a 1-hour cache like research's.
-  - **Its limits:** `UPDATE_MAX_ROUNDS` 8, `UPDATE_INPUT_BUDGET` 400,000 and `UPDATE_OUTPUT_BUDGET` 6,000 (each a placeholder until measured). Five searches of about 10k tokens of pages each come to roughly 200k over the step.
+  - **Its limits:** `UPDATE_MAX_ROUNDS` 8, `UPDATE_OUTPUT_BUDGET` 6,000, and `UPDATE_INPUT_BUDGET` **1,200,000 or 2,000,000 (the user to choose; §8)**. Because every update call re-sends the research conversation, its input budget must be sized like research's:
+    - **typical:** research ends near 50k tokens, 2 searches, 3 update calls: about 180k;
+    - **the heaviest plausible:** research ends near 150k (12 rounds), 5 searches of about 10k tokens of pages each, 6 calls: about 1.06M;
+    - **1.2M** covers that heaviest case; **2M** matches research and fires only in a runaway.
+    - **Real cost stays small:** most of that input is a cache read. A typical update step costs about $0.05 to $0.10, mostly the pages' first write and its output.
   - **Retries** as for research (T3.3).
   - **If it fails or hits a limit,** the band shows `not_summarised` when a search ran, else `unavailable` with the error, and the answer isn't touched.
 - **The band's outcomes:**
@@ -88,13 +96,13 @@ The aim **(user)**: every normal run passes smoothly. Each limit is a backstop t
   - otherwise it's refused with today's codes (`daily_cap`, `monthly_cap`, `spend_limit_paused`, `atlas_unreachable`) or a new `busy`.
 - **Spend recorded as it happens:** each paid call's cost is added atomically to the day's and month's totals when the call ends. A crash then loses at most one call's figure.
 - **Runs in progress always finish.** A run is never stopped because the day's cap was passed during it. **(user)** *"I'm willing to trade more cost overrun here."*
-- **The bound on overrun:** at most `MAX_CONCURRENT_RUNS` runs can be running when the cap is reached.
+- **The bound on overrun:** at most `MAX_CONCURRENT_RUNS` runs can be in progress when the cap is reached.
   - **Typical:** 5 runs × about $0.40, so under $2 past the cap.
-  - **Catastrophic:** 5 runs × the per-run catastrophic figure:
-    - at 800k: research $2.18, update $1.06, composition $0.55 for three attempts, Exa and Voyage $0.07, about $3.86 a run, so about **$19**;
-    - at 2M: about $6.86 a run, so about **$34**.
-  - **The outer backstop:** Anthropic's Console limit on the live workspace ($60 a month, T3.4), outside our code.
-- **`MAX_CONCURRENT_RUNS` = 5** **(main session; the user to confirm)**. It's one instance's registry count. Cloud Run's API service is `max 1` (T3.5), so one count covers the service.
+  - **Catastrophic** (every input token billed as a fresh 5-minute write, every limit reached; research 2M, composition three attempts, Exa and Voyage at their bounds):
+    - with `UPDATE_INPUT_BUDGET` 1.2M: research $5.18, update $3.06, composition $0.56, Exa and Voyage $0.07, about **$8.87 a run**, so about **$44** for 5 runs;
+    - with `UPDATE_INPUT_BUDGET` 2M: about **$10.87 a run**, so about **$54** for 5 runs.
+  - **The outer backstop:** Anthropic's Console limit on the live workspace ($60 a month, T3.4), outside our code. At 2M the catastrophic overrun comes close to it.
+- **`MAX_CONCURRENT_RUNS` = 5** **(user)**. A run is one visitor's question being researched and answered, from `POST /runs` to `run_ended`. Each run makes its own paid calls; a sixth visitor asking while five runs are in progress is refused with `busy`. It's one instance's registry count. Cloud Run's API service is `max 1` (T3.5), so one count covers the service.
 - **What goes:**
   - `reserve`, `settle` and `release`, and reservation expiry;
   - `--open-reservations` in `spend_report.py` and its use in `deploy.sh`;
@@ -106,8 +114,8 @@ The aim **(user)**: every normal run passes smoothly. Each limit is a backstop t
 ## 4. Settings after Wave 3
 
 - **Kept:** `MAX_ROUNDS` 12; `KEEP_CAP` 40; `DAILY_CAP_USD` 15; `MONTHLY_CAP_USD` 60; the deadlines; `VOYAGE_RUN_BOUND_USD`; the note and finding caps.
-- **Changed:** `LOOP_INPUT_BUDGET` (800,000 or 2,000,000); `LOOP_OUTPUT_BUDGET` 16,000; `COMPOSITION_MODEL` `claude-sonnet-5-5`; `COMPOSITION_MAX_TOKENS` 16,000; `UPDATE_SEARCHES_PER_RUN` 5.
-- **New:** `UPDATE_MODEL` `claude-sonnet-5-5` and `UPDATE_EFFORT` `high`; `UPDATE_MAX_ROUNDS` 8; `UPDATE_INPUT_BUDGET` 400,000; `UPDATE_OUTPUT_BUDGET` 6,000; `MAX_CONCURRENT_RUNS` 5.
+- **Changed:** `LOOP_INPUT_BUDGET` 2,000,000; `LOOP_OUTPUT_BUDGET` 16,000; `COMPOSITION_MODEL` `claude-sonnet-5-5`; `COMPOSITION_MAX_TOKENS` 16,000; `UPDATE_SEARCHES_PER_RUN` 5.
+- **New:** `UPDATE_MODEL` `claude-sonnet-5-5` and `UPDATE_EFFORT` `high`; `UPDATE_MAX_ROUNDS` 8; `UPDATE_INPUT_BUDGET` 1,200,000 or 2,000,000; `UPDATE_OUTPUT_BUDGET` 6,000; `MAX_CONCURRENT_RUNS` 5.
 - **Removed:** `RUN_INPUT_TOKENS`, `RUN_OUTPUT_TOKENS`, `COMPOSITION_RESERVE_INPUT`, `FIXED_PREFIX_TOKENS_ESTIMATE` (and the reservation's settings, if any are left after E's change).
 
 ## 5. Events and the page (contract v2.0)
@@ -116,7 +124,7 @@ The events stay one numbered stream per run. The two branches' events interleave
 
 - **A `step` field** (`research`, `update`, `composition`) on `round_started`, `tool_call`, `tool_result`, `paid_call` and `api_fragment`. `paid_call.purpose` gains `update`.
 - **New `update_started` and `update_ended`.**
-  - `update_started` marks the branch's start, with its brief's kept IDs.
+  - `update_started` marks the branch's start, with the kept IDs research ended with.
   - `update_ended` carries the step's own stop kind, if any.
   - `update_band` stays the band's single summary, sent when the update step ends (or at once when it's turned off).
 - **`run_started.limits`:** `rounds`, `loop_input_tokens`, `loop_output_tokens`, `update_searches`, `update_rounds`, `composition_max_tokens`. The old run-wide token fields go.
@@ -127,21 +135,25 @@ The events stay one numbered stream per run. The two branches' events interleave
   - on `submit_answer`: `same_turn`, `no_search`, `nothing_kept`, `no_note`, `note_too_long`, or null;
   - on `submit_update`: `same_turn`, `no_check`, `findings`, `copy_guard`, or null;
   - `no_update_check` goes.
-- **Refusals at `POST /runs`:** new `busy` (503, "Too many runs are in progress; try again in a minute."). The wording is a draft for the user.
+- **Refusals at `POST /runs`** (the API's messages; the user asked the main session to write them, and the page's own lines follow T5.4):
+  - **`busy`** (503, new): *"Five questions are being researched right now, the most this site handles at once. Please try again in a minute."* The number follows `MAX_CONCURRENT_RUNS`.
+  - **`daily_cap`**, reworded since nothing is reserved: *"Today's spending has reached the daily cap, so no new question can start until midnight, Central Time."*
+  - **`monthly_cap`**, likewise: *"This month's spending has reached the monthly cap, so no new question can start until the 1st."*
+  - `spend_limit_paused` and `atlas_unreachable` stay as they are.
 - **The frontend session:**
   - **must wait for the new fixtures** for the step log (two lanes, or the update steps grouped after research), the band's timing, `declined`'s removal and the `busy` refusal;
   - **may go on** with everything else: sources, the answer, citations, the reader, checks and replays.
 
 ## 6. Prompts (the main session drafts; the user approves before the first paid run, T1.14)
 
-- **`loop_system.md`:** the update-check item and its mentions go; the "Submitting" item loses the update fields; the status line loses the update count.
+- **`loop_system.md`** (shared by both steps, for the cache): the research items lose the update check; the "Submitting" item loses the update fields; a new short section describes the update step that follows a submit (its purpose, the window advice, the findings rules, when to skip, and "describe, never evaluate"); the research status line loses the update count.
 - **`tools.json`:**
   - `submit_answer` loses the update fields, and its description loses "the update check run or skipped";
-  - `search_web_updates` and the new `submit_update` move to the update step's tool list.
-- **New `update_system.md`:** what the step is for, its brief, the window advice and the "describe, never evaluate" rule moved from `loop_system.md`, the findings rules, and when to skip.
+  - one tool list of seven for both steps: `search_web_updates` and the new `submit_update` are added, each description saying which step may use it.
+- **`loop_messages.json`:** a new `update_start` message, the accepted submit's result that opens the update step; `submit_accepted_*` texts adjusted; the update step's status line.
 - **`rejections.json`:**
   - `rule_4_no_update_check`, `copy_guard_note` and research's findings texts go;
-  - `submit_update.no_check` is new;
+  - `submit_update.no_check` and the two wrong-step refusals are new;
   - the copy-guard texts move under `submit_update`.
 - **`composition_system.md`:** unchanged. The model changes; the user judges the result.
 
@@ -162,10 +174,16 @@ The events stay one numbered stream per run. The two branches' events interleave
 4. **Reviews:** one Sonnet 5.5 high review per part, then one Opus 5.5 xhigh review across the parts. Fixtures are regenerated by the main session (`make_fixtures.py`, deterministic), and the whole suite is run.
 5. **Then, with the user's approval:** the four paid tests again. Phase 4 has $1.33 of Anthropic and 2 Exa searches left, so an Exa top-up of the Phase 4 limit needs the user's word first.
 
-## 8. Open questions for the user
+## 8. The user's answers, and what is still open
 
-1. **`LOOP_INPUT_BUDGET`: 800,000 or 2,000,000?** It counts input only. 800k lets 12 rounds of research pass. 2M makes it a backstop for a runaway alone, at about $3 more catastrophic cost per run.
-2. **`MAX_CONCURRENT_RUNS` = 5?** It bounds the overrun past the cap.
-3. **The update step's input: a short brief (recommended), or the research conversation?**
-4. **The `busy` refusal's wording.**
-5. **Phase 4's paid-test limits for Wave 3's runs:** the remaining $1.33 of Anthropic and 2 Exa searches will not cover four runs with up to 5 searches each.
+**Answered (Oct 25, 2026):**
+1. `LOOP_INPUT_BUDGET` **2,000,000**.
+2. `MAX_CONCURRENT_RUNS` **5**; a run is one visitor's question in progress.
+3. The update step **continues the research conversation**, for its cache (P4.19 above).
+4. The refusal wording: written by the main session (§5).
+
+**Still open:**
+1. **`UPDATE_INPUT_BUDGET`: 1,200,000 or 2,000,000?** It follows from answer 3: each update call re-sends the research conversation. 1.2M covers the heaviest plausible update step (about 1.06M); 2M fires only in a runaway, with a catastrophic overrun of about $54 for 5 runs against $44.
+2. **Development spend (answer 5), restated for the user:** *"Reset the limit to 0 for our development. Additionally, Development cost should not count once we deploy production."*
+   - **The main session's reading:** Wave 3's paid tests start a fresh development tally at $0, in a new ledger, with the earlier $1.67 and 8 Exa searches recorded and closed. The allowance is to be stated by the user: the main session suggests **$3 of Anthropic and 20 Exa searches**, since a run may now make up to 5.
+   - **Development never counts against production:** this already holds by design. The live service uses its own Atlas database (`Probable_Clause`, `PC_ENV=live`), so its daily and monthly caps never see test spend, and its own Console workspace and key with the $60 monthly limit (T3.4, one of the user's actions before live runs). The two must not share a key. Nothing new is built for it; the deploy check confirms `PC_ENV=live`.
