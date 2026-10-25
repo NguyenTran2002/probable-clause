@@ -14,7 +14,7 @@ import pytest
 from api.protocols import BUDGET_STOPS, StopKind, Refusal, Reservation
 
 CHI = ZoneInfo("America/Chicago")
-W = 1.674                        # about a run's worst case (T3.4)
+W = 1.674                        # an amount to reserve: T3.4's worst case before P4.6 ($2.106); the store takes what it is given
 T = datetime(2030, 5, 14, 12, 0, tzinfo=CHI)
 DAY, MONTH = "2030-05-14", "2030-05"
 

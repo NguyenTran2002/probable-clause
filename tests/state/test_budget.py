@@ -7,17 +7,17 @@ from api.state import budget
 from api.state.budget import worst_case_components, worst_case_usd
 
 
-def test_worst_case_is_one_dollar_sixty_seven_four_to_the_tenth_of_a_cent():
-    assert round(worst_case_usd(), 3) == 1.674
-    assert worst_case_usd() == pytest.approx(1.674, abs=1e-9)
+def test_worst_case_is_two_dollars_ten_six_to_the_tenth_of_a_cent():
+    assert round(worst_case_usd(), 3) == 2.106          # P4.6 (was 1.674)
+    assert worst_case_usd() == pytest.approx(2.106, abs=1e-9)
 
 
 def test_each_component_of_the_worst_case():
     c = worst_case_components()
     assert c["loop_input"] == pytest.approx(0.943, abs=1e-9)
     assert c["loop_output"] == pytest.approx(0.08, abs=1e-9)
-    assert c["composition"] == pytest.approx(0.36, abs=1e-9)
-    assert c["composition_retries"] == pytest.approx(0.24, abs=1e-9)
+    assert c["composition"] == pytest.approx(0.504, abs=1e-9)
+    assert c["composition_retries"] == pytest.approx(0.528, abs=1e-9)
     assert c["exa"] == pytest.approx(0.021, abs=1e-9)
     assert c["voyage"] == pytest.approx(0.03, abs=1e-9)
     assert set(c) == {"loop_input", "loop_output", "composition", "composition_retries", "exa", "voyage"}
@@ -47,9 +47,10 @@ def test_the_worst_case_follows_the_settings(monkeypatch):
     assert worst_case_components()["voyage"] == pytest.approx(0.05, abs=1e-9)
 
 
-def test_five_runs_fit_in_a_day_and_the_sixth_does_not():
+def test_four_runs_fit_in_a_day_and_the_fifth_does_not():
+    # T3.5 had "about five at once at $1.67 within $10"; at P4.6's $2.106, four reservations fit at once
     w = worst_case_usd()
-    assert 5 * w <= settings.DAILY_CAP_USD.value < 6 * w   # T3.5: "about five at once at $1.67 within $10"
+    assert 4 * w <= settings.DAILY_CAP_USD.value < 5 * w
 
 
 def test_module_exposes_only_what_the_contract_names():

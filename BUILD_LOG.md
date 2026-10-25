@@ -1522,3 +1522,35 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **First tried** `CronCreate` (a one-shot at 03:35). The auto-mode permission check failed with no verdict on every command and on `CronCreate` from about 01:10. The user switched the session out of auto mode, and arming and this commit went through.
 **Spend:** none.
 **DECISION (user):** *"Try it this way instead."*
+
+## Oct 25, 2026, 01:34 CDT — Phase 4: Build, overnight step 1: contract v1.5 and the shared changes (P4.6 to P4.9)
+**Asked:** the overnight note's step 1 (`docs/sessions/overnight-run.md`), carrying out P4.6 to P4.9 in the main session's files and in F.
+**Came back:**
+- **Settings (P4.6):**
+  - `COMPOSITION_RESERVE_INPUT` 66,000;
+  - `RUN_INPUT_TOKENS` 436,000;
+  - `LOOP_INPUT_BUDGET` stays 370,000;
+  - new `NOTE_MAX_CHARS` 1,000.
+- **The worst case:** $2.106 (0.943 + 0.08 + 0.504 + 0.528 + 0.021 + 0.03). `api/state/budget.py` and `tests/state/test_budget.py` updated. The store tests pass an amount as input, so their 1.674 stays, now labelled as an example amount.
+- **A consequence of P4.6 the user has not yet seen:** at $2.106, **four** reservations fit in the $10 day at once, not T3.5's "about five at once at $1.67". The budget test now asserts four. H's run-ID test made five runs at once and its fifth was refused; it now makes four. This is queued for the morning; no figure was changed to avoid it.
+- **New test `tests/contract/test_composition_worst_case.py`.** It recomputes the composition's worst-case input with G's own request builder and estimator: the 40 largest documents with 300-character reasons, a 2,000-character question and a 1,000-character note.
+  - It gives **65,188 tokens**, not the 64,945 the pre-compaction script gave. This run ranks the documents by their whole estimated block, not by text length, which explains the difference.
+  - It fits within 66,000 (a margin of 812).
+  - The test also asserts the margin stays under 5,000 and that the run limit is the loop budget plus the reserve.
+  - Characters that JSON escapes raise only the estimate, not the tokens billed, so plain letters are the worst case.
+- **F (P4.8, P4.9), in `api/checks/update_findings.py`:**
+  - `copy_guard_report(..., note=None, exempt=NO_EXEMPTION)` returns `note_flagged` and `note_pages`, with a problem that names "The note" and the page IDs only.
+  - `corpus_words(texts)` builds `CorpusWords`: one normalised string, one line per text. `gram in it` is true only for a run inside one text.
+  - It takes about 2 MB for the corpus. A frozenset of 10-grams was measured at 61 MB (264,869 grams), so the string won.
+  - `pages_named` is exported.
+  - 13 new tests, one of them on a real corpus sentence.
+  - A mutation check by hand (exempt everything; one run across texts; the corpus not normalised; the note unchecked; `any` becoming `all`): each mutant fails tests. One mutant had a different join that still kept the texts apart, so it was equivalent, as expected.
+- **Schema:** `submit.rule` gains `note_too_long`; `tests/contract/test_fixtures.py` allows it.
+- **Draft texts for the user's review (T1.14):**
+  - `rejections.json`: `submit.note_too_long` and `submit.copy_guard_note`, with `<pages>` as page IDs;
+  - `tools.json`: the note's description gains "At most {{NOTE_MAX_CHARS}} characters."
+- **Contract v1.5:** header, §4.E (the worst case and the four-at-once note), §4.F (the signatures and the exemption), §4.G (the rule order with the note cap; P4.7, P4.8 and P4.9 in the loop; the composition estimate as an error log; P4.10), §6 (the withheld note, `note_too_long`), §7.
+- **G's `tests/loop/test_run_answered.py`** expected the old 400,000 limit; that one figure is updated, and the step-2 builder is told.
+- **Whole suite: 3,336 passed, 49 skipped.**
+**Spend:** none.
+**DECISION (user):** none new. This carries out P4.6 to P4.9, locked at 01:01.

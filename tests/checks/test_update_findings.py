@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from api.checks import CopyGuardReport, check_update_findings, copy_guard, copy_guard_report
+from api.checks import CopyGuardReport, check_update_findings, copy_guard, copy_guard_report, corpus_words
 from api.settings import (COPY_GUARD_WORDS, UPDATE_FINDINGS_MAX, UPDATE_OVERVIEW_MAX_CHARS,
                           UPDATE_SOURCES_PER_STATEMENT, UPDATE_STATEMENT_MAX_CHARS)
 
@@ -237,6 +237,90 @@ def test_n_words_below_one_is_refused():
 
 def test_report_type():
     assert isinstance(copy_guard_report([], None, {}, 10), CopyGuardReport)
+
+
+# --- P4.8: the note of a no-sources reply
+
+def test_the_note_is_flagged_and_names_the_page_only():
+    r = copy_guard_report([], None, PAGES, 10, note="I could not find this. " + COPIED + ".")
+    assert r.note_flagged is True and r.note_pages == ["web-1-1"]
+    assert r.flagged_statements == set() and r.overview_flagged is False
+    [p] = r.problems
+    assert p.startswith("The note") and "web-1-1" in p
+    assert "drones" not in p and "photograph" not in p
+
+
+def test_a_reworded_note_passes():
+    r = copy_guard_report([], None, PAGES, 10, note="The corpus does not cover drone photography of yards.")
+    assert r.note_flagged is False and r.note_pages == [] and r.problems == []
+
+
+def test_no_note_given_means_no_note_check():
+    r = copy_guard_report([COPIED], None, PAGES, 10)
+    assert r.note_flagged is False and len(r.problems) == 1
+
+
+def test_note_and_statements_are_reported_together():
+    r = copy_guard_report([COPIED], None, PAGES, 10, note=COPIED)
+    assert r.flagged_statements == {0} and r.note_flagged is True and len(r.problems) == 2
+
+
+# --- P4.9: a run of words that is also the corpus's is not a copy of the page
+
+KATZ = "the Fourth Amendment protects people not places and what a person knowingly exposes to the public"
+
+
+def test_a_court_quotation_a_page_also_quotes_is_exempt():
+    page = {"web-1-1": "Writing in 1967 the Court said that " + KATZ + " is not a subject of protection."}
+    exempt = corpus_words(["For " + KATZ.replace("people not", "people, not") + ", even in his own home or office."])
+    r = copy_guard_report(["The justices said " + KATZ + "."], None, page, 10, exempt=exempt)
+    assert r.problems == [] and r.flagged_statements == set()
+
+
+def test_the_exemption_covers_the_overview_and_the_note_too():
+    page = {"web-1-1": "Writing in 1967 the Court said that " + KATZ + " is not a subject of protection."}
+    exempt = corpus_words([KATZ])
+    r = copy_guard_report([], "As the Court put it, " + KATZ + ".", page, 10, note=KATZ, exempt=exempt)
+    assert r.problems == [] and r.overview_flagged is False and r.note_flagged is False
+
+
+def test_the_page_s_own_words_around_a_court_quotation_still_trip_it():
+    # the quotation is exempt; the run that carries on into the page's own words is not
+    tail = "is not a subject of protection according to this analysis"
+    page = {"web-1-1": "Writing in 1967 the Court said that " + KATZ + " " + tail + "."}
+    exempt = corpus_words([KATZ])
+    r = copy_guard_report(["Quoting: " + KATZ + " " + tail], None, page, 10, exempt=exempt)
+    assert r.flagged_statements == {0}
+
+
+def test_the_page_s_own_words_alone_still_trip_it_with_the_corpus_exempt():
+    exempt = corpus_words([KATZ, "An unrelated passage of the corpus about warrants and probable cause."])
+    assert copy_guard_report([COPIED], None, PAGES, 10, exempt=exempt).flagged_statements == {0}
+
+
+def test_a_run_split_across_two_corpus_texts_is_not_exempt():
+    words = KATZ.split()
+    exempt = corpus_words([" ".join(words[:8]), " ".join(words[8:])])
+    page = {"web-1-1": "Writing in 1967 the Court said that " + KATZ + " is not a subject of protection."}
+    assert copy_guard_report([KATZ], None, page, 10, exempt=exempt).flagged_statements == {0}
+
+
+def test_the_exemption_is_normalised_as_the_page_is():
+    page = {"web-1-1": "The COURT'S words: " + KATZ.upper() + "!"}
+    exempt = corpus_words(["the court’s words, " + KATZ.replace("people not", "people—not")])
+    assert copy_guard_report(["The courts words " + KATZ], None, page, 10, exempt=exempt).problems == []
+
+
+def test_a_sentence_of_the_real_corpus_is_exempt():
+    from api.corpus.store import Corpus
+    from tests.loop.support import ROOT
+    corpus = Corpus.load(ROOT)
+    exempt = corpus_words(p.text for p in corpus.passages.values())
+    p = next(p for p in corpus.passages.values() if len(p.text.split()) > 40)
+    quote = " ".join(p.text.split()[5:25])
+    page = {"web-1-1": "An article quoting the Court: " + quote + ". More of the article's own words here."}
+    assert copy_guard_report([quote], None, page, 10).flagged_statements == {0}           # without the exemption
+    assert copy_guard_report([quote], None, page, 10, exempt=exempt).problems == []         # with it
 
 
 # --- the binding signature: copy_guard(texts, page_texts, n_words) -> list[str]

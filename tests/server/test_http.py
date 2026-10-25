@@ -127,8 +127,9 @@ async def test_post_runs_201():
 async def test_run_ids_are_distinct_and_unguessable():
     h = make_app()
     async with lifespan(h.app):
-        ids = {(await h.client.post("/runs", {"question": f"{QUESTION} {i}"})).json()["run_id"] for i in range(5)}
-        assert len(ids) == 5 and all(len(i) == 22 for i in ids)
+        # four: at P4.6's worst case ($2.106) a fifth open reservation would pass the $10 day
+        ids = {(await h.client.post("/runs", {"question": f"{QUESTION} {i}"})).json()["run_id"] for i in range(4)}
+        assert len(ids) == 4 and all(len(i) == 22 for i in ids)
 
 
 @pytest.mark.parametrize("question", ["", "   ", "\n\t \r", "\x00\x01\x07\x7f", "\u0085\u009f"])

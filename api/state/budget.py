@@ -7,7 +7,7 @@ _PER_M = 1_000_000
 
 
 def worst_case_components() -> dict[str, float]:
-    """The six parts of the worst case, in dollars (T3.4: 0.943, 0.08, 0.36, 0.24, 0.021, 0.03).
+    """The six parts of the worst case, in dollars (T3.4 amended by P4.6: 0.943, 0.08, 0.504, 0.528, 0.021, 0.03).
 
     Every attempt counts toward the run's token ceiling (T3.3), so retries never raise the loop's parts.
     """
@@ -31,5 +31,5 @@ def worst_case_components() -> dict[str, float]:
 
 
 def worst_case_usd() -> float:
-    """What a run reserves before it starts: about $1.674 (T3.4)."""
+    """What a run reserves before it starts: about $2.106 (T3.4 amended by P4.6; was $1.674)."""
     return round(sum(worst_case_components().values()), 6)

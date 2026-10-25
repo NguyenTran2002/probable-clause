@@ -494,7 +494,7 @@ def test_refused_submits_withhold_flagged_statements(path):
             sub = d["submit"]
             if not sub["accepted"]:
                 assert d["is_error"] and sub["rule"] in ("same_turn", "findings", "copy_guard", "no_search", "nothing_kept",
-                                                         "no_update_check", "no_note", None)   # None: bad input (v1.3)
+                                                         "no_update_check", "no_note", "note_too_long", None)   # None: bad input (v1.3)
             inp = calls[d["tool_use_id"]]["input"]
             texts = [f["statement"] for f in inp.get("update_findings") or []] + [inp.get("update_overview") or ""]
             withheld = [t for t in texts if t == WITHHELD]

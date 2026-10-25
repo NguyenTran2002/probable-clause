@@ -20,6 +20,7 @@ def month_doc(ms=0.0, mr=0.0, ds=0.0, dr=0.0, day="2030-05-14"):
 
 
 # --- the cap rule ---------------------------------------------------------------------------------------------------
+# 1.674 is an example worst case (T3.4's before P4.6, now $2.106); the rule takes the amount it is given.
 
 def test_no_document_means_an_empty_month():
     assert rules.cap_verdict(None, "2030-05-14", 1.674) is None

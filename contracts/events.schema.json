@@ -763,6 +763,7 @@
                 "nothing_kept",
                 "no_update_check",
                 "no_note",
+                "note_too_long",
                 null
               ]
             }

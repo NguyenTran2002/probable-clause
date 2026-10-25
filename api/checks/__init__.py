@@ -2,7 +2,8 @@
 
 from api.checks.answer import check_answer
 from api.checks.result import CheckResult, Flag
-from api.checks.update_findings import CopyGuardReport, check_update_findings, copy_guard, copy_guard_report
+from api.checks.update_findings import (CopyGuardReport, CorpusWords, check_update_findings, copy_guard,
+                                       copy_guard_report, corpus_words, pages_named)
 
-__all__ = ["CheckResult", "CopyGuardReport", "Flag", "check_answer", "check_update_findings", "copy_guard",
-           "copy_guard_report"]
+__all__ = ["CheckResult", "CopyGuardReport", "CorpusWords", "Flag", "check_answer", "check_update_findings", "copy_guard",
+           "copy_guard_report", "corpus_words", "pages_named"]

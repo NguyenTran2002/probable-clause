@@ -18,7 +18,7 @@ from tests.state.fakes import matches
 CHI = ZoneInfo("America/Chicago")
 NOW = datetime(2030, 5, 14, 12, 0, tzinfo=CHI)
 DAY, MONTH = "2030-05-14", "2030-05"
-W = 1.674
+W = 1.674        # an amount to reserve (T3.4's worst case before P4.6); the documents take what they are given
 
 
 # --- reserve ---------------------------------------------------------------------------------------------------

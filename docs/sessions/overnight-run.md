@@ -37,6 +37,8 @@ Each one targets 5 minutes after a known reset.
 *Updated at each milestone; read first on every wake.*
 - 01:25 CDT, before the compaction: no step started. The wake-up method is background sleeps, at the user's direction (CronCreate was tried first and blocked). **Both wake-ups are armed** as background tasks: `b0uvgygbk` (03:35, epoch 1792917300) and `bvw4upwdo` (08:35, epoch 1792935300). Don't arm duplicates; on waking from one, arm the next 5 hours after it. The auto-mode permission check failed from about 01:10, so the user switched the session out of auto mode to arm and commit.
 
+- 01:34 CDT: **step 1 done** (contract v1.5, settings, F's note guard and corpus exemption, drafts), committed. Next: step 2, the loop patch by an Opus 5.5 xhigh builder. Queue for the morning: at $2.106 only four reservations fit in the $10 day at once (T3.5 said about five).
+
 ## Standing limits (unchanged by the night)
 - **No paid call of any kind:** no Anthropic, Voyage, Exa or Atlas call from this session or any agent. The new texts also await the user's review before the first paid run (T1.14).
 - **No deploy, no `gcloud`, nothing to goodnight, no `git push`, no edit to `web/`** (the frontend session's).

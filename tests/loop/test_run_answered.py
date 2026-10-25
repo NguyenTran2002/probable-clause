@@ -43,7 +43,7 @@ async def test_answered_run_events_and_end(world):
     assert end["state"] == "answered" and end["answer_end"] == "complete" and end["stop_kind"] is None
     assert end["rounds"] == 3 and end["no_sources_reason"] is None and end["note"] is None
     started = ctx.of("run_started")[0]
-    assert started["limits"] == {"rounds": 12, "input_tokens": 400_000, "output_tokens": 20_000, "update_searches": 3,
+    assert started["limits"] == {"rounds": 12, "input_tokens": 436_000, "output_tokens": 20_000, "update_searches": 3,
                                  "deadline_s": 600}
     assert started["models"] == {"loop": "claude-sonnet-5-5", "composition": "claude-opus-5-5"}
     assert started["coverage"] == world.corpus.coverage and started["corpus_label"] == "full"

@@ -7,7 +7,7 @@ Every returned string is written to Claude and stored in events. A message names
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Container, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from api.settings import (UPDATE_FINDINGS_MAX, UPDATE_OVERVIEW_MAX_CHARS, UPDATE_SOURCES_PER_STATEMENT,
@@ -105,6 +105,8 @@ class CopyGuardReport:
     problems: list[str] = field(default_factory=list)
     flagged_statements: set[int] = field(default_factory=set)    # 0-based indexes into the statements given
     overview_flagged: bool = False
+    note_flagged: bool = False                                   # P4.8
+    note_pages: list[str] = field(default_factory=list)          # the pages the note repeats, by ID
 
 
 def _words(text: str) -> list[str]:
@@ -116,11 +118,34 @@ def _grams(words: list[str], n: int) -> set[tuple[str, ...]]:
     return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
 
 
+class CorpusWords:
+    """The corpus's words, normalised as the guard normalises a page (P4.9): a run of words found here is the Court's,
+    so a page quoting it is not copied by a text quoting it too. One line per text, so a run never spans two texts.
+    Held as one string (about 2 MB for the corpus) rather than a set of word runs (about 60 MB at 10 words)."""
+
+    def __init__(self, texts: Iterable[str]):
+        self._text = "\n" + "\n".join(" " + " ".join(_words(t)) + " " for t in texts if isinstance(t, str)) + "\n"
+
+    def __contains__(self, gram) -> bool:
+        return isinstance(gram, tuple) and bool(gram) and f" {' '.join(gram)} " in self._text
+
+
+NO_EXEMPTION = CorpusWords(())
+
+
+def corpus_words(texts: Iterable[str]) -> CorpusWords:
+    """Build once per corpus (the passages' texts) and pass to every `copy_guard_report` call (P4.9)."""
+    return CorpusWords(texts)
+
+
 def copy_guard_report(statements: Sequence[str], overview: str | None, pages: Mapping[str, str],
-                      n_words: int) -> CopyGuardReport:
-    """T2.3 item 3: a statement or the overview that repeats `n_words` or more consecutive words of any returned
-    page, ignoring case, punctuation and spacing. `pages` maps a page ID to its text. Statements are numbered
-    from 1 in the messages; `flagged_statements` holds 0-based indexes."""
+                      n_words: int, *, note: str | None = None,
+                      exempt: Container[tuple[str, ...]] = NO_EXEMPTION) -> CopyGuardReport:
+    """T2.3 item 3: a statement, the overview or (P4.8) the note that repeats `n_words` or more consecutive words of
+    any returned page, ignoring case, punctuation and spacing. A run of words that is also in `exempt` (the corpus,
+    from `corpus_words`) is not counted (P4.9). `pages` maps a page ID to its text. Statements are numbered from 1
+    in the messages; `flagged_statements` holds 0-based indexes. Whether the note is guarded at all (a no-sources
+    reply once a page was returned) is the caller's call: pass it only then."""
     if n_words < 1:
         raise ValueError("n_words must be at least 1")
     if not isinstance(pages, Mapping):
@@ -130,7 +155,13 @@ def copy_guard_report(statements: Sequence[str], overview: str | None, pages: Ma
 
     def copied_from(text: str) -> list[str]:
         grams = _grams(_words(text if isinstance(text, str) else ""), n_words)
-        return [pid for pid, g in page_grams.items() if grams & g] if grams else []
+        if not grams:
+            return []
+        ids = []
+        for pid, g in page_grams.items():
+            if any(gram not in exempt for gram in grams & g):
+                ids.append(pid)
+        return ids
 
     for index, statement in enumerate(statements):
         ids = copied_from(statement)
@@ -142,13 +173,24 @@ def copy_guard_report(statements: Sequence[str], overview: str | None, pages: Ma
         if ids:
             report.overview_flagged = True
             report.problems.append(_message("The overview", ids, n_words))
+    if note:
+        ids = copied_from(note)
+        if ids:
+            report.note_flagged = True
+            report.note_pages = ids
+            report.problems.append(f"The note repeats {n_words} or more consecutive words of {pages_named(ids)}. "
+                                   f"Rewrite it in your own words, then submit again.")
     return report
 
 
+def pages_named(ids: list[str]) -> str:
+    """"page web-1-2", or "pages web-1-2 and web-2-1": page IDs only, never their words."""
+    return f"page {ids[0]}" if len(ids) == 1 else "pages " + ", ".join(ids[:-1]) + " and " + ids[-1]
+
+
 def _message(who: str, ids: list[str], n_words: int) -> str:
-    pages = f"page {ids[0]}" if len(ids) == 1 else "pages " + ", ".join(ids[:-1]) + " and " + ids[-1]
-    return (f"{who} repeats {n_words} or more consecutive words of {pages}. Paraphrase it in your own words, "
-            f"attributed to its source, and submit again.")
+    return (f"{who} repeats {n_words} or more consecutive words of {pages_named(ids)}. Paraphrase it in your own "
+            f"words, attributed to its source, and submit again.")
 
 
 def copy_guard(texts: list[str], page_texts: list[str], n_words: int) -> list[str]:
