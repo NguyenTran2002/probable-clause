@@ -780,3 +780,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Twelve placements proposed: waking and the long wait; paused by a cap or Atlas unreachable; reconnecting, paused and resumed; retries inside their step; interrupted and abandoned; reload reattaching; the Voyage warning above the answer; stop labels at the top or end of the answer; a failed composition with no try-again; no-sources replies; replays labelled with their Chicago recording date, "Skip to the end" for replays only; one question per run, the composer starting a fresh run screen. Locked as T4.4; T3.7's "to confirm in Area 4" (follow-ups as new runs) settled.
 
 **DECISION (user):** *"Lock topic 4 as T4.4 as proposed."*
+
+## Oct 24, 2026, 19:00 CDT — Phase 3: Architecture, Area 4 (costs shown, T4.5)
+
+**Asked:** Area 4, topic 5: whether each call's cost is shown (left open by T3.1).
+
+**Came back:**
+- Options laid out: (A) nothing; (B) one run-total line when the run ends, split by service on expand; (C) B plus figures on every step; (D) each response's exact `usage` object in "View API calls". Recommended B with D.
+- The user's change: Voyage left out of the shown cost, since its use is very likely within its free tokens. Restated: the total line covers Claude (loop and answer) and Exa and says so; T3.4's caps still count Voyage at list price (display change only). Locked as T4.5.
+
+**DECISION (user):** *"Voyage is very likely free because we make so few requests that it'd still be within free tier even tho I added money to the account and am at Tier 1. So just total up Claude and Exa code with option B and D?"* Then: *"This matches what I wanted. Lock area 4."*

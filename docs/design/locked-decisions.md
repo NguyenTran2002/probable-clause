@@ -773,3 +773,14 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock topic 4 as T4.4 as proposed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:56 CDT — Phase 3: Architecture, Area 4 (new pieces in the prototype's style, T4.4)"
+
+### T4.5 Costs on the page: a run total for Claude and Exa, and each response's exact usage
+
+- **Decision:** Area 4, topic 5 (left open by T3.1):
+  - **(B) One total line when a run ends**, for Claude (the research loop and the answer) and Exa, **labelled as covering those two**, for example "14 calls · 186,000 input tokens, 142,000 from cache · 6,300 output · about $0.24 at list prices (Claude and Exa)"; expanding it splits the total into the loop, the answer and Exa.
+  - **(D) "View API calls"** shows each Claude response's exact `usage` object, part of T4.3's exact fragments.
+  - **Voyage is not shown**, since its use is very likely within its free tokens. **T3.4 is unchanged:** the caps still count Voyage at list price.
+  - **No per-step figures** in the step log. Replays show their recorded figures, labelled with the prices of their recording date. Wording Area 5, including that these are list prices computed by our code.
+- **User's words:** *"Voyage is very likely free because we make so few requests that it'd still be within free tier even tho I added money to the account and am at Tier 1. So just total up Claude and Exa code with option B and D?"* Then: *"This matches what I wanted. Lock area 4."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:00 CDT — Phase 3: Architecture, Area 4 (costs shown, T4.5)"
