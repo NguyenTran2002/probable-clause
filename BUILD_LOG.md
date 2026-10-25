@@ -2179,3 +2179,23 @@ Then: *"The budget for paid build tests are sound."*
 The deploy green light stays separate.
 **Spend:** none.
 **DECISION (user):** *"The frontend plan looks good. Approved."*
+
+## Oct 25, 2026, 16:52 CDT — Phase 4: Build, the frontend's step 0: the main session's calls under P4.31, and `config.json`'s new figures
+**Asked:** the user's go after the compaction: *"Proceed with standing up the frontend as planned."* Step 0 of `docs/sessions/frontend-plan.md` (P4.33).
+**Came back:** the main session's calls, each the user's to refine afterwards (P4.31):
+- **The update step in the step log:** research's steps first; once research ends, two groups stacked in the one column, "Writing the answer" (the composition) and "Update check, running beside the answer" (the update step's rounds, searches and submit). Events go to their group by `step`, whatever order they arrive in; each group has its own spinner and closes on its own end, or on `run_ended` (a cancelled or interrupted branch, an unanswered `tool_call` included). The band stays where T4.3 puts it and fills in when `update_band` arrives.
+- **The band's unavailable lines beside T5.3's two** (`no_credit`, `key_refused`), by `reason`:
+  - `update_step_limit`: *"Update check unavailable: it stopped at its step limit before summarising."*
+  - `update_time_limit`: *"Update check unavailable: the run reached its time limit first."*
+  - `update_token_ceiling_input`, `update_token_ceiling_output`: *"Update check unavailable: it reached its token limit."*
+  - `console_spend_limit`, `tier_spend_cap`, `spend_limit`, `spend_cap`: *"Update check unavailable: this site's monthly API spending limit was reached."*
+  - any other error kind: *"Update check unavailable: the check failed (<reason>)."*, the reason in T5.4's plain words where it has them (overloaded, rate limited, server error, connection lost), and the bare unavailable line for a code with no words (brief §5a).
+- **`busy`:** the run's last step, where T4.4 puts a `POST /runs` refusal, in contract §5's words, the number written out from `MAX_CONCURRENT_RUNS`.
+- **The cost line:** T5.2's total line unchanged; expanded, it splits into research, the update check, the answer and Exa (`totals.claude.cost_usd`'s `loop`, `update`, `composition`; `exa.cost_usd`).
+- **The credits:** T5.1's line names Sonnet 5.5 for the answers too, following T1.8 as P4.20 amends it: *"research and answers on Claude Sonnet 5.5"*.
+- **Withheld text** (contract §4.G.2) is shown as it arrives, in the step log's muted style, never styled as an error.
+- **`config.json` gains seven figures** the wording names, so none is typed into the page: `UPDATE_SEARCHES_PER_RUN`, `EXA_NUM_RESULTS_DEFAULT`, `EXA_TEXT_CHARS`, `MAX_CONCURRENT_RUNS`, `RUN_DEADLINE_S` (the plan's five), and `ABANDON_AFTER_S` ("over a minute") and `EVENTS_TTL_S` ("24 hours"), which T5.4's lines also name. `api/corpus/web_data.py`'s `CONFIG_NAMES` and its test edited by the main session; contract **v2.1** says so in §11.3. Retry lines need no figure: `paid_call` carries `attempt` and `max_attempts`.
+
+Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 skipped); `web/_generated/` regenerated.
+**Spend:** none.
+**DECISION (user):** *"Proceed with standing up the frontend as planned."* The calls above are the main session's (P4.31), not the user's.

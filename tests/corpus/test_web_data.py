@@ -88,7 +88,8 @@ def test_config_json(tmp_path):
     web_data.build_web_data(ROOT / "data" / "corpus", tmp_path)
     cfg = load(tmp_path / "config.json")
     names = ["WAKE_CHECK_TIMEOUT_S", "WAKE_CHECK_GAP_S", "LONG_WAIT_S", "WAKE_GIVE_UP_S", "HEARTBEAT_INTERVAL_S",
-             "PAGE_WATCHDOG_S", "QUESTION_MAX_CHARS"]
+             "PAGE_WATCHDOG_S", "QUESTION_MAX_CHARS", "UPDATE_SEARCHES_PER_RUN", "EXA_NUM_RESULTS_DEFAULT",
+             "EXA_TEXT_CHARS", "MAX_CONCURRENT_RUNS", "RUN_DEADLINE_S", "ABANDON_AFTER_S", "EVENTS_TTL_S"]
     assert cfg == {n: getattr(settings, n).value for n in names}
 
 

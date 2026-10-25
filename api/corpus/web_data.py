@@ -10,8 +10,10 @@ from api import settings
 from api.corpus.store import Corpus, _resolve_root, credit_of
 
 # The page's figures (contract §5.1), by the names api/settings.py gives them.
+# From v2.0 also the figures the page's wording names (T5.3, T5.4, contract §5's busy text; P4.31).
 CONFIG_NAMES = ("WAKE_CHECK_TIMEOUT_S", "WAKE_CHECK_GAP_S", "LONG_WAIT_S", "WAKE_GIVE_UP_S", "HEARTBEAT_INTERVAL_S",
-                "PAGE_WATCHDOG_S", "QUESTION_MAX_CHARS")
+                "PAGE_WATCHDOG_S", "QUESTION_MAX_CHARS", "UPDATE_SEARCHES_PER_RUN", "EXA_NUM_RESULTS_DEFAULT",
+                "EXA_TEXT_CHARS", "MAX_CONCURRENT_RUNS", "RUN_DEADLINE_S", "ABANDON_AFTER_S", "EVENTS_TTL_S")
 
 
 def _write(path: Path, obj) -> None:

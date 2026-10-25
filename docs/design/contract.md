@@ -1,5 +1,7 @@
 # Interfaces contract
 
+**Version 2.1** (Oct 25, 2026): v2.0 plus seven more figures in `config.json` for the page's wording (§11.3, P4.31).
+
 **Version 2.0** (Oct 25, 2026), for Wave 3 (P4.18 to P4.21, `docs/design/wave3-design.md`). It changes these:
 - **Research** ends with `submit_answer(out_of_scope, note?)`, with no rule 4 and no copy guard on the note (§4.G.3).
 - **The update step** continues the research conversation for its cache: one tool list of seven, one system prompt, each step's tools refused in the other, and `submit_update` with `same_turn`, `findings`, `copy_guard` and `no_check` (§4.G.2, §4.G.4).
@@ -784,7 +786,7 @@ Each replay file: `{"format": 1, "slug", "question", "recorded_at" (Chicago ISO)
 
 Both are written by `scripts/build_web_data.py`.
 - **`corpus.json`:** what the landing page and credits need before any run (T5.1, T5.2): `cases`, `earliest_decided`, the three coverage dates, and the case counts by text source.
-- **`config.json`:** the page's figures from `api/settings.py` (§5.1).
+- **`config.json`:** the page's figures from `api/settings.py`: §5.1's, and from v2.1 the ones its wording names (T5.3, T5.4, §5's `busy` text): `UPDATE_SEARCHES_PER_RUN`, `EXA_NUM_RESULTS_DEFAULT`, `EXA_TEXT_CHARS`, `MAX_CONCURRENT_RUNS`, `RUN_DEADLINE_S`, `ABANDON_AFTER_S`, `EVENTS_TTL_S`.
 
 ## 12. Fakes, fixtures and test seams
 
