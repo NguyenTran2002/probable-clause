@@ -141,11 +141,13 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
           continue;
         }
         const raw = tok.content.slice(p.i, p.k);
-        const inner = inlinePiece(md, raw, map.slice(p.i, p.k), fl, flagged, top.notes);
         if (blk.citations.length) {
-          // a block's last piece carries its pills; a block lies in one structure unless it straddled
+          // the pills follow the cited words; the block's trailing space goes after them, before the next block
+          const body = raw.replace(/\s+$/, '');
+          const inner = inlinePiece(md, body, map.slice(p.i, p.i + body.length), fl, flagged, top.notes);
           top.kids.push(cited(blk, p.b, inner, hueOf, false));
-        } else top.kids.push(...inner);
+          if (body.length < raw.length) top.kids.push(text(' '));
+        } else top.kids.push(...inlinePiece(md, raw, map.slice(p.i, p.k), fl, flagged, top.notes));
       }
       continue;
     }

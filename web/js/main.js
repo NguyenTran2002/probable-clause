@@ -1,0 +1,227 @@
+// Wiring: the landing page, the run screen, one question per run (T4.4 #12), the wake protocol before a live run,
+// replays, and a reload going straight back into its run (T3.2, T4.4 #6).
+
+import markdownit from '../vendor/markdown-it/markdown-it.esm.min.mjs';
+import { h, $, $$, clear, rich, webLink, session } from './dom.js';
+import { loadStatic, loadReplays, loadReplay } from './config.js';
+import { createWaker } from './wake.js';
+import { attach } from './stream.js';
+import { playReplay } from './replay.js';
+import { createView } from './view.js';
+import { makeMarkdown } from './answer.js';
+import * as T from './text.js';
+
+const RUN_KEY = 'probable-clause-run';
+const body = document.body;
+
+function swap(view) {
+  const go = () => { body.dataset.view = view; scrollTo(0, 0); };
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(go);
+  else go();
+}
+
+// ---------- the standing lines (T5.1, T5.2, T5.5), filled from corpus.json ----------
+function standing(corpus) {
+  const credits = () => h('details', { class: 'credits' }, h('summary', null, T.CREDITS_SUMMARY),
+    h('p', null, ...rich(T.creditsSources(corpus))), h('p', null, T.CREDITS_BUILT), h('p', null, T.CREDITS_LICENCE),
+    h('p', null, T.coverageDates(corpus.coverage)), h('p', null, T.TEXT_STATUS));
+  const privacy = () => h('details', { class: 'credits' }, h('summary', null, T.PRIVACY_SUMMARY), ...T.PRIVACY.map(par => h('p', null, ...rich(par))));
+  const affiliation = () => h('p', null, `${T.AFFILIATION} `, webLink(T.REPO_URL, T.REPO_LINK_TEXT));
+  $('#pitch').textContent = T.pitch(corpus);
+  clear($('#landing-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'block' }, T.AI_DISCLOSURE),
+    h('p', null, T.coverageLine(corpus)), affiliation(), h('div', { class: 'folds' }, credits(), privacy()));
+  clear($('#dock-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'long' }, T.AI_DISCLOSURE),
+    h('div', { class: 'folds' }, credits(), privacy()), affiliation());
+  $('#trace-caption').textContent = T.TRACE_CAPTION;
+  $('#from-scratch').textContent = T.FROM_SCRATCH;
+}
+
+async function boot() {
+  let cfg, corpus;
+  try { ({ cfg, corpus } = await loadStatic()); } catch {
+    $('#pitch').textContent = T.GENERAL_FAILURE;
+    return;
+  }
+  const md = makeMarkdown(markdownit);
+  const view = createView({ cfg, corpus, md });
+  const waker = createWaker(cfg);
+  standing(corpus);
+  for (const id of ['#q', '#q2']) $(id).maxLength = cfg.QUESTION_MAX_CHARS;
+  $('#q').placeholder = T.ASK_PLACEHOLDER;
+
+  let live = null;          // the stream of the live run on screen
+  let player = null;        // the replay on screen
+  let token = 0;            // bumps when the screen moves on, so a wake still open starts nothing
+
+  function setPlaying(on, replay = false) {
+    body.classList.toggle('playing', on);
+    body.classList.toggle('replaying', on && replay);
+    const q2 = $('#q2');
+    q2.disabled = on;
+    $('#send').disabled = on;
+    q2.placeholder = on ? T.WORKING : T.ASK_ANOTHER;
+  }
+  function stopAll() {
+    token++;
+    if (live) { live.stop(); live = null; }
+    if (player) { player.stop(); player = null; }
+    setPlaying(false);
+  }
+
+  // ---------- replays ----------
+  const replays = await loadReplays();
+  const chipList = (cls) => h('ul', { class: `chiplist ${cls || ''}` }, replays.map(r => h('li', null,
+    h('button', { class: 'chip', attrs: { type: 'button' }, on: { click: () => startReplay(r.slug) } }, r.question))));
+  if (replays.length) { $('#recorded-label').textContent = T.OR_WATCH; $('#recorded').append(chipList()); } else $('#recorded').hidden = true;
+
+  async function startReplay(slug) {
+    stopAll();
+    session.del(RUN_KEY);
+    let rec;
+    try { rec = await loadReplay(slug); } catch { return; }
+    view.reset({ question: rec.question, replay: rec });
+    swap('run');
+    setPlaying(true, true);
+    const my = token;
+    player = playReplay(rec.events, (ev, o) => { if (my === token) view.onEvent(ev, o); }, () => { if (my === token) setPlaying(false); });
+  }
+  $('#skip').textContent = T.SKIP;
+  $('#skip').addEventListener('click', () => { if (player) player.skip(); });
+
+  // ---------- the landing check (brief §2): it shows nothing unless research is paused (T4.4 #2) ----------
+  waker.landing().then(health => {
+    if (!health) return;
+    const note = { paused_day: T.PAUSED_DAY, paused_month: T.PAUSED_MONTH }[health.live_research];
+    if (note) {
+      $('#q').disabled = true;
+      $('#ask button').disabled = true;
+      $('#ask-note').textContent = note;
+    }
+  });
+
+  // ---------- a live run ----------
+  async function startLive(question) {
+    stopAll();
+    session.del(RUN_KEY);
+    view.reset({ question });
+    swap('run');
+    setPlaying(true);
+    const my = token;
+    const steps = view.steps();
+    let wakeStep = null;
+    const showWake = setTimeout(() => { if (my === token) wakeStep = steps.waking(); }, 800);
+    const tick = ({ elapsed, long }) => {
+      if (my !== token || !wakeStep) return;
+      view.status(T.seconds(elapsed), true);
+      if (long) wakeStep.long(chipList('chips-replay'));
+    };
+    try {
+      await waker.wake(tick);
+    } catch {
+      clearTimeout(showWake);
+      if (my !== token) return;
+      if (!wakeStep) wakeStep = steps.waking();
+      wakeStep.gaveUp(() => startLive(question), chipList('chips-replay'));
+      view.status('', false);
+      setPlaying(false);
+      return;
+    }
+    clearTimeout(showWake);
+    if (my !== token) return;
+    if (wakeStep) wakeStep.done();
+    view.status(T.WORKING, true);
+    // POST /runs only after /health answered our JSON, and never retried automatically (brief §8.5 rule 2)
+    let r, j = null;
+    try {
+      r = await fetch('api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
+      if (/application\/json/.test(r.headers.get('content-type') || '')) j = await r.json().catch(() => null);
+    } catch { r = null; }
+    if (my !== token) return;
+    if (r && r.status === 201 && j && j.run_id) {
+      session.set(RUN_KEY, j.run_id);
+      follow(j.run_id, my);
+      return;
+    }
+    refused(j && j.error);
+  }
+
+  function refused(code) {
+    const words = { busy: T.busy(cfg), paused_day: T.PAUSED_DAY, paused_month: T.PAUSED_MONTH, atlas_unreachable: T.ATLAS_UNREACHABLE,
+      question_empty: T.QUESTION_EMPTY, question_too_long: T.questionTooLong(cfg) }[code] || T.GENERAL_FAILURE;
+    view.endStep(words);
+    view.status('', false);
+    setPlaying(false);
+  }
+
+  function follow(runId, my, lastN = 0) {
+    live = attach(runId, cfg, {
+      onEvent: ev => {
+        if (my !== token) return;
+        const behind = Date.now() - Date.parse(ev.at) > 5000;     // a stored event caught up on, not a new one
+        view.onEvent(ev, { quiet: behind });
+      },
+      onState: st => {
+        if (my !== token) return;
+        if (st === 'reconnecting') view.status(T.RECONNECTING, true);
+        else if (st === 'open') view.status();
+        else if (st === 'closed') { setPlaying(false); live = null; }
+        else if (st === 'expired') { view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
+        else if (st === 'gave_up') {
+          const s = view.steps().waking();
+          s.gaveUp(() => { s.remove(); follow(runId, my, live ? live.last : 0); }, chipList('chips-replay'));
+          view.status('', false);
+        }
+      },
+      wake: () => waker.wake(),
+    }, { lastN });
+  }
+
+  // ---------- the forms ----------
+  $('#ask').addEventListener('submit', e => {
+    e.preventDefault();
+    const q = $('#q').value.trim();
+    if (!q) { $('#ask-note').textContent = T.QUESTION_EMPTY; $('#q').focus(); return; }
+    $('#ask-note').textContent = '';
+    startLive(q);
+  });
+  $('#composer').addEventListener('submit', e => {
+    e.preventDefault();
+    const q = $('#q2').value.trim();
+    if (!q || body.classList.contains('playing')) return;
+    $('#q2').value = '';
+    startLive(q);
+  });
+  for (const id of ['#q', '#q2']) {
+    $(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); e.target.form.requestSubmit(); }
+    });
+  }
+  $('#home').addEventListener('click', () => { stopAll(); session.del(RUN_KEY); view.clearThread(true); swap('landing'); });
+
+  // ---------- a reload goes straight back into its run (T3.2, T4.4 #6) ----------
+  const saved = session.get(RUN_KEY);
+  if (saved) {
+    view.reset({ question: '' });
+    body.dataset.view = 'run';
+    setPlaying(true);
+    const my = token;
+    let first = true;
+    live = attach(saved, cfg, {
+      onEvent: ev => {
+        if (my !== token) return;
+        if (first && ev.kind === 'run_started') { $('.ask-msg .bubble').textContent = ev.data.question; first = false; }
+        view.onEvent(ev, { quiet: Date.now() - Date.parse(ev.at) > 5000 });
+      },
+      onState: st => {
+        if (my !== token) return;
+        if (st === 'reconnecting') view.status(T.RECONNECTING, true);
+        else if (st === 'closed') { setPlaying(false); live = null; }
+        else if (st === 'expired') { $('.ask-msg').remove(); view.endStep(T.expired(cfg)); session.del(RUN_KEY); view.status('', false); setPlaying(false); }
+        else if (st === 'gave_up') { view.endStep(T.WAKE_GAVE_UP); setPlaying(false); }
+      },
+      wake: () => waker.wake(),
+    });
+  }
+}
+
+boot();

@@ -302,3 +302,22 @@ export const READER_FAILED = 'The opinion could not be loaded. Try again in a mo
 export const EXCERPT = (id, lit) => lit ? `The passage Claude retrieved, ${id}. The sentences the answer cites are lit.` : `The passage Claude retrieved, ${id}.`;
 export const PAGE_WORD = slip => slip ? 'Slip opinion page' : 'U.S. Reports page';
 export const FOOTNOTES_HEADING = 'Footnotes';
+
+// ---------- a passage's or opinion's lineup and pages (main session's; per curiam and "not printed": P1.18) ----------
+const TYPE_LABEL = { majority: 'Majority opinion', plurality: 'Plurality opinion' };
+export function typeLabel(type) { return TYPE_LABEL[type] || type[0].toUpperCase() + type.slice(1); }
+export function andList(xs) { return xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`; }
+export function lineup(p) {
+  if (p.joined_by_source === 'per curiam' || !p.authors.length) return `${typeLabel(p.opinion_type ?? p.type)}, per curiam.`;
+  const head = `${typeLabel(p.opinion_type ?? p.type)} by ${andList(p.authors)}`;
+  if (p.joined_by.length) return `${head}, joined by ${andList(p.joined_by)}.`;
+  if (p.joined_by_source === 'not printed') return `${head}. Who joined is not printed in the source.`;
+  return `${head}, joined by no other Justice.`;
+}
+export function pin(p) {
+  const pages = p.page_end && p.page_end !== p.page_start ? `${p.page_start}–${p.page_end}` : `${p.page_start}`;
+  if (p.slip_opinion) return `slip op., at ${pages}`;
+  return `${p.citation.replace(/\s+\d+$/, '')}, at ${pages}`;
+}
+export const decided = iso => `Decided ${longDate(iso)}.`;
+export function footnoteLabel(p) { return `Footnote ${p.footnote_label}`; }

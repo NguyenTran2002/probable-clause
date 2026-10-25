@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Probable Clause</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body data-view="landing" data-pane="thread">
+
+<section id="landing" aria-label="Start">
+  <div class="hero">
+    <h1 class="wordmark">Probable C<span class="l">l</span>ause</h1>
+    <p class="pitch" id="pitch"></p>
+
+    <form id="ask" class="field">
+      <label class="sr" for="q">Your question</label>
+      <textarea id="q" rows="2"></textarea>
+      <button type="submit" class="primary">Research</button>
+    </form>
+    <p class="ask-note" id="ask-note" role="status"></p>
+
+    <div class="recorded" id="recorded">
+      <p id="recorded-label"></p>
+    </div>
+  </div>
+
+  <!-- The trace figure (T5.1 #2): one citation from a run on Oct 25, 2026 (Kyllo v. United States), followed from
+       the answer, to the sentence in the kept passage, to the citation in the API response. -->
+  <figure class="trace">
+    <div class="trace-row">
+      <div class="t-card">
+        <p class="t-where">In the answer</p>
+        <p><span class="t-cited">The question presented was whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home is a "search."</span> <span class="pill h1">kyllo-1-p1</span></p>
+      </div>
+      <span class="t-link" aria-hidden="true"></span>
+      <div class="t-card t-source h1">
+        <p class="t-where">In the passages Claude kept</p>
+        <p class="t-case"><i>Kyllo v. United States</i>, 533 U.S. 27, majority</p>
+        <p class="t-text"><span class="hit">This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a "search" within the meaning of the Fourth Amendment.</span></p>
+      </div>
+      <span class="t-link" aria-hidden="true"></span>
+      <div class="t-card t-wire">
+        <p class="t-where">In the API response</p>
+<pre><span class="k">"type"</span>: <span class="s">"content_block_location"</span>,
+<span class="k">"document_title"</span>: <span class="s">"Kyllo v. United States (2001), Scalia, majority"</span>,
+<span class="k">"document_index"</span>: <span class="n">0</span>,
+<span class="k">"start_block_index"</span>: <span class="n">0</span>,
+<span class="k">"end_block_index"</span>: <span class="n">1</span>,
+<span class="k">"cited_text"</span>: <span class="s">"This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a \"search\" within the meaning of the Fourth Amendment."</span></pre>
+      </div>
+    </div>
+    <figcaption id="trace-caption"></figcaption>
+  </figure>
+
+  <footer class="fine" id="landing-fine"></footer>
+</section>
+
+<section id="run" aria-label="Research">
+  <header class="bar">
+    <button type="button" class="wordmark small" id="home" aria-label="Probable Clause, back to the start">Probable C<span class="l">l</span>ause</button>
+  </header>
+
+  <nav class="tabs" aria-label="Panes">
+    <button type="button" data-pane="thread">Conversation</button>
+    <button type="button" data-pane="sources">Sources <span class="count" id="tab-count"></span></button>
+  </nav>
+
+  <div class="cols">
+    <section class="col" id="pane-thread" aria-label="Conversation">
+      <div class="scroller" id="thread-scroll">
+        <div class="thread" id="thread" aria-live="polite" aria-relevant="additions"></div>
+      </div>
+      <div class="dock">
+        <p class="status" id="status" role="status"></p>
+        <form id="composer" class="field composer">
+          <label class="sr" for="q2">Your question</label>
+          <textarea id="q2" rows="1"></textarea>
+          <button type="submit" class="primary" id="send">Research</button>
+          <button type="button" class="ghost" id="skip"></button>
+        </form>
+        <p class="scratch" id="from-scratch"></p>
+        <div class="disclaimer" id="dock-fine"></div>
+      </div>
+    </section>
+
+    <aside class="col scroller" id="pane-sources" aria-label="Sources">
+      <header class="col-head">
+        <h2>Sources</h2>
+        <p id="src-count"></p>
+      </header>
+      <ol class="passages" id="passages"></ol>
+    </aside>
+  </div>
+
+  <svg class="threads" id="threads" aria-hidden="true"></svg>
+</section>
+
+<dialog id="api" aria-labelledby="api-title">
+  <div class="dlg">
+    <header class="dlg-head">
+      <div>
+        <h2 id="api-title"></h2>
+        <p>Every Messages API exchange that touched this passage, exactly as sent and received.</p>
+      </div>
+      <button type="button" class="ghost" data-close>Close</button>
+    </header>
+    <div class="dlg-body">
+      <section class="dlg-source" aria-label="The source as shown">
+        <h3>The source as shown</h3>
+        <div id="api-card"></div>
+      </section>
+      <section class="dlg-wire" aria-label="API traffic">
+        <h3>API traffic</h3>
+        <ol class="xchg" id="api-steps"></ol>
+      </section>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="reader" aria-labelledby="reader-title">
+  <div class="reader">
+    <header class="dlg-head reader-head">
+      <div>
+        <h2 id="reader-title"></h2>
+        <p id="reader-sub"></p>
+      </div>
+      <div class="reader-actions">
+        <button type="button" class="ghost" id="reader-jump">Back to the excerpt</button>
+        <button type="button" class="ghost" data-close>Close</button>
+      </div>
+    </header>
+    <div class="reader-body" id="reader-body"></div>
+  </div>
+</dialog>
+
+</body>
+</html>
