@@ -69,7 +69,10 @@ More, each from the brief:
 - **CourtListener limits for the user's EDU account: 20 requests a minute, 1,000 an hour** (stated by the user, Oct 23, 2026). The API returns no rate-limit headers, so pacing is ours: about 15 a minute, serially, and cache every raw response so nothing is fetched twice.
 - Some pages (SCDB, case.law, Exa's collection pages) render by JavaScript and can't be string-matched; `curl` with a browser user agent reaches courtlistener.com/terms when WebFetch gets 403.
 
-## Two sessions in one checkout (P0.3, P1.6)
+## Two sessions in one checkout (P0.3, P1.6), retired by P4.28
+
+**From Oct 25, 2026 (P4.28) the main session builds and owns `web/` and `webdev/`; the frontend session is retired and `docs/sessions/frontend-log.md` is the historical record. The rules below are kept for the record.**
+
 
 Two Claude Code sessions share this folder and the `main` branch. The **main session** runs the phases and owns every shared file. The **frontend session**, started by the user, built the art-direction look tests (Phase 1) and builds the real page against a mock in Phase 4 (brief rewritten Oct 24, 2026).
 
@@ -84,7 +87,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - Only the main session touches `.venv`, `pyproject.toml` and `uv.lock`.
 - Dev servers: main session on 8000; frontend session on another port (8765 suggested).
 
-**If you are the main session:** fold `docs/sessions/frontend-log.md` into `BUILD_LOG.md` and `locked-decisions.md` under your own timestamped entries. Never edit `web/`. Before tagging a phase, check `git status` for the frontend session's uncommitted work and ask the user.
+**If you are the main session:** you own `web/` and `webdev/` (P4.28); log frontend work in `BUILD_LOG.md`. Before tagging a phase, check `git status` for the frontend session's uncommitted work and ask the user.
 
 ## Current state and next step
 
