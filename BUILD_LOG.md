@@ -1050,3 +1050,28 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - **Tests:** 407 passed (web updates and contract).
 **Spend:** none.
 **DECISION (user):** none new.
+
+## Oct 24, 2026, 21:39 CDT — Phase 4: Build, Wave 1, part E merged
+**Asked:** Part E, money and state (contract §4.E), under *"Start wave 1 let's go!"*
+**Came back:**
+- **Part E:** `api/state/`, `scripts/spend_report.py`, `tests/state/`. It covers:
+  - Chicago clock helpers;
+  - the price table (Voyage marked unconfirmed);
+  - `worst_case_usd()` = 0.943 + 0.08 + 0.36 + 0.24 + 0.021 + 0.03 = **$1.674**, asserted by test;
+  - `MemoryStore` and `MongoStore`, one shared semantic suite.
+- **`reserve`** is one conditional update of the month's document, with missing fields guarded. Tests race two runs for the last room, and ten runs for five places.
+- **Review** by a Sonnet 5.5 high subagent: the money logic is sound, and the worst case recomputes to $1.674. Fixes made by the builder:
+  - run records and stop details are checked against **allowlists** (T3.7); the reviewer showed the first denylist let `q`, `prompt` and `content` through;
+  - no driver error, which could carry Atlas host names, survives in an exception chain;
+  - `spend_report.py` exits 2 on any failure to read, so a crash no longer reads as "reservation open";
+  - prices match exact model IDs only;
+  - negative reserved figures are shown as anomalies.
+  - Known and documented: a reservation whose update times out on our side but lands later stays counted until cleaned by hand. This errs safe: it cannot overspend.
+- **Shared code** (8492353):
+  - `count_run_started` is removed from the `Store` protocol (`reserve` counts the start in the same update).
+  - The report reads are added to the protocol.
+  - `ATLAS_RESERVE_TRIES` is 5, a placeholder.
+- **Not yet run:** the 41 Atlas-gated tests, which need `MONGODB_URI` and `PC_ATLAS_TEST=1`. Before its first fixes, the builder ran its suite against a throwaway local `mongod` on a unix socket, with no TCP; it was stopped and its data deleted afterwards. Asked not to repeat this.
+- **Tests:** 1,219 passed, 41 skipped (state and contract).
+**Spend:** none.
+**DECISION (user):** none new.
