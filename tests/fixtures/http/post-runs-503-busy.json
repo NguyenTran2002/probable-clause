@@ -1,0 +1,10 @@
+{
+  "description": "POST /runs while MAX_CONCURRENT_RUNS questions are in progress (contract v2.0 section 5): refused with no Atlas call.",
+  "method": "POST",
+  "path": "/runs",
+  "status": 503,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{\"error\":\"busy\",\"message\":\"Five questions are being researched right now, the most this site handles at once. Please try again in a minute.\"}"
+}

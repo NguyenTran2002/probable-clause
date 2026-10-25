@@ -17,7 +17,7 @@ FIXTURES = sorted((ROOT / "tests" / "fixtures" / "events").glob("*.json"))
 
 
 def envelope(n, kind, data):
-    return {"v": 1, "run": "r" * 22, "n": n, "t_ms": n * 100, "at": "2026-10-24T20:31:05.123-05:00", "kind": kind, "data": data}
+    return {"v": 2, "run": "r" * 22, "n": n, "t_ms": n * 100, "at": "2026-10-24T20:31:05.123-05:00", "kind": kind, "data": data}
 
 
 PASSAGE = {
@@ -30,15 +30,22 @@ PASSAGE = {
 }
 
 GOOD = [
-    envelope(1, "round_started", {"round": 1, "status_line": "Round 1 of 12 · 0 kept · update check not yet run"}),
+    envelope(1, "round_started", {"step": "research", "round": 1, "status_line": "Round 1 of 12 · 0 kept"}),
     envelope(2, "passage", PASSAGE),
-    envelope(3, "tool_result", {"tool_use_id": "toolu_1", "name": "search_exact", "is_error": False,
+    envelope(3, "tool_result", {"step": "research", "tool_use_id": "toolu_1", "name": "search_exact", "is_error": False,
                                 "content": "...", "found": ["katz-1-p3"], "matched_again": []}),
     envelope(4, "answer_block", {"index": 0, "text": "The Court held that the Amendment protects people.",
                                  "citations": [{"passage_id": "katz-1-p3", "first_sentence": 0, "last_sentence": 0,
                                                 "cited_text": "For the Fourth Amendment protects people, not places. ",
                                                 "call_no": 6, "path": "content[1]"}]}),
     envelope(5, "warning", {"code": "meaning_search_degraded"}),
+    envelope(6, "update_started", {"kept": ["katz-1-p3"]}),
+    envelope(7, "update_ended", {"end": "stopped", "stop_kind": "update_step_limit", "failure_reason": None,
+                                 "rounds": 8, "searches": 0}),
+    envelope(8, "update_ended", {"end": "stopped", "stop_kind": "console_spend_limit", "failure_reason": "spend_limit",
+                                 "rounds": 1, "searches": 0}),
+    envelope(9, "tool_result", {"step": "update", "tool_use_id": "toolu_2", "name": "submit_answer", "is_error": True,
+                                "content": "Not run.", "wrong_step": True, "submit": {"accepted": False, "rule": "wrong_step"}}),
 ]
 
 BAD = [
@@ -47,6 +54,13 @@ BAD = [
     envelope(1, "tool_result", {"tool_use_id": "t", "name": "search_corpus", "is_error": False, "content": ""}),
     {**envelope(1, "paused", {"since_ms": 0}), "at": "2026-10-24T20:31:05Z"},  # no offset (brief §10.7)
     {**envelope(1, "paused", {"since_ms": 0}), "extra": True},
+    {**envelope(1, "paused", {"since_ms": 0}), "v": 1},                  # v2.0: only envelope v 2
+    envelope(1, "round_started", {"round": 1, "status_line": "Round 1 of 12 · 0 kept"}),          # no step
+    envelope(1, "update_ended", {"end": "stopped", "stop_kind": None, "failure_reason": None, "rounds": 8, "searches": 0}),
+    envelope(1, "update_ended", {"end": "submitted", "stop_kind": "update_step_limit", "failure_reason": None,
+                                 "rounds": 2, "searches": 1}),
+    envelope(1, "update_band", {"outcome": "declined", "reason": None, "searches": [], "findings": [], "overview": None,
+                                "pages": []}),                          # declined is gone (P4.19)
 ]
 
 

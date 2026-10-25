@@ -1,5 +1,5 @@
 {
-  "description": "GET /health when today's cap would be exceeded: live research is paused until midnight, Chicago time.",
+  "description": "GET /health when today's spending has reached the daily cap: live research is paused until midnight, Chicago time.",
   "method": "GET",
   "path": "/health",
   "status": 200,

@@ -5,7 +5,8 @@ tests/fixtures/http/*.json (contract §5). The schema test (test_events_schema.p
 tests check what a schema cannot: the order rules of contract §6, that every citation is the exact slice of its
 passage, that the totals are the sum of the stream's paid calls, that the checks event is what `check_answer` makes
 of the stream's own blocks, that no web page text is anywhere, and that the set as a whole covers every state,
-stop kind and band outcome the contract defines.
+stop kind and band outcome the contract defines. Contract v2.0: research, then the update step beside the
+composition, each event placed by its `step`.
 """
 
 import json
@@ -20,7 +21,7 @@ from api import settings
 from api.checks import check_answer
 from api.corpus.store import Corpus
 from api.state.prices import PRICE_TABLE, price, price_sources
-from api.types import Usage
+from api.types import STEP_OF_PURPOSE, Usage
 
 ROOT = Path(__file__).resolve().parents[2]
 EVENT_FILES = sorted((ROOT / "tests" / "fixtures" / "events").glob("*.json"))
@@ -28,6 +29,8 @@ HTTP_FILES = sorted((ROOT / "tests" / "fixtures" / "http").glob("*.json"))
 SCHEMA = json.loads((ROOT / "contracts" / "events.schema.json").read_text())
 CHICAGO = ZoneInfo(str(settings.TIME_ZONE.value))
 WITHHELD = "[statement withheld: it repeated a page's words]"
+RULES = {"submit_answer": {"same_turn", "no_search", "nothing_kept", "no_note", "note_too_long", "wrong_step", None},
+         "submit_update": {"same_turn", "findings", "copy_guard", "no_check", "wrong_step", None}}     # contract v2.0 §6
 RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 PLACEHOLDER = re.compile(r"^\[page text: \d+ characters, not stored\]$")
 OPEN_BLOCK = re.compile(r"<web_page_text[^>]*>\n(.*?)\n</web_page_text>", re.S)
@@ -65,7 +68,8 @@ def test_top_level_fields(path):
     keys = ["format", "slug", "question", "recorded_at", "commit", "models", "prices", "corpus_label"]
     assert [k for k in doc if k != "after"][:-1] == keys and list(doc)[-1] == "events"
     assert doc["format"] == 1 and doc["slug"] == path.stem and doc["commit"] == "fixture"
-    assert doc["models"] == {"loop": settings.LOOP_MODEL.value, "composition": settings.COMPOSITION_MODEL.value}
+    assert doc["models"] == {"loop": settings.LOOP_MODEL.value, "update": settings.UPDATE_MODEL.value,
+                             "composition": settings.COMPOSITION_MODEL.value}
     assert doc["prices"] == price_sources()
     assert doc["corpus_label"] in ("full", "before_chatrie")
     rec = datetime.fromisoformat(doc["recorded_at"])
@@ -84,7 +88,7 @@ def test_envelopes_and_order_rules(path):
     rec = datetime.fromisoformat(doc["recorded_at"])
     last_t = 0
     for e in events:
-        assert e["run"] == run and e["v"] == 1
+        assert e["run"] == run and e["v"] == 2
         assert e["t_ms"] >= last_t, f"t_ms went back at n={e['n']}"
         last_t = e["t_ms"]
         at = datetime.fromisoformat(e["at"])
@@ -219,8 +223,11 @@ def test_loop_fragments_point_at_what_was_sent_and_returned(path):
     if doc.get("after"):
         pytest.skip("needs the rounds before the reconnect point")
     events = doc["events"]
-    rounds, current = {}, 0
+    rounds, current = {}, 0             # research's rounds: the update step emits no fragments (contract v2.0 §6)
     for e in events:
+        if e["data"].get("step") == "update":
+            assert e["kind"] != "api_fragment"
+            continue
         if e["kind"] == "round_started":
             current = e["data"]["round"]
         elif e["kind"] == "tool_call":
@@ -262,7 +269,9 @@ def test_loop_usage_is_cold_then_cached(path):
     doc = load(path)
     if doc.get("after"):
         pytest.skip("needs the first call")
-    loop = [e["data"] for e in doc["events"] if e["kind"] == "paid_call" and e["data"]["purpose"] == "loop" and e["data"]["outcome"] == "ok"]
+    # research and the update step are one conversation: every call after the first reads it from the cache (P4.19)
+    loop = [e["data"] for e in doc["events"] if e["kind"] == "paid_call" and e["data"]["purpose"] in ("loop", "update")
+            and e["data"]["outcome"] == "ok"]
     comp = [e["data"] for e in doc["events"] if e["kind"] == "paid_call" and e["data"]["purpose"] == "composition" and e["data"]["outcome"] == "ok"]
     if loop:
         first = loop[0]["usage"]
@@ -293,9 +302,9 @@ def test_totals_are_the_sum_of_the_paid_calls(path):
     t = doc["events"][-1]["data"]["totals"]
     claude = [p for p in paid if p["service"] == "anthropic"]
     input_tokens = cache_read = cache_write = output = 0
-    cost = {"loop": 0.0, "composition": 0.0}
+    cost = {"loop": 0.0, "update": 0.0, "composition": 0.0}
     for p in claude:
-        model = doc["models"]["loop" if p["purpose"] == "loop" else "composition"]
+        model = doc["models"][p["purpose"]]
         if p["usage"] is None:       # an attempt priced from an estimate (T3.3, P4.5, P4.10): never shown as Claude's
             assert p["estimated"] is True and p["outcome"] in ("retrying", "failed")
             e = p["estimated_usage"]   # v1.6: the tokens it was priced at
@@ -325,8 +334,8 @@ def test_totals_are_the_sum_of_the_paid_calls(path):
     assert c["calls"] == len(claude)
     assert (c["input_tokens"], c["cache_read_tokens"], c["cache_write_tokens"], c["output_tokens"]) == (
         input_tokens, cache_read, cache_write, output)
-    assert c["cost_usd"]["loop"] == pytest.approx(cost["loop"], abs=1e-8)
-    assert c["cost_usd"]["composition"] == pytest.approx(cost["composition"], abs=1e-8)
+    for purpose in ("loop", "update", "composition"):
+        assert c["cost_usd"][purpose] == pytest.approx(cost[purpose], abs=1e-8)
     for service, key, field in (("exa", "exa", "searches"), ("voyage", "voyage", "requests")):
         mine = [p for p in paid if p["service"] == service]
         assert t[key][field] == len(mine)
@@ -340,7 +349,10 @@ def test_totals_are_the_sum_of_the_paid_calls(path):
             assert p["usage"] is not None and p["estimated"] is False
     # the run's end reports what was counted
     ended = doc["events"][-1]["data"]
-    assert ended["rounds"] == sum(1 for e in doc["events"] if e["kind"] == "round_started")
+    assert ended["rounds"] == sum(1 for e in doc["events"] if e["kind"] == "round_started"
+                                  and e["data"]["step"] == "research")
+    for p in paid:
+        assert p["step"] == STEP_OF_PURPOSE[p["purpose"]]
     blocks = [e["data"]["text"] for e in doc["events"] if e["kind"] == "answer_block"]
     assert ended["answer_chars"] == sum(len(b) for b in blocks)
 
@@ -364,7 +376,8 @@ def test_checks_are_check_answer_run_on_the_streams_own_blocks(path):
     expected = json.loads(json.dumps(r, default=lambda o: o.__dict__))
     assert checks[0] == expected
     kinds = [e["kind"] for e in events]
-    assert kinds.index("answer_block") < kinds.index("checks") < kinds.index("update_band")
+    last_block = max(i for i, k in enumerate(kinds) if k == "answer_block")
+    assert last_block < kinds.index("checks") < kinds.index("run_ended")
 
 
 @pytest.mark.parametrize("path", EVENT_FILES, ids=ids_of(EVENT_FILES))
@@ -409,42 +422,60 @@ def test_web_pages_are_synthetic_and_carry_no_text(path):
 
 @pytest.mark.parametrize("path", EVENT_FILES, ids=ids_of(EVENT_FILES))
 def test_the_band_matches_what_the_run_did(path):
+    """Contract v2.0 §6: the band's outcome, in its order of precedence, from what the update step did."""
     doc = load(path)
     if doc.get("after"):
         pytest.skip("needs the whole run")
     events = doc["events"]
+    kinds = [e["kind"] for e in events]
     band = next((e["data"] for e in events if e["kind"] == "update_band"), None)
+    started = "update_started" in kinds
+    ended_upd = next((e["data"] for e in events if e["kind"] == "update_ended"), None)
     ended = events[-1]["data"]
-    if ended["state"] in ("failed", "interrupted"):
-        assert band is None or ended["state"] == "failed"
-        if ended["state"] == "interrupted":
-            assert band is None
+    if ended["state"] == "interrupted":
+        assert band is None
         return
-    assert band is not None
-    results = [e["data"] for e in events if e["kind"] == "tool_result" and e["data"]["name"] == "search_web_updates"]
+    if band is None:                              # only H's `failed` may leave the band out (a cancelled branch)
+        assert ended["state"] == "failed"
+        return
+    # placement: right after update_ended, or before any composition_started when the step never started
+    bi = kinds.index("update_band")
+    if started:
+        assert ended_upd is not None and kinds[bi - 1] == "update_ended"
+    elif "composition_started" in kinds:
+        assert bi < kinds.index("composition_started")
+    results = [e["data"] for e in events if e["kind"] == "tool_result" and e["data"]["name"] == "search_web_updates"
+               and not e["data"].get("wrong_step")]
+    assert all(e["data"].get("step") == "update" for e in events if e["kind"] == "tool_result"
+               and e["data"]["name"] == "search_web_updates" and not e["data"].get("wrong_step"))
     counted = [r for r in results if r["web_status"] in ("ok", "refused_by_exa", "failed")]
-    assert [s["search_no"] for s in band["searches"]] == [r["search_no"] for r in results if "search_no" in r]
-    submits = [e["data"] for e in events if e["kind"] == "tool_result" and e["data"]["name"] == "submit_answer"
-               and e["data"]["submit"]["accepted"]]
+    # the band lists every search that reached our wrapper's call (an unavailable one too, uncounted and with no
+    # search_no in its tool_result, since §4.H counts searches from search_no)
+    assert [s["search_no"] for s in band["searches"] if s["status"] != "unavailable"] == [
+        r["search_no"] for r in results if "search_no" in r]
+    assert len(band["searches"]) == sum(1 for r in results if r["web_status"] != "refused_by_us")
+    accepted = [e["data"] for e in events if e["kind"] == "tool_result" and e["data"]["name"] == "submit_update"
+                and e["data"]["submit"]["accepted"]]
+    unavailable = any(r["web_status"] == "unavailable" for r in results)
     o = band["outcome"]
-    if o == "found":
-        assert band["findings"] and counted
-    elif o == "nothing_relevant":
-        assert counted and submits and not band["findings"]
-    elif o == "not_summarised":
-        assert counted and not submits
-    elif o == "unavailable":
-        assert band["reason"] in ("no_credit", "key_refused") and not counted
-    elif o == "skipped":
-        assert band["reason"] and not counted and submits
-    elif o == "declined":
-        assert band["reason"] is None and not counted and submits
-    elif o == "not_run":
-        # no search and no submit, or (P4.7, v1.5) an out-of-scope reply with no search
-        calls = {e["data"]["tool_use_id"]: e["data"]["input"] for e in events if e["kind"] == "tool_call"}
-        assert not counted and not any(r["web_status"] == "unavailable" for r in results)
-        assert all(calls[s["tool_use_id"]].get("out_of_scope") is True for s in submits)
+    if counted:
+        assert o == ("not_summarised" if not accepted else "found" if band["findings"] else "nothing_relevant")
+    elif not started:
+        assert o in ("not_run", "unavailable")
+        if o == "unavailable":
+            assert band["reason"] in ("no_credit", "key_refused") and events[0]["data"]["update_check_available"] is False
+    elif unavailable:
+        assert o == "unavailable" and band["reason"] in ("no_credit", "key_refused")
+    elif ended_upd["end"] in ("stopped", "failed"):
+        assert o == "unavailable" and band["reason"] == (ended_upd["stop_kind"] or ended_upd["failure_reason"])
+    elif accepted and band["reason"]:
+        assert o == "skipped"
+    else:
+        assert o == "not_run" and ended_upd["end"] == "abandoned"
     assert band["reason"] is None or o in ("skipped", "unavailable")
+    if ended_upd is not None:
+        assert ended_upd["searches"] == len(counted)
+        assert ended_upd["rounds"] == sum(1 for e in events if e["kind"] == "round_started" and e["data"]["step"] == "update")
 
 
 # Which answer_end each state may carry (contract section 6, v1.1). A state that stops before or without a composition
@@ -496,25 +527,29 @@ def test_run_ended_is_consistent(path):
 
 @pytest.mark.parametrize("path", EVENT_FILES, ids=ids_of(EVENT_FILES))
 def test_refused_submits_withhold_flagged_statements(path):
+    """P4.3 carried to v2.0 (§4.G.2): in the update step a call repeating a page is stored with that text withheld."""
     doc = load(path)
     events = doc["events"]
     calls = {e["data"]["tool_use_id"]: e["data"] for e in events if e["kind"] == "tool_call"}
     for e in events:
         d = e["data"]
-        if e["kind"] == "tool_result" and d["name"] == "submit_answer":
+        if e["kind"] == "tool_result" and d["name"] in RULES:
             sub = d["submit"]
             if not sub["accepted"]:
-                assert d["is_error"] and sub["rule"] in ("same_turn", "findings", "copy_guard", "no_search", "nothing_kept",
-                                                         "no_update_check", "no_note", "note_too_long", None)   # None: bad input (v1.3)
+                assert d["is_error"] and sub["rule"] in RULES[d["name"]]   # None: bad input (v1.3)
             inp = calls[d["tool_use_id"]]["input"]
-            texts = ([f["statement"] for f in inp.get("update_findings") or []] + [inp.get("update_overview") or ""]
-                     + [inp.get("note") or "", inp.get("update_skip_reason") or ""])   # the note (P4.8), the skip reason (P4.13)
+            texts = ([f["statement"] for f in inp.get("update_findings") or [] if isinstance(f, dict)]
+                     + [inp.get("update_overview") or "", inp.get("note") or "", inp.get("update_skip_reason") or ""])
             withheld = [t for t in texts if t == WITHHELD]
+            if d["step"] == "research":
+                assert not withheld, "research never sees a page, so nothing it sends is withheld (P4.19)"
             if sub.get("rule") == "copy_guard":
                 assert withheld, "a submit refused by the copy guard is stored with its flagged statements withheld (P4.3)"
                 assert "page" in d["content"] and "Paraphrase" in d["content"] or "own words" in d["content"]
             elif sub["accepted"]:
                 assert not withheld   # an accepted submit has nothing the guard flagged; a refused one may (v1.3)
+            if sub.get("rule") == "wrong_step":
+                assert d.get("wrong_step") is True
 
 
 @pytest.mark.parametrize("path", EVENT_FILES, ids=ids_of(EVENT_FILES))
@@ -564,14 +599,20 @@ def test_the_set_covers_every_state_stop_kind_and_outcome():
     results = [e["data"] for e in events if e["kind"] == "tool_result"]
     assert {r["name"] for r in results} == set(defs["tool_result"]["properties"]["name"]["enum"])
     assert {r["web_status"] for r in results if "web_status" in r} == set(defs["tool_result"]["properties"]["web_status"]["enum"])
-    assert {r["submit"]["rule"] for r in results if r.get("submit") and not r["submit"]["accepted"]} == {
-        "same_turn", "findings", "copy_guard", "no_search", "nothing_kept", "no_update_check", "no_note", "note_too_long",
-        None}
+    for name, rules in RULES.items():
+        got = {r["submit"]["rule"] for r in results if r["name"] == name and not r["submit"]["accepted"]}
+        assert got == rules - ({"wrong_step"} if name == "submit_update" else set()), (name, got)
+    assert any(r.get("wrong_step") for r in results if r["step"] == "research")
+    assert any(r.get("wrong_step") for r in results if r["step"] == "update")
+    ends_upd = [e["data"] for e in events if e["kind"] == "update_ended"]
+    assert {u["end"] for u in ends_upd} >= {"submitted", "stopped", "failed"}
+    assert {k for e in ends for k in e["stop_kinds"]} >= {"update_step_limit", "console_spend_limit"}
     assert {e["data"]["code"] for e in events if e["kind"] == "warning"} == {"meaning_search_degraded", "meaning_search_unavailable"}
     paid = [e["data"] for e in events if e["kind"] == "paid_call"]
     assert {p["outcome"] for p in paid} == {"ok", "retrying", "failed"}
     assert {(p["service"], p["purpose"]) for p in paid} == {
-        ("anthropic", "loop"), ("anthropic", "composition"), ("voyage", "embed"), ("voyage", "rerank"), ("exa", "update_search")}
+        ("anthropic", "loop"), ("anthropic", "update"), ("anthropic", "composition"), ("voyage", "embed"),
+        ("voyage", "rerank"), ("exa", "update_search")}
     assert {p["service"] for p in paid if p["outcome"] == "retrying"} == {"anthropic", "voyage"}
     assert {p["error_kind"] for p in paid if p["service"] == "anthropic"} >= {
         "overloaded", "rate_limited", "server_error", "refusal", "spend_limit", "spend_cap", "stream_broken"}
@@ -624,6 +665,7 @@ def test_health_bodies_have_contract_5s_shape(name, live, update):
 ERRORS = [
     ("post-runs-400-question-empty.json", 400, "question_empty"), ("post-runs-400-question-too-long.json", 400, "question_too_long"),
     ("post-runs-413-body-too-large.json", 413, "body_too_large"), ("post-runs-503-paused-day.json", 503, "paused_day"),
+    ("post-runs-503-busy.json", 503, "busy"),
     ("post-runs-503-paused-month.json", 503, "paused_month"), ("post-runs-503-atlas-unreachable.json", 503, "atlas_unreachable"),
     ("get-events-404-run-unknown.json", 404, "run_unknown"), ("post-alive-404-run-unknown.json", 404, "run_unknown"),
 ]

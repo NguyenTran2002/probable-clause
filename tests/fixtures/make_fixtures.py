@@ -11,8 +11,15 @@ Only the outside services are faked, with their parts' own fakes: `FakeAnthropic
 `FakeExaTransport` (D) and `MemoryStore` (E). The stream is read off `GET /runs/{id}/events` as the page would read
 it, while a simulated page posts `POST /runs/{id}/alive` every HEARTBEAT_INTERVAL_S of virtual time.
 
+Contract v2.0 (Wave 3): research, then the update step and the composition side by side. Each scenario scripts
+research's rounds, the update step's rounds and the composition apart, and `FakeAnthropic` serves each step from its
+own script, so the two branches interleave on the virtual clock as the real code schedules them.
+
 What this script decides, and nothing else:
-  - what Claude "says": each scripted turn's tool calls, the answer blocks and their citations;
+  - what Claude "says": each scripted turn's tool calls (research's and the update step's), the answer blocks and
+    their citations;
+  - a few limits lowered for one stream, where the real figure can't be reached in a short stream (`Scenario.patch`,
+    applied to `api.loop.run`'s module constants, which `run_started.limits` reports too);
   - what the fakes report: token counts (the loop's own estimator, the corpus's characters per token, applied to the
     request the fake received), latencies (virtual seconds on `FakeClock`), Exa's sample pages, the scripted
     failures;
@@ -72,7 +79,6 @@ from api.loop.streamer import FakeAnthropic, FakeTurn, StreamFailed, raw_usage  
 from api.search.meaning import MeaningIndex  # noqa: E402
 from api.search.voyage import FakeVoyageClient  # noqa: E402
 from api.server import AppDeps, create_app  # noqa: E402
-from api.state.budget import worst_case_usd  # noqa: E402
 from api.state.prices import price_sources  # noqa: E402
 from api.state.store import MemoryStore  # noqa: E402
 from api.web_updates.exa import FakeExaTransport, UpdateSearch, exa_response, exa_result  # noqa: E402
@@ -88,6 +94,7 @@ CHICAGO = ZoneInfo(str(settings.TIME_ZONE.value))
 BASE = datetime(2026, 10, 24, 22, 0, 0, tzinfo=CHICAGO)
 
 LOOP_MODEL = str(settings.LOOP_MODEL.value)
+UPDATE_MODEL = str(settings.UPDATE_MODEL.value)
 COMP_MODEL = str(settings.COMPOSITION_MODEL.value)
 HEARTBEAT_S = float(settings.HEARTBEAT_INTERVAL_S.value)
 EMBED_S, RERANK_S = 0.3, 0.6            # the fake Voyage's latencies (virtual seconds)
@@ -97,10 +104,12 @@ CORPORA = {"full": Corpus.load(ROOT), "before_chatrie": Corpus.load(ROOT, exclud
 KEYWORD = {k: KeywordIndex(c) for k, c in CORPORA.items()}
 MEANING = {k: MeaningIndex.load(ROOT / "data" / "vectors", c.passages.values()) for k, c in CORPORA.items()}
 # The fake Claude's token counts: characters over a fixed ratio, set so that the loop's fixed prefix (system prompt,
-# catalog and tools) comes out at FIXED_PREFIX_TOKENS_ESTIMATE, the settings' own figure for it (T1.14, T3.4). The
-# loop's estimator (the corpus's characters per token) is deliberately higher, so its checks err on the safe side.
+# catalog and tools) comes out at PREFIX_TOKENS, P4.6's estimate of it (the setting is gone since P4.18; the figure is
+# this script's own now). The loop's estimator (the corpus's characters per token) is deliberately higher, so its
+# checks err on the safe side.
+PREFIX_TOKENS = 12_000
 _PREFIX_CHARS = len(loop_run.prompts.loop_system(CORPORA["full"])) + len(json.dumps(loop_run.build_tool_list(), ensure_ascii=False))
-RATIO = _PREFIX_CHARS / int(settings.FIXED_PREFIX_TOKENS_ESTIMATE.value)
+RATIO = _PREFIX_CHARS / PREFIX_TOKENS
 
 
 def est(text: str) -> int:
@@ -167,6 +176,7 @@ class Scenario:
     question: str
     rounds: list
     comp: Comp | None = None
+    update: list = field(default_factory=list)     # the update step's rounds (contract v2.0 §4.G.4)
     label: str = "full"
     exa_flag: bool = False                         # the Atlas flag "Exa out of credit" is set before the run
     embed_failures: list = field(default_factory=list)
@@ -175,6 +185,7 @@ class Scenario:
     interrupt: bool = False
     expect: dict = field(default_factory=dict)
     spare_rounds: bool = False                     # a limit ends the loop before every scripted round was used
+    patch: dict = field(default_factory=dict)      # api.loop.run constants lowered for this stream only
 
 
 def T(text):
@@ -203,7 +214,7 @@ def page_text(slug: str, n: int, lead: str = "") -> str:
 
 def page_texts(sc: Scenario) -> list[str]:
     out = []
-    for r in sc.rounds:
+    for r in sc.rounds + sc.update:
         for c in r.calls:
             if c.web:
                 out += [page_text(p[2], p[4], p[6])[:80] for p in c.web.pages]
@@ -249,7 +260,7 @@ def voyage_error(kind: str) -> ServiceError:
 def exa_script(sc: Scenario, clock, rng: random.Random) -> list:
     """FakeExaTransport's script: one coroutine per search that reaches Exa, in order."""
     items = []
-    for r in sc.rounds:
+    for r in sc.rounds + sc.update:
         for c in r.calls:
             if c.web is None:
                 continue
@@ -272,22 +283,15 @@ def exa_script(sc: Scenario, clock, rng: random.Random) -> list:
 
 
 class FixtureClaude:
-    """G's FakeAnthropic behind a scripted conversation: each loop turn and the composition are built from the
-    request the fake receives, so usage follows the request's size, and every call takes virtual time."""
+    """G's FakeAnthropic behind a scripted conversation: each research or update turn and the composition are built
+    from the request the fake receives, so usage follows the request's size, and every call takes virtual time. Each
+    step has its own queue, chosen by the `step` the loop passes (contract v2.0 §12)."""
 
     def __init__(self, sc: Scenario, clock: FakeClock, rng: random.Random):
         self.sc, self.clock, self.rng = sc, clock, rng
         self.fake = FakeAnthropic()
-        self.loop: deque = deque()
-        for r in sc.rounds:
-            for kind, secs in r.retries:
-                self.loop.append(("fail", kind, secs))
-            if r.fail:
-                self.loop.append(("fail", *r.fail))
-            elif r.hang:
-                self.loop.append(("hang",))
-            else:
-                self.loop.append(("turn", r))
+        self.loop = self.turns(sc.rounds)
+        self.update = self.turns(sc.update)
         self.comp: deque = deque()
         if sc.comp:
             for kind, secs in sc.comp.retries:
@@ -298,10 +302,25 @@ class FixtureClaude:
                     self.comp.append(("fail", kind, secs))
             else:
                 self.comp.append(("answer", sc.comp))
+        self.queues = {"research": self.loop, "update": self.update, "composition": self.comp}
         self.tool_n = 0
         self.ok_calls = 0
         self.cached_conv = 0
         self.hung: float | None = None
+
+    @staticmethod
+    def turns(rounds) -> deque:
+        q: deque = deque()
+        for r in rounds:
+            for kind, secs in r.retries:
+                q.append(("fail", kind, secs))
+            if r.fail:
+                q.append(("fail", *r.fail))
+            elif r.hang:
+                q.append(("hang",))
+            else:
+                q.append(("turn", r))
+        return q
 
     @staticmethod
     def error(kind: str) -> StreamFailed:
@@ -311,11 +330,10 @@ class FixtureClaude:
                   "spend_cap": 429}.get(kind)
         return StreamFailed(kind, status, messages.get(kind, f"synthetic {kind}"))
 
-    async def stream(self, request: dict, deadline_s: float, on_block):
-        queue = self.comp if request["model"] == COMP_MODEL else self.loop
+    async def stream(self, request: dict, deadline_s: float, on_block, *, step: str):
+        queue = self.queues[step]
         if not queue:
-            raise AssertionError(f"{self.sc.slug}: no scripted {'composition' if queue is self.comp else 'loop'} "
-                                 f"call left")
+            raise AssertionError(f"{self.sc.slug}: no scripted {step} call left")
         item = queue.popleft()
         if item[0] == "fail":
             await self.clock.sleep(item[2])
@@ -325,12 +343,13 @@ class FixtureClaude:
             await asyncio.Event().wait()           # never answers: the instance goes away (T3.1)
         if item[0] == "answer":
             return await self.compose(request, deadline_s, on_block, item[1])
-        return await self.turn(request, deadline_s, item[1])
+        return await self.turn(request, deadline_s, item[1], step)
 
     # -- the loop --
     def loop_usage(self, request: dict, out: int) -> dict:
         """The prefix (system prompt and tools) written to the 1-hour cache on the first call, then read; the
-        conversation written to the 5-minute cache as it grows, the last status line left uncached."""
+        conversation written to the 5-minute cache as it grows, the last status line left uncached. The update step
+        continues research's conversation, so its first call reads all of it from the cache (P4.19)."""
         prefix = est(request["system"][0]["text"]) + est_json(request["tools"])
         conv = sum(est_json(m["content"]) for m in request["messages"])
         if self.ok_calls == 0:
@@ -347,7 +366,7 @@ class FixtureClaude:
         self.ok_calls += 1
         return usage
 
-    async def turn(self, request: dict, deadline_s: float, r: Round):
+    async def turn(self, request: dict, deadline_s: float, r: Round, step: str):
         content = [{"type": "thinking", "thinking": "", "signature": stable_id(self.sc.slug, "sig", self.tool_n)}]
         if r.text:
             content.append({"type": "text", "text": r.text})
@@ -366,8 +385,8 @@ class FixtureClaude:
         usage = self.loop_usage(request, out)
         secs = r.seconds if r.seconds is not None else 0.9 + out / LOOP_TOKENS_PER_S + self.rng.uniform(-0.3, 0.6)
         await self.clock.sleep(round(secs, 3))
-        self.fake.push(FakeTurn(content=content, stop_reason=stop, usage=usage))
-        return await self.fake.stream(request, deadline_s, None)
+        self.fake.push(FakeTurn(content=content, stop_reason=stop, usage=usage), step=step)
+        return await self.fake.stream(request, deadline_s, None, step=step)
 
     # -- the composition --
     async def compose(self, request: dict, deadline_s: float, on_block, comp: Comp):
@@ -404,22 +423,26 @@ class FixtureClaude:
 
         self.fake.push(FakeTurn(content=content, stop_reason="max_tokens" if comp.cut else "end_turn",
                                 usage=raw_usage(inp, output=out), break_after=comp.break_after,
-                                partial_usage=raw_usage(inp, output=1) if comp.break_after is not None else None))
-        return await self.fake.stream(request, deadline_s, slow_block)
+                                partial_usage=raw_usage(inp, output=1) if comp.break_after is not None else None),
+                       step="composition")
+        return await self.fake.stream(request, deadline_s, slow_block, step="composition")
 
 
 # ---------------------------------------------------------------------------------------------------------------
 # Running one scenario through H's app
 # ---------------------------------------------------------------------------------------------------------------
 @contextmanager
-def patched(clock: FakeClock, run_id: str):
+def patched(clock: FakeClock, run_id: str, limits: dict | None = None):
     async def run_sync(fn, *args):
         return fn(*args)
 
     fake_time = SimpleNamespace(monotonic=clock.monotonic)
     saved = [(loop_run, "time"), (loop_run, "retry_sleep"), (loop_run, "anyio"), (meaning_mod, "time"),
              (exa_mod, "time"), (app_mod, "secrets")]
+    saved += [(loop_run, name) for name in (limits or {})]
     old = [(m, a, getattr(m, a)) for m, a in saved]
+    for name, v in (limits or {}).items():
+        setattr(loop_run, name, v)
     loop_run.time = fake_time
     loop_run.retry_sleep = clock.sleep
     loop_run.anyio = SimpleNamespace(to_thread=SimpleNamespace(run_sync=run_sync))
@@ -472,7 +495,7 @@ class Recorded:
 def document(sc: Scenario, start: datetime, events: list) -> dict:
     return {"format": 1, "slug": sc.slug, "question": events[0]["data"]["question"],
             "recorded_at": start.isoformat(timespec="seconds"), "commit": "fixture",
-            "models": {"loop": LOOP_MODEL, "composition": COMP_MODEL}, "prices": price_sources(),
+            "models": {"loop": LOOP_MODEL, "update": UPDATE_MODEL, "composition": COMP_MODEL}, "prices": price_sources(),
             "corpus_label": sc.label, "events": events}
 
 
@@ -501,7 +524,7 @@ async def record(sc: Scenario, order: int) -> Recorded:
 
     app = create_app(factory)
     client = Client(app)
-    with patched(clock, run_id):
+    with patched(clock, run_id, sc.patch):
         async with lifespan(app):
             if sc.exa_flag:
                 await store.set_flag("exa_out_of_credit", clock.now())
@@ -523,6 +546,9 @@ async def record(sc: Scenario, order: int) -> Recorded:
             await clock.settle()
         if sc.interrupt:
             ticker.cancel()
+            after = await store.read_events(run_id, 0)
+            # the shutdown records the attempt in flight when its run is cancelled (contract v2.0 §4.G.1 item 7)
+            stored = after
     assert errors == [], f"{sc.slug}: schema errors {errors[:3]}"
 
     if sc.interrupt:
@@ -547,7 +573,8 @@ async def record(sc: Scenario, order: int) -> Recorded:
         raw = s.text
         check_stream(events, corpus, page_texts=page_texts(sc))      # G's checker: the schema and contract §6's order rules
         if not sc.spare_rounds:
-            assert not claude.loop, f"{sc.slug}: {len(claude.loop)} scripted loop calls were left unused"
+            assert not claude.loop, f"{sc.slug}: {len(claude.loop)} scripted research calls were left unused"
+        assert not claude.update, f"{sc.slug}: {len(claude.update)} scripted update calls were left unused"
         assert not claude.comp, f"{sc.slug}: scripted composition calls were left unused"
         assert not transport._script, f"{sc.slug}: scripted Exa answers were left unused"
     check_expectations(sc, events)
@@ -670,23 +697,27 @@ def answered_phone_location_records():
                                             K("carpenter-1-p40", LOC_P40_FIRST)]}),
         ]),
         Round([
+            Call("keep_passages", {"keep": [K("carpenter-1-p40", LOC_P40)]}),
+        ], text="Sharpening the reason for the narrowness passage."),
+        Round([submit()]),
+    ], Comp(LOC_ANSWER), update=[
+        Round([
             Call("search_web_updates", {"query": "Supreme Court cell phone location records warrant decision", "start_published_date": "2026-06-30",
                                         "end_published_date": "2026-10-24", "category": "news", "num_results": 5}, web=WEB_LOC_1),
-            Call("keep_passages", {"keep": [K("carpenter-1-p40", LOC_P40)]}),
         ], text="Checking for developments after the corpus's last decision."),
         Round([
             Call("search_web_updates", {"query": "pending petitions location data warrant third-party doctrine", "start_published_date": "2026-06-30",
                                         "category": "publication", "num_results": 5}, web=WEB_LOC_2),
         ]),
         Round([
-            Call("submit_answer", {"out_of_scope": False, "update_findings": [
+            submit_update(update_findings=[
                 {"statement": "A sample news page reports that a federal court of appeals took up a challenge to a tower-dump warrant in September 2026.",
                  "sources": ["web-1-1"]},
                 {"statement": "Sample pages report that a state legislature was considering limits on sales of location data to government agencies, and that petitions on location data were waiting at the Court.",
                  "sources": ["web-1-2", "web-2-1"]}],
-                "update_overview": "The sample pages describe lower-court and legislative activity on location data after the corpus's coverage dates. None of them reports a Supreme Court decision."}),
+                update_overview="The sample pages describe lower-court and legislative activity on location data after the corpus's coverage dates. None of them reports a Supreme Court decision."),
         ]),
-    ], Comp(LOC_ANSWER), expect=answered(band="found"))
+    ], expect=answered(band="found"))
 
 
 # --- Small topics reused by many streams ----------------------------------------------------------------------------
@@ -758,6 +789,15 @@ def submit(**inp):
     return Call("submit_answer", {"out_of_scope": False, **inp})
 
 
+def submit_update(**inp):
+    return Call("submit_update", inp)
+
+
+def skip_update(reason):
+    """The update step that decides no search is needed: one round, its skip reason."""
+    return [Round([submit_update(update_skip_reason=reason)])]
+
+
 # --- 2. A reply with no sources: out of scope ------------------------------------------------------------------------
 OUT_OF_SCOPE_NOTE = ("This question is about landlord-tenant law, which falls outside what this corpus covers: Supreme Court opinions on the "
                      "Fourth Amendment and surveillance technology. A related question I can research is whether police may use technology such as "
@@ -766,10 +806,9 @@ OUT_OF_SCOPE_NOTE = ("This question is about landlord-tenant law, which falls ou
 
 @scenario
 def out_of_scope_reply():
-    skip = "The question is outside the corpus's subject, so there is nothing to check for later developments."
     return Scenario("out-of-scope-reply", "Can my landlord raise my rent in the middle of a lease?", [
-        Round([Call("submit_answer", {"out_of_scope": True, "note": OUT_OF_SCOPE_NOTE, "update_skip_reason": skip})], think=1_400),
-    ], expect={"state": "no_sources", "no_sources_reason": "out_of_scope", "band": "skipped"})
+        Round([Call("submit_answer", {"out_of_scope": True, "note": OUT_OF_SCOPE_NOTE})], think=1_400),
+    ], expect={"state": "no_sources", "no_sources_reason": "out_of_scope", "band": "not_run"})
 
 
 # --- 3. A reply with no sources: nothing found ----------------------------------------------------------------------
@@ -787,13 +826,15 @@ def nothing_found_reply():
             Call("read_passages", {"target": "grady-1-p9", "before": 1, "after": 1}),
             Call("search_exact", {"any_of": ["\"school official\"", "\"public school\"", "schoolchildren"], "max_results": 5}),
         ], text="The only mention of schools is in passing; checking its context."),
+        Round([submit(note=note)]),
+    ], update=[       # nothing was kept, so nothing is composed, but the web may report a decision the corpus lacks
         Round([
             Call("search_web_updates", {"query": "Supreme Court student backpack search Fourth Amendment school decision", "start_published_date": "2026-06-30",
                                         "category": "news", "num_results": 3},
                  web=Web(pages=[page("School district updates its locker search policy", "schools.example.test", "locker-policy", "2026-08-21", 2480),
                                 page("A parent's guide to searches at school", "family.example.test", "parents-guide", None, 3160)])),
         ]),
-        Round([submit(note=note, update_findings=[])]),
+        Round([submit_update(update_findings=[])]),
     ], expect={"state": "no_sources", "no_sources_reason": "nothing_found", "band": "nothing_relevant"})
 
 
@@ -812,8 +853,8 @@ def pause_and_resume():
                                        "max_results": 6}, seed="riley-1-p25"),
                Call("read_passages", {"target": "riley-1-p66"})]),
         Round([phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")]),
-        Round([submit(note=scope, update_skip_reason=RILEY_SKIP)]),
-    ], Comp(PHONE_ANSWER), heartbeat=lambda t: not (0 < t < 40), expect=answered(band="skipped"))
+        Round([submit(note=scope)]),
+    ], Comp(PHONE_ANSWER), update=skip_update(RILEY_SKIP), heartbeat=lambda t: not (0 < t < 40), expect=answered(band="skipped"))
 
 
 # --- an abandoned run (T3.2) ---------------------------------------------------------------------------------------------
@@ -901,12 +942,11 @@ def step_limit_stop():
                Call("search_exact", {"any_of": ["\"565 U. S. 400\"", "\"565 U. S., at\""], "filters": {"decided_from": "2013"}, "max_results": 4})]),
         Round([Call("search_meaning", {"query": "tracking a person through a phone compared with GPS monitoring of a car",
                                        "filters": {"decided_from": "2013"}, "max_results": 4}, seed="carpenter-1-p28")]),
+        # a web search during research: refused as the update step's tool (wrong_step), never sent to Exa, not counted
         Round([Call("search_web_updates", {"query": "GPS tracker warrant court decision", "start_published_date": "2026-06-30", "category": "news",
-                                           "num_results": 4},
-                    web=Web(pages=[page("Police GPS trackers draw a new round of challenges", "news.example.test", "gps-challenges", "2026-09-03", 3010),
-                                   page("Explainer: tracking devices and the warrant requirement", "explainer.example.test", "tracking-explainer", None, 3880)]))]),
+                                           "num_results": 4})]),
         Round([Call("search_exact", {"any_of": ["\"Global-Positioning-System\"", "\"GPS\""], "filters": {"decided_from": "2013"}, "max_results": 4})]),
-    ], Comp(GPS_ANSWER), expect={"state": "step_limit", "stop_kind": "step_limit", "answer_end": "complete", "band": "not_summarised"})
+    ], Comp(GPS_ANSWER), expect={"state": "step_limit", "stop_kind": "step_limit", "answer_end": "complete", "band": "not_run"})
 
 
 # --- the checks: a misquotation and a full case name that is not in the corpus (T1.12, T5.2) -----------------------
@@ -935,11 +975,12 @@ def check_flags():
             Call("read_passages", {"target": "jones-1-p9"}),
         ]),
         Round([gps_keep("jones-1-p8", "jones-1-p9", "knotts-1-p15", "karo-1-p19")]),
-        Round([submit(update_skip_reason=GPS_SKIP)]),
-    ], Comp(spec), expect=answered(band="skipped"))
+        Round([submit()]),
+    ], Comp(spec), update=skip_update(GPS_SKIP), expect=answered(band="skipped"))
 
 
-# --- 5. The per-run input ceiling (T3.3): the next call would cross 370,000 input tokens --------------------------------
+# --- 5. Research's input ceiling (T3.3): the next call would cross the budget. LOOP_INPUT_BUDGET is 2,000,000 (P4.18),
+# which a short stream can't reach, so this stream runs with it lowered to v1.9's 370,000 (run_started shows it) -------
 HEAVY_POOL = [
     ("riley-1-p47", "what makes a cell phone different from other things an arrestee carries", "riley-1-p50", "the volume of private information in a phone", "riley-1-p43"),
     ("carpenter-1-p28", "cell-site records compared with GPS tracking", "carpenter-1-p16", "location data held by a third party", "carpenter-1-p41"),
@@ -970,10 +1011,11 @@ def token_ceiling_input():
         retries = {2: [("overloaded", 1.3), ("overloaded", 1.05)], 4: [("rate_limited", 0.9), ("overloaded", 1.2)]}.get(k, [])
         rounds.append(Round(calls, retries=retries))
     return Scenario("token-ceiling-input", PHONE_Q, rounds, Comp(PHONE_ANSWER), spare_rounds=True,
+                    patch={"LOOP_INPUT_BUDGET": 370_000},
                     expect={"state": "token_ceiling", "stop_kind": "token_ceiling_input", "answer_end": "complete", "band": "not_run"})
 
 
-# --- 6. The per-run output ceiling (T3.3): the last loop call is cut at max_tokens ------------------------------------------
+# --- 6. Research's output ceiling (T3.3): the loop's output runs out (LOOP_OUTPUT_BUDGET 16,000) ----------------------------
 @scenario
 def token_ceiling_output():
     rounds = [
@@ -987,9 +1029,11 @@ def token_ceiling_output():
         [Call("read_passages", {"target": "kyllo-1-p5", "before": 0, "after": 2})],
         [Call("search_exact", {"any_of": ["home"], "filters": {"cases": ["kyllo"], "opinion_types": ["dissent"]}, "max_results": 3})],
         [Call("read_passages", {"target": "kyllo-2-p1", "before": 0, "after": 2})],
+        [Call("search_meaning", {"query": "whether the home's walls make a difference to what counts as a search", "max_results": 3}, seed="kyllo-1-p14")],
+        [Call("read_passages", {"target": "kyllo-2-p4", "before": 0, "after": 1})],
     ]
     rng = random.Random("token-ceiling-output thinking")
-    return Scenario("token-ceiling-output", THERMAL_Q, [Round(c, think=rng.randint(780, 900)) for c in rounds],
+    return Scenario("token-ceiling-output", THERMAL_Q, [Round(c, think=rng.randint(1_560, 1_700)) for c in rounds],
                     Comp(THERMAL_ANSWER), spare_rounds=True,
                     expect={"state": "token_ceiling", "stop_kind": "token_ceiling_output", "answer_end": "complete", "band": "not_run"})
 
@@ -1025,30 +1069,32 @@ COPIED = ("The court of appeals held that police must obtain a warrant before us
 def submit_refused_copy_guard():
     return Scenario("submit-refused-copy-guard", THERMAL_Q, [
         Round(thermal_search_calls()),
-        Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7"),
-               Call("search_web_updates", {"query": "thermal imaging warrant court of appeals ruling", "start_published_date": "2026-06-30",
+        Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER), update=[
+        Round([Call("search_web_updates", {"query": "thermal imaging warrant court of appeals ruling", "start_published_date": "2026-06-30",
                                            "category": "news", "num_results": 3},
                     web=Web(pages=[page("Appeals court rules on thermal scans of homes", "news.example.test", "thermal-ruling", "2026-09-17", 3600, "Sample Staff", COPY_LEAD),
                                    page("Thermal imaging: what officers may use", "explainer.example.test", "thermal-explainer", "2026-08-05", 2950)]))]),
-        Round([submit(update_findings=[
+        Round([submit_update(update_findings=[                                     # the findings checks: rule findings
             {"statement": "A sample news page reports an appeals court ruling on thermal scans of homes.", "sources": ["web-3-1"]},
             {"statement": "A second sample page lists the devices officers may use without a warrant.", "sources": []}])]),
-        Round([submit(update_findings=[
+        Round([submit_update(update_findings=[                                     # the copy guard: withheld in the event (P4.3)
             {"statement": COPIED, "sources": ["web-1-1"]},
             {"statement": "A second sample page discusses which devices officers use, without saying whether any ruling changed.", "sources": ["web-1-2"]}],
             update_overview="The sample pages describe a lower-court ruling and an explainer.")]),
-        Round([submit(update_findings=[
+        Round([submit_update(update_findings=[
             {"statement": "A sample news page reports that an appeals court addressed thermal scans of homes from the street and required a warrant for them.",
              "sources": ["web-1-1"]},
             {"statement": "A second sample page discusses which devices officers use, without saying whether any ruling changed.", "sources": ["web-1-2"]}],
             update_overview="The sample pages describe a lower-court ruling and an explainer.")]),
-    ], Comp(THERMAL_ANSWER), expect=answered(band="found"))
+    ], expect=answered(band="found"))
 
 
 @scenario
-def submit_refused_basic_rules_then_declined():
+def submit_refused_basic_rules():
     spec = [x for x in PHONE_ANSWER if all(pid != "riley-1-p66" for pid, _, _ in x["cites"])]
-    return Scenario("submit-refused-basic-rules-then-declined", PHONE_Q, [
+    return Scenario("submit-refused-basic-rules", PHONE_Q, [
         Round([Call("read_passages", {"target": "riley-1-p1"}), Call("read_passages", {"target": "riley-1-p999"}),
                submit()]),                                                          # rule 1: in the same turn as a read
         Round([submit()]),                                                          # rule 2: a read alone is not a search
@@ -1058,22 +1104,29 @@ def submit_refused_basic_rules_then_declined():
         Round([submit()]),                                                          # rule 3: nothing kept, no note
         Round([Call("keep_passages", {"keep": [K("riley-1-p26", PHONE_KEEPS["riley-1-p26"]), K("riley-1-p25", PHONE_KEEPS["riley-1-p25"]),
                                                K("riley-1-p67", "The last paragraph of the opinion.")]})]),   # one ID never shown
-        Round([submit()]),                                                          # rule 4: no update check, no reason: refused once
-        Round([submit()]),                                                          # accepted after the reminder: declined
-    ], Comp(spec), expect=answered(band="declined", refused_keeps=["riley-1-p67"]))
+        Round([submit()]),                                                          # accepted
+    ], Comp(spec), update=[
+        Round([submit_update()]),                                                   # no_check: no search and no skip reason
+        Round([submit_update(update_findings=[{"statement": "A finding with a field the tool does not have.",
+                                               "sources": [], "page_quote": "anything"}])]),   # bad input: rule null
+        Round([Call("search_meaning", {"query": "phones and arrests", "max_results": 3}, seed="riley-1-p25"),
+               submit_update(update_skip_reason=RILEY_SKIP)]),                      # wrong_step, and same_turn for the submit
+        Round([submit_update(update_skip_reason=RILEY_SKIP)]),                      # accepted
+    ], expect=answered(band="skipped", refused_keeps=["riley-1-p67"]))
 
 
 # --- The update check unavailable (T2.4, P2.11) ------------------------------------------------------------------------------
 def unavailable_run(slug, reason, *, at_start=False):
-    calls = [thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]
-    if not at_start:
-        calls.append(Call("search_web_updates", {"query": "thermal imaging warrant ruling", "start_published_date": "2026-06-30", "num_results": 5},
-                          web=Web(kind=reason)))
+    update = [] if at_start else [      # with the Atlas flag set at the start, the update step never starts
+        Round([Call("search_web_updates", {"query": "thermal imaging warrant ruling", "start_published_date": "2026-06-30", "num_results": 5},
+                    web=Web(kind=reason))]),
+        Round([submit_update()]),       # no_check is waived once the check became unavailable
+    ]
     return Scenario(slug, THERMAL_Q, [
         Round(thermal_search_calls()),
-        Round(calls),
-        Round([submit()]),        # rule 4 is waived while the check is unavailable
-    ], Comp(THERMAL_ANSWER), exa_flag=at_start, expect=answered(band="unavailable"))
+        Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER), update=update, exa_flag=at_start, expect=answered(band="unavailable"))
 
 
 @scenario
@@ -1095,19 +1148,27 @@ def band_unavailable_credit_flag_at_start():
 @scenario
 def update_search_statuses():
     q = {"query": "cell phone search incident to arrest new decision", "start_published_date": "2026-06-30", "category": "news", "num_results": 4}
+    arrest_notes = page("Court notes on digital searches at arrest", "news.example.test", "arrest-notes", "2026-08-11", 2800)
     return Scenario("update-search-statuses", PHONE_Q, [
         Round(phone_search_calls()),
         Round([phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")]),
+        Round([submit()]),
+    ], Comp(PHONE_ANSWER), update=[
         Round([Call("search_web_updates", {"query": "cell phone search warrant arrest ruling", "start_published_date": "2026-6-30"})]),   # refused by our code
-        Round([Call("search_web_updates", q, web=Web(kind="refused"))]),
-        Round([Call("search_web_updates", {**q, "type": "lite"}, web=Web(kind="failed", seconds=30.0))]),
+        Round([Call("search_web_updates", q, web=Web(kind="refused"))]),                                   # search 1: refused by Exa
+        Round([Call("search_web_updates", {**q, "type": "lite"}, web=Web(kind="failed", seconds=30.0))]),  # search 2: failed
         Round([Call("search_web_updates", {"query": "phone search arrest court", "start_published_date": "2026-06-30", "num_results": 4},
-                    web=Web(pages=[page("Court notes on digital searches at arrest", "news.example.test", "arrest-notes", "2026-08-11", 2800),
+                    web=Web(pages=[arrest_notes,
                                    page("Local police update their phone-search policy", "city.example.test", "police-policy", "2026-09-02", 2150, "Sample Desk")]))]),
-        Round([Call("search_web_updates", {"query": "phone search arrest policy", "num_results": 3})]),       # the fourth: refused by our code
-        Round([submit(update_findings=[
-            {"statement": "A sample page reports that a local police department updated its policy on searching phones after an arrest.", "sources": ["web-3-2"]}])]),
-    ], Comp(PHONE_ANSWER), expect=answered(band="found"))
+        Round([Call("search_web_updates", {"query": "phone search arrest appeals", "start_published_date": "2026-06-30", "num_results": 3},
+                    web=Web(pages=[arrest_notes]))]),                                                     # search 4: only a repeat
+        Round([Call("search_web_updates", {"query": "phone search arrest state court", "start_published_date": "2026-06-30", "num_results": 3},
+                    web=Web(pages=[page("State court hears a phone-search appeal", "courts.example.test", "state-phone-appeal", "2026-10-02", 2440)]))]),
+        Round([Call("search_web_updates", {"query": "phone search arrest policy", "num_results": 3})]),       # the sixth: refused by our code
+        Round([submit_update(update_findings=[
+            {"statement": "A sample page reports that a local police department updated its policy on searching phones after an arrest.", "sources": ["web-3-2"]},
+            {"statement": "Another sample page reports that a state court heard an appeal about a phone searched at an arrest.", "sources": ["web-5-1"]}])]),
+    ], expect=answered(band="found"))
 
 
 # --- The Voyage warning, both codes (T3.3) -------------------------------------------------------------------------------------
@@ -1117,8 +1178,8 @@ def voyage_warning_degraded():
         Round([Call("search_meaning", {"query": "using a thermal imaging device on a house from a public street", "max_results": 6}, seed="kyllo-1-p5"),
                thermal_search_calls()[1]]),
         Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
-        Round([submit(update_skip_reason=KYLLO_SKIP)]),
-    ], Comp(THERMAL_ANSWER), rerank_failures=["server_error"] * 3, expect=answered(band="skipped"))
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER), update=skip_update(KYLLO_SKIP), rerank_failures=["server_error"] * 3, expect=answered(band="skipped"))
 
 
 @scenario
@@ -1129,8 +1190,8 @@ def voyage_warning_unavailable():
         Round([Call("search_meaning", {"query": "using a thermal imaging device on a house from a public street", "max_results": 6}, seed="kyllo-1-p5")],
               text="Meaning search failed; trying it again, and using keyword search meanwhile."),
         Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
-        Round([submit(update_skip_reason=KYLLO_SKIP)]),
-    ], Comp(THERMAL_ANSWER), embed_failures=["rate_limited"] * 3, expect=answered(band="skipped"))
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER), update=skip_update(KYLLO_SKIP), embed_failures=["rate_limited"] * 3, expect=answered(band="skipped"))
 
 
 # --- Retries that worked: Anthropic (loop and composition) and Voyage (embed and rerank) (T3.3) ---------------------------------
@@ -1139,8 +1200,9 @@ def retries_recovered():
     return Scenario("retries-anthropic-and-voyage-recovered", PHONE_Q, [
         Round(phone_search_calls(), retries=[("rate_limited", 0.85)]),
         Round([phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")]),
-        Round([submit(update_skip_reason=RILEY_SKIP)]),
-    ], Comp(PHONE_ANSWER, retries=[("overloaded", 1.3)]), embed_failures=["server_error"],
+        Round([submit()]),
+    ], Comp(PHONE_ANSWER, retries=[("overloaded", 1.3)]),
+        update=[Round([submit_update(update_skip_reason=RILEY_SKIP)], retries=[("rate_limited", 0.7)])], embed_failures=["server_error"],
         rerank_failures=["rate_limited", "server_error"], expect=answered(band="skipped"))
 
 
@@ -1161,8 +1223,8 @@ def composition_incomplete():
     return Scenario("composition-incomplete-stream-broken", THERMAL_Q, [
         Round(thermal_search_calls()),
         Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
-        Round([submit(update_skip_reason=KYLLO_SKIP)]),
-    ], Comp(THERMAL_ANSWER, break_after=3),
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER, break_after=3), update=skip_update(KYLLO_SKIP),
         expect={"state": "answered", "answer_end": "incomplete", "failure_reason": "stream_broken", "band": "skipped"})
 
 
@@ -1171,8 +1233,8 @@ def composition_failed():
     return Scenario("composition-failed-before-first-block", PHONE_Q, [
         Round(phone_search_calls()),
         Round([phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")]),
-        Round([submit(update_skip_reason=RILEY_SKIP)]),
-    ], Comp(PHONE_ANSWER, fail=("server_error", 0.75)),
+        Round([submit()]),
+    ], Comp(PHONE_ANSWER, fail=("server_error", 0.75)), update=skip_update(RILEY_SKIP),
         expect={"state": "failed", "answer_end": "none", "failure_reason": "server_error", "band": "skipped"})
 
 
@@ -1191,14 +1253,14 @@ def gps_compact_rounds():
                                     "filters": {"opinion_types": ["concurrence"]}, "max_results": 3}, seed="jones-2-p4"),
         ]),
         Round([gps_keep("jones-1-p8", "jones-1-p9", "knotts-1-p15", "karo-1-p19", "jones-2-p4")]),
-        Round([submit(update_skip_reason=GPS_SKIP)]),
+        Round([submit()]),
     ]
 
 
 @scenario
 def answer_cut_off():
     spec = GPS_ANSWER[:5] + [T("Justice Sotomayor, concurring, wrote that GPS monitoring generates a precise, comprehensive record of a person's public movements that reflects a wealth of detail about her familial, political, profes")]
-    return Scenario("answer-cut-off-length-limit", GPS_Q, gps_compact_rounds(), Comp(spec, cut=True),
+    return Scenario("answer-cut-off-length-limit", GPS_Q, gps_compact_rounds(), Comp(spec, cut=True), update=skip_update(GPS_SKIP),
                     expect={"state": "answered", "stop_kind": "composition_max_tokens", "answer_end": "cut_off", "band": "skipped"})
 
 
@@ -1230,11 +1292,9 @@ def spend_limit_console():
 def spend_limit_tier_cap():
     return Scenario("spend-limit-tier-cap", PHONE_Q, [
         Round(phone_search_calls()),
-        Round([phone_keep("riley-1-p26", "riley-1-p25"),
-               Call("search_web_updates", {"query": "cell phone search arrest court decision", "start_published_date": "2026-06-30", "num_results": 3},
-                    web=Web(pages=[page("Notes on phone searches after arrest", "news.example.test", "phone-notes", "2026-07-30", 2600)]))]),
+        Round([phone_keep("riley-1-p26", "riley-1-p25")]),
         Round([Call("search_exact", {"any_of": ["\"get a warrant\""], "filters": {"cases": ["riley"]}, "max_results": 3})], fail=("spend_cap", 0.45)),
-    ], expect={"state": "spend_limit", "stop_kind": "tier_spend_cap", "answer_end": "none", "band": "not_summarised"})
+    ], expect={"state": "spend_limit", "stop_kind": "tier_spend_cap", "answer_end": "none", "band": "not_run"})
 
 
 # --- A replay: the geofence question recorded on the corpus that ends before Chatrie (T5.6) ---------------------------------
@@ -1277,54 +1337,59 @@ def replay_geofence_before_chatrie():
                                     "max_results": 3}, seed="jones-2-p7"),
         ]),
         Round([Call("keep_passages", {"keep": [K(i, GEO_KEEPS[i]) for i in GEO_KEEPS]})]),
+        Round([submit()]),
+    ], Comp(GEO_ANSWER), update=[
         Round([Call("search_web_updates", {"query": "Supreme Court geofence warrant decision", "start_published_date": "2018-06-23", "end_published_date": "2026-10-24",
                                            "category": "news", "num_results": 5},
                     web=Web(pages=[page("Court issues its decision in Chatrie v. United States", "news.example.test", "chatrie-decision", "2026-06-29", 3900, "Sample Staff"),
                                    page("What the geofence decision means for location history", "review.example.test", "geofence-meaning", "2026-07-01", 4000, "Sample Contributor"),
                                    page("Notes on a geofence ruling", "journal.example.test", "geofence-notes", None, 2700)]))],
               text="The corpus ends at 2018, so checking the web for later decisions."),
-        Round([submit(update_findings=[
+        Round([submit_update(update_findings=[
             {"statement": "A sample news page reports that the Supreme Court issued its decision in Chatrie v. United States, a case about a geofence warrant, on June 29, 2026.",
              "sources": ["web-1-1"]},
             {"statement": "A sample commentary page discusses what that decision means for requests for location history.", "sources": ["web-1-2"]}],
             update_overview="The sample pages report a Supreme Court decision on geofence warrants after the corpus's last case. The corpus does not contain it.")]),
-    ], Comp(GEO_ANSWER), label="before_chatrie", expect=answered(band="found"))
+    ], label="before_chatrie", expect=answered(band="found"))
 
 
-# --- P4.7: an out-of-scope reply needs no update check -------------------------------------------------------------------------
+# --- A greeting: out of scope, a note, and no update step (P4.19) ---------------------------------------------------------------
 @scenario
-def out_of_scope_no_update_check():
+def out_of_scope_greeting():
     note = ("Hello! I research what the Supreme Court has said about the Fourth Amendment and surveillance technology, such as "
             "phone searches, location records and thermal imaging. Ask me a question on one of those and I will look through the opinions.")
-    return Scenario("out-of-scope-no-update-check", "hello", [
+    return Scenario("out-of-scope-greeting", "hello", [
         Round([Call("submit_answer", {"out_of_scope": True, "note": note})]),
     ], expect={"state": "no_sources", "no_sources_reason": "out_of_scope", "band": "not_run"})
 
 
-# --- P4.8: the copy guard covers a no-sources reply's note once a page was returned -------------------------------------------
+# --- The update step refuses research's tools; a refused call that repeats a page's words is withheld (v2.0 §4.G.2) ---------
 INFOTAINMENT_LEAD = ("Vehicle systems can store call logs, text messages, location history and the contacts of every phone that was ever "
                      "paired with the car, often for years after the phone itself is gone.")
 
 
 @scenario
-def note_refused_copy_guard():
+def update_refused_calls_withheld():
     copied = ("The corpus has no Supreme Court opinion on searching a car's onboard computer. Be aware that vehicle systems can store call "
               "logs, text messages, location history and the contacts of every phone that was ever paired with the car.")
-    reworded = ("The corpus has no Supreme Court opinion on searching a car's onboard computer, and the passages found are about phones "
-                "and tracking devices rather than data kept in a vehicle. A related question it can answer is how the Court treats "
-                "searches of the data on a cell phone seized at an arrest.")
-    return Scenario("note-refused-copy-guard", "Do police need a warrant to download the data from my car's infotainment system?", [
+    note = ("The corpus has no Supreme Court opinion on searching a car's onboard computer, and the passages found are about phones "
+            "and tracking devices rather than data kept in a vehicle. A related question it can answer is how the Court treats "
+            "searches of the data on a cell phone seized at an arrest.")
+    return Scenario("update-refused-calls-withheld", "Do police need a warrant to download the data from my car's infotainment system?", [
         Round([
             Call("search_meaning", {"query": "police downloading stored data from a vehicle's onboard computer", "max_results": 5}, seed="riley-1-p47"),
             Call("search_exact", {"any_of": ["infotainment", "\"onboard computer\"", "\"vehicle data\""], "max_results": 5}),
         ]),
+        Round([submit(note=note)], text="Nothing in the corpus addresses vehicle data directly."),
+    ], update=[
         Round([
             Call("search_web_updates", {"query": "warrant vehicle infotainment data download court", "start_published_date": "2026-06-30",
                                         "category": "news", "num_results": 3},
                  web=Web(pages=[page("What your car remembers about your phone", "explainer.example.test", "car-remembers", "2026-08-14", 3400, "Sample Desk", INFOTAINMENT_LEAD)])),
-        ], text="Nothing in the corpus addresses vehicle data directly; checking for later developments."),
-        Round([submit(note=copied, update_findings=[])]),            # the note repeats the page's words: refused, withheld (P4.8)
-        Round([submit(note=reworded, update_findings=[])]),          # reworded: accepted
+        ]),
+        # research's submit in the update step: refused (wrong_step), and its note, which repeats the page, is withheld
+        Round([submit(note=copied)]),
+        Round([submit_update(update_findings=[])]),
     ], expect={"state": "no_sources", "no_sources_reason": "nothing_found", "band": "nothing_relevant"})
 
 
@@ -1346,11 +1411,46 @@ def note_too_long():
     short_note = ("This question is about contesting a traffic ticket, which is a matter of state traffic law and local court "
                   "procedure, not the Supreme Court opinions on the Fourth Amendment and surveillance technology that this corpus "
                   "holds. A related question it can research is whether police may track a car's movements without a warrant.")
-    skip = "The question is outside the corpus's subject, so there is nothing to check for later developments."
     return Scenario("note-too-long", "How do I contest a speeding ticket from a traffic camera?", [
-        Round([Call("submit_answer", {"out_of_scope": True, "note": long_note, "update_skip_reason": skip})]),
-        Round([Call("submit_answer", {"out_of_scope": True, "note": short_note, "update_skip_reason": skip})]),
-    ], expect={"state": "no_sources", "no_sources_reason": "out_of_scope", "band": "skipped"})
+        Round([Call("submit_answer", {"out_of_scope": True, "note": long_note})]),
+        Round([Call("submit_answer", {"out_of_scope": True, "note": short_note})]),
+    ], expect={"state": "no_sources", "no_sources_reason": "out_of_scope", "band": "not_run"})
+
+
+# --- The update step's own ends: its round limit, a failure after a search, the spend limit (v2.0 §4.G.4) --------------------
+@scenario
+def update_step_limit():
+    """The update step never submits: it keeps sending research's tools, each refused, until UPDATE_MAX_ROUNDS."""
+    rounds = [Round([Call("search_exact", {"any_of": ["\"thermal imaging\""], "max_results": 3})])] + [
+        Round([Call("read_passages", {"target": f"kyllo-1-p{n}"})]) for n in range(2, 2 + int(settings.UPDATE_MAX_ROUNDS.value) - 1)]
+    return Scenario("update-step-limit", THERMAL_Q, [
+        Round(thermal_search_calls()),
+        Round([thermal_keep("kyllo-1-p1", "kyllo-1-p14", "kyllo-1-p7")]),
+        Round([submit()]),
+    ], Comp(THERMAL_ANSWER), update=rounds, expect=answered(band="unavailable"))
+
+
+@scenario
+def update_step_failed():
+    """A search ran, then the update step's next call failed after its retries: the answer is untouched."""
+    return Scenario("update-step-failed", PHONE_Q, [
+        Round(phone_search_calls()),
+        Round([phone_keep("riley-1-p26", "riley-1-p25", "riley-1-p66")]),
+        Round([submit()]),
+    ], Comp(PHONE_ANSWER), update=[
+        Round([Call("search_web_updates", {"query": "cell phone search arrest court decision", "start_published_date": "2026-06-30", "num_results": 3},
+                    web=Web(pages=[page("Notes on phone searches after arrest", "news.example.test", "phone-notes", "2026-07-30", 2600)]))]),
+        Round([submit_update(update_findings=[])], retries=[("overloaded", 1.2), ("overloaded", 1.4)], fail=("overloaded", 1.1)),
+    ], expect=answered(band="not_summarised"))
+
+
+@scenario
+def update_step_spend_limit():
+    """The update step meets the Console spend limit during an answered run: the run stays answered, the stop is in
+    stop_kinds, and H pauses live research (contract §4.H)."""
+    return Scenario("update-step-spend-limit", GPS_Q, gps_compact_rounds(), Comp(GPS_ANSWER[:5] + GPS_ANSWER[-1:]), update=[
+        Round([submit_update(update_skip_reason=GPS_SKIP)], fail=("spend_limit", 0.5)),
+    ], expect=answered(band="unavailable"))
 
 
 # ===============================================================================================================
@@ -1438,29 +1538,48 @@ async def write_all_http(oos: Recorded) -> None:
 
     async def answer(name, description, method, path, body=None, prepare=None, during=None, keep_body=True):
         app, store, clock = await http_app(run_id, prepare)
+
+        async def tick():                  # the shutdown's grace runs on the virtual clock (runs left unattached)
+            while True:
+                await clock.advance(1)
         with patched(clock, run_id):
             async with lifespan(app):
                 client = Client(app)
                 if during is not None:
                     await during(store, client)
                 r = await client.request(method, path, body)
+                ticker = asyncio.ensure_future(tick())
+            ticker.cancel()
         write_http(name, description, method, path, r.status, shown_headers(r.headers), r.text)
         return r
 
-    async def fill_day(store, clock):
-        await store.reserve("filler", float(settings.DAILY_CAP_USD.value) - worst_case_usd() + 0.5, clock.now())
+    async def spend(store, run_id, amount, at):
+        a = await store.admit(run_id, at)
+        await store.record_spend(a, amount)
 
-    async def fill_month(store, clock):
-        for day in range(1, 7):
-            await store.reserve(f"filler-{day}", 9.9, datetime(2026, 10, day, 12, tzinfo=CHICAGO))
+    async def fill_day(store, clock):         # today's spend has reached the daily cap (P4.21: at or over refuses)
+        await spend(store, "filler", float(settings.DAILY_CAP_USD.value), clock.now())
+
+    async def fill_month(store, clock):       # the month's has reached the monthly cap, no single day's the daily one
+        days = math.ceil(float(settings.MONTHLY_CAP_USD.value) / 10)
+        for day in range(1, days + 1):
+            await spend(store, f"filler-{day}", 10.0, datetime(2026, 10, day, 12, tzinfo=CHICAGO))
+
+    async def five_in_progress(store, client):   # MAX_CONCURRENT_RUNS runs admitted and not yet ended
+        pinned = app_mod.secrets                  # the fixed run ID would repeat; these runs get their own
+        for k in range(int(settings.MAX_CONCURRENT_RUNS.value)):
+            app_mod.secrets = SimpleNamespace(token_urlsafe=lambda n=16, k=k: stable_id("busy", k))
+            r = await client.post("/runs", {"question": f"Sample question {k + 1}"})
+            assert r.status == 201, r.text
+        app_mod.secrets = pinned
 
     async def atlas_down(store, client):
         store.unreachable = True
 
     await answer("health-ready", "GET /health when loading is complete and live research is open (contract section 5).", "GET", "/health")
-    await answer("health-paused-day", "GET /health when today's cap would be exceeded: live research is paused until midnight, Chicago time.",
+    await answer("health-paused-day", "GET /health when today's spending has reached the daily cap: live research is paused until midnight, Chicago time.",
                  "GET", "/health", prepare=fill_day)
-    await answer("health-paused-month", "GET /health when the month's cap would be exceeded, or after the Console spend limit ended a run.",
+    await answer("health-paused-month", "GET /health when this month's spending has reached the monthly cap, or after the Console spend limit was met.",
                  "GET", "/health", prepare=fill_month)
     await answer("health-unknown", "GET /health when Atlas did not answer within the short timeout: both fields are unknown.",
                  "GET", "/health", during=atlas_down)
@@ -1482,10 +1601,12 @@ async def write_all_http(oos: Recorded) -> None:
                  {"question": "a" * (int(settings.QUESTION_MAX_CHARS.value) + 1)})
     await answer("post-runs-413-body-too-large", "POST /runs with a body over REQUEST_BODY_MAX_BYTES.", "POST", "/runs",
                  json.dumps({"question": "a" * int(settings.REQUEST_BODY_MAX_BYTES.value)}))
-    await answer("post-runs-503-paused-day", "POST /runs when the Chicago day's cap would be exceeded (the daily cap). Authoritative over /health.",
+    await answer("post-runs-503-paused-day", "POST /runs when the Chicago day's spending has reached the daily cap. Authoritative over /health.",
                  "POST", "/runs", q, prepare=fill_day)
-    await answer("post-runs-503-paused-month", "POST /runs when the month's cap would be exceeded, or while the Anthropic spend-limit flag is set.",
+    await answer("post-runs-503-paused-month", "POST /runs when the month's spending has reached the monthly cap, or while the Anthropic spend-limit flag is set.",
                  "POST", "/runs", q, prepare=fill_month)
+    await answer("post-runs-503-busy", "POST /runs while MAX_CONCURRENT_RUNS questions are in progress (contract v2.0 section 5): refused with no Atlas call.",
+                 "POST", "/runs", q, during=five_in_progress)
     await answer("post-runs-503-atlas-unreachable", "POST /runs when Atlas cannot be reached: fail closed, no paid run.", "POST", "/runs", q,
                  during=atlas_down)
     # the first part of the out-of-scope-reply stream, as sent: through the fourth data frame after a keep-alive line

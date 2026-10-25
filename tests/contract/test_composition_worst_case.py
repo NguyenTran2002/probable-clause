@@ -1,5 +1,6 @@
-"""P4.6: the composition's worst-case input, recomputed from the corpus and the settings with the loop's own request
-builder and estimator, fits in COMPOSITION_RESERVE_INPUT, so the figure cannot fall behind the code."""
+"""P4.21 (contract v2.0 §4.E): the composition's largest input, recomputed from the corpus and the settings with the
+loop's own request builder and estimator, fits in WORST_CASE_COMPOSITION_INPUT, so the documented worst case cannot
+fall behind the code. The figure is documentation only, never a gate (it was P4.6's COMPOSITION_RESERVE_INPUT)."""
 
 from types import SimpleNamespace
 
@@ -34,17 +35,18 @@ def worst_case_estimate(corpus: Corpus) -> int:
     return run.est(request["system"]) + run.est_json(request["messages"])
 
 
-def test_the_composition_worst_case_fits_in_its_reserve(corpus):
+def test_the_composition_worst_case_fits_in_the_documented_figure(corpus):
     est = worst_case_estimate(corpus)
-    assert est <= int(settings.COMPOSITION_RESERVE_INPUT.value), est
+    assert est <= int(settings.WORST_CASE_COMPOSITION_INPUT.value), est
 
 
-def test_the_reserve_keeps_only_a_small_margin(corpus):
-    # P4.6: the reserve is the worst case "plus a small margin"; a reserve far above it overstates the worst case
+def test_the_documented_figure_keeps_only_a_small_margin(corpus):
+    # a figure far above the worst case overstates the documented worst case (P4.21's overrun bound)
     est = worst_case_estimate(corpus)
-    assert int(settings.COMPOSITION_RESERVE_INPUT.value) - est < 5_000, est
+    assert int(settings.WORST_CASE_COMPOSITION_INPUT.value) - est < 5_000, est
 
 
-def test_the_run_limit_is_the_loop_budget_plus_the_reserve():
-    assert (int(settings.RUN_INPUT_TOKENS.value)
-            == int(settings.LOOP_INPUT_BUDGET.value) + int(settings.COMPOSITION_RESERVE_INPUT.value))
+def test_the_reserve_and_the_run_wide_limits_are_gone():
+    for name in ("COMPOSITION_RESERVE_INPUT", "COMPOSITION_RESERVE_OUTPUT", "RUN_INPUT_TOKENS", "RUN_OUTPUT_TOKENS",
+                 "FIXED_PREFIX_TOKENS_ESTIMATE"):
+        assert not hasattr(settings, name), name          # P4.18

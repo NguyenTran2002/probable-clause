@@ -1,5 +1,5 @@
 {
-  "description": "GET /health when the month's cap would be exceeded, or after the Console spend limit ended a run.",
+  "description": "GET /health when this month's spending has reached the monthly cap, or after the Console spend limit was met.",
   "method": "GET",
   "path": "/health",
   "status": 200,
