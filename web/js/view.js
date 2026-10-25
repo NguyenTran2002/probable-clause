@@ -99,7 +99,7 @@ export function createView({ cfg, corpus, md }) {
   }
 
   // ---------- the band, above the answer (T4.3 #4) ----------
-  function showBand() { clear(bandSlot).append(fresh(renderBand(run.band, cfg))); }
+  function showBand() { const b = renderBand(run.band, cfg); clear(bandSlot); if (b) bandSlot.append(fresh(b)); }
 
   // ---------- the answer ----------
   function showAnswer() {

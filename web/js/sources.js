@@ -92,10 +92,13 @@ export function createSources({ list, countEl, tabCount, onApi, onRead }) {
   return { sync, reset, cards };
 }
 
+// a term Claude already put in quotation marks (an exact phrase) keeps its own and gets no more
+export function quoted(s) { s = String(s); return /^".*"$/.test(s) ? s : `“${s}”`; }
+
 export function foundByLabel(it) {
   const i = it.input || {};
-  if (it.name === 'search_meaning') return `“${i.query}”`;
-  if (it.name === 'search_exact') return [i.all_of, i.any_of].filter(Boolean).flat().map(s => `“${s}”`).join(', ');
+  if (it.name === 'search_meaning') return quoted(i.query);
+  if (it.name === 'search_exact') return [i.all_of, i.any_of].filter(Boolean).flat().map(quoted).join(', ');
   if (it.name === 'read_passages') return `reading around ${i.target}`;
   return it.name;
 }

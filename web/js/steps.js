@@ -4,6 +4,7 @@
 
 import { h, fresh, clear } from './dom.js';
 import { callVisible, hueOf } from './model.js';
+import { quoted } from './sources.js';
 import * as T from './text.js';
 
 const WITHHELD = /(\[statement withheld: it repeated a page's words\]|\[field withheld [^\]]*\])/;
@@ -131,7 +132,7 @@ export function createSteps(container, { cfg, onGoto }) {
       case 'search_exact': {
         const parts = [];
         for (const [k, label] of [['all_of', 'all of'], ['any_of', 'any of'], ['none_of', 'none of']]) {
-          if (Array.isArray(inp[k]) && inp[k].length) parts.push(`${label} ${inp[k].map(s => `“${s}”`).join(', ')}`);
+          if (Array.isArray(inp[k]) && inp[k].length) parts.push(`${label} ${inp[k].map(quoted).join(', ')}`);
         }
         if (parts.length) li.append(h('p', { class: 'query' }, ...withheld(parts.join(' · '))));
         li.append(h('p', { class: 'meta' }, searchMeta(inp)));

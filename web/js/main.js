@@ -26,7 +26,7 @@ function standing(corpus) {
     h('p', null, ...rich(T.creditsSources(corpus))), h('p', null, T.CREDITS_BUILT), h('p', null, T.CREDITS_LICENCE),
     h('p', null, T.coverageDates(corpus.coverage)), h('p', null, T.TEXT_STATUS));
   const privacy = () => h('details', { class: 'credits' }, h('summary', null, T.PRIVACY_SUMMARY), ...T.PRIVACY.map(par => h('p', null, ...rich(par))));
-  const affiliation = () => h('p', null, `${T.AFFILIATION} `, webLink(T.REPO_URL, T.REPO_LINK_TEXT));
+  const affiliation = () => h('p', { class: 'aff' }, `${T.AFFILIATION} `, webLink(T.REPO_URL, T.REPO_LINK_TEXT));
   $('#pitch').textContent = T.pitch(corpus);
   clear($('#landing-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'block' }, T.AI_DISCLOSURE),
     h('p', null, T.coverageLine(corpus)), affiliation(), h('div', { class: 'folds' }, credits(), privacy()));

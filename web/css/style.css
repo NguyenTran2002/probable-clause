@@ -522,6 +522,7 @@ button:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.6; }
 .folds details[open] { flex-basis: 100%; }
 .folds details p { margin: 0.4rem 0 0; }
 .scratch { margin: 0.35rem 0 0 !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
+body.playing .scratch { display: none; }
 .disclaimer .folds { justify-content: center; }
 
 /* the step log after research: two groups, each with its own spinner */
@@ -641,6 +642,9 @@ button:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.6; }
   .pg { float: none; display: block; width: auto; margin: 0 0 0.15rem; text-align: left; line-height: 1.4; }
   .pg-word { display: inline; }
   .reader-text .pg { display: none; }
+  /* the run's dock stays short on a phone: the credits, privacy and affiliation are on the landing page */
+  .disclaimer .folds, .disclaimer .aff { display: none; }
+  .disclaimer { font-size: 0.6875rem; }
   .pgb .pg-word { display: block; margin: 0.4rem 0 0.15rem; font-family: var(--ui); font-size: 0.75rem; color: var(--muted); }
   .folds { justify-content: flex-start; }
   .excerpt { margin: 1.25rem 0; }
@@ -650,7 +654,7 @@ button:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.6; }
 /* sideways phone: short viewport */
 @media (max-height: 500px) and (min-width: 760px) {
   .bar { padding: 0.35rem 1rem; }
-  .disclaimer details, .disclaimer .long, .disclaimer .folds { display: none; }
+  .disclaimer details, .disclaimer .long, .disclaimer .folds, .disclaimer .aff, .scratch { display: none; }
   .dock { padding-top: 0.25rem; }
   .status { margin-bottom: 0.2rem !important; }
   .composer { padding: 0.3rem 0.3rem 0.3rem 0.8rem; }

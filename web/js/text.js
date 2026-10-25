@@ -118,7 +118,6 @@ export const BAND_SKIPPED = reason => `Update check skipped: ${reason}`;
 export const CLAUDES_REASON = reason => `Claude’s reason: ${reason}`;
 export const BAND_INCOMPLETE = 'This search did not complete; nothing came back.';
 export const BAND_NOT_SUMMARISED = 'Not summarised: the run stopped before Claude summarised these searches. The pages they returned are listed below.';
-export const BAND_NOT_RUN = 'Not run: no web search was needed for this run.'; // main session's
 const UNAVAILABLE = 'Update check unavailable';
 // T5.3's two lines, then step 0's for the update step's own stops and errors (main session's, BUILD_LOG 16:52).
 export function bandUnavailable(reason) {

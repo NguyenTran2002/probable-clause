@@ -24,6 +24,7 @@ export function createParser(onFrame, onComment) {
     buf += chunk;
     let i;
     while ((i = buf.search(/\r\n|\r|\n/)) >= 0) {
+      if (buf[i] === '\r' && i === buf.length - 1) break;     // a CR at the chunk's end may be half of a CRLF
       const l = buf.slice(0, i);
       buf = buf.slice(i + (buf[i] === '\r' && buf[i + 1] === '\n' ? 2 : 1));
       line(l);
@@ -33,7 +34,9 @@ export function createParser(onFrame, onComment) {
 
 // handlers: onEvent(envelope), onState('open' | 'reconnecting' | 'expired' | 'closed'), wake() -> Promise
 export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), lastN = 0 } = {}) {
-  let last = lastN, done = false, stopped = false, ctl = null, beat = null, watchdog = null;
+  let last = lastN, done = false, stopped = false, ctl = null, beat = null, watchdog = null, reader = null;
+  // aborting the request ends a real body; the reader is cancelled too, so a stalled read always returns
+  const cut = () => { if (ctl) ctl.abort(); if (reader) reader.cancel().catch(() => {}); };
   const base = `api/runs/${encodeURIComponent(runId)}`;
 
   const stopBeats = () => { clearInterval(beat); beat = null; clearTimeout(watchdog); watchdog = null; };
@@ -46,7 +49,7 @@ export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), 
   };
   const arm = () => {
     clearTimeout(watchdog);
-    watchdog = setTimeout(() => { if (ctl) ctl.abort(); }, cfg.PAGE_WATCHDOG_S * 1000);
+    watchdog = setTimeout(cut, cfg.PAGE_WATCHDOG_S * 1000);
   };
 
   async function connect() {
@@ -73,9 +76,9 @@ export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), 
       if (!ev || ev.v !== 2 || typeof ev.n !== 'number' || ev.n <= last) return;   // the page plays only v2 (§6)
       last = ev.n;
       handlers.onEvent(ev);
-      if (ev.kind === 'run_ended') { done = true; ctl.abort(); }
+      if (ev.kind === 'run_ended') { done = true; cut(); }
     }, () => arm());
-    const reader = r.body.getReader();
+    reader = r.body.getReader();
     const dec = new TextDecoder();
     try {
       for (;;) {
@@ -101,7 +104,7 @@ export function attach(runId, cfg, handlers, { fetchFn = (...a) => fetch(...a), 
   })();
 
   return {
-    stop() { stopped = true; done = true; stopBeats(); if (ctl) ctl.abort(); },
+    stop() { stopped = true; done = true; stopBeats(); cut(); },
     get last() { return last; },
   };
 }

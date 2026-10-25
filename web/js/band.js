@@ -11,9 +11,15 @@ const FIELDS = [['query', 'query'], ['start_published_date', 'published from'], 
   ['include_domains', 'include domains'], ['exclude_domains', 'exclude domains'], ['category', 'category'],
   ['type', 'search type'], ['num_results', 'results']];
 
+// null when there is nothing to show: no search reached the check and nothing stopped it (T2.3 #5: the band shows
+// for a run with no answer only if an update search ran).
 export function renderBand(band, cfg) {
+  const searched = (band.searches || []).length > 0;
+  if (band.outcome === 'not_run' && !searched) return null;
   const sec = h('section', { class: 'update', attrs: { 'aria-label': T.BAND_HEADING } });
-  sec.append(h('h2', null, T.BAND_HEADING), h('p', { class: 'label' }, T.BAND_HONESTY));
+  sec.append(h('h2', null, T.BAND_HEADING));
+  // T5.3's label says Claude searched the web, so it stands only where a search did (main session's reading)
+  if (searched) sec.append(h('p', { class: 'label' }, T.BAND_HONESTY));
   const pages = new Map((band.pages || []).map(p => [p.id, p]));
   const o = band.outcome;
 
@@ -33,8 +39,6 @@ export function renderBand(band, cfg) {
     sec.append(h('p', { class: 'outcome' }, T.bandUnavailable(band.reason)));
   } else if (o === 'not_summarised') {
     sec.append(h('p', { class: 'outcome' }, T.BAND_NOT_SUMMARISED));
-  } else if (o === 'not_run') {
-    sec.append(h('p', { class: 'outcome' }, T.BAND_NOT_RUN));
   }
   if (band.overview) {
     sec.append(h('p', { class: 'summary' }, h('span', { class: 'whose' }, T.BAND_OVERVIEW), ...withheld(band.overview)));
