@@ -43,6 +43,7 @@ More, each from the brief:
 - `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user), kept for the record.
 - `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them; `scripts/render_run.py`: a saved run as a readable Markdown file.
 - `docs/design/wave3-design.md`: the Wave 3 design (update step beside composition, composition on Sonnet, no reservation, looser limits), a draft for the user's approval.
+- `docs/sessions/wave3-plan.md`: the main session's plan for building Wave 3 (steps 0 to 6, agents, reviews, the paid tests), proposed for the user's approval.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
@@ -89,7 +90,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 *Updated Oct 25, 2026, 13:31 CDT, before a planned compaction; the Wave 3 design waits for the user's approval.*
 
-- **Next: Wave 3,** per `docs/design/wave3-design.md` (a draft; nothing in it locked). In order:
+- **Next: Wave 3,** per `docs/design/wave3-design.md` (a draft; nothing in it locked), built by `docs/sessions/wave3-plan.md` (proposed; follow its steps 0 to 6 once approved). In order:
   1. **The user approves the design.** Its §8 is fully answered (13:38 and 13:41 entries): the loop's input 2M, the update step's input 2M, 5 runs at once, the update step continuing the research conversation, refusal wording by the main session, and the development allowance (a fresh tally at $0; $3 of Anthropic and 20 Exa searches; ledger `data/verification/wave3/spend.jsonl`).
   2. **Lock P4.18 to P4.22,** each in its own BUILD_LOG entry with its `locked-decisions.md` entry, in the user's words:
      - P4.18, looser limits;
