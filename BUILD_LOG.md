@@ -1240,3 +1240,19 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `webdev/` and `web/_generated/`. Tree clean, nothing pushed. Wave 2 waits for the user's go after the compaction.
 **Spend:** none.
 **DECISION (user):** *"We'll compact before wave 2. Prep the ground first."*
+
+## Oct 24, 2026, 22:58 CDT — Phase 4: Build, Wave 2 started
+**Asked:** *"Let's start Wave 2."*
+**Came back:**
+- **Wave 2 launched:** three background builders, each on its own paths per contract §13, with no keys, paid calls or commits:
+  - G, the research loop and composition (`api/loop/`, `tests/loop/`), Opus 5.5 xhigh. It may read Anthropic's public docs with WebFetch for streaming, citations, adaptive thinking and effort, one-hour caching, and the two spend errors.
+  - H, the API and run lifecycle (`api/server/`, `api/main.py`, `tests/server/`), Opus 5.5 high.
+  - I, the images and deploy files (`deploy/`, `tests/deploy/`), Sonnet 5.5 high. The files are written, never run; `deploy.sh` is tested only under stub commands, to prove the open-reservations check stops it first.
+- **Agreed between G and H in the briefs** (within contract v1.1, no change to it):
+  - `api.loop` exports `execute_run`, `LoopDeps`, `AnthropicStreamer`, `StreamResult`, `FakeAnthropic` and `SdkAnthropicStreamer(api_key)`;
+  - `api/main.py` exposes `app` (`uvicorn api.main:app`) and imports `api.loop` only inside its deps factory;
+  - in `record_usage`, `usage` is what is priced and `raw_usage` is Claude's exact usage object, written as `paid_call.usage` (null for a failed attempt with no usage).
+- **Each part:** tests first, a mutation check of its honesty-critical rules, then a Sonnet 5.5 high review, the fixes, the tests run by the main session, and a commit of that part's paths with a log entry.
+- **I's brief** excludes `web/looktests/` from the web image (the Phase 1 look tests, not the page), as a choice to report back.
+**Spend:** none.
+**DECISION (user):** *"Let's start Wave 2."*
