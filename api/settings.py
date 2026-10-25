@@ -105,7 +105,7 @@ REQUEST_BODY_MAX_BYTES = _s(16_384, "PLACEHOLDER, main session's (T3.7: POST /ru
 EVENTS_TTL_S = _s(86_400, "T3.7 (24 hours)")
 HEARTBEATS_TTL_S = _s(600, "T3.7 (10 minutes)")
 ATLAS_HEALTH_TIMEOUT_S = _s(2, "PLACEHOLDER, main session's (T3.4: a short timeout)")
-ATLAS_ADMIT_TRIES = _s(5, "PLACEHOLDER, main session's: compare-and-swap rounds in admit before Atlas counts as unreachable (was ATLAS_RESERVE_TRIES; P4.21)")
+ATLAS_ADMIT_TRIES = _s(5, "PLACEHOLDER, main session's: duplicate-key retries in admit and the store's upserts (two writers creating one month's document at once) before Atlas counts as unreachable (was ATLAS_RESERVE_TRIES; P4.21)")
 SHUTDOWN_GRACE_S = _s(5, "main session's: uvicorn's --timeout-graceful-shutdown, so open streams close and the lifespan shutdown records unrecorded spend within Cloud Run's 10 s between SIGTERM and SIGKILL (docs.cloud.google.com/run/docs/container-contract, read Oct 24, 2026)")
 ATLAS_OP_TIMEOUT_S = _s(5, "PLACEHOLDER, main session's: every other Atlas operation, so admission never waits pymongo's 30 s default")
 

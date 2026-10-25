@@ -211,7 +211,7 @@ class MongoStore(Store): ...              # api/protocols.Store; pymongo AsyncMo
 class MemoryStore(Store): ...             # the fake every other part tests against; same semantics
 
 def worst_case_components() -> dict[str, float]   # P4.21: a documented, tested figure only, never a gate
-def worst_case_usd() -> float             # about $10.84 (v2.0)
+def worst_case_usd() -> float             # $11.161 (v2.0)
 def price(u: Usage) -> float              # list price (T3.4); a failed attempt with no usage as T3.3
 def list_price_exa(type: str) -> float
 PRICE_TABLE: dict                         # §10, one source and date per provider
