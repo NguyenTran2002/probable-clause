@@ -1554,3 +1554,35 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Whole suite: 3,336 passed, 49 skipped.**
 **Spend:** none.
 **DECISION (user):** none new. This carries out P4.6 to P4.9, locked at 01:01.
+
+## Oct 25, 2026, 01:54 CDT — Phase 4: Build, overnight steps 2 and 3: the loop patch for P4.6 to P4.10, reviewed and merged
+**Asked:** the overnight note's steps 2 and 3. One builder, Opus 5.5 at xhigh effort, writing only `api/loop/` and `tests/loop/`. Then a read-only review, Sonnet 5.5 at high effort.
+**Came back:**
+- **`api/loop/run.py`:**
+  - **P4.6:** a note over `NOTE_MAX_CHARS` is refused with rule `note_too_long`, after rule 1 and the findings checks and before the copy guard; it applies to every note, an answered run's scope note included. The composition estimate past the reserve is now `log.error`, and the call still runs (P4.4).
+  - **P4.7:** rule 4 is waived when `out_of_scope` is true. "hello" out of scope with no search is accepted at once, with band `not_run`.
+  - **P4.8:** `note_guarded()`: the note is guarded when the submit is out of scope (or `out_of_scope` is not a boolean) or nothing is kept, and a page has been returned. A flagged note is withheld in the stored and streamed `tool_call`, whichever rule refuses. With only the note flagged, the refusal is `copy_guard_note`; otherwise `copy_guard` with every problem.
+  - **P4.9:** `corpus_exemption(corpus)`, a weak-keyed cache like `chars_per_token`'s, built on the first guarded submit (86 ms measured), passed to every copy-guard call.
+  - **P4.10:** verified, with no change. A broken attempt is priced from what it reported and streamed, never at `max_tokens`. The composition gate has no budget callback, so the retry runs.
+- **`tests/loop/test_v15.py`:** 25 tests. They include a run through H's app and `MemoryStore` showing that a flagged note never reaches the stored events or the run record, and a real *Katz* sentence that a page also quotes accepted in a statement and in a note.
+- **Mutation checks:** the builder ran 19 mutants and each made tests fail. The reviewer ran 6 more on a scratch copy, each caught.
+- **The review:** no defects. Its points:
+  1. **Risk:** the worst case is by the estimator, not the tokenizer. Hostile dense text can run past the reserve by about $0.04 a run (plus retries). That is logged, never stopped. Queued for the user.
+  2. **Nit:** P4.6 quoted 64,945. The test computes 65,188 (65,331 on `before_chatrie`), a margin of 812 tokens. `api/settings.py`'s basis now says so. An edit to the prompt drafts may trip the margin test, as intended.
+  3. **Risk:** four reservations at once in the $10 day, not five (already queued at 01:34).
+  4. **Accepted in P4.10:** hidden thinking on a broken composition attempt can go unbilled in the count.
+  5. **Nit:** the note's refusal wording exists in F's problem text and in `copy_guard_note`, so they can drift.
+  6. **Nit:** the fixtures' old limits (step 4).
+  7. **Nit:** the frontend's labels (step 5).
+- **The leak hunt (item 3) found no path for a flagged note:**
+  - `api_fragment` carries no submit input;
+  - no log line takes the input;
+  - the message history is not persisted;
+  - only an accepted note reaches `run_ended`.
+- **The builder's questions, queued for the user:**
+  - the `copy_guard` draft opens with "some of the update findings", even when the note is among the flagged texts;
+  - the 86 ms first build could move to H's start-up.
+- **`docs/design/contract.md`:** §6's `not_run` covers an out-of-scope reply with no search (P4.7).
+- **Whole suite: 3,361 passed, 49 skipped.**
+**Spend:** none.
+**DECISION (user):** none new. This carries out P4.6 to P4.10.

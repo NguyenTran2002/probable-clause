@@ -1,4 +1,5 @@
-"""The research loop and the composition call (contract §4.G; T1.2 to T1.14, T2.1 to T2.5, T3.1 to T3.7, P4.3).
+"""The research loop and the composition call (contract §4.G; T1.2 to T1.14, T2.1 to T2.5, T3.1 to T3.7,
+P4.3 to P4.10).
 
 `execute_run(ctx, deps)` emits run_started ... run_ended and returns normally for every expected end, RunStopped
 included. H holds the run (RunContext): the gate before every paid call, the pricing and the one emitter of
@@ -20,7 +21,7 @@ from dataclasses import asdict, dataclass, field
 import anyio
 
 from api import settings
-from api.checks import check_answer, check_update_findings, copy_guard_report
+from api.checks import CorpusWords, check_answer, check_update_findings, copy_guard_report, corpus_words, pages_named
 from api.corpus.filters import excluded_by_none_of, matches, parse_filters
 from api.corpus.keyword import KeywordIndex
 from api.corpus.store import Corpus
@@ -62,6 +63,7 @@ UPDATE_SEARCHES = int(_v(settings.UPDATE_SEARCHES_PER_RUN))
 KEEP_CAP = int(_v(settings.KEEP_CAP))
 KEEP_REASON_MAX = int(_v(settings.KEEP_REASON_MAX_CHARS))
 COPY_GUARD_WORDS = int(_v(settings.COPY_GUARD_WORDS))
+NOTE_MAX = int(_v(settings.NOTE_MAX_CHARS))
 MAX_ATTEMPTS = ANTHROPIC_POLICY.retries + 1
 
 # P4.3: the stored and streamed tool_call of a refused submit carries this in place of each flagged statement.
@@ -104,6 +106,18 @@ def chars_per_token(corpus: Corpus) -> float:
         chars = sum(len(p.text) for p in corpus.passages.values() if p.kind == "paragraph")
         _RATIO[corpus] = chars / max(1, int(corpus.manifest["core_tokens"]))
     return _RATIO[corpus]
+
+
+_EXEMPT: "weakref.WeakKeyDictionary[Corpus, CorpusWords]" = weakref.WeakKeyDictionary()
+
+
+def corpus_exemption(corpus: Corpus) -> CorpusWords:
+    """The corpus's words for the copy guard (P4.9), built once per corpus from its passages' texts (about 2 MB,
+    under a tenth of a second), on the first guarded submit: a run of words also found in one passage is the Court's,
+    so a page quoting it is not copied by a text quoting it too."""
+    if corpus not in _EXEMPT:
+        _EXEMPT[corpus] = corpus_words(p.text for p in corpus.passages.values())
+    return _EXEMPT[corpus]
 
 
 def usage_from_raw(raw: dict, model: str, *, estimated: bool = False) -> Usage:
@@ -190,8 +204,9 @@ def sort_documents(ids, corpus: Corpus) -> list[str]:
     return sorted(ids, key=lambda pid: (corpus.passages[pid].decided, order[pid]))
 
 
-def withhold_flagged(inp: dict, flagged: set[int], overview_flagged: bool) -> dict:
-    """P4.3: the input as stored, each flagged statement replaced."""
+def withhold_flagged(inp: dict, flagged: set[int], overview_flagged: bool, *, note_flagged: bool = False) -> dict:
+    """P4.3: the input as stored, each flagged statement replaced; a flagged overview, and a flagged note (P4.8),
+    replaced by the same text."""
     shown = copy.deepcopy(inp)
     findings = shown.get("update_findings")
     for i in flagged:
@@ -199,6 +214,8 @@ def withhold_flagged(inp: dict, flagged: set[int], overview_flagged: bool) -> di
             findings[i]["statement"] = WITHHELD
     if overview_flagged:
         shown["update_overview"] = WITHHELD
+    if note_flagged:
+        shown["note"] = WITHHELD
     return shown
 
 
@@ -795,9 +812,18 @@ class _Run:
         _BACKGROUND.add(task)
         task.add_done_callback(_BACKGROUND.discard)
 
-    # -- submitting (T1.10, T2.3, P4.3) --
+    # -- submitting (T1.10, T2.3, P4.3, P4.6 to P4.9) --
+    def note_guarded(self, inp: dict) -> bool:
+        """P4.8: the note of a no-sources reply (out of scope, or nothing kept) is guarded; the scope note of an
+        answered run (in scope, something kept) is not. Kept passages are counted as the submit runs, after the
+        turn's other tools (v1.3). An `out_of_scope` that is not a boolean (bad input, refused anyway) is guarded."""
+        note = inp.get("note")
+        return isinstance(note, str) and bool(note.strip()) and (inp.get("out_of_scope") is not False or not self.kept)
+
     def guard_report(self, inp):
-        """The copy guard over the submit's statements and overview, one entry per finding so the indexes line up."""
+        """The copy guard over the submit's statements and overview, one entry per finding so the indexes line up,
+        and over a no-sources reply's note (P4.8); runs of words that are also the corpus's are exempt (P4.9). None
+        when no page was returned in the run, or there is nothing to guard."""
         if not isinstance(inp, dict) or not self.pages:
             return None
         findings = inp.get("update_findings")
@@ -806,19 +832,22 @@ class _Run:
             statements = [f.get("statement") if isinstance(f, dict) and isinstance(f.get("statement"), str) else ""
                           for f in findings]
         overview = inp.get("update_overview") if isinstance(inp.get("update_overview"), str) else None
-        if not statements and not overview:
+        note = inp["note"] if self.note_guarded(inp) else None
+        if not statements and not overview and not note:
             return None
         return copy_guard_report(statements, overview, {pid: pg.text for pid, pg in self.pages.items()},
-                                 COPY_GUARD_WORDS)
+                                 COPY_GUARD_WORDS, note=note, exempt=corpus_exemption(self.corpus))
 
     def submit(self, inp, same_turn: bool) -> tuple[_Out, dict, bool]:
-        """Rule 1, then the findings checks and the copy guard, then rules 2 to 4 (T1.10, T2.3). Returns the
-        result, the input as stored (P4.3) and whether the submit was accepted."""
+        """Rule 1, then the findings checks, the note cap (P4.6) and the copy guard, then rules 2 to 4, rule 4
+        waived when out of scope (T1.10, T2.3, P4.7). Returns the result, the input as stored (P4.3, P4.8) and
+        whether the submit was accepted."""
         guard = self.guard_report(inp)
         shown = inp
-        if guard is not None and (guard.flagged_statements or guard.overview_flagged):
-            # P4.3, and §1: no page's words are stored, whichever rule refuses the submit.
-            shown = withhold_flagged(inp, guard.flagged_statements, guard.overview_flagged)
+        if guard is not None and (guard.flagged_statements or guard.overview_flagged or guard.note_flagged):
+            # P4.3, P4.8, and §1: no page's words are stored, whichever rule refuses the submit.
+            shown = withhold_flagged(inp, guard.flagged_statements, guard.overview_flagged,
+                                     note_flagged=guard.note_flagged)
 
         def refuse(rule, text):
             log.info("run %s: submit refused (%s)", self.ctx.run_id, rule)
@@ -840,8 +869,14 @@ class _Run:
             problems = check_update_findings(findings, overview, set(self.pages), self.counted)
             if problems:
                 return refuse("findings", rejection("submit", "findings_problems", problems="\n".join(problems)))
-            if guard is not None and guard.problems:                                      # T2.3 item 3
-                return refuse("copy_guard", rejection("submit", "copy_guard", problems="\n".join(guard.problems)))
+        if note is not None and len(note) > NOTE_MAX:                                    # P4.6
+            return refuse("note_too_long", rejection("submit", "note_too_long", length=len(note)))
+        if guard is not None and guard.problems:                                          # T2.3 item 3, P4.8
+            if guard.note_flagged and not guard.flagged_statements and not guard.overview_flagged:
+                text = rejection("submit", "copy_guard_note", pages=pages_named(guard.note_pages))
+            else:
+                text = rejection("submit", "copy_guard", problems="\n".join(guard.problems))
+            return refuse("copy_guard", text)
         out_of_scope = inp["out_of_scope"]
         if not out_of_scope:
             if not self.corpus_searched:                                                  # rule 2
@@ -850,7 +885,8 @@ class _Run:
                 return refuse("nothing_kept", rejection("submit", "rule_3_nothing_kept"))
         elif not note:                                                                    # T1.10, v1.3
             return refuse("no_note", rejection("submit", "out_of_scope_no_note"))
-        if self.counted == 0 and not self.unavailable() and not skip:                    # rule 4, refused once
+        # rule 4, refused once; waived while the check is unavailable (P2.11) and for an out-of-scope reply (P4.7)
+        if not out_of_scope and self.counted == 0 and not self.unavailable() and not skip:
             if self.reminded_round is None or self.reminded_round >= self.round_no:
                 self.reminded_round = self.round_no
                 return refuse("no_update_check", rejection("submit", "rule_4_no_update_check"))
@@ -984,8 +1020,10 @@ class _Run:
         request = self.composition_request(documents, scope_note)
         est = self.est(request["system"]) + self.est_json(request["messages"])
         if est > COMPOSITION_RESERVE_INPUT:
-            log.warning("run %s: composition input estimated at %d tokens, above the %d held back (T1.11)",
-                        self.ctx.run_id, est, COMPOSITION_RESERVE_INPUT)
+            # P4.6: the reserve is the worst case by this estimator, so plain text never reaches this; logged, and
+            # the call still runs (P4.4: no tripwire)
+            log.error("run %s: composition input estimated at %d tokens, above the %d held back (T1.11, P4.6)",
+                      self.ctx.run_id, est, COMPOSITION_RESERVE_INPUT)
         self.call_no += 1
         call_no = self.call_no
         blocks: list[tuple[int, dict, list[dict]]] = []

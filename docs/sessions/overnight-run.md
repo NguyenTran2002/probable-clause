@@ -41,6 +41,8 @@ Each one targets 5 minutes after a known reset.
 
 - 01:38 CDT: **step 2 running**, an Opus 5.5 xhigh builder in the background (if it was cut off by the limit, restart it from the same brief: write only `api/loop/` and `tests/loop/`, P4.6 to P4.10). **Step 6 done ahead of order** (no commit needed): the API image built (427 MB), imports with `--network none`, and loads the corpus, FTS5 and vectors offline; the web image fails at guard 1 as expected (no `web/index.html`); its data stage builds (config, corpus, 102 opinions). Rebuild the API image after the merge. **Uncommitted, mine:** `docs/sessions/frontend-brief.md` (step 5, commit with step 4), a band line in `docs/design/contract.md` (commit with step 3), and `docs/design/paid-build-tests.md` (step 8, draft; Anthropic prices re-read at 01:37, unchanged).
 
+- 01:54 CDT: **steps 2 and 3 done** (loop patch reviewed, merged, logged). Next: step 4, the fixtures builder (Opus 5.5 high, `tests/fixtures/` only); then remove H's `stop_kinds` fill-in and fix `tests/server/` expectations of the old limits; commit the frontend brief with step 4.
+
 ## Standing limits (unchanged by the night)
 - **No paid call of any kind:** no Anthropic, Voyage, Exa or Atlas call from this session or any agent. The new texts also await the user's review before the first paid run (T1.14).
 - **No deploy, no `gcloud`, nothing to goodnight, no `git push`, no edit to `web/`** (the frontend session's).

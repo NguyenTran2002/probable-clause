@@ -443,7 +443,7 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
 - **`declined`:** accepted after rule 4's reminder with no reason. `reason` is null, and the page shows no reason line.
 - **`unavailable`:** no search could run; `reason` is `no_credit` or `key_refused`.
 - **`not_summarised`:** searches ran, but the run stopped before a submit.
-- **`not_run`:** no search and no submit, for example abandoned early.
+- **`not_run`:** no search and no submit, for example abandoned early; or an out-of-scope reply with no search, since rule 4 is waived there (P4.7, v1.5).
 
 **`run_ended` fields:**
 - **`note`** is only for no-sources replies (T1.10).
