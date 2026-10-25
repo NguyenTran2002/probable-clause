@@ -1023,3 +1023,30 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - **Tests:** 169 passed (corpus and contract), run on the stand-in splitter. Builder A's `sentences.py` has not landed yet; the run with the real splitter comes at the Wave 1 merge.
 **Spend:** none.
 **DECISION (user):** none new.
+
+## Oct 24, 2026, 21:25 CDT — Phase 4: Build, Wave 1, part D merged
+**Asked:** Part D, the update check (contract §4.D), under *"Start wave 1 let's go!"*
+**Came back:**
+- **Part D:** `api/web_updates/`, `tests/web_updates/`. It covers:
+  - validation as T2.1;
+  - one MCP session per search, with the 30 s timeout covering the handshake;
+  - the key only in `x-api-key`;
+  - no retries;
+  - the four failure kinds of T2.4;
+  - the 402 flag and stop;
+  - repeats tracked by URL, IDs `web-<search>-<n>`, dates as written;
+  - both formatters, page text replaced in the events text.
+  - The real `mcp` client is tested against an in-process fake server.
+- **Review** by a Sonnet 5.5 high subagent: no blocking defect. With sockets patched to raise, every test still passed. No path was found from page text to a log, an error or an event.
+  - Fixes made by the builder:
+    - the key scrub uses the stripped key;
+    - Exa's message is capped;
+    - an ok reply with no reported cost is marked estimated;
+    - cancellation propagates unrecorded.
+- **Main session's rulings** (contract §4.D, v1.1, 9740eb2):
+  - Recording follows T2.4. A search refused by Exa is recorded at $0. An unavailable search (402, 401) records no paid call. A failed one is recorded at list price, as estimated.
+  - G runs the schema check.
+  - New placeholders: `EXA_HEADER_FIELD_MAX_CHARS` 300 and `EXA_MESSAGE_MAX_CHARS` 500.
+- **Tests:** 407 passed (web updates and contract).
+**Spend:** none.
+**DECISION (user):** none new.
