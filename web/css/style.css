@@ -95,7 +95,8 @@ a { color: var(--brand); }
 /* ---------- views ---------- */
 body[data-view="landing"] #run { display: none; }
 body[data-view="run"] #landing { display: none; }
-body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+/* one row: the prototype's second row sat under its switcher banner; without the banner #run fell into the auto row */
+body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr); }
 
 /* ---------- landing ---------- */
 #landing {
