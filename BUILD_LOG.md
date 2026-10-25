@@ -869,3 +869,27 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T5.6 locked as asked.
 **DECISION (user):**
 - T5.6: *"Lock topic 6 as T5.6: the four recommended questions, the pre-Chatrie replay as the fifth, and the recording rules as proposed."*
+
+## Oct 24, 2026, 19:40 CDT — Phase 3: Architecture, Area 5 closed (the user's wording and the replays)
+**Asked:** Run Area 5 after the compaction, topic by topic; then lock the area, close it and prepare for the compaction.
+**Came back:**
+- Six topics, confirmed by the user with the text-status note added to topic 2, all locked:
+  - T5.1 (19:14): the standing lines — pitch, the trace caption, the not-legal-advice line, the AI disclosure, affiliation with the repository link and no author name, sources and credits per actual text source, the reader's three credit lines; brief defaults 2 (Apache 2.0) and 6 ("live" once actually up) settled.
+  - T5.2 (19:18): the guarantee ("word for word … as normalised"), the coverage line with all three dates, the answer key, the checks' line and flags, the cost label, the text-status note; T1.12's example line reworded.
+  - T5.3 (19:21): the update-check band — honesty label, a replacement guarantee sentence, the band's parts, every outcome line, the pointer under the answer, the step lines.
+  - T5.4 (19:25): every run state and stop label.
+  - T5.5 (19:36): the privacy note, from `docs/research/retention.md`; a rule keeping personal details out of Voyage and Exa queries (T1.14 amended); fonts served by our own web service (T4.1 amended); Voyage training opted out and goodnight's 30-day logs, checked by the user.
+  - T5.6 (19:39): five replays, four on the full corpus and the geofence question on a corpus ending before *Chatrie*; recording rules.
+- Amended: T1.12 (T5.2), T1.14 and T4.1 (T5.5). Settled: brief defaults 2 and 6 (T5.1); §7.4's pre-*Chatrie* option (T5.6).
+- New research record: `docs/research/retention.md`.
+- Carried forward: the working doc's "Area 5 closed" section (build, Phase 5, the design note). Phase 3's five areas are closed; the design note is next.
+**Spend:** none (reads only).
+**DECISION (user):**
+- Topics: *"The six topics work, with the text-status note added. Open topic 1."*
+- T5.1: *"1. We can link to the repo, which is https://github.com/NguyenTran2002/probable-clause. No need to mention my name though. 2. Leave out it is. 3. I'll give it Apache 2.0. 4. We're going with 2b anyway. 5. Live wording is correct."* Then *"Lock."*
+- T5.2: *"Lock topic 2 as T5.2 with the recommended drafts."*
+- T5.3: *"Lock topic 3 as T5.3 with the recommended drafts."*
+- T5.4: *"Lock topic 4 as T5.4 with the recommended drafts."*
+- T5.5: *"Open topic 5. Read the retention pages yourself, no subagent."* Then *"I checked myself, and goodnight keeps request logs for 30 days, the default, so your note's "30 days by default" is correct. Voyage AI is also dropped out as well."* Then *"Add the query rule and self-host the fonts (amending T4.1). Lock the privacy note as T5.5."*
+- T5.6: *"Lock topic 6 as T5.6: the four recommended questions, the pre-Chatrie replay as the fifth, and the recording rules as proposed."*
+- Close: *"Lock area 5. Close it and prepare for the compaction."*
