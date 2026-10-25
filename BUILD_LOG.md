@@ -1126,3 +1126,15 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - The fixtures and the frontend brief update; then Wave 2.
 - The prompt drafts await the user's review before the first paid run.
 **DECISION (user):** none new.
+
+## Oct 24, 2026, 21:55 CDT — Phase 4: Build, the prompt drafts approved; rerank-3 confirmed; Voyage key set
+**Asked:** The user reviewed the prompt drafts in `api/prompts/` (T1.14: reviewed before their first paid run). These include the main session's calls in `tools.json`: `none_of` exact on both tools, and multi-word items needing all their words. The user also checked `rerank-3` and added the Voyage key.
+**Came back:**
+- The prompt drafts stand as committed (23f1ca2, as amended by bd0506b and 5625308), approved for the first paid run.
+- `rerank-3` is confirmed valid by the user. It answers the open point from part C's review: Voyage's docs disagreed.
+- `VOYAGE_API_KEY` reports **set** (`scripts/check_env.py`; the file itself was not read).
+- Next: Voyage's list prices with their source, the key's endpoint (T5.5), and a dry run of the embedding for its cost. Then `--confirm` only on approval.
+**DECISION (user):**
+- *"I checked the prompts. They are good to go."*
+- *"rerank-3 is valid, I just check."*
+- *"Voyage API key is included in .env. Do NOT read the file yourself."*
