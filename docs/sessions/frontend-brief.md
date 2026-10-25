@@ -2,6 +2,8 @@
 
 *Rewritten Oct 24, 2026 by the main session for Phase 4 (P4.1), replacing the look-test brief of Oct 23. If you are the frontend session, read this file in full, then the files it names, before doing anything.*
 
+*From Oct 25, 2026 (P4.28) the main session builds the page itself, following `docs/sessions/frontend-plan.md`; the frontend session is retired. This brief stays the spec (§4 to §6, §5a); its rules on sessions, its log and §8's stops for the frontend session no longer apply.*
+
 ---
 
 ## 1. Who you are and what you are for

@@ -91,10 +91,27 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 16:20 CDT: Wave 3 is built, reviewed and paid-tested (steps 0 to 6).*
+*Updated Oct 25, 2026, 16:50 CDT, before a planned compaction: the frontend build starts after it.*
 
-- **Done:** step 6 ran (BUILD_LOG "Oct 25, 2026, 16:20 CDT"): all four tests behaved as designed; the update step's first call read research's cache each time; answered runs cost about 45% less than the morning's (t1 $0.18, t4 $0.25); Atlas spend matches the paid calls to the cent. **Wave 3's tally: Anthropic $0.5383 of $3.00, Exa 3 of 20** (`data/verification/wave3/spend.jsonl`). The prompt drafts were approved as P4.23.
-- **Next, on the user's word:** the user judges the composition's quality on Sonnet (P4.20) from `data/verification/wave3/answers/`, t1's skip of the update search, and t2's note's grammar slip. Then, as before Wave 3: the frontend session on the v2.0 fixtures (frontend brief §5a); the cloud setup questions; the user's actions before live runs (below); the local review; a separate deploy green light (P4.1).
+- **Next: the frontend build,** following `docs/sessions/frontend-plan.md` (proposed 16:50 for the user's approval; once approved, start at its step 0, then step 1). The main session builds `web/` and `webdev/` itself (P4.28), with no parallel builders; fresh subagents only review. The spec is `docs/sessions/frontend-brief.md` §4 to §6 and §5a, T4.1 to T4.5, T5.1 to T5.6, contract v2.0 §5, §5.1, §6, §11, and the v2.0 fixtures.
+  - **Step 1 asks the user first** for two downloads (the three font families as `.woff2` with the OFL texts, from google/fonts; markdown-it at an exact version, from npm), each named with its source, version and size.
+  - **The calls P4.31 leaves to the main session:** step 0 of the plan lists them; log each, and the user refines afterwards.
+  - **Step 9 is the user's local review:** `deploy/local.sh`, the user testing as a visitor (paid runs on the development key and `Probable_Clause_test`; P4.22 has $2.46 and 17 Exa left; ask before going past it). Then the user's sign-off; the deploy green light is separate.
+- **After the sign-off:** T5.6's five replays recorded on the final code (P4.32); the cloud setup script (P4.30); the goodnight block in `~/Documents/Developer/framedbytran` (P4.26); the deploy, each on its green light.
+- **Done today since Wave 3** (BUILD_LOG 16:15 to 16:46):
+  - P4.23, the prompts approved;
+  - the paid tests at 16:20 ($0.5383 of $3.00, Exa 3 of 20);
+  - P4.20 confirmed;
+  - P4.24 to P4.32:
+    - the live key `ANTHROPIC_API_KEY_LIVE`;
+    - the cloud credentials;
+    - goodnight's green light and location;
+    - Exa's risk accepted;
+    - the main session builds the frontend;
+    - the local review clarified;
+    - the design calls left to the main session;
+    - the setup script deferred;
+    - the replays.
 - **Built in Wave 3** (BUILD_LOG "Oct 25, 2026, 14:17 CDT" and "16:10 CDT"):
   - contract **v2.0** and the schema (5642d5f);
   - E (46eb3e9, 5b080db), H (3a6b16e), I (83b1ab1), G (ac2c86d);
@@ -114,7 +131,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
 - **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.22** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.32** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
   - `locked-decisions.md`, P4.1 to P4.22 above all (P4.18 to P4.22 amend or supersede 14 earlier entries, marked in their headings);
@@ -152,7 +169,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.23). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.33). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** research and the update step `claude-sonnet-5-5` high (P2.1, P4.19); composition `claude-sonnet-5-5` high (P4.20, built).
   - **Limits (P4.18, built):** 12 research rounds; loop input 2M, loop output 16,000; update rounds 8, update input 2M, update output 6,000; 5 update searches; composition output 16,000; no run-wide limit; `MAX_CONCURRENT_RUNS` 5; `RUN_WATCHDOG_S` 2,400. **$15 a day** (P4.11), $60 a month, unchanged.
