@@ -1860,3 +1860,22 @@ Then: *"The budget for paid build tests are sound."*
 - **Thinking** stayed small: 0 to 87 tokens per loop call; 320 to 1,213 for the composition.
 **Spend:** these runs: Anthropic $0.8651 (28 calls), Exa 4 searches ($0.028), Voyage $0.0081. **Phase 4 so far: Anthropic $1.6729 of $3.00** (ledger `data/verification/phase4/spend.jsonl`, 47 lines), **Exa 8 of 10**, Voyage about $0.078 in all.
 **DECISION (user):** *"Run test 4 (Recommended)"*, for this one test: the Exa stop rule of 8 lifted to the Phase 4 ceiling of 10. Nothing else new.
+
+## Oct 25, 2026, 13:31 CDT — Phase 4: Build, the Wave 3 design drafted (nothing locked)
+**Asked:** after the re-runs (13:04 entry), the user: *"Increase loop input budget to 800k tokens. I want to loosen other almost-hit budgets the same. The goal here is to let all runs pass smoothly while having a sure back stop that will almost never be triggered unless something catastrophic has gone wrong. The daily budget and monthly budget stands though, however."* In the discussion that followed, the user's direction, in their words:
+- *"800k for input loop because model's limit is 1M anyway."* The main session explained that the budget counts input only, summed over every research call, not one call's context. The user: *"if that's the case, I'm willing to loosen it to 2M"*, framed on the budget counting input and output. The figure is open (design §8, question 1).
+- *"Update searches loosen to 5"*; the other limits: *"Agreeing with the other limits to loosen"* (loop output 16,000, composition output 16,000).
+- *"Composition 5 min cache: leave it uncached"*; *"Keep composition uncached and passing it only kept passages."*
+- *"Re-architect composition ... change everything to Sonnet high, sacrifice in quality but save cost immensely."* Then: *"Change composition to Sonnet at high effort and I'd judge the quality first. (No comparison run needed.) After all, this project is a tech demo of the citation feature, not a demo of how much smarter and more capable is Opus than Sonnet in constitutional laws."* The main session's estimate: about a fifth of an answered run's cost.
+- *"I'd get rid of the reserve system. I'm willing to trade more cost overrun here because the cost is small and the budget still disable further runs once it's hit or overran."* The main session's conditions: spend recorded per call, admission under the caps, fail closed on Atlas, a cap on runs at once.
+- *"Untangling update from the research loop."* On the main session's proposal to run the update beside the composition rather than before it: *"Good call, and we will let this step decide whether to call Exa or not. Specifically, we can enforce by code such as if a response from the research loop doesn't search the corpus at all, we will turn off update by code automatically (because it's an out of scope response)."*
+- Next steps: *"Draft the design. Then prep the ground for compaction. I'll compact. Then we will implement the new design in wave 3, with subagents efficiently. (Same rule: min effort is high, Sonnet 5.5 and Opus 5.5 only, no Haiku. Max effort is xhigh, no max allowed)."*
+
+**Came back:** `docs/design/wave3-design.md`, a draft for approval:
+- four decisions to lock: P4.18 looser limits, P4.19 the update step out of the loop, P4.20 composition on Sonnet, P4.21 no reservation;
+- the events for contract v2.0;
+- the prompt changes;
+- Wave 3's parts and agents;
+- five open questions: the loop budget (800k or 2M), `MAX_CONCURRENT_RUNS` 5, the update step's input (a short brief recommended over the research conversation), the `busy` wording, Phase 4's paid-test limits.
+**Spend:** none.
+**DECISION (user):** none locked yet. The direction above is recorded for the design; each of P4.18 to P4.21 is locked in its own entry on the user's approval of the design.
