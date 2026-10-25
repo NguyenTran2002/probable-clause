@@ -62,6 +62,8 @@ UPDATE_STATEMENT_MAX_CHARS = _s(600, "PLACEHOLDER against overrun (T2.3)")
 UPDATE_SOURCES_PER_STATEMENT = _s(10, "PLACEHOLDER against overrun (T2.3)")
 UPDATE_OVERVIEW_MAX_CHARS = _s(600, "PLACEHOLDER against overrun (T2.3)")
 COPY_GUARD_WORDS = _s(10, "PLACEHOLDER (T2.3)")
+EXA_HEADER_FIELD_MAX_CHARS = _s(300, "PLACEHOLDER, main session's: a page's title or author line, cut to one line of at most this many characters (T2.2)")
+EXA_MESSAGE_MAX_CHARS = _s(500, "PLACEHOLDER, main session's: Exa's own error message passed to Claude and stored in events (T2.4), cut to this length")
 
 # Answer checks (T1.12)
 QUOTATION_MIN_WORDS = _s(4, "PLACEHOLDER (T1.12)")
