@@ -903,3 +903,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"On copy guard, can you give me more context here?"* Then: *"Lock option A: redact only the flagged statements in the stored and streamed event."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 20:52 CDT — Phase 4: Build, the copy guard and stored events (P4.3)"
+
+### P4.4 No spend tripwire: every run finishes gracefully
+
+- **Decision:** No tripwire stops a run when its recorded spend reaches its reservation. Spend stays bounded by the run's own limits (T3.3's token budgets, the composition bound, Voyage's per-run bound, Exa's three searches), and every run ends through one of its normal end states, never cut off by a spend check.
+- **Considered:** a backstop in H's `record_usage` refusing further loop and search calls once spent plus the composition's reserve reached the reservation, ending the run as a logged fault (raised by the cross-part review, Oct 25, 2026).
+- **User's words:** *"No trip wire for a run. I want every run to finish gracefully."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 00:41 CDT — Phase 4: Build, no spend tripwire (P4.4)"

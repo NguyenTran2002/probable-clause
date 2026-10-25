@@ -1451,3 +1451,9 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Tests:** the whole suite, 3,322 passed, 49 skipped.
 **Spend:** none.
 **DECISION (user):** none yet; the money and wording questions above are put to the user.
+
+## Oct 25, 2026, 00:41 CDT — Phase 4: Build, no spend tripwire (P4.4)
+**Asked:** whether a tripwire should stop a run whose recorded spend reaches its reservation (the cross-part review's finding 2).
+**Came back:** locked as P4.4: no tripwire. A run's spend is held by its own limits, and every run ends through a normal end state. The other bounds therefore have to hold on their own. They are open: the composition input, a broken stream's hidden thinking, and Voyage (already bounded, 00:34).
+**Spend:** none.
+**DECISION (user):** *"No trip wire for a run. I want every run to finish gracefully."*
