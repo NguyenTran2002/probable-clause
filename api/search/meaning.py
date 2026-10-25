@@ -20,6 +20,7 @@ from api import settings
 from api.errors import ServiceError
 from api.retry import VOYAGE_POLICY, with_retries
 from api.search.voyage import VoyageClient
+from api.state.prices import failed_attempt_usage
 from api.types import Hit, Passage, Purpose, RunContext
 
 log = logging.getLogger("probable_clause.meaning")
@@ -56,6 +57,12 @@ class MeaningResult:
     hits: list[Hit]                      # every reranked candidate (up to SEMANTIC_CANDIDATES), best first; the caller tops up
     status: Literal["ok", "not_reranked", "unavailable"]
     message_for_claude: str | None       # the "not reranked" note, or the error saying keyword search still works
+
+
+def _estimate_tokens(chars: int) -> int:
+    """Tokens for `chars` characters of input, rounded up (settings.VOYAGE_CHARS_PER_TOKEN_ESTIMATE)."""
+    per = int(settings.VOYAGE_CHARS_PER_TOKEN_ESTIMATE.value)
+    return -(-chars // per)
 
 
 class MeaningIndex:
@@ -110,7 +117,8 @@ class MeaningIndex:
             return MeaningResult([], "ok", None)
 
         try:
-            vectors, = await self._call(ctx, "embed", lambda: voyage.embed([query], "query"), sleep)
+            vectors, = await self._call(ctx, "embed", lambda: voyage.embed([query], "query"), sleep,
+                                        _estimate_tokens(len(query)))
         except ServiceError as e:
             self._note_failure(ctx, e, "embed")
             ctx.flags.meaning_unavailable_once = True
@@ -132,7 +140,10 @@ class MeaningIndex:
         embedding_order = [Hit(self.passages[r].id, s, reranked=False) for r, s in zip(cand, cand_scores)]
 
         try:
-            ranked, = await self._call(ctx, "rerank", lambda: voyage.rerank(query, [self.texts[r] for r in cand]), sleep)
+            docs = [self.texts[r] for r in cand]
+            # Voyage counts query tokens x documents + document tokens (docs.voyageai.com/docs/reranker, Oct 24, 2026)
+            estimate = _estimate_tokens(len(query) * len(docs) + sum(len(d) for d in docs))
+            ranked, = await self._call(ctx, "rerank", lambda: voyage.rerank(query, docs), sleep, estimate)
         except ServiceError as e:
             self._note_failure(ctx, e, "rerank")
             ctx.flags.meaning_degraded = True
@@ -163,9 +174,12 @@ class MeaningIndex:
             log.warning("voyage %s failed run=%s kind=%s status=%s", purpose, ctx.run_id, e.kind, e.status)
 
     @staticmethod
-    async def _call(ctx: RunContext, purpose: Purpose, request, sleep) -> tuple:
-        """One Voyage request through our retries; every attempt is recorded (contract §4.C). Returns (result,)."""
+    async def _call(ctx: RunContext, purpose: Purpose, request, sleep, estimate_tokens: int) -> tuple:
+        """One Voyage request through our retries; every attempt is recorded (contract §4.C). Returns (result,).
+        An attempt that failed is recorded at `estimate_tokens`, since Voyage reported none (T3.3)."""
         max_attempts = VOYAGE_POLICY.retries + 1
+        model = str((settings.EMBED_MODEL if purpose == "embed" else settings.RERANK_MODEL).value)
+        failed_usage = failed_attempt_usage("voyage", model, estimate_tokens)
         state = {"attempt": 1, "ms": 0}
 
         async def attempt(n: int):
@@ -181,7 +195,7 @@ class MeaningIndex:
             return (result,)
 
         async def on_retry(next_attempt: int, error: ServiceError, wait_s: float) -> None:
-            await ctx.record_usage(None, purpose=purpose, attempt=next_attempt - 1, max_attempts=max_attempts,
+            await ctx.record_usage(failed_usage, purpose=purpose, attempt=next_attempt - 1, max_attempts=max_attempts,
                                    outcome="retrying", error_kind=error.kind, duration_ms=state["ms"])
 
         async def before(n: int) -> None:
@@ -190,6 +204,6 @@ class MeaningIndex:
         try:
             return await with_retries(attempt, VOYAGE_POLICY, before, on_retry, sleep)
         except ServiceError as e:
-            await ctx.record_usage(None, purpose=purpose, attempt=state["attempt"], max_attempts=max_attempts,
+            await ctx.record_usage(failed_usage, purpose=purpose, attempt=state["attempt"], max_attempts=max_attempts,
                                    outcome="failed", error_kind=e.kind, duration_ms=state["ms"])
             raise

@@ -79,6 +79,7 @@ VOYAGE_RETRIES = _s(2, "T3.3")
 VOYAGE_RETRY_WAITS_S = _s("1,3", "PLACEHOLDER (T3.3)")
 RETRY_AFTER_MAX_S = _s(30, "PLACEHOLDER, main session's: a retry-after longer than this is not waited out; the call fails as out of retries, so a run never sleeps past its checks (T3.2, T3.5)")
 VOYAGE_BATCH_TIMEOUT_S = _s(120, "PLACEHOLDER, main session's: one embedding batch in scripts/embed_corpus.py, which is never retried, so a slow batch is not cut off after it was billed")
+VOYAGE_CHARS_PER_TOKEN_ESTIMATE = _s(3, "main session's: prices a failed Voyage attempt that reported no usage (T3.3). Measured 3.73 on the corpus embedding (1,956,650 characters, 524,853 tokens, Oct 24, 2026), rounded down so the estimate over-counts")
 
 # Lifecycle (T3.1, T3.2)
 HEARTBEAT_INTERVAL_S = _s(10, "PLACEHOLDER (T3.2); the page's interval")

@@ -119,7 +119,10 @@ async def test_embed_retried_then_succeeds(tmp_path, passages, ctx, sleeps):
     embeds = [u for u in ctx.usages if u["purpose"] == "embed"]
     assert [(u["attempt"], u["outcome"], u["error_kind"]) for u in embeds] == [
         (1, "retrying", "server_error"), (2, "retrying", "timeout"), (3, "ok", None)]
-    assert embeds[0]["usage"] is None and embeds[2]["usage"] is not None
+    # a failed attempt is recorded at an estimate of its input (T3.3): ceil(len("x") / 3) = 1 token
+    failed = embeds[0]["usage"]
+    assert failed.estimated and failed.model == "voyage-law-2" and failed.input_tokens == 1
+    assert not embeds[2]["usage"].estimated
     assert sleeps.waits == [1.0, 3.0]                       # VOYAGE_POLICY's waits (T3.3)
     # before_paid_call ran before every attempt, in step with the records
     assert [e for e in ctx.log if e[0] == "before"].count(("before", "voyage", "embed")) == 3
@@ -143,7 +146,8 @@ async def test_embed_failing_after_retries_is_unavailable(tmp_path, passages, ct
     assert len([c for c in fake.calls if c[0] == "embed"]) == 3 and not [c for c in fake.calls if c[0] == "rerank"]
     outcomes = [(u["attempt"], u["outcome"]) for u in ctx.usages]
     assert outcomes == [(1, "retrying"), (2, "retrying"), (3, "failed")]
-    assert ctx.usages[-1]["error_kind"] == "server_error" and ctx.usages[-1]["usage"] is None
+    assert ctx.usages[-1]["error_kind"] == "server_error"
+    assert all(u["usage"].estimated and u["usage"].input_tokens == 6 for u in ctx.usages)   # 17 characters / 3
     assert "secret query text" not in caplog.text
 
 
@@ -159,6 +163,12 @@ async def test_rerank_failing_after_retries_falls_back_to_embedding_order(tmp_pa
     assert ctx.flags.meaning_degraded and not ctx.flags.meaning_unavailable_once
     rr = [(u["attempt"], u["outcome"]) for u in ctx.usages if u["purpose"] == "rerank"]
     assert rr == [(1, "retrying"), (2, "retrying"), (3, "failed")]
+    # query tokens x documents + document tokens (Voyage's count), from characters at 3 a token
+    docs = idx.texts
+    chars = len("warrant") * len(docs) + sum(len(d) for d in docs)
+    for u in (u for u in ctx.usages if u["purpose"] == "rerank"):
+        assert u["usage"].estimated and u["usage"].model == "rerank-3"
+        assert u["usage"].input_tokens == -(-chars // 3) > 0
 
 
 async def test_embedding_order_fallback_keeps_cosine_scores(tmp_path, ctx, sleeps):

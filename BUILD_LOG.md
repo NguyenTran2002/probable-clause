@@ -1282,3 +1282,17 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Tests:** 610 passed, 9 skipped (deploy and contract). The 2 `nginx -t` skips are because no nginx binary is installed, so neither config has been parsed by nginx yet.
 **Spend:** none.
 **DECISION (user):** *"Let's start Wave 2."* No new decision. The choices above are the builder's, to be judged at the user's local review.
+
+## Oct 24, 2026, 23:33 CDT — Phase 4: Build, failed Voyage attempts priced at an estimate (part C fix)
+**Asked:** builder H's first contract question: part C recorded a failed Voyage attempt with no usage, so it was priced at $0.
+**Came back:**
+- **The defect:** `MeaningIndex._call` passed `usage=None` for `retrying` and `failed` attempts. The attempt was counted, but priced at $0 against the caps, while T3.3 and contract §6 (v1.1) price it from the caller's input estimate. The worst case's Voyage bound ($0.03 a run) still held, so no cap could be overrun by more than that.
+- **The fix, by the main session in C's merged code:**
+  - Each failed attempt is now recorded with E's `failed_attempt_usage("voyage", model, estimate)`, so it is marked `estimated`.
+  - **The estimate** is characters ÷ `VOYAGE_CHARS_PER_TOKEN_ESTIMATE`, rounded up:
+    - the embed counts the query;
+    - the rerank counts query × documents + documents, Voyage's own count (docs.voyageai.com/docs/reranker, read Oct 24, 2026).
+- **New setting** `VOYAGE_CHARS_PER_TOKEN_ESTIMATE = 3`, the main session's. Its basis: 3.73 characters a token measured on the corpus embedding (1,956,650 characters, 524,853 tokens), rounded down so the estimate over-counts.
+- **Tests:** C's retry tests now assert the estimate for the embed and the rerank. Search, state and contract tests: 1,851 passed, 47 skipped.
+**Spend:** none.
+**DECISION (user):** none; a fix within T3.3 as locked.
