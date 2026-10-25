@@ -481,7 +481,7 @@
         },
         "input": {
           "type": "object",
-          "description": "exactly what Claude sent (T3.1); see contract §14 open item 1"
+          "description": "exactly what Claude sent (T3.1), except that a submit refused by the copy guard has each flagged statement replaced by \"[statement withheld: it repeated a page's words]\" (P4.3)"
         }
       }
     },

@@ -579,7 +579,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:46 CDT — Phase 3: Architecture, Area 2 (the MCP connection, T2.5)"
 
-### T3.1 Starting a run and streaming it to the page — AMENDED by T4.3 (the source reader fetches whole opinions as static files from the web service)
+### T3.1 Starting a run and streaming it to the page — AMENDED by T4.3 (the source reader fetches whole opinions as static files from the web service); AMENDED by P4.3 (a submit refused by the copy guard is stored with its flagged statements withheld)
 
 - **Decision:** Area 3, topic 1:
   - **Transport: Server-Sent Events.** `POST /runs` with the question creates a run and returns its ID; `GET /runs/{id}/events` streams it. The browser's EventSource reconnects on its own, one attempt at a time, sending the last event ID it received (brief §8.5). How the server learns the page is gone is topic 2 (P2.10).
@@ -895,3 +895,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"On the 2,462 passages count, record the correction as its own decisions entry."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 20:50 CDT — Phase 4: Build, the passage count corrected (P4.2)"
+
+### P4.3 A submit refused by the copy guard is stored with its flagged statements withheld (amends T3.1)
+
+- **Decision:** When the copy guard (T2.3) refuses a `submit_answer`, the `tool_call` event stored and streamed for it (and so Atlas and any replay) carries Claude's input exactly, **except that each statement the guard flagged** (in `update_findings` or `update_overview`) is replaced by *"[statement withheld: it repeated a page's words]"*. Claude's own conversation keeps its input unchanged; it goes only to Anthropic and is never stored by this site. The refusal message to Claude names the statement by number and the page by its ID and never quotes the page (contract §4.F). This amends T3.1's "tool call (exactly what Claude sent)" for this one case, so that no web page text is stored or shown (T2.2, P1.3, P1.7). The step log still shows that the submit was refused, by which rule, and which statement was withheld.
+- **Considered:** withholding all findings of a refused submit (hides statements that passed the guard); keeping the input exact (page text in Atlas and published replays, against P1.7).
+- **User's words:** *"On copy guard, can you give me more context here?"* Then: *"Lock option A: redact only the flagged statements in the stored and streamed event."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 20:52 CDT — Phase 4: Build, the copy guard and stored events (P4.3)"

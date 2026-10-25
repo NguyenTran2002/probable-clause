@@ -958,3 +958,12 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **DECISION (user):**
 - *"On the 2,462 passages count, record the correction as its own decisions entry."*
 - *"On copy guard, can you give me more context here?"*
+
+## Oct 24, 2026, 20:52 CDT — Phase 4: Build, the copy guard and stored events (P4.3)
+**Asked:** More context on contract §14's open item 1 (a submit refused by the copy guard would carry page text into the stored `tool_call` event); then lock option A.
+**Came back:**
+- Context given: T3.1 stores exactly what Claude sent; T2.2 and P1.7 store no page text; the copy guard (T2.3) refuses a statement repeating 10 or more consecutive words of a returned page, so the refused submit's input is the one place copied words would reach the stream, Atlas (24 hours) and a published replay. Options: A, redact only the flagged statements; B, withhold all findings of a refused submit; C, keep the input exact. Recommended A.
+- P4.3 locked (amends T3.1): flagged statements replaced by "[statement withheld: it repeated a page's words]" in the stored and streamed event; Claude's conversation unchanged; the refusal message never quotes the page. Contract §6 and the schema's description updated; §14 has no open items. Tests: 25 passed.
+**DECISION (user):**
+- *"On copy guard, can you give me more context here?"*
+- *"Lock option A: redact only the flagged statements in the stored and streamed event."*

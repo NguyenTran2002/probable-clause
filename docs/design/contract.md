@@ -398,7 +398,7 @@ Every event, live or replayed, is one envelope; `contracts/events.schema.json` i
 |---|---|---|
 | `run_started` | G | question, limits, coverage dates, `update_check_available`, models, `corpus_label` |
 | `round_started` | G | round number, the status line sent to Claude (T1.14) |
-| `tool_call` | G | `round`, `tool_use_id`, tool name, the exact input Claude sent (see §14, open item 1) |
+| `tool_call` | G | `round`, `tool_use_id`, tool name, the exact input Claude sent, except that a submit refused by the copy guard has each flagged statement replaced by "[statement withheld: it repeated a page's words]" (P4.3) |
 | `passage` | G | the passage (§6.1) |
 | `tool_result` | G | `tool_use_id`, name, `is_error`, `content` (the text sent to Claude; for `search_web_updates`, `format_for_events`'s text, with page text replaced); by tool: `found` (the matched passages only, not attached footnotes) and `matched_again` (searches), `not_reranked`, `target` and `read` (reads), `kept` (each with `replaced`) and `refused` and `kept_count` (keep), `web` and `web_repeats` and `web_status` and `search_no` (update search: page details, never text), `submit` (`accepted`, and `rule` when refused) |
 | `paid_call` | H, from `record_usage` (called by C, D and G) | `call_no` (Claude calls only), service, purpose, attempt, `max_attempts`, outcome (`ok`, `retrying`, `failed`), `error_kind`, `duration_ms`, Claude's exact `usage` object, cost in dollars, `estimated` |
@@ -575,7 +575,7 @@ Both are written by `scripts/build_web_data.py`.
 
 The main session merges Wave 1 and runs the whole suite. **Wave 2 (G, H, I)** starts after that.
 
-## 14. Open items (the user's to rule on, before Wave 2)
+## 14. Open items (none open)
 
-1. **A refused submit's `tool_call` and page text.** T3.1 has the `tool_call` event carry exactly what Claude sent. A submit refused by the copy guard holds 10 or more consecutive words of a page, and T2.2 and P1.7 forbid storing page text. Until the user rules, G must not be started.
+1. ~~A refused submit's `tool_call` and page text~~: ruled as P4.3 (flagged statements withheld in the stored and streamed event), Oct 24, 2026, 20:52 CDT.
 2. ~~T3.6's unit count~~: recorded as P4.2 (2,462 passages), Oct 24, 2026, 20:50 CDT.
