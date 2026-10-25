@@ -822,3 +822,13 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Topics: *"The six topics work, with the text-status note added. Open topic 1."*
 - Answers: *"1. We can link to the repo, which is https://github.com/NguyenTran2002/probable-clause. No need to mention my name though. 2. Leave out it is. 3. I'll give it Apache 2.0. 4. We're going with 2b anyway. 5. Live wording is correct."*
 - T5.1: *"Lock."*
+
+## Oct 24, 2026, 19:18 CDT — Phase 3: Architecture, Area 5 (the guarantee, coverage and checks, T5.2)
+**Asked:** Open topic 2 (the guarantee, coverage, answer key, the checks' line and flags, the cost label, the text-status note); then lock it with the recommended drafts.
+**Came back:**
+- Read in the prototype's `run.js` (read only): the card's guarantee, the answer key, the old case-name flag note, the reader's text-status sentence.
+- Three placeholders said more than holds: "verbatim in this opinion" is true of the normalised corpus copy; "rest on a passage" overstates what a citation shows (brief §1); T1.12's example line says "cited passages", but its quotation check compares against the kept passages and allows standard quoting edits.
+- Facts by script from the manifest: 32 cases decided 1878-05-13 to 2026-06-29; the full-pull and corpus latest dates are the same day; ingested 2026-10-23.
+- Drafts with recommendations for six lines; T5.2 locked with every recommendation. T1.12's example line is reworded by it.
+**DECISION (user):**
+- T5.2: *"Lock topic 2 as T5.2 with the recommended drafts."*
