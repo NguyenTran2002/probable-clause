@@ -1099,3 +1099,30 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - **Tests:** 459 passed (corpus and contract). Builder B's corpus tests now run on the real splitter.
 **Spend:** none.
 **DECISION (user):** none new.
+
+## Oct 24, 2026, 21:52 CDT — Phase 4: Build, Wave 1, part F merged; Wave 1 complete
+**Asked:** Part F, the answer checks (contract §4.F; T1.12, T2.3), under *"Start wave 1 let's go!"*
+**Came back:**
+- **Part F:** `api/checks/`, `tests/checks/`.
+  - The quotation check implements T1.12's conventions: punctuation inside the closing mark, nested quotation marks, ellipses, bracketed alterations including the source's own.
+  - The full-citation check gives "not in this corpus" (P1.10).
+  - The findings checks and the copy guard (T2.3) are included. `copy_guard_report` gives G the flagged statements for P4.3.
+  - All 1,932 quotations in the corpus are found when their own passage is the kept text.
+- **Review** by a Sonnet 5.5 high subagent, which found **false passes** (results the page would state as true when they are not). All are fixed and tested with the reviewer's inputs:
+  - a whole-word bracket could swallow or insert a negation ("is [reasonable]" for "is not reasonable"); brackets now never add or remove a negation, prefix forms included;
+  - a name whose right party only began with a corpus party resolved ("Smith v. Maryland Casualty Co."); the right party must now match exactly;
+  - a name followed by another corpus case's citation passed ("Katz v. United States, 565 U.S. 400"); the citation now flags.
+- **Silent misses fixed:** multi-paragraph quotations, blockquotes, and inch marks breaking the quotation pairing. Two false flags fixed: "Ass'n" and "Dow Chem. Co.".
+- **Matching is bounded:** the reviewer's 189 s case now takes under 0.2 s. A quotation that can't be decided within the step budget is flagged, never passed.
+- **Main session's rulings** (contract v1.1, 5625308):
+  - `QUOTATION_BRACKET_MAX_SOURCE_WORDS` is set to **3**, a placeholder; part F measured that the corpus's quotations need at most 1.
+  - The composition prompt now asks for double quotation marks or a blockquote, and never a bracket that changes the meaning.
+  - Offsets are code points, which the page converts for JavaScript.
+- **Wave 1 complete:** parts A to F are merged. **The whole suite: 2,364 passed, 41 skipped** (the Atlas-gated tests of part E).
+**Spend:** none in Wave 1. The Anthropic ledger is unchanged at $0.6964.
+**Next:**
+- The 41 Atlas tests against `Probable_Clause_test`, with `MONGODB_URI` (set).
+- The embedding: it needs `VOYAGE_API_KEY` (missing), Voyage's prices from the billing page and the key's endpoint checked (T5.5), then `--confirm` on the user's approval. `rerank-3`'s existence also needs confirming; Voyage's docs disagree.
+- The fixtures and the frontend brief update; then Wave 2.
+- The prompt drafts await the user's review before the first paid run.
+**DECISION (user):** none new.
