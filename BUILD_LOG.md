@@ -841,3 +841,11 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Drafts with recommendations for the honesty label, the replacement guarantee sentence, the band's parts, every outcome line, the pointer under the answer (T1.11) and the step lines; T5.3 locked with every recommendation.
 **DECISION (user):**
 - T5.3: *"Lock topic 3 as T5.3 with the recommended drafts."*
+
+## Oct 24, 2026, 19:25 CDT — Phase 3: Architecture, Area 5 (run states and stop labels, T5.4)
+**Asked:** Open topic 4 (the wording of every run state and stop label); then lock it with the recommended drafts.
+**Came back:**
+- Read T4.4's twelve pieces and the rules behind them in T1.10, T1.11 and T3.2 to T3.6. Already fixed and kept: brief §5.7's step-limit label, brief §7.2's paused-for-today message, T4.4's "Reconnecting…" and "Recorded run, <Chicago date>". Kept from the rules: no measured start range shown until one is measured (brief §7.2); the Voyage warning never claims the answer's quality suffered (T3.3).
+- Drafts with recommendations in nine groups: waking, paused and unavailable, connection, retries and failures, the Voyage warning, stop labels, no-sources replies, replays and the one-question line, rejections and the finish line; T5.4 locked with every recommendation.
+**DECISION (user):**
+- T5.4: *"Lock topic 4 as T5.4 with the recommended drafts."*
