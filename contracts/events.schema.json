@@ -762,6 +762,7 @@
                 "no_search",
                 "nothing_kept",
                 "no_update_check",
+                "no_note",
                 null
               ]
             }

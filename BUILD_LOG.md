@@ -1326,3 +1326,36 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Tests:** deploy, contract, state and search: 1,891 passed, 49 skipped.
 **Spend:** none.
 **DECISION (user):** none; the main session's rulings within the locked decisions, announced to G and H.
+
+## Oct 24, 2026, 23:52 CDT — Phase 4: Build, Wave 2, contract v1.3 (after part G's review)
+**Asked:** builder G's report and its Sonnet 5.5 high review.
+**Came back:**
+- **G built** `api/loop/`: the six tools, the loop, composition with custom content documents and citations, and the SDK client (138 tests; 45 mutations, all caught).
+  - **SDK, from Anthropic's docs** (read Oct 24, 2026, SDK 2.3.0): adaptive thinking; `output_config.effort` "high" for both models; a one-hour breakpoint on the system block, which also covers the tools rendered before it, then the request's top-level automatic breakpoint; `max_retries=0`.
+  - **The spend errors:** the tier spend cap is a 429 whose `error.details.error_code` is `enforced_spend_limit_reached`; the Console spend limit is a 400 whose message begins "You have reached your specified (workspace) API usage limits" (platform.claude.com/docs/en/api/rate-limits). A 429 without those markers stays `rate_limited`, so a misread can't pause research for a month.
+- **The review** found no defect in the citation mapping (checked on `berger-1-p1`), the SDK request or the spend markers. **It did find real defects, which G is fixing now:**
+  - a keep after a submit in the same turn was silently dropped (T1.10 allows it);
+  - a broken stream was priced for its input only, so up to about $0.24 of Opus output went uncounted against the reservation and the output ceiling;
+  - a last attempt could read `retrying` with no retry after it;
+  - end pairings the fixture rules forbade;
+  - smaller robustness points.
+- **Contract v1.3, the main session's rulings:**
+  - a turn's tools run in Claude's order with `submit_answer` last;
+  - **withholding (P4.3) applies to any refused submit** with statements the copy guard flags, not only one refused by the copy guard, since no page's words are ever stored (§1). This is G's stricter reading, adopted;
+  - `submit.rule` gains `no_note`, for `out_of_scope` without a note;
+  - `step_limit`, `token_ceiling` and `time_limit` keep their own `stop_kind` when their composition is then cut off. These three and `error_stopped` may end `incomplete`;
+  - a citation's response path is `content[k]` with k at or after the block index, since thinking blocks come first;
+  - **a citation whose `cited_text` disagrees with our slice is not attached, and is logged as a mapping fault,** so no sentence Claude did not cite is ever lit. The first paid build test checks the count;
+  - `tool_call` may name an ID before its `passage` event, since its input is Claude's exactly.
+- **Prompt drafts added** (`api/prompts/`, for the user's review before the first paid run, T1.14): G's own texts, moved out of the code:
+  - the unknown-tool error;
+  - the two accepted-submit texts;
+  - the composition request's scope-note and coverage lines;
+  - the out-of-scope-without-note refusal.
+- **For the user, before the first paid run:**
+  - **Composition input:** the 40 longest passages (`KEEP_CAP`) are about 30,500 tokens of text, against `COMPOSITION_RESERVE_INPUT`'s 30,000, before keep reasons, metadata and the prompt. A full keep list can therefore push the composition, and so the run, past its reserved worst case (T3.4's $1.674). G only warns today.
+  - **The copy guard covers statements and the overview only** (T2.3). `note` and `update_skip_reason` are stored and shown unguarded, although Claude saw page text.
+  - **Two sources for some texts:** `rejections.json`'s `update_search.*` and `findings_problem.*` texts go unused, because D's and F's own messages (reviewed in Wave 1) are sent instead.
+- **Tests:** contract, 571 passed, 7 skipped.
+**Spend:** none.
+**DECISION (user):** none; the main session's rulings within the locked decisions, announced to G and H.

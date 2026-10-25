@@ -200,7 +200,9 @@ def test_citations_are_exact_slices_of_their_passages(path):
             assert 0 <= c["first_sentence"] <= c["last_sentence"] < len(p["sentences"])
             a, z = p["sentences"][c["first_sentence"]][0], p["sentences"][c["last_sentence"]][1]
             assert c["cited_text"] == p["text"][a:z], f"cited_text is not the slice at n={e['n']}"
-            assert c["call_no"] == comp["call_no"] and c["path"] == f"content[{d['index']}]"
+            # the response's content index: thinking blocks come first, so it is at or after the answer index (v1.3)
+            k = re.fullmatch(r"content\[(\d+)\]", c["path"])
+            assert c["call_no"] == comp["call_no"] and k and int(k.group(1)) >= d["index"]
             frag = fragments[(c["passage_id"], c["call_no"], "response", c["path"])]
             assert frag["text"] == d["text"]
             doc_index = comp["documents"].index(c["passage_id"])
@@ -439,10 +441,10 @@ def test_the_band_matches_what_the_run_did(path):
 ALLOWED_ANSWER_END = {
     "answered": {"complete", "cut_off", "incomplete"},
     "no_sources": {"none"},
-    "step_limit": {"complete", "cut_off", "none"},
-    "token_ceiling": {"complete", "cut_off", "none"},
-    "time_limit": {"complete", "cut_off", "none"},
-    "error_stopped": {"complete", "cut_off"},
+    "step_limit": {"complete", "cut_off", "incomplete", "none"},
+    "token_ceiling": {"complete", "cut_off", "incomplete", "none"},
+    "time_limit": {"complete", "cut_off", "incomplete", "none"},
+    "error_stopped": {"complete", "cut_off", "incomplete"},
     "abandoned": {"none"}, "interrupted": {"none"}, "failed": {"none"}, "refusal": {"none"}, "spend_limit": {"none"},
 }
 
@@ -459,7 +461,11 @@ def test_run_ended_is_consistent(path):
         assert end == "cut_off"
     else:
         assert kind is None
-    assert (end == "cut_off") == (kind == "composition_max_tokens")
+    # a loop limit keeps its own stop_kind when its composition is then cut off (v1.3)
+    assert (end == "cut_off") == (kind == "composition_max_tokens" or (state in allowed and state != "spend_limit"
+                                                                      and end == "cut_off"))
+    if kind == "composition_max_tokens":
+        assert end == "cut_off"
     if state == "no_sources":
         assert d["no_sources_reason"] in ("out_of_scope", "nothing_found") and d["note"] and end == "none"
     else:
@@ -469,10 +475,8 @@ def test_run_ended_is_consistent(path):
     if d["failure_reason"] is not None:
         assert d["failure_reason"] in SCHEMA["$defs"]["run_ended"]["properties"]["failure_reason"]["enum"]
     assert end in ALLOWED_ANSWER_END[state], f"{state} with answer_end {end} is not a pairing the contract allows"
-    if end == "incomplete":
-        assert state == "answered", "answer_end incomplete goes with state answered (contract section 6, v1.1)"
-    if state == "error_stopped":
-        assert end != "incomplete"          # error_stopped is a loop stopped by an error, composed from what was kept
+    if end == "incomplete":                  # a composition that broke after its first block (v1.1, v1.3)
+        assert state in ("answered", "step_limit", "token_ceiling", "time_limit", "error_stopped")
     if end in ("complete", "cut_off", "incomplete"):
         assert d["answer_chars"] > 0
     if end == "none" and state not in ("failed", "interrupted"):   # H's endings count what streamed (v1.2)
@@ -489,15 +493,16 @@ def test_refused_submits_withhold_flagged_statements(path):
         if e["kind"] == "tool_result" and d["name"] == "submit_answer":
             sub = d["submit"]
             if not sub["accepted"]:
-                assert d["is_error"] and sub["rule"] in ("same_turn", "findings", "copy_guard", "no_search", "nothing_kept", "no_update_check")
+                assert d["is_error"] and sub["rule"] in ("same_turn", "findings", "copy_guard", "no_search", "nothing_kept",
+                                                         "no_update_check", "no_note", None)   # None: bad input (v1.3)
             inp = calls[d["tool_use_id"]]["input"]
             texts = [f["statement"] for f in inp.get("update_findings") or []] + [inp.get("update_overview") or ""]
             withheld = [t for t in texts if t == WITHHELD]
             if sub.get("rule") == "copy_guard":
                 assert withheld, "a submit refused by the copy guard is stored with its flagged statements withheld (P4.3)"
                 assert "page" in d["content"] and "Paraphrase" in d["content"] or "own words" in d["content"]
-            else:
-                assert not withheld
+            elif sub["accepted"]:
+                assert not withheld   # an accepted submit has nothing the guard flagged; a refused one may (v1.3)
 
 
 @pytest.mark.parametrize("path", EVENT_FILES, ids=ids_of(EVENT_FILES))

@@ -6,7 +6,8 @@
     "copy_guard": "Not accepted: some of the update findings repeat a web page's wording.\n<problems>\nRewrite each one in your own words, describing what the page reports, then submit again.",
     "rule_2_no_search": "Not accepted: no corpus search has been run. Search the corpus with search_meaning or search_exact before submitting. If the question is outside the corpus's subject, set out_of_scope and write a note to the visitor instead.",
     "rule_3_nothing_kept": "Not accepted: no passages are kept, and there is no note. Keep the passages the answer rests on with keep_passages, or, if no passage bears on the question, explain why in note, written to the visitor.",
-    "rule_4_no_update_check": "Not accepted: no update check has been run. Run one with search_web_updates, or explain in update_skip_reason why it isn't needed, then submit again."
+    "rule_4_no_update_check": "Not accepted: no update check has been run. Run one with search_web_updates, or explain in update_skip_reason why it isn't needed, then submit again.",
+    "out_of_scope_no_note": "Not accepted: 'note' is required when 'out_of_scope' is true. Write the visitor two or three plain sentences on what the corpus covers and why the question falls outside it, then submit again."
   },
   "findings_problem": {
     "unknown_source": "Statement <n> names <id>, which no update search in this run returned.",

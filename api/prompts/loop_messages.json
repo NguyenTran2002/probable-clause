@@ -1,5 +1,5 @@
 {
-  "_about": "Lines our code adds to the loop's user turns (T1.14, T2.4), outside the cached system prompt. Angle-bracket fields are filled by builder G; fields in double braces are setting names in api/settings.py. Draft by the main session, for the user's review before the first paid run (T1.14).",
+  "_about": "Lines our code adds to the loop's user turns (T1.14, T2.4), outside the cached system prompt. Angle-bracket fields are filled by builder G; fields in double braces are setting names in api/settings.py. Draft by the main session, for the user's review before the first paid run (T1.14). Added Oct 24, 2026 from builder G's drafts, for the same review: unknown_tool, submit_accepted_note, submit_accepted_answer (<passages> is \"1 kept passage\" or \"<n> kept passages\"), and the composition request's composition_scope_note and composition_coverage lines (the question line there is first_message).",
   "first_message": "The visitor's question:\n\n<question>",
   "update_check_unavailable": "The update check is unavailable for this run: <reason>. search_web_updates will not run, and no update check is required before submitting.",
   "update_unavailable_reason": {
@@ -11,5 +11,10 @@
     "not_run": "update check not yet run",
     "some_run": "update searches <n> of {{UPDATE_SEARCHES_PER_RUN}}",
     "unavailable": "update check unavailable"
-  }
+  },
+  "unknown_tool": "There is no tool named <name>. The tools are: <tools>.",
+  "submit_accepted_note": "Submission accepted. No answer will be written from the corpus; the note goes to the visitor.",
+  "submit_accepted_answer": "Submission accepted. The answer is being written from the <passages>.",
+  "composition_scope_note": "Scope note from the research step: <scope_note>",
+  "composition_coverage": "Coverage: the latest decision in the full pull is <latest_decision_full_pull>, the latest decision in this corpus is <latest_decision_in_corpus>, and the text was ingested on <ingested>."
 }
