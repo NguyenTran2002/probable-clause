@@ -2199,3 +2199,77 @@ The deploy green light stays separate.
 Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 skipped); `web/_generated/` regenerated.
 **Spend:** none.
 **DECISION (user):** *"Proceed with standing up the frontend as planned."* The calls above are the main session's (P4.31), not the user's.
+
+## Oct 25, 2026, 17:50 CDT — Phase 4: Build, the frontend built, reviewed and stood up locally (frontend plan steps 1 to 9)
+**Asked:** *"Proceed with standing up the frontend as planned."* (`docs/sessions/frontend-plan.md`, P4.33.)
+**Came back:**
+- **Step 1, the downloads, on the user's OK** (*"Yes, both"*), each checked before use:
+  - the fonts: 10 `.woff2` files (Instrument Sans v4, Newsreader v26, JetBrains Mono v24; Latin and Latin Extended; 588,376 bytes) from fonts.gstatic.com, since google/fonts ships only `.ttf`; the three OFL texts from google/fonts;
+  - markdown-it 15.0.3's `dist/browser/markdown-it.esm.min.mjs` and licence, from the npm tarball, its sha512 matching the registry.
+- **The page, `web/`** (a9f1f0a, 7a91257, 7fa7c07, d9f4f2e): `index.html`, `css/`, and 16 modules (`text`, `model`, `answer`, `cp`, `dom`, `config`, `wake`, `stream`, `steps`, `sources`, `band`, `costs`, `apicalls`, `reader`, `replay`, `view`, `main`). The prototype's look, against contract v2.1. Every string is a text node; nothing is inserted as markup.
+- **The mock, `webdev/serve.py`** (standard library, port 8765): the page, the generated files, replays, and contract §5's endpoints played from the fixtures, with dev-only switches for each failure answer, a cold start, speed and a dropped connection.
+- **Checks:**
+  - Node tests, `node --test webdev/test/`: **65 pass**. They cover the run model over all 39 fixtures, placement by step, the answer renderer (citations, flags across blocks, code points, the straddle fallback), the wake protocol and the stream client.
+  - Every fixture plays live through the mock with no console error and nothing left spinning.
+  - No horizontal scroll at 1440×900, 393×852 and 852×393, in light and dark, measured by element rectangles.
+  - The page contacts only its own origin.
+  - The whole Python suite: **2,943 passed, 54 skipped**.
+- **Step 8, two read-only reviews:**
+  - **Opus 5.5 xhigh (the honesty paths)** found and the main session fixed:
+    - a Markdown table crashed the answer;
+    - an error while drawing an event became an endless reconnect loop;
+    - an HTML entity could decode to the renderer's private sentinels and fake, cut or hide a check flag;
+    - the status and step log claimed an answer while none was being written;
+    - the band said Claude searched the web when a search met an out-of-credit or refused key;
+    - multi-paragraph footnotes were never lit in the reader, and page numbers at a sentence's start were lost;
+    - a Voyage outage was titled as the site's refusal;
+    - a partial answer in a failed run read "Finished".
+
+    Tables, code blocks and entities now stay plain text.
+  - **Sonnet 5.5 high (states, layout, accessibility)** found and the main session fixed:
+    - a replay chip racing a live run;
+    - steps redrawn on every event, dropping keyboard focus and re-announcing the log;
+    - a long unbroken question widening the page;
+    - a failed composition still showing the answer's heading;
+    - the reload path's "Try again" with no button;
+    - no timeout before headers;
+    - focus lost on a phone when a citation opens the sources pane;
+    - Escape does not unpin a citation;
+    - smooth scrolling under reduced motion;
+    - flags with no accessible name;
+    - the drag-to-backdrop close;
+    - the AI disclosure hidden on a sideways phone;
+    - transition rejections.
+- **Step 9:** `deploy/local.sh` was run by the main session (its header updated to P4.1's 16:38 clarification). Both images built and run:
+  - the API, `PC_ENV=test`, development keys, `Probable_Clause_test`, ready in 1.9 s;
+  - the page at http://localhost:8080.
+
+  The recorded-run chips play two of Wave 3's real paid runs from today (w3-t1 thermal imager, w3-t4 phone tracking), written to a local `replays/` that `.git/info/exclude` keeps out of git. The real replays are recorded after the review (P4.32). No question has been asked of the local API.
+- **The main session's calls, for the user to refine (P4.31), beyond step 0's (16:52):**
+  - **Step titles:** "Searching by meaning", "Searching for exact words", "Reading in the opinion", "Keeping passages", "Finishing research", "Summarising the update check", "Asking Claude for the next step" (shown only while a call is waiting or when it retried), "Refused: not this step's tool", "Refused by this site's checks", "Checked the answer".
+  - **The groups' intro lines:** "Research finished with N passages kept. The answer and the update check start side by side." and, with nothing kept, "… so no answer is written. The update check runs next."
+  - **Status lines:**
+    - "Research · <the status line Claude sees>", "Writing the answer · the update check runs beside it", "Update check";
+    - "Finished: … and Claude's reply" for a no-sources reply;
+    - "Stopped after N s." for a run that ended without its answer.
+  - **The answer's own lines:**
+    - "Incomplete: the run ended before the answer was finished, and the checks did not run on it." for a failed or interrupted run with a partial answer;
+    - "The answer could not be written" and "Wrote part of the answer before an error" as the composition step's titles;
+    - "No full case names or U.S. Reports citations to check.";
+    - each flag note starts with the flagged words in quotation marks, then T5.2's line.
+  - **Failure words:** "timed out", "an error on this site" and "an unreadable reply" for kinds T5.4's four don't name, in retry lines and failure lines. The band's unavailable line uses T5.4's four only.
+  - **The band:** it is not shown when no search ran (T2.3 #5). Its honesty label shows only above a search that ran. Its fixed line reads the run's own recorded figures.
+  - **The wake lines without recorded runs:** T5.4 #1's two lines without their pointer to recorded runs.
+  - **The credits:** "Built with the Claude API (research and answers on Claude Sonnet 5.5) …" (step 0).
+  - **The trace figure:** a real citation from w3-t1 (*Kyllo*).
+- **Questions for the user, left as the decisions have them:**
+  - **Light-mode contrast** (T4.1's palette): the passage-ID pills are about 3.6 to 4.25 to 1 on their tints, and "Not kept" cards' muted text is about 2.9 to 1. Darkening the source hues or dropping the cards' opacity would change the locked look.
+  - **The skipped band line:** T5.3 #4 gives both "Update check skipped: <reason>" and "Claude's reason: <reason>"; the page shows only the first, so the reason is not repeated.
+  - **The cost line** counts our estimates for attempts that reported no usage (T3.3) in the total. The API window labels them as ours; T5.2's line says "from each response's token counts".
+**Failures:**
+- Write turned `\u` escapes into literal characters; the private-use ones were rewritten as escapes.
+- A card state named `cited` collided with the answer's `.cited` class; renamed.
+- A CRLF split across stream chunks ended a frame early; a Node test caught it.
+- A boot-order error (a `let` used before its line) blanked the page once during the fixes; caught by the browser sweep.
+**Spend:** none. The local stack has made no paid call.
+**DECISION (user):** *"Yes, both"* (the two downloads, asked in this sitting). No other decision; the calls above are the main session's.

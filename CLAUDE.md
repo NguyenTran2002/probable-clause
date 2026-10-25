@@ -91,12 +91,13 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 16:48 CDT, before a planned compaction: the frontend build starts after it.*
+*Updated Oct 25, 2026, 17:50 CDT: the frontend is built, reviewed and running locally for the user's review.*
 
-- **Next: the frontend build,** following `docs/sessions/frontend-plan.md` (**approved 16:49, P4.33**; start at its step 0, then step 1). The main session builds `web/` and `webdev/` itself (P4.28), with no parallel builders; fresh subagents only review. The spec is `docs/sessions/frontend-brief.md` §4 to §6 and §5a, T4.1 to T4.5, T5.1 to T5.6, contract v2.0 §5, §5.1, §6, §11, and the v2.0 fixtures.
-  - **Step 1 asks the user first** for two downloads (the three font families as `.woff2` with the OFL texts, from google/fonts; markdown-it at an exact version, from npm), each named with its source, version and size.
-  - **The calls P4.31 leaves to the main session:** step 0 of the plan lists them; log each, and the user refines afterwards.
-  - **Step 9 is the user's local review:** `deploy/local.sh`, the user testing as a visitor (paid runs on the development key and `Probable_Clause_test`; P4.22 has $2.46 and 17 Exa left; ask before going past it). Then the user's sign-off; the deploy green light is separate.
+- **Now: the user's local review (frontend plan step 9).** `deploy/local.sh` is running (started by the main session): the page at http://localhost:8080, the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`. Each question asked is a real paid run; P4.22's allowance has $2.46 and 17 Exa searches left, so ask for a new allowance before going past it. Ctrl-C in its shell (or stopping the background task) removes both containers.
+  - The recorded-run chips play two of Wave 3's real runs from a local `replays/` (excluded in `.git/info/exclude`, never committed). Delete `replays/` after the review; the real replays come later (P4.32).
+  - Then the user's sign-off, in their words, logged. The deploy green light is separate.
+  - **Open for the user** (BUILD_LOG 17:50): light-mode contrast against T4.1's palette, the skipped band line's repeated reason, the cost line counting our estimates, and the main session's wording calls listed there.
+- **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (65). Contract v2.1 (`config.json` gains seven figures).
 - **After the sign-off:** T5.6's five replays recorded on the final code (P4.32); the cloud setup script (P4.30); the goodnight block in `~/Documents/Developer/framedbytran` (P4.26); the deploy, each on its green light.
 - **Done today since Wave 3** (BUILD_LOG 16:15 to 16:46):
   - P4.23, the prompts approved;
