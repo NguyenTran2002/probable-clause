@@ -1900,3 +1900,61 @@ Then: *"The budget for paid build tests are sound."*
 - The design has no open question left. On the user's approval, P4.18 to P4.21 are locked, with the development allowance as P4.22.
 **Spend:** none.
 **DECISION (user):** *"UPDATE_INPUT_BUDGET 2M. Development allowance as you restated it: a fresh tally at $0, $3 Anthropic and 20 Exa searches."* Not yet a lock: the design waits for the user's approval.
+
+## Oct 25, 2026, 13:47 CDT — Phase 4: Build, the Wave 3 design and plan approved
+**Asked:** approval of `docs/sessions/wave3-plan.md` and, with it, `docs/design/wave3-design.md` (every §8 question answered, 13:38 and 13:41 entries), locking P4.18 to P4.22.
+**Came back:** approved. The five decisions follow, each in its own entry. The plan's steps 0 to 6 run after the user's compaction.
+**Spend:** none.
+**DECISION (user):** *"Looks good to me. Record then prep the ground for compaction."*
+
+## Oct 25, 2026, 13:47 CDT — Phase 4: Build, looser limits (P4.18)
+**Asked:** the user, after the re-runs: *"Increase loop input budget to 800k tokens. I want to loosen other almost-hit budgets the same. The goal here is to let all runs pass smoothly while having a sure back stop that will almost never be triggered unless something catastrophic has gone wrong. The daily budget and monthly budget stands though, however."*
+**Came back:** design §3 P4.18 and §4:
+- `LOOP_INPUT_BUDGET` 2,000,000 (input only, summed over every research call);
+- `UPDATE_INPUT_BUDGET` 2,000,000;
+- `LOOP_OUTPUT_BUDGET` 16,000;
+- `COMPOSITION_MAX_TOKENS` 16,000;
+- `UPDATE_SEARCHES_PER_RUN` 5;
+- `UPDATE_MAX_ROUNDS` 8 and `UPDATE_OUTPUT_BUDGET` 6,000 (placeholders);
+- `MAX_ROUNDS` 12, `KEEP_CAP` 40 and the deadlines unchanged;
+- `RUN_INPUT_TOKENS`, `RUN_OUTPUT_TOKENS`, `COMPOSITION_RESERVE_INPUT` and `FIXED_PREFIX_TOKENS_ESTIMATE` removed.
+- The daily ($15) and monthly ($60) caps stand.
+**Spend:** none.
+**DECISION (user):** *"2M for the loop's input."*, *"Update searches loosen to 5"*, *"Agreeing with the other limits to loosen."*, *"UPDATE_INPUT_BUDGET 2M."*, approved with the design: *"Looks good to me."*
+
+## Oct 25, 2026, 13:47 CDT — Phase 4: Build, the update check as its own step (P4.19)
+**Asked:** the user: *"Untangling update from the research loop."*
+**Came back:** design §2 and §3 P4.19:
+- Research ends with `submit_answer(out_of_scope, note?)`. Rule 4, P4.7's waiver and the copy guard on the note go; research never sees a web page.
+- The update step then runs beside the composition. It continues the research conversation for its cache: one tool list of seven and one system prompt, with each step's tools refused in the other.
+- It decides whether to search, with up to 5 searches, and ends with `submit_update`. Its rules are `same_turn`, `no_check`, the findings checks and the copy guard.
+- Our code turns it off when research never searched the corpus (out of scope), or when Exa is unavailable.
+- The band loses `declined`. The events gain the `step` field and `update_started` / `update_ended` (contract v2.0).
+**Spend:** none.
+**DECISION (user):** *"Good call, and we will let this step decide whether to call Exa or not. Specifically, we can enforce by code such as if a response from the research loop doesn't search the corpus at all, we will turn off update by code automatically (because it's an out of scope response)."* and *"Update step's input should take advantage of the cached research conversation at maximum. We're just separating them so that we have finer control."*, approved with the design.
+
+## Oct 25, 2026, 13:47 CDT — Phase 4: Build, composition on Sonnet 5.5 at high effort (P4.20)
+**Asked:** the user: *"change everything to Sonnet high, sacrifice in quality but save cost immensely."*
+**Came back:** design §3 P4.20. `COMPOSITION_MODEL` is `claude-sonnet-5-5` at high effort. It stays uncached, with only the kept passages as sources; the approved composition prompt is unchanged. The main session's estimate of the saving is about a fifth of an answered run's cost.
+**Spend:** none.
+**DECISION (user):** *"Change composition to Sonnet at high effort and I'd judge the quality first. (No comparison run needed.) After all, this project is a tech demo of the citation feature, not a demo of how much smarter and more capable is Opus than Sonnet in constitutional laws."* and *"Keep composition uncached and passing it only kept passages."*, approved with the design.
+
+## Oct 25, 2026, 13:47 CDT — Phase 4: Build, no reservation (P4.21)
+**Asked:** the user: *"I'd get rid of the reserve system. I'm willing to trade more cost overrun here because the cost is small and the budget still disable further runs once it's hit or overran."*
+**Came back:** design §3 P4.21:
+- **Admission:** a run starts only while today's and the month's spend are under the caps, the spend-limit flag is clear, and fewer than `MAX_CONCURRENT_RUNS` (5) runs are in progress. Otherwise it is refused (`daily_cap`, `monthly_cap`, `spend_limit_paused`, `atlas_unreachable`, or the new `busy`).
+- **Spend:** each paid call's cost is recorded as it happens. Runs in progress always finish. It fails closed when Atlas can't be reached.
+- **The overrun bound:** typically under $2. The catastrophic case is about $54 for 5 runs at the 2M budgets, behind the Console's $60 monthly limit.
+- **What goes:** reservations (`reserve`, `settle`, `release`, expiry, `--open-reservations`), and the worst case as a gate.
+- **The refusal texts** are the main session's, per the user (design §5).
+**Spend:** none.
+**DECISION (user):** the quote above; *"I also want to up maximum parallel runs to 5."*; *"Wording when too many runs are in progress: you can write the polished version."*, approved with the design.
+
+## Oct 25, 2026, 13:47 CDT — Phase 4: Build, Wave 3's development allowance (P4.22)
+**Asked:** the user: *"Reset the limit to 0 for our development. Additionally, Development cost should not count once we deploy production."* This read two ways, so the main session restated it (design §8).
+**Came back:**
+- Wave 3's paid tests start a fresh tally at $0 in `data/verification/wave3/spend.jsonl`, with **$3.00 of Anthropic and 20 Exa searches**. Each paid test runs only on the user's go.
+- The Phase 4 ledger closes at $1.6729 and 8 Exa searches.
+- Production never counts development spend: it has its own Atlas database (`Probable_Clause`, `PC_ENV=live`) and its own Console workspace and key with the $60 monthly limit (T3.4). The two must not share a key.
+**Spend:** none.
+**DECISION (user):** *"Development allowance as you restated it: a fresh tally at $0, $3 Anthropic and 20 Exa searches."*, approved with the design.

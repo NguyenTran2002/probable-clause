@@ -1,6 +1,6 @@
 # Wave 3 plan: building the Wave 3 design
 
-*Proposed Oct 25, 2026 by the main session for the user's approval, before a planned compaction. It builds `docs/design/wave3-design.md`. The main session follows it after the compaction. Nothing in it spends money until step 6, and step 6 runs only on the user's go.*
+*Proposed Oct 25, 2026 by the main session; **approved by the user at 13:47 CDT** ("Looks good to me."). It builds `docs/design/wave3-design.md` (P4.18 to P4.22). The main session follows it after the compaction, from step 0, item 2 (item 1, the locks, is done). Nothing in it spends money until step 6, and step 6 runs only on the user's go.*
 
 ## Rules for the whole wave
 

@@ -292,7 +292,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 13:59 CDT — Phase 2: Research"
 
-### P2.7 Run limits kept from brief §8.2 — AMENDED by P4.6 (the run's input limit is 436,000) and P4.11 (the daily cap is $15)
+### P2.7 Run limits kept from brief §8.2 — AMENDED by P4.6 (the run's input limit is 436,000) and P4.11 (the daily cap is $15); AMENDED by P4.18 (looser per-step limits) and P4.21 (the caps admit runs; nothing reserved)
 
 - **Decision:** The remaining starting values of brief §8.2 stand after Phase 2's measurements (`docs/research/phase2-findings.md` §3: two runs of 4 and 6 steps, $0.14 and $0.24 of Claude): a step limit of 12 tool rounds plus the final composition call; a per-run ceiling of 400K input and 20K output tokens; at most 3 update searches per run, results clamped to 10; a global daily cap of $10; a monthly cap of $60. Every counter persists in Atlas. P2.6 removed the per-visitor limit.
 - **User's words:** *"Stick with these limits: 12 steps, 400K input and 20K output tokens per run, 3 update searches, the $10 daily cap and the $60 monthly cap."*
@@ -416,7 +416,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:06 CDT — Phase 3: Architecture, Area 1 (the keep tool, T1.7)"
 
-### T1.8 The composition call runs on Opus 5.5 at high effort (amends P2.1 for composition)
+### T1.8 The composition call runs on Opus 5.5 at high effort (amends P2.1 for composition) — AMENDED by P4.20 (composition on Sonnet 5.5 at high effort)
 
 - **Decision:** The final composition call runs on **`claude-opus-5-5` at high effort**, for the quality of the answer the visitor reads. The research loop stays on `claude-sonnet-5-5` at high effort (P2.1). The composition model is its own setting, and **Sonnet 5.5 at high effort is compared against it later** (Phase 5, with the real composition prompt; the paid calls with the user's approval). Citations, adaptive thinking and the effort setting on Opus 5.5 are confirmed in build tests.
 - **Cost, priced from Phase 2's tokens:** a run rises about 30%, to roughly $0.19 to $0.31; the $10 daily cap then covers roughly 32 to 53 runs of that kind. P2.7's limits are unchanged.
@@ -436,7 +436,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:23 CDT — Phase 3: Architecture, Area 1 (citation granularity, T1.9)"
 
-### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1); by P4.6 (the note is capped at 1,000 characters); by P4.7 (rule 4 waived when out of scope); by P4.16 (rule 1: a submit must be alone in its turn, and sent once; a keep in the same turn no longer counts)
+### T1.10 `submit_answer` and the rejection rules (supersedes brief §2's "its input lists the kept passage IDs") — AMENDED by T2.3 (adds `update_findings` and `update_overview`, checked after rule 1); by P4.6 (the note is capped at 1,000 characters); by P4.7 (rule 4 waived when out of scope); by P4.16 (rule 1: a submit must be alone in its turn, and sent once; a keep in the same turn no longer counts); AMENDED by P4.19 (the update fields and rule 4 leave `submit_answer` for the update step)
 
 - **Decision:** Area 1, topic 6:
   - **`submit_answer(out_of_scope, note?, update_skip_reason?)`.** No list of kept IDs: the composition call uses the kept set as it stands when the submit is accepted (T1.7). This supersedes brief §2's Termination row ("Its input lists the kept passage IDs"); the invariant stands (every citation points to a passage the viewer watched Claude keep).
@@ -453,7 +453,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:32 CDT — Phase 3: Architecture, Area 1 (submit_answer and the rejection rules, T1.10)"
 
-### T1.11 The composition call — AMENDED by T3.3 (a composition that fails before its first block is retried up to twice)
+### T1.11 The composition call — AMENDED by T3.3 (a composition that fails before its first block is retried up to twice); AMENDED by P4.18 (`max_tokens` 16,000) and P4.20 (Sonnet)
 
 - **Decision:** Area 1, topic 7 (model and inputs also under T1.8 and T1.9):
   - **Inputs:** the question; the scope note if any (T1.10); the three coverage dates; the kept passages, one custom content document each (T1.9), **in order of decision date, then opinion, then position**, each titled with a short label ("Katz v. United States (1967), Harlan, concurring") and carrying in `context` its ID, citation, date, exact opinion type, author, joiners, section, pages and keep reason. **Left out:** footnotes that were not kept (Claude saw them in the loop and could keep them or name them in a keep reason), and the web results.
@@ -501,7 +501,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:04 CDT — Phase 3: Architecture, Area 1 (the loop's system prompt, T1.14)"
 
-### T2.1 `search_web_updates`: what Claude sets, what our server limits, what it costs
+### T2.1 `search_web_updates`: what Claude sets, what our server limits, what it costs — AMENDED by P4.18 (5 searches a run) and P4.19 (searched in the update step)
 
 - **Decision:** Area 2, topic 1:
   - **Reading of brief §2's Update check row** ("Claude controls every search field; our server clamps cost-related fields"): Claude controls every field of **our** wrapper tool, the list in brief §6.2 (query, date window, domains, category, search type), not every field Exa's tool offers.
@@ -531,7 +531,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:33 CDT — Phase 3: Architecture, Area 2 (what a web result looks like to Claude, T2.2)"
 
-### T2.3 The update-check band: structured findings in `submit_answer` (amends P1.3 and T1.10) — AMENDED by P4.8 (the no-sources note guarded) and P4.9 (corpus words exempt)
+### T2.3 The update-check band: structured findings in `submit_answer` (amends P1.3 and T1.10) — AMENDED by P4.8 (the no-sources note guarded) and P4.9 (corpus words exempt); AMENDED by P4.19 (findings in the update step's `submit_update`; `declined` removed)
 
 - **Decision:** Area 2, topic 3, option A:
   1. **Fields** added to `submit_answer` (amends T1.10): `update_findings`, a list of `{statement, sources}` (source IDs `web-<search>-<n>`, T2.2), an empty list meaning nothing relevant was found; `update_overview`, optional. Caps, placeholders against overrun only: 20 findings, 600 characters a statement, 10 sources a statement, 600 characters for the overview. Statements describe what a page reports, attributed to its source, never whether the law has changed (system prompt).
@@ -615,7 +615,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 17:58 CDT — Phase 3: Architecture, Area 3 (disconnect detection and the grace window, T3.2)"
 
-### T3.3 The paid calls during a run: streamed, visible retries for Anthropic and Voyage (supersedes brief §10.7's no-retry rule for these calls; amends P2.8 and T1.11)
+### T3.3 The paid calls during a run: streamed, visible retries for Anthropic and Voyage (supersedes brief §10.7's no-retry rule for these calls; amends P2.8 and T1.11) — AMENDED by P4.18 (per-step token budgets; no run-wide limit)
 
 - **Decision:** Area 3, topic 3:
   - **Claude calls are streamed** (the SDK's stream, the final message assembled), with the SDK's own retries off (`max_retries=0`, so no hidden retry sits inside a measured time, brief §10.7) and our own deadline per call: 120 s for a loop call, 300 s for composition (placeholders until measured).
@@ -633,7 +633,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:04 CDT — Phase 3: Architecture, Area 3 (the paid calls during a run, T3.3)"
 
-### T3.4 Spend counters and caps: the worst case reserved atomically at the start; every budget stop recorded — AMENDED by P4.6 (the worst case is $2.11)
+### T3.4 Spend counters and caps: the worst case reserved atomically at the start; every budget stop recorded — AMENDED by P4.6 (the worst case is $2.11); AMENDED by P4.21 (no reservation: admission under the caps, spend recorded per call, a cap on runs at once)
 
 - **Decision:** Area 3, topic 4:
   - **Reservation (B1):** a run starts only if, in one conditional update of one Atlas document per Chicago month (holding the month's and each day's spent and reserved), spent plus reserved plus the run's worst case stays within $10 for the Chicago day and $60 for the Chicago month (P2.7). The caps are therefore never overshot, however many instances run (brief §8.1). Up to one worst case of a day may go unused.
@@ -920,7 +920,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 00:46 CDT — Phase 4: Build, broken loop attempts counted as streamed (P4.5)"
 
-### P4.6 The composition's room raised to its worst case; the run's input limit 436,000; the note capped (amends P2.7, T1.10, T3.4)
+### P4.6 The composition's room raised to its worst case; the run's input limit 436,000; the note capped (amends P2.7, T1.10, T3.4) — SUPERSEDED by P4.18 and P4.21 (no composition reserve, no run-wide input limit; the note cap stands)
 
 - **Decision:** `COMPOSITION_RESERVE_INPUT` is 66,000 tokens. That is the composition's worst case by the loop's own estimator, 64,945 tokens (the 40 longest passages, each with a 300-character keep reason, a 2,000-character question and a 1,000-character note), plus a small margin. The loop keeps its 370,000 (`LOOP_INPUT_BUDGET`), so the run's input limit (`RUN_INPUT_TOKENS`, P2.7's 400,000) becomes **436,000**. The visitor's `note` (and so the scope note) is capped at **1,000 characters**, with a refusal text drafted for the user's review (T1.14). The worst case reserved per run (T3.4's $1.674) becomes about **$2.11**. A test recomputes the composition's worst case from the corpus and the settings, so the figure cannot fall behind the code.
 - **Considered:** a keep budget refusing keeps past a 30,000 reserve; keeping 400,000 with the loop at 335,000 (about $2.01); no note cap (about 448,000 and $2.25); a lower `KEEP_CAP`.
@@ -928,7 +928,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
 
-### P4.7 An out-of-scope reply needs no update check (amends T1.10)
+### P4.7 An out-of-scope reply needs no update check (amends T1.10) — SUPERSEDED by P4.19 (no rule 4)
 
 - **Decision:** T1.10's rule 4 (no update check and no skip reason: refused once) is waived when `out_of_scope` is true, so a greeting or an off-topic question is never pushed toward a paid Exa search. This matches the system prompt's "No search is needed."
 - **Considered:** keeping rule 4 for every submit, as T1.10 has it.
@@ -936,7 +936,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 01:01 CDT — Phase 4: Build, five decisions after the cross-part review (P4.6 to P4.10)"
 
-### P4.8 The copy guard covers a no-sources reply's note once a page was returned (amends T2.3) — AMENDED by P4.13 (`update_skip_reason` is guarded too)
+### P4.8 The copy guard covers a no-sources reply's note once a page was returned (amends T2.3) — AMENDED by P4.13 (`update_skip_reason` is guarded too); SUPERSEDED by P4.19 (research never sees a page; its note is not guarded)
 
 - **Decision:** On a no-sources reply (out of scope or nothing found), when any update search has returned a page in the run, the `note` gets T2.3's copy guard: `COPY_GUARD_WORDS` or more consecutive words of a returned page refuse the submit, with a refusal asking for it to be reworded, and the flagged note is withheld in the stored `tool_call` as P4.3 does. Keep reasons, the scope note of an answered run and `update_skip_reason` stay unguarded.
 - **Considered:** guarding keep reasons, every note and the skip reason too (the cross-part review's suggestion); leaving T2.3 as it was.
@@ -968,7 +968,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
 
-### P4.12 A run's spend may pass its reservation through failed composition attempts
+### P4.12 A run's spend may pass its reservation through failed composition attempts — SUPERSEDED by P4.21 (no reservation)
 
 - **Decision:** The worst case stays $2.106. It reserves input only for the two failed composition attempts, while P4.10 also prices their streamed output, so a run's recorded spend can pass its reservation: typically by cents, by $0.48 at most. The caps stay correct, because every cost is settled as spent.
 - **Considered:** reserving that output too ($2.586 a run).
@@ -976,7 +976,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
 
-### P4.13 The copy guard covers `update_skip_reason` too (amends P4.8)
+### P4.13 The copy guard covers `update_skip_reason` too (amends P4.8) — AMENDED by P4.19 (the skip reason is guarded in `submit_update`)
 
 - **Decision:** Once an update search has returned a page in the run, `update_skip_reason` gets T2.3's copy guard on every submit. A skip reason repeating `COPY_GUARD_WORDS` or more consecutive words of a returned page refuses the submit (rule `copy_guard`) and is withheld in the stored and streamed `tool_call`, as P4.3 does. Its refusal text mirrors the approved `copy_guard_note`. Keep reasons and an answered run's scope note stay unguarded (P4.8).
 - **Considered:** leaving it unguarded, as P4.8 did ("because the update is skipped"); refusing or dropping a skip reason once a search counted.
@@ -984,7 +984,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:09 CDT — Phase 4: Build, five decisions on the overnight report (P4.11 to P4.15)"
 
-### P4.14 The composition's worst case is counted by the loop's estimator
+### P4.14 The composition's worst case is counted by the loop's estimator — SUPERSEDED by P4.21 (no reserve to count against)
 
 - **Decision:** `COMPOSITION_RESERVE_INPUT` (P4.6) bounds the composition's input as the loop's estimator counts it (characters over the corpus's characters-per-token ratio), not as the tokenizer does. Text that tokenizes densely can run past it by about $0.04 a run; that is logged and never stopped (P4.4).
 - **Considered:** a larger margin.
@@ -1019,3 +1019,39 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I think we should decapitalize everything before comparison check as best practice?"* Then: *"Lock P4.17: the quotation check compares without regard to letter case throughout; the answer keeps the quotation as written. Then build it."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:55 CDT — Phase 4: Build, the quotation check ignores letter case (P4.17)"
+
+### P4.18 Looser limits, each a backstop that almost never fires (amends P2.7, T1.11, T2.1, T3.3; supersedes P4.6's limits)
+
+- **Decision:** `LOOP_INPUT_BUDGET` 2,000,000 (input only, over every research call); `UPDATE_INPUT_BUDGET` 2,000,000; `LOOP_OUTPUT_BUDGET` 16,000; `COMPOSITION_MAX_TOKENS` 16,000; `UPDATE_SEARCHES_PER_RUN` 5; `UPDATE_MAX_ROUNDS` 8 and `UPDATE_OUTPUT_BUDGET` 6,000 (placeholders); `MAX_ROUNDS` 12, `KEEP_CAP` 40 and the deadlines unchanged; `RUN_INPUT_TOKENS`, `RUN_OUTPUT_TOKENS`, `COMPOSITION_RESERVE_INPUT` and `FIXED_PREFIX_TOKENS_ESTIMATE` removed. The daily ($15) and monthly ($60) caps stand. Detail: `docs/design/wave3-design.md` §3 and §4.
+- **User's words:** *"The goal here is to let all runs pass smoothly while having a sure back stop that will almost never be triggered unless something catastrophic has gone wrong. The daily budget and monthly budget stands though, however."*; *"2M for the loop's input."*; *"Update searches loosen to 5"*; *"UPDATE_INPUT_BUDGET 2M."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, looser limits (P4.18)"
+
+### P4.19 The update check is its own step, beside the composition, continuing the research conversation (amends T1.10, T2.1, T2.3, P4.13; supersedes P4.7, P4.8)
+
+- **Decision:** research ends with `submit_answer(out_of_scope, note?)` (no rule 4, no copy guard on the note; research never sees a page). The update step then runs beside the composition, continuing the research conversation for its cache (one tool list of seven and one system prompt; each step's tools refused in the other). It decides whether to search (up to 5) and ends with `submit_update` (rules `same_turn`, `no_check`, the findings checks, the copy guard). Our code turns it off when research never searched the corpus, or when Exa is unavailable. The band loses `declined`; the events gain `step`, `update_started` and `update_ended` (contract v2.0). Detail: design §2, §3, §5, §6.
+- **User's words:** *"Untangling update from the research loop."*; *"we will let this step decide whether to call Exa or not. Specifically, we can enforce by code such as if a response from the research loop doesn't search the corpus at all, we will turn off update by code automatically (because it's an out of scope response)."*; *"Update step's input should take advantage of the cached research conversation at maximum. We're just separating them so that we have finer control."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, the update check as its own step (P4.19)"
+
+### P4.20 Composition on Sonnet 5.5 at high effort (amends T1.8, T1.11)
+
+- **Decision:** `COMPOSITION_MODEL` is `claude-sonnet-5-5` at high effort; uncached; only the kept passages as sources; the approved prompt unchanged. The user judges the quality in the next paid runs.
+- **User's words:** *"Change composition to Sonnet at high effort and I'd judge the quality first. (No comparison run needed.) After all, this project is a tech demo of the citation feature, not a demo of how much smarter and more capable is Opus than Sonnet in constitutional laws."*; *"Keep composition uncached and passing it only kept passages."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, composition on Sonnet 5.5 at high effort (P4.20)"
+
+### P4.21 No reservation: admission under the caps, spend recorded per call, at most 5 runs at once (amends T3.4, P2.7; supersedes P4.12, P4.14)
+
+- **Decision:** a run starts only while today's and the month's spend are under the caps, the spend-limit flag is clear, and fewer than `MAX_CONCURRENT_RUNS` (5) runs are in progress; otherwise it is refused (`daily_cap`, `monthly_cap`, `spend_limit_paused`, `atlas_unreachable`, `busy`). Each paid call's cost is recorded as it happens; runs in progress always finish; it fails closed on Atlas. Reservations and the worst case as a gate go. The refusal texts are the main session's (design §5).
+- **User's words:** *"I'd get rid of the reserve system. I'm willing to trade more cost overrun here because the cost is small and the budget still disable further runs once it's hit or overran."*; *"I also want to up maximum parallel runs to 5."*; *"you can write the polished version."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, no reservation (P4.21)"
+
+### P4.22 Wave 3's development allowance
+
+- **Decision:** Wave 3's paid tests start a fresh tally at $0 in `data/verification/wave3/spend.jsonl`, with $3.00 of Anthropic and 20 Exa searches; each paid test only on the user's go. The Phase 4 ledger closes at $1.6729 and 8 Exa searches. Production never counts development spend (its own Atlas database, its own Console workspace and key, T3.4).
+- **User's words:** *"Reset the limit to 0 for our development. Additionally, Development cost should not count once we deploy production."* Then: *"Development allowance as you restated it: a fresh tally at $0, $3 Anthropic and 20 Exa searches."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, Wave 3's development allowance (P4.22)"
+

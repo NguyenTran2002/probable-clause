@@ -1,6 +1,6 @@
 # Wave 3 design: research, then update and composition side by side
 
-*Drafted Oct 25, 2026 by the main session for the user's approval, after the paid build tests and their re-runs (BUILD_LOG, 12:29 and 13:04). Nothing here is locked. On approval each numbered decision below is locked in its own BUILD_LOG entry with its `locked-decisions.md` entry, and contract v2.0 is written before any builder starts. Where this draft and a locked entry differ, the entry wins until the new one is locked.*
+*Drafted Oct 25, 2026 by the main session; **approved by the user at 13:47 CDT** ("Looks good to me."), locking P4.18 to P4.22 (BUILD_LOG, "Oct 25, 2026, 13:47 CDT" entries; `locked-decisions.md`). Contract v2.0 is written from it in the plan's step 0, before any builder starts. Where this design and a locked entry differ, the entry wins.*
 
 *Marked **(user)** where the user decided it in discussion, **(main session)** where it is the main session's call for the user to check.*
 
