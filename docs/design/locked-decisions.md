@@ -468,7 +468,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:46 CDT — Phase 3: Architecture, Area 1 (the composition call, T1.11)"
 
-### T1.12 Answer checks: a quotation check and a narrow full-citation check; the general case-name verifier dropped (supersedes brief §2's Case-name verifier row and §5.8; amends P1.10)
+### T1.12 Answer checks: a quotation check and a narrow full-citation check; the general case-name verifier dropped (supersedes brief §2's Case-name verifier row and §5.8; amends P1.10) — AMENDED by T5.2 (the line under the answer is reworded: quotations are found in the passages Claude kept)
 
 - **Decision:** Area 1, topic 8 (the user's addition):
   - **The general case-name verifier is dropped.** Brief §2 ("Every case name in the answer must resolve to a document in the corpus, or it is flagged on screen"; "In the minimum demo") and §5.8 are superseded: a case name outside the corpus cannot be found reliably in free text without structured output, which Citations rules out, and a check that claimed it would give false confidence.
