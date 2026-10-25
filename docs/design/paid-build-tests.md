@@ -1,6 +1,6 @@
 # Paid build tests, Phase 4: the plan for the user's approval
 
-*Drafted by the main session during the overnight run of Oct 25, 2026. Nothing here has been run, and nothing runs without the user's approval of this plan (CLAUDE.md: paid spend needs approval).*
+*Drafted by the main session during the overnight run of Oct 25, 2026. **The budget was approved by the user at 12:09 CDT** ("The budget for paid build tests are sound"; BUILD_LOG, P4.11 to P4.15). The prompt drafts were approved at the same time (P4.15). Nothing has been run yet; the tests run on the user's go.*
 
 ## Limits
 - **Anthropic:** the Phase 4 ceiling is **$3.00**. Spent so far in Phase 4: $0.
@@ -57,8 +57,8 @@ The page is re-read once more right before the tests, and `PRICE_TABLE`'s Anthro
 - A BUILD_LOG entry, with the Anthropic ledger updated.
 
 ## What the user does or decides first
-1. **Approve this plan** or change it: the questions, the order, the $2.50 stop.
-2. **The texts** (T1.14): read the prompt and refusal drafts before the first paid run. They are listed in the morning report.
+1. ~~Approve this plan~~: the budget was approved, Oct 25, 12:09.
+2. ~~The texts~~: approved (P4.15).
 3. **The key:**
    - T3.4 asks for a Console workspace and key with a $60 monthly limit before live runs.
    - For these build tests, say whether the key now in `.env` may be used.

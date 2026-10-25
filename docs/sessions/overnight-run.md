@@ -175,6 +175,7 @@ Add a line saying the fixtures were regenerated from the real code. If `docs/ses
 - **The morning report:** the closing message, with what was done and its commits, what's waiting on the user and why, the spend ($0), and the token use. A `PushNotification`, if the tool is available, when the night's work ends.
 
 ## Waiting on the user (don't decide these)
+- **Answered by the user, Oct 25, 12:09** (P4.11 to P4.15): the cap at $15, the spend past the reservation accepted, the skip reason guarded, the estimator's limit accepted, the drafts approved, the paid tests' budget approved. The items below stay for the record; the nits are still open.
 - **Added during the night** (BUILD_LOG 01:34 to 02:49):
   - **Four at once:** at $2.106, four reservations fit in the $10 day at once, not T3.5's "about five". Accept, or change the daily cap.
   - **Composition retries:** the worst case reserves input only for the two failed composition attempts, while P4.10 prices their streamed output. A run can pass its reservation by cents, up to $0.48 in theory. Accept (the reviewer's advice), or reserve it ($2.586).
