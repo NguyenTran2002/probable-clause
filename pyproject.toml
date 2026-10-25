@@ -5,10 +5,21 @@ description = "Citation and precedent finder for U.S. Supreme Court Fourth Amend
 requires-python = ">=3.13"
 dependencies = [
     "anthropic>=2.3.0",
+    "fastapi>=0.162.0",
+    "httpx2>=2.16.0",
+    "jsonschema>=4.26.0",
     "mcp>=2.3.0",
+    "numpy>=2.5.4",
+    "pymongo>=4.19.0",
+    "uvicorn>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
     "english-words>=2.0.2",
+    "pytest>=9.1.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
