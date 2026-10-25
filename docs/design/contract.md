@@ -1,6 +1,6 @@
 # Interfaces contract
 
-**Version 1.1** (Oct 24, 2026). Version 1 was revised after the Opus xhigh review (P4.1) before any builder started; 1.1 adds `loop_messages.json` to §4.G's prompt files and has `scripts/embed_corpus.py` read passages through B's `Corpus` (§4.C), both during Wave 1. Written by the main session for Phase 4. One writer, the main session; a change bumps the version and is announced to every builder and to the frontend session (P0.3). Where this contract and `docs/design/locked-decisions.md` differ, the decisions win and this file is fixed.
+**Version 1.1** (Oct 24, 2026). Version 1 was revised after the Opus xhigh review (P4.1) before any builder started; 1.1 adds `loop_messages.json` to §4.G's prompt files, has `scripts/embed_corpus.py` read passages through B's `Corpus` (§4.C), and settles the embedded header's section wording and the appendix labels (§3, §4.C, after the main session's review of the labels), all during Wave 1. Written by the main session for Phase 4. One writer, the main session; a change bumps the version and is announced to every builder and to the frontend session (P0.3). Where this contract and `docs/design/locked-decisions.md` differ, the decisions win and this file is fixed.
 
 Machine-checkable and shared code, all the main session's: `contracts/events.schema.json` (every event), `api/types.py` (shared types), `api/settings.py` (every figure and its basis), `api/errors.py` (errors and the closed error vocabulary), `api/retry.py` (our retries, T3.3), `api/protocols.py` (the Atlas store's interface). Builders import these and never redefine what they hold.
 
@@ -37,7 +37,7 @@ Source: `data/corpus/cases/<key>.json` and `data/corpus/manifest.json`, committe
   - **Joining:** the heading stack is joined with "-", with trailing periods dropped ("I." → "I", so Part III subpart A is "III-A").
   - **A letter heading with a title** ("A. TITLE I—THE RECORDKEEPING REQUIREMENTS") contributes its letter only.
   - **Unnumbered title rows** inside an appendix ("PROOF OF CRIMINAL VIOLATION") do not change the label.
-  - **Appendix paragraphs** take the appendix's title row ("APPENDIX TO OPINION OF STEVENS, J.") as their label, or "Appendix" where the corpus has no title row (the *Kyllo* and *Carpenter* dissents).
+  - **Appendix paragraphs** take the appendix's title row, verbatim, final period included ("APPENDIX TO OPINION OF MR. JUSTICE WHITE."), as their label, or "Appendix" where the corpus has no title row (the *Kyllo* and *Carpenter* dissents). Footnotes take the label of the paragraph that cites them (v1.1).
   - **Not labels:** omission rows and letterhead lines typed as sections.
   - Before the first heading the label is `None`.
   - **Check before embedding:** B's tests print every distinct label per opinion, and the main session reviews that list before the embedding runs.
@@ -120,7 +120,9 @@ class HttpVoyageClient(VoyageClient):     # VOYAGE_BASE_URL, bearer VOYAGE_API_K
 class FakeVoyageClient(VoyageClient): ... # deterministic vectors from a hash; scripted failures
 
 def embedded_text(p: Passage) -> str:
-    """One header line, then the text (T3.6): '<case name> (<year>), <exact type>, <authors or per curiam>[, Part <section>]'."""
+    """One header line, then the text (T3.6): '<case name> (<year>), <exact type>, <authors or per curiam>[, <section>]',
+    where <section> is "Part <label>" for a numbered label ("Part III-A") and the label as it stands for an
+    appendix label ("Appendix", "APPENDIX TO OPINION OF MR. JUSTICE WHITE."); several authors joined with " and "."""
 
 class MeaningIndex:
     @classmethod

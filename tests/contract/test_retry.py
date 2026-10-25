@@ -2,6 +2,7 @@
 
 import pytest
 
+from api import settings
 from api.errors import ServiceError
 from api.retry import ANTHROPIC_POLICY, VOYAGE_POLICY, with_retries
 
@@ -61,6 +62,15 @@ async def test_retry_after_wins():
     go, _, waits = run(ANTHROPIC_POLICY, [ServiceError("anthropic", "rate_limited", 429, retry_after_s=5.0)])
     assert await go() == "ok"
     assert waits == [5.0]
+
+
+@pytest.mark.anyio
+async def test_retry_after_past_cap_fails_without_waiting():
+    over = settings.RETRY_AFTER_MAX_S.value + 1
+    go, log, waits = run(VOYAGE_POLICY, [ServiceError("voyage", "rate_limited", 429, retry_after_s=over)])
+    with pytest.raises(ServiceError):
+        await go()
+    assert waits == [] and ("attempt", 2) not in log
 
 
 @pytest.mark.anyio

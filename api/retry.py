@@ -67,6 +67,8 @@ async def with_retries(
                 raise
             wait = policy.waits_s[min(n - 1, len(policy.waits_s) - 1)]
             if policy.honour_retry_after and e.retry_after_s is not None:
+                if e.retry_after_s > settings.RETRY_AFTER_MAX_S.value:
+                    raise  # too long to wait inside a run
                 wait = e.retry_after_s
             await on_retry(n + 1, e, wait)
             await sleep(wait)
