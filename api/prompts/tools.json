@@ -55,7 +55,7 @@
     }
   },
   "submit_answer": {
-    "description": "Finish research. The answer is then written from the passages you have kept, as they stand. Do not submit in the same turn as a search or a read. At least one corpus search is required unless the question is out of scope. A submit that breaks a rule is refused with a message saying what to fix.",
+    "description": "Ends research. The first accepted submit stops the loop at once: no further tool runs and nothing more is read, and the answer is then written from the passages you have kept, as they stand. So submit only when you are done: everything kept, the update check run or skipped. Send it alone in its turn, once, with every field you need in that one call (`note`, `update_findings` or `update_skip_reason`, `update_overview`): the visitor sees only what this one call carries. At least one corpus search is required unless the question is out of scope. A submit that breaks a rule is refused with a message saying what to fix.",
     "fields": {
       "out_of_scope": "true when the question falls outside the corpus's subject, or is a greeting or chit-chat; a note is then required. Never true for a question about a person's own situation, or a borderline question the corpus can address.",
       "note": "Written to the visitor, in plain language, two or three sentences. Required when the question is out of scope or nothing was kept: say what the corpus covers and why the question falls outside it or why nothing bore on it, and, where natural, a related question it can answer. On a normal answer, optional: a short scope note when part of the question falls outside the corpus, such as state law. At most {{NOTE_MAX_CHARS}} characters.",

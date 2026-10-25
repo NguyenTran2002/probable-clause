@@ -1808,3 +1808,16 @@ Then: *"The budget for paid build tests are sound."*
 - **Cost noted:** a refused turn costs one short extra round on a cached prefix (about $0.005 to $0.03); the changed system prompt rewrites the 1-hour cache once (about $0.075).
 **Spend:** none.
 **DECISION (user):** *"Lock P4.16: submit_answer alone in its turn, once; other tools in that turn still run; keep the rule name same_turn; the three prompt texts as drafted. Then build it, contract v1.8."*
+
+## Oct 25, 2026, 12:48 CDT — Phase 4: Build, P4.16 built; contract v1.8
+**Asked:** *"Then build it, contract v1.8."* (P4.16, the 12:42 entry.)
+**Came back:**
+- **The loop (`api/loop/run.py`, `run_tools`):** rule 1 is now "the turn holds more than one call", so a submit with any other call, or a second submit, is refused as `same_turn`; the turn's tools run in Claude's order (the v1.3 reorder that ran submits last is gone). `SEARCH_OR_READ` (`api/loop/tools.py`), now unused, is removed.
+- **The three approved texts,** as locked: `rejections.json`'s `submit.rule_1_same_turn`, `tools.json`'s `submit_answer` description, `loop_system.md`'s "Submitting ends the research" item.
+- **Tests (`tests/loop/test_submit_rules.py`):** four old tests rewritten for the new rule (a keep in the same turn now refuses the submit; a keep after a submit runs and the submit is refused; results still return in Claude's order); new: two submits alone both refused, the paid test 4's split submit losing nothing (the resubmit's scope note reaches `run_ended`), and a submit with an unknown tool refused.
+- **Contract v1.8** (§4.G, the tool table); the frontend brief's `submit.rule` line; the design note's summary of the rules.
+- **Fixtures regenerated:** every file keeps its events, counts and end state; only token counts, times and costs moved, from the longer texts on the fakes.
+- **Review (one agent, Sonnet 5.5 at high effort, read-only):** no correctness bug. Leftovers it named, left as built: rule 4's `reminded_round >= round_no` condition can no longer be true, and `accepted_any` is now redundant (both harmless). Its suggested test for a submit with an unknown tool was added.
+- **Whole suite: 3,458 passed, 49 skipped.** Not yet re-run with money.
+**Spend:** none.
+**DECISION (user):** none new. This carries out P4.16, locked at 12:42.

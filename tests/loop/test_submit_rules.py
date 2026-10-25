@@ -1,4 +1,4 @@
-"""submit_answer's rules in order (T1.10, T2.3): rule 1, then the findings checks and the copy guard, then rules 2
+"""submit_answer's rules in order (T1.10, T2.3): rule 1 (alone in its turn, once, P4.16), then the findings checks and the copy guard, then rules 2
 to 4; P4.3's withholding of flagged statements in the stored tool_call."""
 
 import json
@@ -61,11 +61,15 @@ async def test_rule_1_comes_before_the_findings_checks(world):
     assert rules(ctx)[0] == "same_turn"
 
 
-async def test_a_keep_in_the_same_turn_is_fine(world):
+async def test_a_keep_in_the_same_turn_refuses_the_submit(world):
+    """P4.16: a submit must be the turn's only call. The keep runs and counts; the submit is refused."""
     script = [search(), turn(tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}]),
-                             tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)), answer(world)]
+                             tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+              submit(update_skip_reason=SKIP), answer(world)]
     ctx, fakes = await run_loop(world, script)
-    assert rules(ctx) == [None] and ctx.ended()["state"] == "answered"
+    assert rules(ctx) == ["same_turn", None] and ctx.ended()["state"] == "answered"
+    assert ctx.results("keep_passages")[0]["is_error"] is False
+    assert ctx.of("composition_started")[0]["documents"] == ["katz-1-p6"]
     assert fakes["anthropic"].requests[-1]["model"] == "claude-opus-5-5"
 
 
@@ -90,12 +94,39 @@ async def test_rule_4_refused_once_then_declined(world):
     assert band["outcome"] == "declined" and band["reason"] is None
 
 
-async def test_rule_4_reminder_must_be_seen_before_a_resubmit_counts(world):
-    """Two submits in one turn: the second has not seen the first's reminder, so it is refused too."""
+async def test_two_submits_in_one_turn_are_both_refused(world):
+    """P4.16: two submits alone in a turn are both refused by rule 1, before any other rule runs."""
     script = [search(), keep(), turn(tu("submit_answer", out_of_scope=False), tu("submit_answer", out_of_scope=False)),
-              submit(), answer(world)]
+              submit(), submit(), answer(world)]
     ctx, _ = await run_loop(world, script)
-    assert rules(ctx) == ["no_update_check", "no_update_check", None]
+    assert rules(ctx) == ["same_turn", "same_turn", "no_update_check", None]
+    assert all(r["content"] == rejection("submit", "rule_1_same_turn") for r in ctx.results("submit_answer")[:2])
+
+
+async def test_a_submit_with_an_unknown_tool_is_refused(world):
+    """P4.16: an unknown tool counts as another call; Claude gets an error for it and the submit is refused."""
+    script = [search(), keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP),
+                                     tu("no_such_tool", x=1)),
+              submit(update_skip_reason=SKIP), answer(world)]
+    ctx, fakes = await run_loop(world, script)
+    assert rules(ctx) == ["same_turn", None] and ctx.ended()["state"] == "answered"
+    sent = fakes["anthropic"].requests[3]["messages"][-1]["content"]
+    assert [b["is_error"] for b in sent if b["type"] == "tool_result"] == [True, True]
+
+
+async def test_a_split_submit_loses_nothing(world):
+    """The paid build tests (Oct 25, test 4): a scope note in one submit and a bare submit in the same turn. Both
+    are refused, so neither replaces the other; the single resubmit's note reaches the end."""
+    scope = "The corpus holds Supreme Court opinions only; state law is not covered."
+    script = [search(), keep(),
+              turn(tu("submit_answer", out_of_scope=False, note=scope, update_skip_reason=SKIP),
+                   tu("submit_answer", out_of_scope=False)),
+              submit(note=scope, update_skip_reason=SKIP), answer(world)]
+    ctx, _ = await run_loop(world, script)
+    assert rules(ctx) == ["same_turn", "same_turn", None]
+    end = ctx.ended()
+    assert end["state"] == "answered" and end["scope_note"] == scope
+    assert ctx.of("update_band")[0]["outcome"] == "skipped"
 
 
 async def test_rule_4_waived_while_the_update_check_is_unavailable(world):
@@ -181,25 +212,28 @@ async def test_bad_input_is_an_error_result_with_no_rule(world):
     assert res[1]["content"] == rejection("submit", "out_of_scope_no_note")     # v1.3
 
 
-async def test_a_keep_after_a_submit_in_the_same_turn_counts(world):
-    """v1.3: submit_answer runs after the turn's other tools; every tool_use gets its tool_call and tool_result."""
+async def test_a_keep_after_a_submit_runs_and_the_submit_is_refused(world):
+    """P4.16: the turn's tools run in Claude's order; the keep counts, the submit is refused, every tool_use gets
+    its tool_call and tool_result."""
     script = [search(), keep(), turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP),
-                                     tu("keep_passages", keep=[{"id": "katz-1-n9", "reason": "late"}])), answer(world)]
+                                     tu("keep_passages", keep=[{"id": "katz-1-n9", "reason": "late"}])),
+              submit(update_skip_reason=SKIP), answer(world)]
     ctx, _ = await run_loop(world, script)
-    assert [d["name"] for d in ctx.of("tool_call")][-2:] == ["keep_passages", "submit_answer"]
-    assert [d["name"] for d in ctx.results()][-2:] == ["keep_passages", "submit_answer"]
+    assert [d["name"] for d in ctx.of("tool_call")][-3:] == ["submit_answer", "keep_passages", "submit_answer"]
+    assert [d["name"] for d in ctx.results()][-3:] == ["submit_answer", "keep_passages", "submit_answer"]
+    assert rules(ctx) == ["same_turn", None]
     assert ctx.of("composition_started")[0]["documents"] == ["katz-1-p6", "katz-1-n9"]
     assert ctx.results("submit_answer")[-1]["content"] == prompts.message("submit_accepted_answer",
                                                                           passages="2 kept passages")
 
 
 async def test_the_results_go_back_in_claudes_order(world):
-    """A refused submit before a keep: the keep runs first, the results return in the order Claude called them."""
+    """A refused submit before a keep: the results return in the order Claude called them."""
     script = [search(), turn(tu("submit_answer", out_of_scope=False),
                              tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}])),
               submit(update_skip_reason=SKIP), answer(world)]
     ctx, fakes = await run_loop(world, script)
-    assert rules(ctx) == ["no_update_check", None]          # the keep counted before the submit's rules ran
+    assert rules(ctx) == ["same_turn", None]                 # P4.16: not alone in its turn
     sent = fakes["anthropic"].requests[2]["messages"][4]["content"]
     asked = fakes["anthropic"].requests[2]["messages"][3]["content"]
     ids = [b["id"] for b in asked if b["type"] == "tool_use"]

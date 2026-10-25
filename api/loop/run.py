@@ -31,7 +31,7 @@ from api.loop import prompts
 from api.loop.prompts import rejection
 from api.loop.streamer import AnthropicStreamer, StreamResult
 from api.loop.streamer import raw_usage as usage_object
-from api.loop.tools import (SEARCH_OR_READ, STRICT_TOOLS, TOOL_NAMES, check_fields, max_results, string_list,
+from api.loop.tools import (STRICT_TOOLS, TOOL_NAMES, check_fields, max_results, string_list,
                             text_field, tools as build_tool_list, whole_number)
 from api.retry import ANTHROPIC_POLICY, with_retries
 from api.search.meaning import UNAVAILABLE_NOTE, MeaningIndex
@@ -570,20 +570,18 @@ class _Run:
 
     # -- the tools --
     async def run_tools(self, res: StreamResult, call_no: int) -> tuple[list[dict], bool]:
-        """The turn's tools in Claude's order, except that submit_answer runs after the others, so a keep in the
-        same turn counts (§4.G, v1.3). Every tool_use gets its tool_call and tool_result; the results go back to
-        Claude in Claude's order."""
+        """The turn's tools in Claude's order (§4.G). submit_answer must be the turn's only call: with any other
+        call, or a second submit, every submit is refused and the other calls run as usual (P4.16, amending T1.10
+        rule 1). Every tool_use gets its tool_call and tool_result; the results go back to Claude in Claude's order."""
         uses = [(ti, ci, b) for ti, (ci, b) in enumerate((i, b) for i, b in enumerate(res.content)
                                                          if b.get("type") == "tool_use")]
-        same_turn = any(b.get("name") in SEARCH_OR_READ for _, _, b in uses)     # T1.10 rule 1
+        same_turn = len(uses) > 1                                                 # rule 1, P4.16
         # T1.7: a keep may name only passages shown before this turn; this turn's results are not yet seen by Claude
         self.seen_before_turn = frozenset(self.seen)
         user_index = len(self.messages)          # the index the tool results' user message will have
         results: list[dict | None] = [None] * len(uses)
         accepted_any = False
-        ordered = [u for u in uses if u[2].get("name") != "submit_answer"] + \
-                  [u for u in uses if u[2].get("name") == "submit_answer"]
-        for ti, ci, b in ordered:
+        for ti, ci, b in uses:
             name, tid, inp = b.get("name"), b.get("id"), b.get("input")
             if name not in TOOL_NAMES:
                 log.warning("run %s: Claude called an unknown tool", self.ctx.run_id)

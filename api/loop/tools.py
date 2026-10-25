@@ -20,7 +20,6 @@ from api.errors import ToolInputError
 from api.loop.prompts import fill_settings, tool_texts
 
 TOOL_NAMES = ("search_meaning", "search_exact", "read_passages", "keep_passages", "search_web_updates", "submit_answer")
-SEARCH_OR_READ = frozenset({"search_meaning", "search_exact", "read_passages", "search_web_updates"})   # T1.10 rule 1
 STRICT_TOOLS = ("read_passages", "keep_passages", "search_web_updates", "submit_answer")                # T3.7
 GROUPS = ("majority", "plurality", "concurrence", "dissent")                                            # T1.4
 

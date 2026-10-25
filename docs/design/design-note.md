@@ -18,7 +18,7 @@ A research tool for U.S. Supreme Court opinions on the Fourth Amendment and digi
    - `read_passages`: by ID or page, 0 to 10 around, returned as marked blocks (T1.3, T1.6);
    - `keep_passages`: batched, a reason each, re-keeping replaces the reason, cap 40 (T1.7);
    - `search_web_updates`: the update check through Exa's MCP server, 3 a run (T2.1 to T2.5);
-   - `submit_answer`: the stop signal, refused by four rules (same-turn search, no search yet, nothing kept with no note, no update check once), and checked for the band's findings and the copy guard (T1.10, T2.3).
+   - `submit_answer`: the stop signal, refused by four rules (not alone in its turn, or not sent once, P4.16; no search yet, nothing kept with no note, no update check once), and checked for the band's findings and the copy guard (T1.10, T2.3).
    No citing-cases lookup; Claude traces later cases by keyword search on the citation string (T1.13). The system prompt's outline is T1.14 (with the query rule of T5.5).
 3. **Composition**, on Opus 5.5 at high effort (T1.8), with no tools: each kept passage goes in as a custom content document of **our** sentences (a conservative splitter, built and checked in Phase 4), metadata and the keep reason in `context` (T1.9). Claude cites any run of whole sentences; uncited text is synthesis, marked by its lack of an underline (T1.11, T5.2). Markdown is rendered with raw HTML and links off; `max_tokens` 12,000 (T1.11, T4.2).
 4. **The checks** run when the answer finishes streaming (T1.12).
