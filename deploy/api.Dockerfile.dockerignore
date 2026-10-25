@@ -1,0 +1,29 @@
+# Read by BuildKit for deploy/api.Dockerfile (build context: the repository root).
+# An allow-list (T3.5, T3.7: nothing but what the API needs), then explicit denials
+# that stay in force whatever the allow-list grows to include.
+*
+!api
+!contracts
+!data/corpus
+!data/vectors
+!pyproject.toml
+!uv.lock
+!.python-version
+
+.env
+.env.*
+**/.env
+**/.env.*
+data/raw
+data/cache
+data/verification
+.venv
+**/.venv
+.git
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+tests
+web
+webdev
+docs

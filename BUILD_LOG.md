@@ -1256,3 +1256,29 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **I's brief** excludes `web/looktests/` from the web image (the Phase 1 look tests, not the page), as a choice to report back.
 **Spend:** none.
 **DECISION (user):** *"Let's start Wave 2."*
+
+## Oct 24, 2026, 23:14 CDT — Phase 4: Build, Wave 2, part I merged (images and deploy files)
+**Asked:** Wave 2 (*"Let's start Wave 2."*); part I, contract §4.I.
+**Came back:**
+- **Part I merged:** `deploy/` and `tests/deploy/`.
+  - Files: `api.Dockerfile`, `web.Dockerfile`, their `.dockerignore` files, `nginx.conf` (production), `nginx.local.conf` (the local profile), `deploy.sh` and `local.sh`.
+  - **Written, never run.** Nothing was built, pushed or deployed. `deploy.sh` ran only under stub commands in the tests, on a `PATH` the real `gcloud` and `docker` are not on.
+- **Images pinned by tag** (read Oct 24, 2026, and fetched again by the reviewer): `python:3.13.17-slim-trixie`, `ghcr.io/astral-sh/uv:0.13.5`, `nginx:1.30.6-alpine3.24-slim`. Both Dockerfiles use `uv sync --locked`, so a stale lock fails the build.
+- **The Sonnet 5.5 high review found real defects, all fixed by the builder:**
+  - **The page guard could not fail:** nginx's own welcome page satisfied it, so a deploy before the frontend lands would have published that page. The image now empties nginx's folder first, then requires our `index.html`, at least one `.woff2` with its licence text (T5.5), `config.json`, `corpus.json` and `opinions/`.
+  - **The spend gate's timing:** it ran once, minutes before the API's revision was replaced. It now runs first and again immediately before the API's `gcloud run deploy`, with stub tests for both.
+  - **`local.sh` passed all of `.env` with quotes kept**, `COURTLISTENER_API_TOKEN` included. It now loads `.env` through `uv run --env-file` and passes only the four keys the API needs, with `PC_ENV=test`.
+  - nginx: `charset utf-8`, `gzip_vary on`, one worker; `.DS_Store` excluded.
+- **The builder's choices, for the user to judge at the local review:**
+  - `web/looktests/`, `web/_generated/` and `webdev/` are not served.
+  - **CSP:** only the page's own origin (T5.5). `style-src` allows inline styles so the page's code can set style attributes; scripts are `'self'` only.
+  - **Names:** services `probable-clause-api` and `probable-clause-web`; service accounts `pc-api@` and `pc-web@probable-clause.iam.gserviceaccount.com`; the Artifact Registry repo `probable-clause`; secrets `pc-anthropic-api-key`, `pc-voyage-api-key`, `pc-exa-api-key`, `pc-mongodb-uri`, each pinned to its newest enabled version.
+  - The gate reads the live database (`--env live`). `deploy.sh` checks that the registry, service accounts and secrets exist and creates none. nginx keeps no access log and uvicorn runs with `--no-access-log` (T3.7).
+- **Path prefix:** goodnight strips `/probable-clause/` before the web service and `/probable-clause/api/` before the API (T3.5), so nginx serves from the root. Locally, `/api/` is proxied to the API with the prefix stripped and buffering off for the event stream.
+- **Open, for the user before any deploy:**
+  - how the registry, the service accounts, the secrets and their values are created (T3.5 left the secrets open);
+  - whether the port, service names and the web service's CPU, memory, concurrency and timeout belong in `api/settings.py`;
+  - `--scaling=auto` beside `--min` and `--max`, undocumented either way. The main session checks it with `gcloud run deploy --help` (offline) before any green light.
+- **Tests:** 610 passed, 9 skipped (deploy and contract). The 2 `nginx -t` skips are because no nginx binary is installed, so neither config has been parsed by nginx yet.
+**Spend:** none.
+**DECISION (user):** *"Let's start Wave 2."* No new decision. The choices above are the builder's, to be judged at the user's local review.

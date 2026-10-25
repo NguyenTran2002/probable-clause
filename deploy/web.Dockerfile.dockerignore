@@ -1,0 +1,34 @@
+# Read by BuildKit for deploy/web.Dockerfile (build context: the repository root).
+# The web image needs the page, the replays, and what build_web_data.py reads (T4.2, contract 4.I).
+*
+!web
+!replays
+!api
+!data/corpus
+!scripts/build_web_data.py
+!pyproject.toml
+!uv.lock
+!.python-version
+!deploy/nginx.conf
+!deploy/nginx.local.conf
+
+# Not served: the Phase 1 look tests, build_web_data.py's local output, the frontend's mock and tests
+web/looktests
+web/_generated
+webdev
+**/node_modules
+
+.env
+.env.*
+**/.env
+**/.env.*
+data/raw
+data/cache
+data/verification
+.venv
+**/.venv
+.git
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+tests
