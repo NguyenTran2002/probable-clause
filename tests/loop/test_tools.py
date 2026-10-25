@@ -6,23 +6,26 @@ from api import settings
 from api.errors import ServiceError
 from api.loop.prompts import rejection
 from api.search.voyage import FakeVoyageClient
-from tests.loop.support import cite_block, composition, loop_usage, run_loop, tu, turn
+from tests.loop.support import cite_block, composition, run_loop, skip_update, tu, turn
 
 pytestmark = pytest.mark.anyio
 
-SKIP = "Not needed."
-
 
 def finish(world, pid="katz-1-p6", first=0):
+    """The end of research (a keep, then the submit), and the update step's and the composition's scripts."""
     return [turn(tu("keep_passages", keep=[{"id": pid, "reason": "r"}])),
-            turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
-            composition(cite_block("Text. ", world.corpus, [pid], pid, first, first))]
+            turn(tu("submit_answer", out_of_scope=False))]
+
+
+def rest(world, pid="katz-1-p6", first=0, docs=None):
+    return {"update": [skip_update()], "comp": [composition(cite_block("Text. ", world.corpus, docs or [pid], pid,
+                                                                       first, first))]}
 
 
 async def test_matched_again_and_top_up(world):
     q = {"any_of": ['"telephone booth"'], "filters": {"cases": ["katz"]}, "max_results": 2}
     script = [turn(tu("search_exact", **q)), turn(tu("search_exact", **q)), *finish(world, "katz-1-p3")]
-    ctx, fakes = await run_loop(world, script)
+    ctx, fakes = await run_loop(world, script, **rest(world, "katz-1-p3"))
     first, second = ctx.results("search_exact")
     assert first["found"] == ["katz-1-n8", "katz-1-p3"] and first["matched_again"] == []
     assert second["matched_again"] == ["katz-1-n8", "katz-1-p3"] and len(second["found"]) == 2
@@ -36,7 +39,7 @@ async def test_attached_footnotes_are_shown_and_can_be_kept(world):
     script = [turn(tu("read_passages", target="katz-1-p5")),
               turn(tu("search_exact", any_of=["booth"], filters={"cases": ["katz"]}, max_results=1)),
               *finish(world, "katz-1-n4")]
-    ctx, _ = await run_loop(world, script)
+    ctx, _ = await run_loop(world, script, **rest(world, "katz-1-n4"))
     read = ctx.results("read_passages")[0]
     assert read["read"] == ["katz-1-p5"]                          # attached footnotes are not "read" or "found"
     for n in (4, 5, 6, 7):
@@ -47,7 +50,7 @@ async def test_attached_footnotes_are_shown_and_can_be_kept(world):
 async def test_a_page_read_marks_the_passages_on_that_page(world):
     script = [turn(tu("read_passages", target="KATZ:351", before=0, after=0)),
               turn(tu("search_exact", any_of=["booth"], filters={"cases": ["katz"]}, max_results=1)), *finish(world)]
-    ctx, _ = await run_loop(world, script)
+    ctx, _ = await run_loop(world, script, **rest(world))
     read = ctx.results("read_passages")[0]
     assert read["target"] == "katz:351" and read["read"] == ["katz-1-p5", "katz-1-p6", "katz-1-n7", "katz-1-n8", "katz-1-n9"]
     assert read["content"].count("(on the page you asked for)") == 5
@@ -56,7 +59,7 @@ async def test_a_page_read_marks_the_passages_on_that_page(world):
 async def test_no_match_repeats_the_filters(world):
     script = [turn(tu("search_exact", all_of=["zebra", "giraffe"], filters={"cases": ["katz"], "decided_from": "1960"})),
               turn(tu("read_passages", target="katz-1-p6")), *finish(world)]
-    ctx, _ = await run_loop(world, script)
+    ctx, _ = await run_loop(world, script, **rest(world))
     res = ctx.results("search_exact")[0]
     assert not res["is_error"] and res["found"] == []
     assert res["content"] == "No passages matched this search. Filters set: cases katz; decided_from 1960."
@@ -78,7 +81,7 @@ async def test_no_match_repeats_the_filters(world):
 async def test_bad_input_is_an_error_result_saying_what_to_fix(world, name, inp, fragment):
     script = [turn(tu(name, **inp)), turn(tu("search_exact", any_of=["booth"], filters={"cases": ["katz"]}, max_results=1),
                                           tu("read_passages", target="katz-1-p6")), *finish(world)]
-    ctx, fakes = await run_loop(world, script)
+    ctx, fakes = await run_loop(world, script, **rest(world))
     res = ctx.results(name)[0]
     assert res["is_error"] and fragment in res["content"]
     # Claude got the same text as an error tool result
@@ -90,7 +93,7 @@ async def test_bad_input_is_an_error_result_saying_what_to_fix(world, name, inp,
 async def test_max_results_is_clamped(world):
     script = [turn(tu("search_exact", any_of=["booth"], max_results=50)),
               turn(tu("read_passages", target="katz-1-p6")), *finish(world)]
-    ctx, _ = await run_loop(world, script)
+    ctx, _ = await run_loop(world, script, **rest(world))
     assert len(ctx.results("search_exact")[0]["found"]) == settings.MAX_RESULTS_CAP.value
 
 
@@ -103,9 +106,8 @@ async def test_keep_rules(world):
                                              {"id": "katz-1-n9", "reason": long}])),
               turn(tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "corrected reason"}])),
               turn(tu("keep_passages", keep=[{"id": "katz-9-p1", "reason": "still never shown"}])),
-              turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
-              composition(cite_block("Text. ", world.corpus, ["katz-1-p6"], "katz-1-p6", 0, 0))]
-    ctx, fakes = await run_loop(world, script)
+              turn(tu("submit_answer", out_of_scope=False))]
+    ctx, fakes = await run_loop(world, script, **rest(world))
     k1, k2, k3 = ctx.results("keep_passages")
     assert k1["kept"] == [{"id": "katz-1-p6", "reason": "first reason", "replaced": False}] and k1["kept_count"] == 1
     assert [r["why"] for r in k1["refused"]] == [
@@ -115,7 +117,7 @@ async def test_keep_rules(world):
     assert k2["kept"] == [{"id": "katz-1-p6", "reason": "corrected reason", "replaced": True}]
     assert k3["is_error"] and k3["kept"] == [] and k3["content"].startswith("Nothing was kept:")
     # the composition gets the corrected reason (T1.7)
-    doc = fakes["anthropic"].requests[-1]["messages"][0]["content"][0]
+    doc = fakes["anthropic"].requests_for("composition")[0]["messages"][0]["content"][0]
     assert "corrected reason" in doc["context"] and "first reason" not in doc["context"]
 
 
@@ -125,9 +127,8 @@ async def test_keep_cap(world, monkeypatch):
               turn(tu("keep_passages", keep=[{"id": f"katz-1-n{i}", "reason": "r"} for i in (4, 5, 6)])),
               turn(tu("keep_passages", keep=[{"id": "katz-1-n4", "reason": "re-keep is not a new keep"}])),
               turn(tu("search_exact", any_of=["booth"], max_results=1)),
-              turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
-              composition(cite_block("Text. ", world.corpus, ["katz-1-n4", "katz-1-n5"], "katz-1-n4", 0, 0))]
-    ctx, _ = await run_loop(world, script)
+              turn(tu("submit_answer", out_of_scope=False))]
+    ctx, _ = await run_loop(world, script, **rest(world, "katz-1-n4", docs=["katz-1-n4", "katz-1-n5"]))
     k1, k2 = ctx.results("keep_passages")
     assert [k["id"] for k in k1["kept"]] == ["katz-1-n4", "katz-1-n5"]
     assert k1["refused"] == [{"id": "katz-1-n6", "why": rejection("keep", "cap_reached", id="katz-1-n6", count=2)}]
@@ -143,7 +144,7 @@ async def test_meaning_search_not_reranked_warns_once(world):
     script = [turn(tu("search_meaning", query="listening to a booth", max_results=3)),
               turn(tu("search_meaning", query="eavesdropping device", max_results=3)),
               turn(tu("read_passages", target="katz-1-p6")), *finish(world)]
-    ctx, _ = await run_loop(world, script, voyage=voyage)
+    ctx, _ = await run_loop(world, script, voyage=voyage, **rest(world))
     r1, r2 = ctx.results("search_meaning")
     assert r1["not_reranked"] is True and "not reranked" in r1["content"] and not r1["is_error"]
     assert [d["code"] for d in ctx.of("warning")] == ["meaning_search_degraded"]
@@ -157,7 +158,7 @@ async def test_meaning_search_unavailable_is_an_error_result(world):
     script = [turn(tu("search_meaning", query="listening to a booth")),
               turn(tu("search_exact", any_of=["booth"], max_results=1), tu("read_passages", target="katz-1-p6")),
               *finish(world)]
-    ctx, _ = await run_loop(world, script, voyage=voyage)
+    ctx, _ = await run_loop(world, script, voyage=voyage, **rest(world))
     res = ctx.results("search_meaning")[0]
     assert res["is_error"] and "Keyword search still works" in res["content"] and res["found"] == []
     assert [d["code"] for d in ctx.of("warning")] == ["meaning_search_unavailable"]
@@ -169,18 +170,17 @@ async def test_meaning_search_unavailable_does_not_count_as_a_search(world):
     voyage = FakeVoyageClient(embed_failures=[_err("rate_limited")] * 3)
     script = [turn(tu("search_meaning", query="booth")), turn(tu("read_passages", target="katz-1-p6")),
               turn(tu("keep_passages", keep=[{"id": "katz-1-p6", "reason": "r"}])),
-              turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
+              turn(tu("submit_answer", out_of_scope=False)),
               turn(tu("search_exact", any_of=["booth"], max_results=1)),
-              turn(tu("submit_answer", out_of_scope=False, update_skip_reason=SKIP)),
-              composition(cite_block("Text. ", world.corpus, ["katz-1-p6"], "katz-1-p6", 0, 0))]
-    ctx, _ = await run_loop(world, script, voyage=voyage)
+              turn(tu("submit_answer", out_of_scope=False))]
+    ctx, _ = await run_loop(world, script, voyage=voyage, **rest(world))
     assert [d["submit"].get("rule") for d in ctx.results("submit_answer")] == ["no_search", None]
 
 
 async def test_meaning_search_results_carry_headers(world):
     script = [turn(tu("search_meaning", query="a phone booth", filters={"cases": ["katz"], "opinion_types": ["majority"]},
                       max_results=4)), turn(tu("read_passages", target="katz-1-p6")), *finish(world)]
-    ctx, fakes = await run_loop(world, script)
+    ctx, fakes = await run_loop(world, script, **rest(world))
     res = ctx.results("search_meaning")[0]
     assert len(res["found"]) == 4 and all(pid.startswith("katz-1-") for pid in res["found"])
     assert res["not_reranked"] is False
@@ -194,7 +194,7 @@ async def test_per_curiam_header(world):
     script = [turn(tu("read_passages", target="clinton-1-p1")), turn(tu("read_passages", target="katz-1-p6"),
                                                                       tu("search_exact", any_of=["booth"], max_results=1)),
               *finish(world)]
-    ctx, _ = await run_loop(world, script)
+    ctx, _ = await run_loop(world, script, **rest(world))
     assert "opinion clinton-1: majority · per curiam · " in ctx.results("read_passages")[0]["content"]
 
 
@@ -202,7 +202,7 @@ async def test_unknown_tool_gets_an_error_result_and_no_events(world):
     script = [turn({"type": "tool_use", "id": "toolu_x", "name": "search_corpus", "input": {"query": "x"}},
                    tu("read_passages", target="katz-1-p6")),
               turn(tu("search_exact", any_of=["booth"], max_results=1)), *finish(world)]
-    ctx, fakes = await run_loop(world, script)
+    ctx, fakes = await run_loop(world, script, **rest(world))
     assert "search_corpus" not in [d["name"] for d in ctx.of("tool_call")]
     sent = fakes["anthropic"].requests[1]["messages"][2]["content"]
     assert sent[0]["tool_use_id"] == "toolu_x" and sent[0]["is_error"] is True

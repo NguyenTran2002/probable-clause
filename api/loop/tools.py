@@ -1,15 +1,18 @@
-"""The six tools Claude sees in the research loop (contract §7; T1.2 to T1.10, T2.1, T2.3, T3.7).
+"""The seven tools Claude sees in research and the update step (contract v2.0 §4.G.2, §7; T1.2 to T1.10, T2.1, T2.3,
+T3.7, P4.19).
 
-Schemas are ours; every description is read from api/prompts/tools.json. Our code validates every field of every
-call whatever the schema says (T3.7): a bad input raises ToolInputError, which becomes an error tool result.
+One list of seven, identical in every research and update request, so the update step reads research's cache
+(P4.19): each step runs only its own tools and refuses the other's (RESEARCH_TOOLS, UPDATE_TOOLS). Schemas are ours;
+every description is read from api/prompts/tools.json. Our code validates every field of every call whatever the
+schema says (T3.7): a bad input raises ToolInputError, which becomes an error tool result.
 
 Strict tool use (T3.7) is set only where the schema fits its limits. Its limits, from
 https://platform.claude.com/docs/en/build-with-claude/structured-outputs ("Schema complexity limits", read Oct 24,
 2026): at most 20 strict tools, 24 optional parameters across all strict schemas, 16 union-typed parameters; no
-numeric or length constraints (`minimum`, `maxLength` ...). Strict here: keep_passages (0 optional), submit_answer
-(4), read_passages (2) and search_web_updates (7), 13 optional parameters, no unions. The two search tools share
-the filters object (8 optional parameters each with its fields), so making them strict too would leave no margin
-under 24 if nested fields are counted; they stay non-strict and our validation covers them.
+numeric or length constraints (`minimum`, `maxLength` ...). Strict here: keep_passages (0 optional), read_passages
+(2), submit_answer (1), search_web_updates (7) and submit_update (3), 13 optional parameters, no unions. The two
+search tools share the filters object (8 optional parameters each with its fields), so making them strict too would
+leave no margin under 24 if nested fields are counted; they stay non-strict and our validation covers them.
 """
 
 import copy
@@ -19,8 +22,11 @@ from api import settings
 from api.errors import ToolInputError
 from api.loop.prompts import fill_settings, tool_texts
 
-TOOL_NAMES = ("search_meaning", "search_exact", "read_passages", "keep_passages", "search_web_updates", "submit_answer")
-STRICT_TOOLS = ("read_passages", "keep_passages", "search_web_updates", "submit_answer")                # T3.7
+TOOL_NAMES = ("search_meaning", "search_exact", "read_passages", "keep_passages", "submit_answer", "search_web_updates",
+              "submit_update")                                                                       # §4.G.2, §7
+RESEARCH_TOOLS = frozenset(("search_meaning", "search_exact", "read_passages", "keep_passages", "submit_answer"))
+UPDATE_TOOLS = frozenset(("search_web_updates", "submit_update"))
+STRICT_TOOLS = ("read_passages", "keep_passages", "submit_answer", "search_web_updates", "submit_update")  # T3.7
 GROUPS = ("majority", "plurality", "concurrence", "dissent")                                            # T1.4
 
 
@@ -66,7 +72,8 @@ def _strings(desc: str) -> dict:
 
 
 def build_tools() -> list[dict]:
-    """The tool list, in a fixed order (the cached prefix must never change, T1.14)."""
+    """The tool list, in a fixed order: the cached prefix must never change (T1.14), and research and the update step
+    send the same list (P4.19, contract v2.0 §4.G.2)."""
     tools = [
         {
             "name": "search_meaning",
@@ -136,6 +143,19 @@ def build_tools() -> list[dict]:
             },
         },
         {
+            "name": "submit_answer",
+            "description": _d("submit_answer/description"),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "out_of_scope": {"type": "boolean", "description": _field("submit_answer", "out_of_scope")},
+                    "note": {"type": "string", "description": _field("submit_answer", "note")},
+                },
+                "required": ["out_of_scope"],
+                "additionalProperties": False,
+            },
+        },
+        {
             "name": "search_web_updates",
             "description": _d("search_web_updates/description"),
             "input_schema": {
@@ -159,32 +179,29 @@ def build_tools() -> list[dict]:
             },
         },
         {
-            "name": "submit_answer",
-            "description": _d("submit_answer/description"),
+            "name": "submit_update",
+            "description": _d("submit_update/description"),
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "out_of_scope": {"type": "boolean", "description": _field("submit_answer", "out_of_scope")},
-                    "note": {"type": "string", "description": _field("submit_answer", "note")},
-                    "update_skip_reason": {"type": "string",
-                                           "description": _field("submit_answer", "update_skip_reason")},
                     "update_findings": {
                         "type": "array",
-                        "description": _field("submit_answer", "update_findings"),
+                        "description": _field("submit_update", "update_findings"),
                         "items": {
                             "type": "object",
                             "properties": {
                                 "statement": {"type": "string",
-                                              "description": _field("submit_answer", "update_findings.statement")},
-                                "sources": _strings(_field("submit_answer", "update_findings.sources")),
+                                              "description": _field("submit_update", "update_findings.statement")},
+                                "sources": _strings(_field("submit_update", "update_findings.sources")),
                             },
                             "required": ["statement", "sources"],
                             "additionalProperties": False,
                         },
                     },
-                    "update_overview": {"type": "string", "description": _field("submit_answer", "update_overview")},
+                    "update_overview": {"type": "string", "description": _field("submit_update", "update_overview")},
+                    "update_skip_reason": {"type": "string",
+                                           "description": _field("submit_update", "update_skip_reason")},
                 },
-                "required": ["out_of_scope"],
                 "additionalProperties": False,
             },
         },

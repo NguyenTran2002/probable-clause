@@ -8,7 +8,7 @@ import httpx2
 import pytest
 
 from api.errors import ServiceError
-from api.loop.run import _Run
+from api.loop.run import _Research, _Run
 from api.loop.streamer import SdkAnthropicStreamer, StreamFailed, classify_status
 from tests.loop.support import FakeCtx, make_deps
 
@@ -87,15 +87,16 @@ def streamer(server) -> SdkAnthropicStreamer:
 
 
 def loop_request(world) -> dict:
+    """Research's request, from the one builder research and the update step share (§4.G.2)."""
     deps, _ = make_deps(world, [])
     run = _Run(FakeCtx(), deps)
     run.messages.append({"role": "user", "content": [{"type": "text", "text": "The visitor's question:\n\nx"}]})
-    return run.loop_request(8000)
+    return _Research(run).request(8000)
 
 
 async def test_loop_request_on_the_wire(world):
     server = Server(ok(message_start(), *thinking_block(0), *tool_block(1), *message_end("tool_use", 77)))
-    res = await streamer(server).stream(loop_request(world), 120.0, None)
+    res = await streamer(server).stream(loop_request(world), 120.0, None, step="research")
     body = server.body()
     req = server.requests[0]
     assert req.url.path == "/v1/messages" and req.headers["authorization"] == "Bearer test-key-not-real"   # SDK 2.3.0
@@ -104,7 +105,8 @@ async def test_loop_request_on_the_wire(world):
     assert body["thinking"] == {"type": "adaptive"} and body["output_config"] == {"effort": "high"}
     assert body["cache_control"] == {"type": "ephemeral"}
     assert body["system"][0]["cache_control"] == {"type": "ephemeral", "ttl": "1h"}
-    assert [t.get("strict", False) for t in body["tools"]] == [False, False, True, True, True, True]
+    assert [t.get("strict", False) for t in body["tools"]] == [False, False, True, True, True, True, True]
+    assert [t["name"] for t in body["tools"]][-2:] == ["search_web_updates", "submit_update"]
     assert "tool_choice" not in body and "temperature" not in body
     # the final message, exactly as the API sent it
     assert res.stop_reason == "tool_use"
@@ -123,16 +125,16 @@ async def test_composition_request_and_streamed_blocks(world):
     cited = p.text[p.sentences[0][0]:p.sentences[1][1]]
     c = {"type": "content_block_location", "cited_text": cited, "document_index": 0, "document_title": "T",
          "start_block_index": 0, "end_block_index": 2}
-    server = Server(ok(message_start("claude-opus-5-5"), *thinking_block(0), *text_block(1, "Intro. "),
+    server = Server(ok(message_start("claude-sonnet-5-5"), *thinking_block(0), *text_block(1, "Intro. "),
                        *text_block(2, "Cited. ", [c]), *message_end("end_turn", 900)))
     seen = []
 
     async def on_block(i, block):
         seen.append((i, block))
 
-    res = await streamer(server).stream(request, 300.0, on_block)
+    res = await streamer(server).stream(request, 300.0, on_block, step="composition")
     body = server.body()
-    assert body["model"] == "claude-opus-5-5" and body["max_tokens"] == 12000
+    assert body["model"] == "claude-sonnet-5-5" and body["max_tokens"] == 16000
     assert body["output_config"] == {"effort": "high"} and "cache_control" not in body
     doc = body["messages"][0]["content"][0]
     assert doc["type"] == "document" and doc["source"]["type"] == "content" and doc["citations"] == {"enabled": True}
@@ -170,7 +172,7 @@ WS_LIMIT = {"type": "error", "error": {"type": "invalid_request_error",
 async def test_error_classification(world, status, body, headers, kind, retry_after):
     server = Server(error(status, body, headers))
     with pytest.raises(ServiceError) as e:
-        await streamer(server).stream(loop_request(world), 120.0, None)
+        await streamer(server).stream(loop_request(world), 120.0, None, step="research")
     assert e.value.kind == kind and e.value.status == status and e.value.retry_after_s == retry_after
     assert e.value.service == "anthropic"
     assert len(server.requests) == 1                     # the SDK's own retries are off (max_retries=0)
@@ -181,14 +183,14 @@ async def test_a_mid_stream_error_is_stream_broken_with_the_usage_reported(world
     body = sse(message_start(), *thinking_block(0)) + f"event: error\ndata: {json.dumps(err)}\n\n".encode()
     server = Server(httpx2.Response(200, headers={"content-type": "text/event-stream"}, content=body))
     with pytest.raises(StreamFailed) as e:
-        await streamer(server).stream(loop_request(world), 120.0, None)
+        await streamer(server).stream(loop_request(world), 120.0, None, step="research")
     assert e.value.kind == "stream_broken" and e.value.started and e.value.raw_usage["input_tokens"] == 12
 
 
 async def test_a_connection_failure_before_the_stream(world):
     server = Server(httpx2.ConnectError("refused"))
     with pytest.raises(StreamFailed) as e:
-        await streamer(server).stream(loop_request(world), 120.0, None)
+        await streamer(server).stream(loop_request(world), 120.0, None, step="research")
     assert e.value.kind == "connection" and e.value.raw_usage is None
 
 
@@ -198,13 +200,13 @@ async def test_our_deadline(world):
         return ok(message_start(), *message_end())
     server = Server(slow)
     with pytest.raises(StreamFailed) as e:
-        await streamer(server).stream(loop_request(world), 0.05, None)
+        await streamer(server).stream(loop_request(world), 0.05, None, step="research")
     assert e.value.kind == "deadline"
 
 
 async def test_a_refusal_is_a_completed_response(world):
     server = Server(ok(message_start(), *message_end("refusal", 5)))
-    res = await streamer(server).stream(loop_request(world), 120.0, None)
+    res = await streamer(server).stream(loop_request(world), 120.0, None, step="research")
     assert res.stop_reason == "refusal" and res.usage["output_tokens"] == 5
 
 
@@ -214,8 +216,12 @@ async def test_a_callback_error_is_not_classified(world):
     async def boom(i, b):
         raise KeyError("not an API error")
 
-    with pytest.raises(KeyError):
-        await streamer(server).stream(loop_request(world), 120.0, boom)
+    with pytest.raises(KeyError) as e:
+        await streamer(server).stream(loop_request(world), 120.0, boom, step="research")
+    # what the stream reported and streamed rides on the exception, so the attempt is priced from it
+    from api.loop.streamer import partial_of
+    raw, chars, started = partial_of(e.value)
+    assert raw["input_tokens"] == 12 and chars == 1 and started is True
 
 
 def test_classify_status_markers():
@@ -237,5 +243,37 @@ async def test_a_broken_stream_reports_what_it_streamed(world):
         f"event: error\ndata: {json.dumps(err)}\n\n".encode()
     server = Server(httpx2.Response(200, headers={"content-type": "text/event-stream"}, content=body))
     with pytest.raises(StreamFailed) as e:
-        await streamer(server).stream(loop_request(world), 120.0, None)
+        await streamer(server).stream(loop_request(world), 120.0, None, step="research")
     assert e.value.streamed_chars == 500 + len(json.dumps({"any_of": ["y" * 100]}))
+
+
+async def test_step_is_never_sent_and_must_be_a_step(world):
+    server = Server(ok(message_start(), *thinking_block(0), *message_end("end_turn", 3)))
+    await streamer(server).stream(loop_request(world), 120.0, None, step="update")
+    assert "step" not in server.body()
+    with pytest.raises(ValueError):
+        await streamer(Server()).stream(loop_request(world), 120.0, None, step="loop")
+
+
+async def test_a_cancelled_stream_carries_what_it_streamed(world):
+    """Contract v2.0 §4.G.1 item 7: the cancellation goes on, with the usage reported and the characters streamed."""
+    from api.loop.streamer import partial_of
+    reached = asyncio.Event()
+
+    async def body(request):
+        async def chunks():
+            yield sse(message_start(), *text_block(0, "x" * 300))
+            reached.set()
+            await asyncio.sleep(30)
+            yield sse(*message_end())
+        return httpx2.Response(200, headers={"content-type": "text/event-stream"}, content=chunks())
+
+    task = asyncio.create_task(streamer(Server(body)).stream(loop_request(world), 120.0, None, step="research"))
+    await reached.wait()
+    for _ in range(20):
+        await asyncio.sleep(0)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError) as e:
+        await task
+    raw, chars, started = partial_of(e.value)
+    assert started is True and raw["input_tokens"] == 12 and chars == 300

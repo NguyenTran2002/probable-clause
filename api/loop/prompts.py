@@ -1,8 +1,8 @@
 """The prompt files of api/prompts/, loaded and filled (contract §4.G; T1.14).
 
 `{{UPPER}}` comes from api/settings.py, lower-case `{{...}}` from the corpus (catalog, case count, coverage dates),
-and `<field>` per call. The texts are the main session's, approved by the user (21:55, Oct 24, 2026); this module
-only fills them and never writes text of its own.
+and `<field>` per call. The texts are the main session's (contract v2.0's drafts, for the user's review before the
+first paid run, T1.14); this module only fills them and never writes text of its own.
 """
 
 import json
@@ -89,20 +89,28 @@ def message(key: str, **fields) -> str:
     return fill_fields(loop_messages()[key], **fields)
 
 
-def status_line(round_no: int, kept: int, *, searches_counted: int, unavailable: bool) -> str:
-    """The per-turn status line (T1.14), from loop_messages.json."""
-    lm = loop_messages()
+def status_line(round_no: int, kept: int) -> str:
+    """Research's per-turn status line (T1.14, contract v2.0 §4.G.3): "Round <round> of {{MAX_ROUNDS}} · <kept> kept"."""
+    return fill_fields(loop_messages()["status_line"], round=round_no, kept=kept)
+
+
+def update_status(*, searches_counted: int, unavailable: bool) -> str:
+    """The last part of the update step's status line, from `status_update` (contract v2.0 §4.G.4)."""
+    lm = loop_messages()["status_update"]
     if unavailable:
-        upd = fill_fields(lm["status_update"]["unavailable"])
-    elif searches_counted:
-        upd = fill_fields(lm["status_update"]["some_run"], n=searches_counted)
-    else:
-        upd = fill_fields(lm["status_update"]["not_run"])
-    return fill_fields(lm["status_line"], round=round_no, kept=kept, update_status=upd)
+        return fill_fields(lm["unavailable"])
+    if searches_counted:
+        return fill_fields(lm["some_run"], n=searches_counted)
+    return fill_fields(lm["not_run"])
 
 
-def unavailable_line(reason: str) -> str:
-    """The first message's line when the update check is unavailable for the run (T2.4)."""
-    lm = loop_messages()
-    why = fill_fields(lm["update_unavailable_reason"][reason])
-    return fill_fields(lm["update_check_unavailable"], reason=why)
+def status_line_update(round_no: int, *, searches_counted: int, unavailable: bool) -> str:
+    """The update step's per-turn status line (contract v2.0 §4.G.4): "Update step · round <round> of
+    {{UPDATE_MAX_ROUNDS}} · <update_status>"."""
+    return fill_fields(loop_messages()["status_line_update"], round=round_no,
+                       update_status=update_status(searches_counted=searches_counted, unavailable=unavailable))
+
+
+def kept_passages_text(n: int) -> str:
+    """`<passages>` in the accepted texts: "1 kept passage" or "<n> kept passages" (loop_messages.json's _about)."""
+    return "1 kept passage" if n == 1 else f"{n} kept passages"

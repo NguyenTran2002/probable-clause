@@ -24,13 +24,14 @@ import inspect
 import json
 import logging
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Protocol
 
 import anthropic
 import httpx2
 
 from api.errors import ErrorKind, ServiceError
+from api.types import Step
 
 log = logging.getLogger("probable_clause.loop")
 
@@ -40,6 +41,31 @@ SPEND_LIMIT_PREFIXES = ("You have reached your specified API usage limits",
                         "You have reached your specified workspace API usage limits")
 
 OnBlock = Callable[[int, dict], Awaitable[None] | None]
+STEPS = ("research", "update", "composition")
+
+# Contract v2.0, §4.G.1 item 7: an attempt in flight when its task is cancelled is still recorded, priced from what it
+# streamed and reported. The cancellation itself must propagate unchanged, so the streamer leaves what it saw on the
+# CancelledError under this attribute ({"raw_usage", "streamed_chars", "started"}) and re-raises it. It does the same
+# on any other exception it does not classify (an `on_block` callback's included), so that attempt is priced the same
+# way. A StreamFailed carries the same figures as its own fields.
+PARTIAL_ATTR = "stream_partial"
+
+
+def mark_partial(e: BaseException, *, raw_usage: dict | None, streamed_chars: int, started: bool) -> None:
+    """Leave what an attempt streamed and reported on its CancelledError, unless an inner layer already did."""
+    if getattr(e, PARTIAL_ATTR, None) is None:
+        try:
+            setattr(e, PARTIAL_ATTR, {"raw_usage": copy.deepcopy(raw_usage), "streamed_chars": int(streamed_chars),
+                                      "started": bool(started)})
+        except (AttributeError, TypeError):      # an exception type that takes no attributes: priced as nothing seen
+            pass
+
+
+def partial_of(e: BaseException) -> tuple[dict | None, int, bool]:
+    """(the usage reported, the characters streamed, whether the stream began) of a cancelled attempt; nothing seen
+    when the streamer left nothing (the cancellation came before the request was sent)."""
+    p = getattr(e, PARTIAL_ATTR, None) or {}
+    return p.get("raw_usage"), int(p.get("streamed_chars") or 0), bool(p.get("started"))
 
 
 @dataclass
@@ -69,9 +95,11 @@ class StreamFailed(ServiceError):
 
 
 class AnthropicStreamer(Protocol):
-    async def stream(self, request: dict, deadline_s: float, on_block: OnBlock | None) -> StreamResult:
+    async def stream(self, request: dict, deadline_s: float, on_block: OnBlock | None, *,
+                     step: Step) -> StreamResult:
         """Stream one request. `on_block(content_index, block)` is awaited for each completed text block.
-        Raises ServiceError (StreamFailed) with an ErrorKind (§2)."""
+        Raises ServiceError (StreamFailed) with an ErrorKind (§2). `step` (contract v2.0) is for logs and the fake's
+        scripts; it is never sent. A cancellation propagates unchanged, carrying what was streamed (PARTIAL_ATTR)."""
         ...
 
 
@@ -162,7 +190,10 @@ class SdkAnthropicStreamer:
         """Close the client's connections (for the API's shutdown)."""
         await self._client.close()
 
-    async def stream(self, request: dict, deadline_s: float, on_block: OnBlock | None) -> StreamResult:
+    async def stream(self, request: dict, deadline_s: float, on_block: OnBlock | None, *,
+                     step: Step) -> StreamResult:
+        if step not in STEPS:
+            raise ValueError(f"unknown step {step!r}")
         state = {"started": False, "message": False, "usage": None, "blocks": 0, "chars": 0}
 
         def failed(kind: ErrorKind, status=None, message="", retry_after=None) -> StreamFailed:
@@ -201,7 +232,13 @@ class SdkAnthropicStreamer:
                         raise failed("unreadable", None, "the stream carried no message")
                     final = await s.get_final_message()
                     request_id = s.request_id
+        except asyncio.CancelledError as e:
+            # §4.G.1 item 7: the caller records the attempt from what it streamed, then lets the cancellation go on
+            mark_partial(e, raw_usage=state["usage"], streamed_chars=state["chars"], started=state["started"])
+            log.info("%s call cancelled after %d streamed characters", step, state["chars"])
+            raise
         except _CallbackError as e:
+            mark_partial(e.inner, raw_usage=state["usage"], streamed_chars=state["chars"], started=state["started"])
             raise e.inner
         except StreamFailed:
             raise
@@ -226,6 +263,9 @@ class SdkAnthropicStreamer:
             raise failed("protocol", None, "the API call failed") from None
         except ValueError:
             raise failed("unreadable", None, "the reply could not be parsed") from None
+        except Exception as e:                  # not classified: the caller records it from what was streamed
+            mark_partial(e, raw_usage=state["usage"], streamed_chars=state["chars"], started=state["started"])
+            raise
         return StreamResult(
             content=[b.to_dict(mode="json") for b in final.content],
             stop_reason=final.stop_reason,
@@ -259,37 +299,81 @@ def raw_usage(input_tokens: int = 0, *, w5: int = 0, w1: int = 0, read: int = 0,
             "output_tokens": output, "service_tier": "standard"}
 
 
-@dataclass
+class FakeRequest(dict):
+    """A request the fake received, exactly as sent (a dict), with the step it was made for (contract v2.0, §12)."""
+
+    def __init__(self, request: dict, step: str):
+        super().__init__(request)
+        self.step = step
+
+
 class FakeAnthropic:
-    """Scripted turns: tool calls, text blocks with citations, errors (contract §12). Each `stream` pops the next
-    item: a FakeTurn, an exception (raised), or a function of the request returning either."""
-    script: list = field(default_factory=list)
-    requests: list = field(default_factory=list)
-    deadlines: list = field(default_factory=list)
+    """Scripted turns: tool calls, text blocks with citations, errors (contract §12). From v2.0 one script per step:
+    `push(*items, step=...)` adds to that step's script (research when no step is given), and each `stream(...,
+    step=...)` pops the next item of its own step's script, so the two branches' order never decides which turn a
+    call gets. An item is a FakeTurn, an exception (raised), or a function of the request returning either (awaited
+    when it returns an awaitable, so a test can hold a call in flight). Before each block it delivers, the fake yields
+    to the event loop (`await asyncio.sleep(0)`), so the update step and the composition really interleave.
+    `requests` holds every request in the order received, each a FakeRequest carrying its `step`."""
 
-    def push(self, *items) -> None:
-        self.script.extend(items)
+    def __init__(self, script=(), *, update=(), composition=()):
+        self.scripts: dict[str, list] = {"research": list(script), "update": list(update),
+                                         "composition": list(composition)}
+        self.requests: list[FakeRequest] = []
+        self.deadlines: list[float] = []
 
-    async def stream(self, request: dict, deadline_s: float, on_block: OnBlock | None) -> StreamResult:
-        self.requests.append(copy.deepcopy(request))
+    @property
+    def script(self) -> list:
+        """Research's script (the one `push` without a step adds to)."""
+        return self.scripts["research"]
+
+    def left(self) -> dict[str, int]:
+        """Unused items per step."""
+        return {k: len(v) for k, v in self.scripts.items() if v}
+
+    def push(self, *items, step: str = "research") -> None:
+        if step not in self.scripts:
+            raise ValueError(f"unknown step {step!r}")
+        self.scripts[step].extend(items)
+
+    def requests_for(self, step: str) -> list[FakeRequest]:
+        return [r for r in self.requests if r.step == step]
+
+    async def stream(self, request: dict, deadline_s: float, on_block: OnBlock | None, *,
+                     step: Step) -> StreamResult:
+        if step not in self.scripts:
+            raise ValueError(f"unknown step {step!r}")
+        self.requests.append(FakeRequest(copy.deepcopy(request), step))
         self.deadlines.append(deadline_s)
-        if not self.script:
-            raise AssertionError("FakeAnthropic: the test did not script this call")
-        item = self.script.pop(0)
-        if callable(item) and not isinstance(item, (FakeTurn, BaseException)):
-            item = item(request)
-        if isinstance(item, BaseException):
-            raise item
+        script = self.scripts[step]
+        if not script:
+            raise AssertionError(f"FakeAnthropic: the test did not script this {step} call")
+        item = script.pop(0)
         delivered = chars = 0
-        for i, b in enumerate(item.content):
-            if item.break_after is not None and delivered >= item.break_after:
-                break
-            chars += len(b.get("text") or b.get("thinking") or "") + (len(json.dumps(b["input"])) if "input" in b else 0)
-            if b.get("type") == "text" and on_block is not None:
-                out = on_block(i, copy.deepcopy(b))
-                if inspect.isawaitable(out):
-                    await out
-                delivered += 1
+        partial = None
+        try:
+            if callable(item) and not isinstance(item, (FakeTurn, BaseException)):
+                item = item(request)
+                if inspect.isawaitable(item):
+                    item = await item
+            if isinstance(item, BaseException):
+                raise item
+            partial = item.partial_usage
+            for i, b in enumerate(item.content):
+                if item.break_after is not None and delivered >= item.break_after:
+                    break
+                await asyncio.sleep(0)          # §12: yield before each block, so the branches interleave
+                chars += len(b.get("text") or b.get("thinking") or "") + (len(json.dumps(b["input"])) if "input" in b else 0)
+                if b.get("type") == "text" and on_block is not None:
+                    out = on_block(i, copy.deepcopy(b))
+                    if inspect.isawaitable(out):
+                        await out
+                    delivered += 1
+        except ServiceError:
+            raise                               # a scripted failure carries its own figures
+        except BaseException as e:              # a cancellation, a callback's exception or a scripted one
+            mark_partial(e, raw_usage=partial, streamed_chars=chars, started=True)
+            raise
         if item.break_after is not None:
             if item.error is not None:
                 if isinstance(item.error, StreamFailed) and not item.error.streamed_chars:

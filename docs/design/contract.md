@@ -379,11 +379,15 @@ A refused wrong-step call:
 
 **An unknown tool** gets `unknown_tool` (listing the seven), as v1.8.
 
-**No page's words in a refused call (§1, T2.2, P4.3 carried to v2.0).** All seven tools are offered in the update step, so a call refused there could carry a page's words: a wrong-step `submit_answer` note, a keep reason, or a `submit_update` refused at the input check. In the update step, once any page has been returned in the run:
-- every **refused** call's stored and streamed `tool_call` has each string in its input, at any depth, run through `copy_guard` with the corpus exemption;
-- each flagged string is replaced by "[statement withheld: it repeated a page's words]".
+**No page's words in any stored update-step call (§1, T2.2, P4.3 carried to v2.0).** All seven tools are offered in the update step, so any call there can carry a page's words once a page has been returned: a wrong-step `submit_answer` note, a keep reason, a refused `submit_update`, or a web query that quotes a page. In the update step, once any page has been returned in the run:
+- every call's stored and streamed `tool_call` has each string in its input, at any depth, run through `copy_guard` with the corpus exemption, **keys included**. This covers accepted calls (a later `search_web_updates` query) as well as refused ones: wrong-step calls and every rule's refusals;
+- each flagged string value is replaced by "[statement withheld: it repeated a page's words]", and each flagged key by "[field withheld <k>]", with k counting from 1 within the input;
+- the band's `searches[].params` show the same withheld text as the stored `tool_call`;
+- a refused call's result `content`, which can echo its input (an error naming a field), is guarded the same way.
 
-This covers wrong-step calls, unknown tools and every rule's refusals. `submit_update`'s own rules withhold as §4.G.4 says, and both apply. Accepted calls are stored as Claude sent them, as in v1.9.
+Claude is still sent its own input and the original texts; only what is stored and streamed is withheld. `submit_update`'s own rules withhold as §4.G.4 says, and both apply. An unknown tool emits no `tool_call` or `tool_result` (v1.8), so it stores nothing.
+
+**`submit_update`'s input check** refuses, with rule null, a finding that is not exactly `{statement, sources}`, and any other extra key. F's checks read only `statement` and `sources`, so an extra key would otherwise pass unchecked.
 
 #### G.3 Research (T1.2 to T1.10, amended by P4.16 and P4.19)
 
