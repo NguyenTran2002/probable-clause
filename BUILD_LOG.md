@@ -1178,3 +1178,14 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - Whole suite: 2,364 passed, 41 skipped.
 **Spend:** Voyage, 524,853 tokens, $0.0630 at list price, likely within the account's 50M free tokens. Anthropic: none.
 **DECISION (user):** *"Approved: run embed_corpus.py --confirm on the full corpus."*
+
+## Oct 24, 2026, 22:09 CDT — Phase 4: Build, part E's store tested against Atlas
+**Asked:** *"Yes, run part E's Atlas-gated tests against Probable_Clause_test."*
+**Came back:**
+- `PC_ATLAS_TEST=1 uv run --frozen --env-file .env pytest -q tests/state/test_store_atlas.py` gave **40 passed in 49.12 s**. `uv` loaded the URI into the test process; the main session did not read `.env`.
+- The 40 are the shared semantic suite run on `MongoStore` against the real Atlas server, plus the check that the TTL fields are BSON dates and the TTL index is set.
+- The suite includes two runs racing for the last room under the cap (only one gets in) and ten runs racing for five places (exactly five get in).
+- The earlier "41 skipped" was these 40 plus the event-fixture test, which skips until the fixtures exist.
+- **Clean-up checked:** each test used randomly prefixed collections dated 2030 and dropped them. Afterwards `Probable_Clause_test` holds only its existing `init` collection, with no test collection left. The live database `Probable_Clause` was not touched.
+**Spend:** none.
+**DECISION (user):** *"Yes, run part E's Atlas-gated tests against Probable_Clause_test."*
