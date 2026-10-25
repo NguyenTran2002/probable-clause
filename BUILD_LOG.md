@@ -951,3 +951,10 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - `tests/fixtures/sentences/hardest.json`: the ten passages of `scripts/probe_chunking.py`, committed for the splitter's tests.
 **Spend:** none (the review subagent made no paid calls).
 **DECISION (user):** none new; working under *"Start Phase 4, step 0 of P4.1: the scaffold, T1.5, then contract v1."*
+
+## Oct 24, 2026, 20:50 CDT — Phase 4: Build, the passage count corrected (P4.2)
+**Asked:** Record the corrected passage count (contract §14, open item 2) as its own decisions entry.
+**Came back:** P4.2 in `locked-decisions.md`: 2,462 passages (1,964 paragraphs, 498 footnotes, by script after T1.5), not T3.6's 2,748 units, which also counted the 286 section headings; vectors about 10.1 MB, not 11.3 MB. T3.6's heading marked as corrected by P4.2; the contract's open item 2 closed. Open item 1 (the copy guard and stored page text) stays open; the user asked for more context.
+**DECISION (user):**
+- *"On the 2,462 passages count, record the correction as its own decisions entry."*
+- *"On copy guard, can you give me more context here?"*

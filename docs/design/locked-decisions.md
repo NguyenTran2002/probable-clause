@@ -670,7 +670,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:26 CDT — Phase 3: Architecture, Area 3 (Cloud Run and the gateway, T3.5)"
 
-### T3.6 Start-up and the wake protocol (settles T1.1's open points)
+### T3.6 Start-up and the wake protocol (settles T1.1's open points) — COUNT CORRECTED by P4.2 (2,462 passages, not 2,748 units; vectors about 10.1 MB)
 
 - **Decision:** Area 3, topic 6:
   - **Vectors in memory** in the API container: the 2,748 units' voyage-law-2 vectors (1,024 dimensions, 11.3 MB as float32), scored by brute-force dot product, with the T1.4 filters applied in memory. No vector search in Atlas.
@@ -888,3 +888,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"You're allowed to use both Sonnet 5.5 and Opus 5.5 subagents. Never use any effort level below high, and you're also barred from ever using max effort level as well (for both models)."* Then: *"Plan looks right, but I want to add that we have to spin things up locally for review first before any deploy."* Then: *"Lock. Proceed."*
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:58 CDT — Phase 3: Architecture, the Phase 4 build plan (P4.1)"
+
+### P4.2 The corpus has 2,462 passages (corrects T3.6's "2,748 units")
+
+- **Decision:** The searchable units, and so the rows of the vectors file, are **2,462 passages**: 1,964 content paragraphs and 498 footnotes, counted by script on Oct 24, 2026 after T1.5. T3.6's "the 2,748 units' voyage-law-2 vectors (1,024 dimensions, 11.3 MB as float32)" also counted the 286 section headings, which T1.6 says are never passages. The vectors file is therefore about 10.1 MB (2,462 × 1,024 × 4 bytes). Nothing else in T3.6 changes. Found while writing contract v1 and confirmed by the Opus review (contract §3).
+- **User's words:** *"On the 2,462 passages count, record the correction as its own decisions entry."*
+- **Date:** Oct 24, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 20:50 CDT — Phase 4: Build, the passage count corrected (P4.2)"

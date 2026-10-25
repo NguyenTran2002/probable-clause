@@ -578,4 +578,4 @@ The main session merges Wave 1 and runs the whole suite. **Wave 2 (G, H, I)** st
 ## 14. Open items (the user's to rule on, before Wave 2)
 
 1. **A refused submit's `tool_call` and page text.** T3.1 has the `tool_call` event carry exactly what Claude sent. A submit refused by the copy guard holds 10 or more consecutive words of a page, and T2.2 and P1.7 forbid storing page text. Until the user rules, G must not be started.
-2. **T3.6's unit count.** "2,748 units" should read 2,462 passages (§3). The figure is a count, not a decision, but P2.12 asks for a superseding entry.
+2. ~~T3.6's unit count~~: recorded as P4.2 (2,462 passages), Oct 24, 2026, 20:50 CDT.
