@@ -1040,6 +1040,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Change composition to Sonnet at high effort and I'd judge the quality first. (No comparison run needed.) After all, this project is a tech demo of the citation feature, not a demo of how much smarter and more capable is Opus than Sonnet in constitutional laws."*; *"Keep composition uncached and passing it only kept passages."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, composition on Sonnet 5.5 at high effort (P4.20)"
+- **Confirmed** after Wave 3's paid tests: *"I checked the answers, and quality is surprisingly good."* Log: `BUILD_LOG.md`, "Oct 25, 2026, 16:23 CDT — Phase 4: Build, composition on Sonnet confirmed after the paid tests (P4.20)".
 
 ### P4.21 No reservation: admission under the caps, spend recorded per call, at most 5 runs at once (amends T3.4, P2.7; supersedes P4.12, P4.14)
 

@@ -2065,3 +2065,9 @@ Then: *"The budget for paid build tests are sound."*
   - t2's grammar slip.
 **Spend:** Wave 3's tally (P4.22, `data/verification/wave3/spend.jsonl`, 23 lines): **Anthropic $0.5383 of $3.00, Exa 3 of 20 searches** ($0.021). Voyage $0.0057 at list price.
 **DECISION (user):** pending: the composition's quality on Sonnet.
+
+## Oct 25, 2026, 16:23 CDT — Phase 4: Build, composition on Sonnet confirmed after the paid tests (P4.20)
+**Asked:** P4.20 left the composition's quality on Sonnet for the user to judge from the next paid runs.
+**Came back:** the user read Wave 3's four rendered answers (`data/verification/wave3/answers/`).
+**Spend:** none.
+**DECISION (user):** *"I checked the answers, and quality is surprisingly good. Looks like we don't need Opus level reasoning when we already hand Sonnet all the necessary primary sources."* P4.20 stands as built.
