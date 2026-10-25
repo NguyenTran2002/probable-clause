@@ -911,3 +911,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"No trip wire for a run. I want every run to finish gracefully."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 00:41 CDT — Phase 4: Build, no spend tripwire (P4.4)"
+
+### P4.5 A broken loop attempt is counted from what it streamed and reported
+
+- **Decision:** When a loop call's stream breaks partway, the attempt is priced and counted against the run's output budget from what the stream reported and what it visibly streamed, as built (G's estimate from the streamed characters, at a ratio that errs high). It is not counted at its full `max_tokens`. Thinking tokens billed but never streamed (`display: "omitted"`, T3.1) can therefore go uncounted, up to about $0.08 for a loop attempt, and the run's spend may pass its reservation by that much. Every completed call is priced from Anthropic's final reported usage, which includes all thinking tokens.
+- **Considered:** counting a broken attempt at its full `max_tokens` (safe, but one break would spend the loop's remaining output budget and end research).
+- **User's words:** *"Broken stream, counting at full max tokens is too much compared to what could have been. Rely on what we have so far is fine. It's only a round."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 00:46 CDT — Phase 4: Build, broken loop attempts counted as streamed (P4.5)"
