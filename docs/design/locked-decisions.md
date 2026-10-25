@@ -1055,3 +1055,9 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 13:47 CDT — Phase 4: Build, Wave 3's development allowance (P4.22)"
 
+### P4.23 Wave 3's prompt drafts are approved (T1.14)
+
+- **Decision:** The v2.0 drafts are approved as written: `loop_system.md` (one prompt for research and the update step), `tools.json` (seven tools, `submit_update`), `loop_messages.json` (`status_line`, `status_line_update`, `update_start`, `update_start_note`, `submit_update_accepted`), `rejections.json` (`submit_update`, `wrong_step`), and the refusal texts of contract §5.
+- **User's words:** *"The prompt drafts are approved. Run the four Wave 3 paid tests under P4.22's allowance."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:15 CDT — Phase 4: Build, Wave 3's prompt drafts approved (P4.23)"

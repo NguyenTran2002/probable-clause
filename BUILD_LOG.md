@@ -2017,3 +2017,14 @@ Then: *"The budget for paid build tests are sound."*
 - **Nothing pushed.** The frontend session can now build the step log, the band's timing, the removal of `declined`, and `busy` against the v2.0 fixtures.
 **Spend:** none (fakes only; Atlas test database reads and writes are free).
 **DECISION (user):** none taken. Waiting on the user: the review of the prompt drafts (T1.14), then the go for step 6's paid tests (P4.22).
+
+## Oct 25, 2026, 16:15 CDT — Phase 4: Build, Wave 3's prompt drafts approved (P4.23)
+**Asked:** the user's review of the v2.0 prompt drafts before the first paid run (T1.14).
+**Came back:** the drafts committed in 5642d5f and fe9f3c7:
+- `api/prompts/loop_system.md`: one system prompt for both steps, with research's items without the update check and the new "After research: the update step" section;
+- `tools.json`: seven tools, `submit_answer` without the update fields, and `search_web_updates` and `submit_update` marked as the update step's;
+- `loop_messages.json`: `status_line` without the update count, `status_line_update`, `update_start`, `update_start_note` and `submit_update_accepted`;
+- `rejections.json`: `submit_update` (its rule 1, the moved findings and copy-guard texts, `no_check`) and `wrong_step`;
+- the `busy` and cap refusal texts of contract §5.
+**Spend:** none.
+**DECISION (user):** *"The prompt drafts are approved. Run the four Wave 3 paid tests under P4.22's allowance."*
