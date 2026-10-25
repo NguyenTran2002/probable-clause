@@ -1821,3 +1821,10 @@ Then: *"The budget for paid build tests are sound."*
 - **Whole suite: 3,458 passed, 49 skipped.** Not yet re-run with money.
 **Spend:** none.
 **DECISION (user):** none new. This carries out P4.16, locked at 12:42.
+
+## Oct 25, 2026, 12:55 CDT — Phase 4: Build, the quotation check ignores letter case (P4.17)
+**Asked:** the paid build tests' item 2 (12:29 entry): in test 1, "Presumptively unreasonable without a warrant." is in kept passage `kyllo-1-p14` lower-cased and was flagged as not found, because the check matched letter case outside brackets. The main session proposed accepting a changed first letter only; the user: *"I think we should decapitalize everything before comparison check as best practice?"* The main session agreed: the check exists to catch changed or invented words, which a case-blind comparison still catches; a change of case alone almost never changes what a passage says; it gives up only the strict convention of bracketing a re-cased letter ("[P]resumptively") and the rare reading carried by a capital alone ("State", "Court").
+**Came back:** locked as below.
+- **The rule:** the quotation check (T1.12) compares a quotation with the kept passages without regard to letter case, throughout. The answer keeps the quotation exactly as Claude wrote it. Every other rule stands: ellipses, brackets, the negation guards, the four-word minimum.
+**Spend:** none.
+**DECISION (user):** *"Lock P4.17: the quotation check compares without regard to letter case throughout; the answer keeps the quotation as written. Then build it."*

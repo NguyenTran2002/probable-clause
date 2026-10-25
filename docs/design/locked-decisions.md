@@ -468,7 +468,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 16:46 CDT — Phase 3: Architecture, Area 1 (the composition call, T1.11)"
 
-### T1.12 Answer checks: a quotation check and a narrow full-citation check; the general case-name verifier dropped (supersedes brief §2's Case-name verifier row and §5.8; amends P1.10) — AMENDED by T5.2 (the line under the answer is reworded: quotations are found in the passages Claude kept)
+### T1.12 Answer checks: a quotation check and a narrow full-citation check; the general case-name verifier dropped (supersedes brief §2's Case-name verifier row and §5.8; amends P1.10) — AMENDED by T5.2 (the line under the answer is reworded: quotations are found in the passages Claude kept); by P4.17 (the quotation comparison ignores letter case)
 
 - **Decision:** Area 1, topic 8 (the user's addition):
   - **The general case-name verifier is dropped.** Brief §2 ("Every case name in the answer must resolve to a document in the corpus, or it is flagged on screen"; "In the minimum demo") and §5.8 are superseded: a case name outside the corpus cannot be found reliably in free text without structured output, which Citations rules out, and a check that claimed it would give false confidence.
@@ -1011,3 +1011,11 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Refuse 2 or more submission in a turn. I'd also add that a submission tool call must be its own turn with no extra tool accompanying it."* Then: *"Lock P4.16: submit_answer alone in its turn, once; other tools in that turn still run; keep the rule name same_turn; the three prompt texts as drafted. Then build it, contract v1.8."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:42 CDT — Phase 4: Build, `submit_answer` alone in its turn (P4.16)"
+
+### P4.17 The quotation check ignores letter case (amends T1.12)
+
+- **Decision:** the quotation check compares a quotation with the kept passages without regard to letter case, throughout. The answer keeps the quotation exactly as Claude wrote it. Every other rule of T1.12 and contract §4.F stands (ellipses, brackets, the negation guards, the four-word minimum). It gives up the strict convention of bracketing a re-cased letter and the rare reading carried by a capital alone.
+- **Why:** in the paid build tests a real *Kyllo* quotation, capitalised at the start of a lead-in, was flagged as not found; a visitor would read that as an invented quotation.
+- **User's words:** *"I think we should decapitalize everything before comparison check as best practice?"* Then: *"Lock P4.17: the quotation check compares without regard to letter case throughout; the answer keeps the quotation as written. Then build it."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 12:55 CDT — Phase 4: Build, the quotation check ignores letter case (P4.17)"
