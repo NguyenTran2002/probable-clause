@@ -7,7 +7,7 @@
     "filters.decided_to": "Optional. The latest decision date, inclusive: a year or a date, as decided_from. Leave unset for no upper bound.",
     "filters.opinion_types": "Optional. One or more of the groups majority, plurality, concurrence and dissent. The groups are this tool's, not standard labels: concurrence covers every concurring type, and an opinion concurring in part and dissenting in part is in both concurrence and dissent. Results show each opinion's exact type; describe opinions by their exact type. Leave unset to search every opinion.",
     "filters.authors": "Optional. Authors' surnames, as the catalog writes them, or \"per curiam\". Leave unset to search every author.",
-    "filters.none_of": "Optional. Words or quoted phrases; passages containing any of them are left out. Leave unset to exclude nothing.",
+    "filters.none_of": "Optional. Words or quoted phrases; passages containing any of them are left out. Exclusion matches the exact words only, not other forms, so list each form you mean (search, searches). An unquoted item of several words excludes passages containing all of its words. Leave unset to exclude nothing.",
     "filters.include_footnotes": "Optional. Whether footnotes may be returned on their own. Defaults to true. Footnotes cited by a returned paragraph are attached to it either way."
   },
   "_max_results": "Optional. How many new passages to return, 1 to {{MAX_RESULTS_CAP}}. Defaults to {{MAX_RESULTS_DEFAULT}}.",
@@ -18,11 +18,11 @@
     }
   },
   "search_exact": {
-    "description": "Search the corpus for passages containing given words. all_of narrows (every item must appear), any_of widens (at least one must appear), none_of excludes (no item may appear); give at least one item in all_of or any_of. Put a phrase in double quotes inside an item to match it exactly, such as \"\\\"reasonable expectation of privacy\\\"\". Word forms match (search matches searched and searching). Results are ranked by relevance, best first, in the same format as search_meaning. To find later passages citing a case, search its citation in both forms, such as \"\\\"389 U. S. 347\\\"\" and \"\\\"389 U. S., at\\\"\", with filters.decided_from after its decision.",
+    "description": "Search the corpus for passages containing given words. all_of narrows (every item must appear), any_of widens (at least one must appear), none_of excludes (no item may appear); give at least one item in all_of or any_of. Put a phrase in double quotes inside an item to match it exactly, such as \"\\\"reasonable expectation of privacy\\\"\"; an unquoted item of several words needs all of its words, anywhere in the passage. In all_of and any_of, word forms match (search matches searched and searching); none_of matches the exact words only. Results are ranked by relevance, best first, in the same format as search_meaning. To find later passages citing a case, search its citation in both forms, such as \"\\\"389 U. S. 347\\\"\" and \"\\\"389 U. S., at\\\"\", with filters.decided_from after its decision.",
     "fields": {
       "all_of": "Optional. Words or quoted phrases that must all appear. Up to {{KEYWORD_ITEMS_PER_LIST}}.",
       "any_of": "Optional. Words or quoted phrases of which at least one must appear. Up to {{KEYWORD_ITEMS_PER_LIST}}.",
-      "none_of": "Optional. Words or quoted phrases that must not appear. Up to {{KEYWORD_ITEMS_PER_LIST}}."
+      "none_of": "Optional. Words or quoted phrases that must not appear, matched exactly (list each form you mean). Up to {{KEYWORD_ITEMS_PER_LIST}}, together with filters.none_of."
     }
   },
   "read_passages": {

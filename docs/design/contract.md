@@ -31,7 +31,7 @@ Source: `data/corpus/cases/<key>.json` and `data/corpus/manifest.json`, committe
 - **Paragraph passages:** every paragraph whose `kind` is not `section` (kinds `text`, `quote`, `appendix`), numbered from 1 within its opinion: `katz-1-p1`. Section paragraphs are never passages and never returned by search (T1.6).
 - **Footnote passages:** each footnote is **one** passage, numbered from 1 in the opinion's `footnotes` order (by order, never by label: labels repeat, as in *Boyd*): `katz-1-n1`. Its text is its paragraphs joined with `"\n\n"`; that join is always a sentence boundary. *(The main session's call.)*
 - **Counts, by script** (Oct 24, 2026, after T1.5): 1,964 paragraph passages and 498 footnote passages, **2,462 passages**. Phase 3's "2,748 units" (T3.6) also counted the 286 section headings; the vectors file is therefore about 10.1 MB (2,462 × 1,024 × 4 bytes), not 11.3 MB.
-- **Text** is the corpus text exactly. The loop's view adds footnote markers `[n. <label>]` at each reference (after the character at `footnote_refs[].offset`), each reference resolved to a footnote ID: an opinion's references match its footnotes one to one in label order (checked by script). The composition call and the page get the text without markers (T1.6).
+- **Text** is the corpus text exactly. The loop's view adds footnote markers `[n. <label>]` at each reference, inserted at `footnote_refs[].offset`, an insertion point (after `text[:offset]`; 155 of 498 references sit at the end of the text; v1.1), each reference resolved to a footnote ID: an opinion's references match its footnotes one to one in label order (checked by script). The composition call and the page get the text without markers (T1.6).
 - **Section label** (T1.6). It is part of the text Voyage embeds (§4.C), so it is fixed before the embedding and never changed after without re-embedding. The rule:
   - **Numbered headings:** level and numeral are read as `scripts/check_structure.py`'s `level()` reads them. That is the existing reading of I/V/C/D, which can be numerals or letters.
   - **Joining:** the heading stack is joined with "-", with trailing periods dropped ("I." → "I", so Part III subpart A is "III-A").
@@ -102,7 +102,7 @@ class KeywordIndex:                       # SQLite FTS5, porter + unicode61, bui
     def compile(all_of, any_of, none_of) -> str                     # the FTS5 query; Claude never writes syntax
 ```
 
-`parse_filters` treats an empty list, or a filter set to every value, as unset (T1.4). `KeywordIndex.search` raises `ToolInputError` when both `all_of` and `any_of` are empty or a list exceeds `KEYWORD_ITEMS_PER_LIST`; a quoted item is a phrase; word forms match (porter). The caller asks for `limit = max_results + len(already seen)` so it can top up (T1.6).
+`parse_filters` treats an empty list, or a filter set to every value, as unset (T1.4). `KeywordIndex.search` raises `ToolInputError` when both `all_of` and `any_of` are empty, a list exceeds `KEYWORD_ITEMS_PER_LIST`, or a list is not a list of strings. A double-quoted item is an exact phrase; an unquoted item of several words needs all its words, anywhere; word forms match (porter) in `all_of` and `any_of`. **`none_of` matches exact words and phrases, unstemmed, on both tools** (`excluded_by_none_of` and the keyword index agree; v1.1). The caller asks for `limit = max_results + len(already seen)` so it can top up (T1.6).
 
 `scripts/build_web_data.py --out <dir>` writes, for the web image: the reader files (§11.1), `corpus.json` (§11.3) and `config.json` (§5.1). It always uses the full corpus.
 
@@ -509,7 +509,7 @@ In `api/state/prices.py`, one source and date per provider:
 
 One per opinion, `opinions/<opinion_id>.json`, generated from `data/corpus/` into the web image:
 
-`{"opinion_id", "case": {"key", "name", "citation", "decided", "slip_opinion", "credit": "courtlistener" | "us_reports" | "slip_opinion"}, "type", "authors", "joined_by", "joined_by_source", "joined_by_note", "heading", "paragraphs": [{"id" | null for sections, "kind", "text", "page_start", "page_breaks": [{"offset", "page"}], "footnote_refs": [{"offset", "label", "footnote_id"}]}], "footnotes": [{"id", "label", "page", "paragraphs", "page_breaks"}]}`
+`{"opinion_id", "case": {"key", "name", "citation", "decided", "slip_opinion", "credit": "courtlistener" | "us_reports" | "slip_opinion"}, "type", "authors", "joined_by", "joined_by_source", "joined_by_note", "heading", "paragraphs": [{"id" | null for sections, "kind", "text", "page_start", "page_breaks": [{"offset", "page"}], "footnote_refs": [{"offset", "label", "footnote_id"}]}], "footnotes": [{"id", "label", "page", "page_starts", "paragraphs", "page_breaks"}]}`; a footnote's `page_starts` and `page_breaks` are per paragraph, in the order of `paragraphs` (v1.1)
 
 The `credit` code selects T5.1's reader credit line.
 
