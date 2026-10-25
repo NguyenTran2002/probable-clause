@@ -810,3 +810,15 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - T4.3: *"Lock topic 3 as T4.3: the seven changes as proposed, 6(a) and 7(b)."*
 - T4.4: *"Lock topic 4 as T4.4 as proposed."*
 - T4.5: *"Voyage is very likely free because we make so few requests that it'd still be within free tier even tho I added money to the account and am at Tier 1. So just total up Claude and Exa code with option B and D?"* Then *"This matches what I wanted. Lock area 4."*
+
+## Oct 24, 2026, 19:14 CDT — Phase 3: Architecture, Area 5 (the standing lines, T5.1)
+**Asked:** Resume Phase 3 after the compaction with Area 5 (the user's wording and the replays); confirm its topics; open topic 1, the lines that sit on every screen; then lock it.
+**Came back:**
+- Area 5's six topics confirmed, with the text-status note added to topic 2.
+- Read in the prototype (read only): the pitch, the trace figure's caption, the landing footer, the run screen's disclaimer and folded credits. Two placeholders were inaccurate: the credit gave CourtListener as the source of all text (by `data/corpus/README.md`, 25 cases come from CourtListener's Lawbox copies, 6 from the official U.S. Reports on GovInfo, *Chatrie* from the slip opinion), and the disclosure named one model where two run (T1.8). The trace figure still showed `search_result_location`, replaced by custom content documents in T1.9.
+- Drafts with recommendations for the pitch, the caption, the not-legal-advice line, the AI disclosure (Usage Policy and Commercial Terms requirements, licensing.md §5), the affiliation line, sources and credits (Free Law Project non-endorsement, licensing.md §2), the reader's three credit lines, and "live" (brief default 6); five questions for the user.
+- T5.1 locked: the lines as restated after the user's answers, with brief defaults 2 (Apache 2.0) and 6 ("live") settled.
+**DECISION (user):**
+- Topics: *"The six topics work, with the text-status note added. Open topic 1."*
+- Answers: *"1. We can link to the repo, which is https://github.com/NguyenTran2002/probable-clause. No need to mention my name though. 2. Leave out it is. 3. I'll give it Apache 2.0. 4. We're going with 2b anyway. 5. Live wording is correct."*
+- T5.1: *"Lock."*
