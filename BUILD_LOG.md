@@ -1985,3 +1985,35 @@ Then: *"The budget for paid build tests are sound."*
 - **The whole suite is expected to fail** from this commit until the wave's parts land (contract §13).
 **Spend:** none.
 **DECISION (user):** none needed. The design and plan were approved at 13:47; the prompt drafts await the user's review before step 6.
+
+## Oct 25, 2026, 16:10 CDT — Phase 4: Build, Wave 3 built and reviewed (steps 1 to 5)
+**Asked:** the user: *"Proceed with Wave 3."* (`docs/sessions/wave3-plan.md`).
+**Came back:**
+- **The parts, each built by an agent and then reviewed by a fresh one** (models and efforts per P4.1):
+  - **E** (built Sonnet 5.5 high, reviewed Sonnet 5.5 high) — 46eb3e9, 5b080db. The reservation is gone; `admit` checks the caps strictly under, with `runs_started` counted in the same update; `record_spend` makes one `$inc` per paid call; `live_status` works from spend; the documented worst case is $11.161. **Atlas caught a real defect:** Atlas refuses `$expr` in an upsert's filter (code 224), which the fake had allowed, so every admission would have failed closed. Fixed (the conditional update is never an upsert), and the fake now refuses it too. `test_store_atlas.py` passes 45 of 45 against `Probable_Clause_test`.
+  - **H** (built Sonnet 5.5 high, reviewed Sonnet 5.5 high) — 3a6b16e. `busy` at `MAX_CONCURRENT_RUNS`, with the slot taken before Atlas is awaited and freed in a `finally`. Spend is recorded per call, with `paid_call` emitted before the Atlas write. Envelope `v: 2`, `step` on `paid_call`, counting by step. **New setting (the main session's):** `RUN_WATCHDOG_S`, so a hung run can't hold a slot for good.
+  - **G** (built Opus 5.5 xhigh, reviewed Opus 5.5 high) — ac2c86d. Research and the update step share one conversation machinery and one request builder; a test checks the update step's prefix byte for byte. The update step continues research's messages. Wrong-step refusals run both ways. `submit_update` runs its rules in contract order. The composition is on Sonnet. Both branches run as tasks, with a cancelled branch awaited and the original exception re-raised, and an in-flight attempt recorded. **The review found two honesty gaps:** an extra key inside an accepted finding, and dict keys in a refused call, both of which could carry a page's words into events. Fixed. **Contract §4.G.2 now guards every stored update-step call** once a page has come back, accepted ones and the band's search params included. That carries §1 and T2.2 to v2.0, with no decision changed.
+  - **I** (the main session) — 83b1ab1. The deploy gate reads the live month; there are no reservations left to check.
+- **Step 4, the main session's files** — 2fe685d, d3a0ce1:
+  - `run_client.py` and `render_run.py` read `step` and the update step (still reading v1 recordings); new runs go to `data/verification/wave3/`;
+  - fixtures regenerated through the real backend: 39 streams and 20 HTTP answers, byte-identical on every run;
+  - the contract tests rewritten for v2.0;
+  - `test_composition_worst_case.py` recast against `WORST_CASE_COMPOSITION_INPUT`.
+- **Step 5, the Opus 5.5 xhigh review across the parts** — fe9f3c7. It found no defect in the money path, the honesty rules or the cache. Applied:
+  - D records an Exa search cancelled in flight;
+  - Exa's own message is guarded;
+  - `model_context_window_exceeded` is treated as `max_tokens` in both steps;
+  - `RUN_WATCHDOG_S` raised to 2,400 s (about 1,695 s is the longest legitimate run), with `run_client.py`'s timeout above it;
+  - three fixtures for the update lane's endings (a cancelled branch, abandonment, the update time limit);
+  - the frontend brief corrected: withheld text can appear anywhere in the update step; a `tool_call` may never get its result; `paused` is run-wide.
+- **Accepted, not changed (the main session's call, for the user to check):**
+  - H's `failed` ending drops research's stop kinds, so a research limit followed by an unexpected exception isn't recorded in `budget_stops`;
+  - spend writes sit on each branch's path (up to `ATLAS_OP_TIMEOUT_S` each against a slow Atlas);
+  - `UPDATE_OUTPUT_BUDGET` 6,000 may bind a long submit. Watch it in the paid tests.
+- **Checks:**
+  - the whole suite: **2,943 passed, 54 skipped**;
+  - the API image built (427 MB), and its corpus, indexes, exemption and loop load with `--network none`;
+  - `spend_report.py --month 2026-10 --env test` reached `Probable_Clause_test` (the 13:04 failure did not recur): $1.7435 spent, 8 runs started, no stops.
+- **Nothing pushed.** The frontend session can now build the step log, the band's timing, the removal of `declined`, and `busy` against the v2.0 fixtures.
+**Spend:** none (fakes only; Atlas test database reads and writes are free).
+**DECISION (user):** none taken. Waiting on the user: the review of the prompt drafts (T1.14), then the go for step 6's paid tests (P4.22).
