@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "probable-clause/events/v1",
+  "title": "Probable Clause run event, contract v1 (docs/design/contract.md §6)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "run", "n", "t_ms", "at", "kind", "data"],
+  "properties": {
+    "v": {"const": 1},
+    "run": {"type": "string", "minLength": 16},
+    "n": {"type": "integer", "minimum": 1},
+    "t_ms": {"type": "integer", "minimum": 0},
+    "at": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?[+-]\\d{2}:\\d{2}$"},
+    "kind": {"enum": ["run_started", "round_started", "tool_call", "passage", "tool_result", "paid_call",
+                      "api_fragment", "paused", "resumed", "warning", "composition_started", "answer_block",
+                      "checks", "update_band", "run_ended"]},
+    "data": {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"kind": {"const": "run_started"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/run_started"}}}},
+    {"if": {"properties": {"kind": {"const": "round_started"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/round_started"}}}},
+    {"if": {"properties": {"kind": {"const": "tool_call"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/tool_call"}}}},
+    {"if": {"properties": {"kind": {"const": "passage"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/passage"}}}},
+    {"if": {"properties": {"kind": {"const": "tool_result"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/tool_result"}}}},
+    {"if": {"properties": {"kind": {"const": "paid_call"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/paid_call"}}}},
+    {"if": {"properties": {"kind": {"const": "api_fragment"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/api_fragment"}}}},
+    {"if": {"properties": {"kind": {"enum": ["paused", "resumed"]}}}, "then": {"properties": {"data": {"$ref": "#/$defs/pause"}}}},
+    {"if": {"properties": {"kind": {"const": "warning"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/warning"}}}},
+    {"if": {"properties": {"kind": {"const": "composition_started"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/composition_started"}}}},
+    {"if": {"properties": {"kind": {"const": "answer_block"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/answer_block"}}}},
+    {"if": {"properties": {"kind": {"const": "checks"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/checks"}}}},
+    {"if": {"properties": {"kind": {"const": "update_band"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/update_band"}}}},
+    {"if": {"properties": {"kind": {"const": "run_ended"}}}, "then": {"properties": {"data": {"$ref": "#/$defs/run_ended"}}}}
+  ],
+  "$defs": {
+    "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "passage_id": {"type": "string", "pattern": "^[a-z_]+-\\d+-[pn]\\d+$"},
+    "web_id": {"type": "string", "pattern": "^web-\\d+-\\d+$"},
+    "usd": {"type": "number", "minimum": 0},
+    "web_page": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "title", "url", "domain", "published", "author"],
+      "properties": {
+        "id": {"$ref": "#/$defs/web_id"},
+        "title": {"type": "string"},
+        "url": {"type": "string", "pattern": "^https?://"},
+        "domain": {"type": "string"},
+        "published": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+        "author": {"type": ["string", "null"]}
+      }
+    },
+    "run_started": {
+      "type": "object", "additionalProperties": false,
+      "required": ["question", "limits", "coverage", "update_check_available", "models", "corpus_label"],
+      "properties": {
+        "question": {"type": "string"},
+        "limits": {
+          "type": "object", "additionalProperties": false,
+          "required": ["rounds", "input_tokens", "output_tokens", "update_searches", "deadline_s"],
+          "properties": {
+            "rounds": {"type": "integer"}, "input_tokens": {"type": "integer"}, "output_tokens": {"type": "integer"},
+            "update_searches": {"type": "integer"}, "deadline_s": {"type": "integer"}
+          }
+        },
+        "coverage": {
+          "type": "object", "additionalProperties": false,
+          "required": ["latest_decision_full_pull", "latest_decision_in_corpus", "ingested"],
+          "properties": {
+            "latest_decision_full_pull": {"$ref": "#/$defs/date"},
+            "latest_decision_in_corpus": {"$ref": "#/$defs/date"},
+            "ingested": {"$ref": "#/$defs/date"}
+          }
+        },
+        "update_check_available": {"type": "boolean"},
+        "models": {
+          "type": "object", "additionalProperties": false, "required": ["loop", "composition"],
+          "properties": {"loop": {"type": "string"}, "composition": {"type": "string"}}
+        },
+        "corpus_label": {"enum": ["full", "before_chatrie"]}
+      }
+    },
+    "round_started": {
+      "type": "object", "additionalProperties": false, "required": ["round", "status_line"],
+      "properties": {"round": {"type": "integer", "minimum": 1}, "status_line": {"type": "string"}}
+    },
+    "tool_call": {
+      "type": "object", "additionalProperties": false, "required": ["round", "tool_use_id", "name", "input"],
+      "properties": {
+        "round": {"type": "integer", "minimum": 1},
+        "tool_use_id": {"type": "string"},
+        "name": {"enum": ["search_meaning", "search_exact", "read_passages", "keep_passages", "search_web_updates", "submit_answer"]},
+        "input": {"type": "object"}
+      }
+    },
+    "passage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "case_key", "case_name", "citation", "decided", "opinion_id", "opinion_type", "authors",
+                   "joined_by", "section", "page_start", "page_end", "paragraph_kind", "footnote_label", "footnotes",
+                   "cited_by", "text", "sentences"],
+      "properties": {
+        "id": {"$ref": "#/$defs/passage_id"},
+        "kind": {"enum": ["paragraph", "footnote"]},
+        "case_key": {"type": "string"}, "case_name": {"type": "string"}, "citation": {"type": "string"},
+        "decided": {"$ref": "#/$defs/date"},
+        "opinion_id": {"type": "string"}, "opinion_type": {"type": "string"},
+        "authors": {"type": "array", "items": {"type": "string"}},
+        "joined_by": {"type": "array", "items": {"type": "string"}},
+        "section": {"type": ["string", "null"]},
+        "page_start": {"type": "integer"}, "page_end": {"type": "integer"},
+        "paragraph_kind": {"enum": ["text", "quote", "appendix", null]},
+        "footnote_label": {"type": ["string", "null"]},
+        "footnotes": {"type": "array", "items": {"$ref": "#/$defs/passage_id"}},
+        "cited_by": {"type": "array", "items": {"$ref": "#/$defs/passage_id"}},
+        "text": {"type": "string", "minLength": 1},
+        "sentences": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "array", "prefixItems": [{"type": "integer", "minimum": 0}, {"type": "integer", "minimum": 1}], "items": false, "minItems": 2}
+        }
+      }
+    },
+    "tool_result": {
+      "type": "object", "additionalProperties": false, "required": ["tool_use_id", "name", "is_error", "content"],
+      "properties": {
+        "tool_use_id": {"type": "string"},
+        "name": {"enum": ["search_meaning", "search_exact", "read_passages", "keep_passages", "search_web_updates", "submit_answer"]},
+        "is_error": {"type": "boolean"},
+        "content": {"type": "string", "description": "exactly the text sent to Claude (T5.4: a refused submit shows it)"},
+        "found": {"type": "array", "items": {"$ref": "#/$defs/passage_id"}},
+        "matched_again": {"type": "array", "items": {"$ref": "#/$defs/passage_id"}},
+        "not_reranked": {"type": "boolean"},
+        "read": {"type": "array", "items": {"$ref": "#/$defs/passage_id"}},
+        "target": {"type": "string"},
+        "kept": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["id", "reason", "replaced"],
+          "properties": {"id": {"$ref": "#/$defs/passage_id"}, "reason": {"type": "string"}, "replaced": {"type": "boolean"}}
+        }},
+        "refused": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["id", "why"],
+          "properties": {"id": {"type": "string"}, "why": {"type": "string"}}
+        }},
+        "kept_count": {"type": "integer"},
+        "web": {"type": "array", "items": {"$ref": "#/$defs/web_page"}},
+        "web_repeats": {"type": "array", "items": {"$ref": "#/$defs/web_id"}},
+        "web_status": {"enum": ["ok", "refused_by_us", "refused_by_exa", "failed", "unavailable"]},
+        "search_no": {"type": "integer", "minimum": 1},
+        "submit": {
+          "type": "object", "additionalProperties": false, "required": ["accepted"],
+          "properties": {
+            "accepted": {"type": "boolean"},
+            "rule": {"enum": ["same_turn", "findings", "copy_guard", "no_search", "nothing_kept", "no_update_check", null]}
+          }
+        }
+      }
+    },
+    "paid_call": {
+      "type": "object", "additionalProperties": false,
+      "required": ["service", "purpose", "attempt", "outcome", "duration_ms", "cost_usd", "estimated"],
+      "properties": {
+        "call_no": {"type": "integer", "minimum": 1},
+        "service": {"enum": ["anthropic", "voyage", "exa"]},
+        "purpose": {"enum": ["loop", "composition", "embed", "rerank", "update_search"]},
+        "attempt": {"type": "integer", "minimum": 1},
+        "max_attempts": {"type": "integer", "minimum": 1},
+        "outcome": {"enum": ["ok", "retrying", "failed"]},
+        "error_kind": {"type": ["string", "null"]},
+        "duration_ms": {"type": "integer", "minimum": 0},
+        "usage": {"type": ["object", "null"], "description": "Claude's exact usage object (T4.5)"},
+        "cost_usd": {"$ref": "#/$defs/usd"},
+        "estimated": {"type": "boolean"}
+      }
+    },
+    "api_fragment": {
+      "type": "object", "additionalProperties": false, "required": ["passage_id", "call_no", "role", "path", "json"],
+      "properties": {
+        "passage_id": {"$ref": "#/$defs/passage_id"},
+        "call_no": {"type": "integer", "minimum": 1},
+        "role": {"enum": ["request", "response"]},
+        "path": {"type": "string"},
+        "json": {}
+      }
+    },
+    "pause": {
+      "type": "object", "additionalProperties": false, "required": ["since_ms"],
+      "properties": {"since_ms": {"type": "integer", "minimum": 0}}
+    },
+    "warning": {
+      "type": "object", "additionalProperties": false, "required": ["code"],
+      "properties": {"code": {"enum": ["meaning_search_degraded", "meaning_search_unavailable"]}}
+    },
+    "composition_started": {
+      "type": "object", "additionalProperties": false, "required": ["call_no", "documents"],
+      "properties": {
+        "call_no": {"type": "integer", "minimum": 1},
+        "documents": {"type": "array", "items": {"$ref": "#/$defs/passage_id"}}
+      }
+    },
+    "answer_block": {
+      "type": "object", "additionalProperties": false, "required": ["index", "text", "citations"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0},
+        "text": {"type": "string"},
+        "citations": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["passage_id", "first_sentence", "last_sentence", "cited_text", "call_no", "path"],
+          "properties": {
+            "passage_id": {"$ref": "#/$defs/passage_id"},
+            "first_sentence": {"type": "integer", "minimum": 0},
+            "last_sentence": {"type": "integer", "minimum": 0},
+            "cited_text": {"type": "string"},
+            "call_no": {"type": "integer", "minimum": 1},
+            "path": {"type": "string"}
+          }
+        }}
+      }
+    },
+    "checks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["quotations_checked", "quotations_found", "citations_checked", "citations_found", "not_in_corpus", "flags"],
+      "properties": {
+        "quotations_checked": {"type": "integer"}, "quotations_found": {"type": "integer"},
+        "citations_checked": {"type": "integer"}, "citations_found": {"type": "integer"},
+        "not_in_corpus": {"type": "array", "items": {"type": "string"}},
+        "flags": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["block", "start", "end", "kind", "text"],
+          "properties": {
+            "block": {"type": "integer", "minimum": 0}, "start": {"type": "integer", "minimum": 0}, "end": {"type": "integer", "minimum": 0},
+            "kind": {"enum": ["quotation_not_found", "not_in_corpus"]}, "text": {"type": "string"}
+          }
+        }}
+      }
+    },
+    "update_band": {
+      "type": "object", "additionalProperties": false, "required": ["outcome", "reason", "searches", "findings", "overview", "pages"],
+      "properties": {
+        "outcome": {"enum": ["found", "nothing_relevant", "skipped", "declined", "unavailable", "not_summarised", "not_run"]},
+        "reason": {"type": ["string", "null"], "description": "Claude's skip reason, or unavailable's cause code (no_credit, key_refused)"},
+        "searches": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["search_no", "params", "fixed", "status", "returned", "undated"],
+          "properties": {
+            "search_no": {"type": "integer", "minimum": 1},
+            "params": {"type": "object", "description": "every field of the wrapper, unset ones null (T2.1, T5.3)"},
+            "fixed": {"type": "object"},
+            "status": {"enum": ["ok", "refused_by_exa", "failed", "unavailable"]},
+            "returned": {"type": "integer"}, "undated": {"type": "integer"}
+          }
+        }},
+        "findings": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["statement", "sources"],
+          "properties": {"statement": {"type": "string"}, "sources": {"type": "array", "items": {"$ref": "#/$defs/web_id"}, "minItems": 1}}
+        }},
+        "overview": {"type": ["string", "null"]},
+        "pages": {"type": "array", "items": {"$ref": "#/$defs/web_page"}}
+      }
+    },
+    "run_ended": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "answer_end", "rounds", "answer_chars", "totals"],
+      "properties": {
+        "state": {"enum": ["answered", "no_sources", "step_limit", "token_ceiling", "time_limit", "error_stopped",
+                           "abandoned", "interrupted", "failed", "refusal", "spend_limit"]},
+        "no_sources_reason": {"enum": ["out_of_scope", "nothing_found", null]},
+        "note": {"type": ["string", "null"]},
+        "scope_note": {"type": ["string", "null"]},
+        "answer_end": {"enum": ["complete", "cut_off", "incomplete", "none"]},
+        "failure_reason": {"type": ["string", "null"]},
+        "rounds": {"type": "integer", "minimum": 0},
+        "answer_chars": {"type": "integer", "minimum": 0},
+        "totals": {
+          "type": "object", "additionalProperties": false, "required": ["claude", "exa", "voyage", "prices"],
+          "properties": {
+            "claude": {
+              "type": "object", "additionalProperties": false,
+              "required": ["calls", "input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens", "cost_usd"],
+              "properties": {
+                "calls": {"type": "integer"}, "input_tokens": {"type": "integer"}, "cache_read_tokens": {"type": "integer"},
+                "cache_write_tokens": {"type": "integer"}, "output_tokens": {"type": "integer"},
+                "cost_usd": {"type": "object", "additionalProperties": false, "required": ["loop", "composition"],
+                             "properties": {"loop": {"$ref": "#/$defs/usd"}, "composition": {"$ref": "#/$defs/usd"}}}
+              }
+            },
+            "exa": {"type": "object", "additionalProperties": false, "required": ["searches", "cost_usd"],
+                    "properties": {"searches": {"type": "integer"}, "cost_usd": {"$ref": "#/$defs/usd"}}},
+            "voyage": {"type": "object", "additionalProperties": false, "required": ["requests", "cost_usd"],
+                       "properties": {"requests": {"type": "integer"}, "cost_usd": {"$ref": "#/$defs/usd"}}},
+            "prices": {"type": "object", "additionalProperties": false, "required": ["source", "date"],
+                       "properties": {"source": {"type": "string"}, "date": {"$ref": "#/$defs/date"}}}
+          }
+        }
+      }
+    }
+  }
+}

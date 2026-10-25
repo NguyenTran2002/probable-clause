@@ -24,6 +24,7 @@ REQUIRED = {
     "ANTHROPIC_API_KEY": 1,
     "EXA_API_KEY": 2,
     "MONGODB_URI": 4,
+    "VOYAGE_API_KEY": 4,
 }
 
 LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$")
