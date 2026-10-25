@@ -1075,3 +1075,27 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 - **Tests:** 1,219 passed, 41 skipped (state and contract).
 **Spend:** none.
 **DECISION (user):** none new.
+
+## Oct 24, 2026, 21:42 CDT — Phase 4: Build, Wave 1, part A merged (the splitter, T1.9)
+**Asked:** Part A, the sentence splitter (contract §4.A, T1.9), under *"Start wave 1 let's go!"*
+**Came back:**
+- **Part A:** `api/corpus/sentences.py`, `scripts/check_sentences.py`, `tests/corpus/test_sentences.py`.
+- **Corpus figures:**
+  - All 2,462 passages tile, and every footnote join is a boundary.
+  - 11,005 sentences (9,337 in paragraphs, 1,668 in footnotes).
+  - 8,543 splits.
+  - Suspicious splits: "v." 0, "No." 3, section sign 60, initial 21, reporter abbreviation 176, short capitalised word 4, number 713.
+  - The ten hardest passages give 50 sentences.
+- **The main session's sample review** (T1.9, no subagent): 39 suspicious splits drawn across every category, plus the builder's 12. Every one is a true sentence end.
+- **Review** by a Sonnet 5.5 high subagent: no blocking defect. It found no case where the splitter splits more readily than T1.9 allows, except one hyphen edge with no corpus effect; tiling was fuzzed on 60,000 strings.
+  - Fixes made by the builder:
+    - case-insensitive abbreviations (a lowercase word matches lowercase entries only);
+    - the hyphen rule narrowed;
+    - a linear blank-line scan replacing a quadratic regex;
+    - tests killing every surviving mutant (21 of 21 caught).
+  - The corpus splits are unchanged: SHA `3aaa2c7d…6391f` before and after.
+  - The main session's suggestion to list "no" was withdrawn: it removed one true split in *Kyllo* ("answered no. | See"), now pinned by a test.
+- **Kept as is:** "supra" stays on the list ("in doubt, do not split"). The *Chatrie* typo "Pet. for. Cert." stays as known (P1.21); the splitter guards against it.
+- **Tests:** 459 passed (corpus and contract). Builder B's corpus tests now run on the real splitter.
+**Spend:** none.
+**DECISION (user):** none new.
