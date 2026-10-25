@@ -63,9 +63,9 @@ More, each from the brief:
 
 ## Two sessions in one checkout (P0.3, P1.6)
 
-Two Claude Code sessions share this folder and the `main` branch. The **main session** runs the phases and owns every shared file. The **frontend session**, started by the user, builds the art-direction look tests now and the mock frontend from Phase 4.
+Two Claude Code sessions share this folder and the `main` branch. The **main session** runs the phases and owns every shared file. The **frontend session**, started by the user, built the art-direction look tests (Phase 1) and builds the real page against a mock in Phase 4 (brief rewritten Oct 24, 2026).
 
-**If you are the frontend session:** your brief is `docs/sessions/frontend-brief.md`. Read it in full first. You write only under `web/looktests/` (later `web/`) and `docs/sessions/frontend-log.md`, and never call CourtListener.
+**If you are the frontend session:** your brief is `docs/sessions/frontend-brief.md`. Read it in full first. You write only under `web/` (what is served) and `webdev/` (your mock server and Node tests, never served), and `docs/sessions/frontend-log.md`; you never call CourtListener or any paid service. `web/_generated/` (gitignored) holds `scripts/build_web_data.py`'s output for local use.
 
 **Rules for both:**
 - One writer per file.

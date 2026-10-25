@@ -41,3 +41,6 @@ dist/
 # Verification output (script reports, agent findings) stays local. The cleaned
 # corpus in data/corpus/ is committed (brief default 3, locked-decisions P1.22).
 data/verification/
+
+# Generated web data (scripts/build_web_data.py) for local development; the web image generates its own
+web/_generated/

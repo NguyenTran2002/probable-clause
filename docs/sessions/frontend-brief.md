@@ -1,115 +1,129 @@
-# Frontend session brief: art-direction look tests
+# Frontend session brief: the real page, against a mock
 
-*Written Oct 23, 2026 by the main session, for a second Claude Code session the user starts in this same folder (locked-decisions P1.6). If you are that session, read this file in full, then the files it names, before doing anything.*
+*Rewritten Oct 24, 2026 by the main session for Phase 4 (P4.1), replacing the look-test brief of Oct 23. If you are the frontend session, read this file in full, then the files it names, before doing anything.*
 
 ---
 
 ## 1. Who you are and what you are for
 
-You are the **frontend session** of Probable Clause. Another Claude Code session, the **main session**, is working in this same folder and branch at the same time: it runs Phase 1 (building the case-law corpus) and owns every shared document.
+You are the **frontend session** of Probable Clause. The **main session** works in this same folder and branch. It builds the backend (Wave 2 of P4.1 is starting: the research loop, the API and the deploy files) and owns every shared document.
 
-Your job now is the **art-direction look tests** from brief §7.3: several distinct visual directions for the page, rendered locally for the user to compare at desktop and phone sizes. **You are done when the user picks a direction** (or a combination) and that choice is in your log in the user's words. The contract-bound mock frontend comes later, after interfaces contract v1 (start of Phase 4), and is not part of this job.
+**Your job:** build the real page under `web/`, from the locked prototype (T4.1) and against **interfaces contract v1.1**. Drive it from a local mock that plays the main session's fixtures.
+
+**You are done when:**
+- every fixture plays correctly through your mock;
+- every view passes the size checks (§6);
+- your Node tests pass;
+- the user has reviewed it locally and says so. That sign-off goes in your log in the user's words.
+
+Deploying is not yours. The page later runs against the real API in the local review of the whole stack (P4.1).
 
 ## 2. Read first
 
-1. `PROBABLE_CLAUSE_KICKOFF.md` in full, the frozen brief. Most relevant to you: §1 (what this is), §2 (binding decisions), **§7 (the interface)**, §6.4 (the update-check band), §5.5 and §5.8 (how the answer and the verifier show), §8.5 (waking, reconnecting), §10.6 (wording rules).
-2. `docs/design/locked-decisions.md`. It **wins over the brief.** Most relevant to you: P0.3 (two-session rules), P0.4 (images), P1.2, P1.3 (update-check display), P1.4 and P1.5 (disclosure and credit), P1.6 (this session).
-3. `docs/research/licensing.md`, which drives the notices and credits the page must carry.
-4. `CLAUDE.md`, including its "If you are the frontend session" section.
+1. `PROBABLE_CLAUSE_KICKOFF.md` in full, the frozen brief. Above all §1, §2, §7 (the interface), §8.5 (waking) and §10.6 (wording rules).
+2. `docs/design/locked-decisions.md`. It **wins over the brief**. Yours above all:
+   - **the look and the stack:** T4.1 (the prototype is the baseline), T4.2 (plain ES modules, markdown-it, no build step), T4.3 (the seven changes to the prototype), T4.4 (new pieces), T4.5 (costs);
+   - **every wording entry:** T5.1 to T5.6. The texts there are final; use them exactly;
+   - **the behaviours behind the page:** T1.6, T1.7, T1.9 to T1.12, T2.2 to T2.4, T3.1, T3.2, T3.6 and T3.7, and P4.3.
+3. `docs/design/contract.md` (v1.1). It is the spec you build against:
+   - §5: the endpoints;
+   - §5.1: the wake protocol, which the page implements;
+   - §6: every event. `contracts/events.schema.json` is binding;
+   - §11: reader files, replays, `corpus.json` and `config.json`.
+4. `docs/design/design-note.md`, for the architecture in one read.
+5. Your own log, `docs/sessions/frontend-log.md`, and the prototype at `web/looktests/machinery/` (commit badc05f, T4.1).
+6. `CLAUDE.md`, including its "If you are the frontend session" section.
 
-Load the **frontend-design** skill before designing.
+Load the **frontend-design** skill before designing anything new.
 
 ## 3. Rules for sharing this folder (P0.3)
 
-- **Write only under `web/looktests/`** and your own log, `docs/sessions/frontend-log.md`. Never edit `BUILD_LOG.md`, `CLAUDE.md`, `docs/design/`, `docs/research/`, the brief, `pyproject.toml`, `uv.lock`, `scripts/`, `data/` or `.claude/`. If one of those needs a change, tell the user, and the main session makes it.
-- **Commit only your own paths, by name:** `git add web/looktests docs/sessions/frontend-log.md && git commit -m "..." -- web/looktests docs/sessions/frontend-log.md`. Never `git add -A` or `git add .`.
-- **Never** `git stash`, `git reset`, `git checkout -- .`, `git restore` on paths you don't own, `git switch` or `git checkout <branch>`, `git rebase`, `git commit --amend`, or any tag. If git reports `index.lock`, wait a few seconds and retry; never delete the lock.
-- End every commit message with: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (or your own model's line, as your session's attribution reminder gives it).
-- Don't touch `.venv` or run `uv sync` or `uv add`. Never read or edit `.env`.
-- **Never call CourtListener.** The main session is pulling from it under the user's rate limit, and every call counts against it.
-- **No `.png`, `.jpg` or `.jpeg` file is ever committed**, screenshots included (P0.4). `.svg` and `.ico` are allowed. You may take screenshots in the browser pane for your own checking, but never save them into the repo or publish them.
-- No absolute local paths in any committed file.
+- **Write only under `web/` and `webdev/`, and your log `docs/sessions/frontend-log.md`.**
+  - `web/` is exactly what the web service serves (T4.2), so nothing for development goes there.
+  - `webdev/` is yours for what is never served: the mock server, the Node tests, helper scripts.
+  - Never edit anything else. `tests/fixtures/`, `contracts/`, `api/`, `scripts/`, `docs/design/`, `BUILD_LOG.md` and `CLAUDE.md` are the main session's. If one needs a change (a fixture is wrong, the schema can't express something), tell the user, and the main session makes it.
+- **Commit only your own paths, by name:** `git add web webdev docs/sessions/frontend-log.md && git commit -m "..." -- web webdev docs/sessions/frontend-log.md`. Never `git add -A` or `git add .`.
+- **Git you never touch:**
+  - Never `git stash`, `reset`, `checkout -- .`, `restore` on paths you don't own, a branch switch, `rebase`, `commit --amend`, or a tag.
+  - On `index.lock`, wait and retry; never delete it.
+  - End every commit message with your session's attribution line.
+- Don't touch `.venv`, `pyproject.toml` or `uv.lock`, and never run `uv add` or `uv sync`. Never read or edit `.env`. Make no paid calls and no calls to CourtListener, Exa, Voyage or Anthropic.
+- **No `.png`, `.jpg` or `.jpeg` file is ever committed** (P0.4). `.svg`, `.ico` and `.woff2` are fine.
+- No absolute local paths in committed files.
+- **Ports:** the main session uses 8000 for the API; use 8765 for your mock.
 
-## 4. Your log
+## 4. What you build
 
-`docs/sessions/frontend-log.md`, append-only, in the same entry format as `BUILD_LOG.md` (brief §10.2):
+**The page, in `web/`:**
+- **From the prototype.** Carry `web/looktests/machinery/` forward into `web/`, split into ES modules by concern: the stream client, the renderer, the source panel, the modals, the wake logic, the band, the checks.
+- **Drop** what T4.1 lists: the palette and theme banner, the scripted run, the mock opinion text, the `?v=` strings. Leave `web/looktests/` as it is, for the record.
+- **Fonts (T5.5):** Instrument Sans, Newsreader and JetBrains Mono, served as `.woff2` from `web/fonts/` with the SIL Open Font License text beside them. No request to Google Fonts or any other third party; the page contacts no one but its own origin.
+- **markdown-it (T4.2):** vendored at an exact version, with its licence file. Raw HTML off and links off in the answer.
+- **Text is inserted as text.** Create elements and set their text. Never build markup from strings holding visitor, Claude, corpus or web content (T3.7). The only links to the web are the update band's, built by your code from the event's URL fields, opening with `noopener noreferrer`.
+- **The page always calls `api/...` relative to its own URL** (contract §4.I). There is no CORS and no absolute API origin.
 
-```
-## <date and time> — Look tests: <short name>
-**Asked:** <what the user asked for, in your summary>
-**Came back:** <what was produced or found>
-**Failures:** <what broke and how it was fixed, if anything>
-**DECISION (user):** <the user's decisions and directions, quoting the user>
-```
+**The mock, in `webdev/`:** a small local server, with the Python standard library or Node and no dependencies. It serves:
+- `web/` as the site root;
+- the generated files at the same root: `opinions/<opinion_id>.json`, `corpus.json` and `config.json`;
+- under `api/`, the contract §5 endpoints, played from fixtures:
+  - `GET /health` answers from `tests/fixtures/http/`;
+  - `POST /runs` returns a run whose stream is one fixture. Pick the fixture with a query parameter or a dev-only switch in `webdev/`, never in `web/`;
+  - `GET /runs/{id}/events` plays its events as Server-Sent Events. Each event is `id: <n>`, `event: <kind>` and `data: <envelope>`; events are paced by their `t_ms`; a comment line comes every `KEEPALIVE_S`; `Last-Event-ID` is honoured; and the stream closes after `run_ended`;
+  - `POST /runs/{id}/alive` returns 204;
+  - the failure answers: Cloud Run's plain-text 429, 500 and 503, the gateway's HTML 502, the `POST /runs` refusals, and the 404 for an expired run. Each one is a switch, so every state of T4.4 and T5.4 can be shown.
+- **The generated files:** the main session wrote them to `web/_generated/` (gitignored) with `scripts/build_web_data.py --out web/_generated`. In production they sit at the site root beside `web/`'s files. Your mock serves them there, and you may rerun that script into the same folder.
 
-- Run `TZ=America/Chicago date "+%b %-d, %Y, %H:%M %Z"` **immediately before** writing each heading. Never estimate a time. Commit right after appending.
-- Write an entry at the end of each sitting and whenever the user decides something. The DECISION line records only the user's judgement, never yours.
-- The main session copies your entries' decisions into `BUILD_LOG.md` and `locked-decisions.md`. Do not number decisions yourself.
+**The fixtures,** which you read and never edit:
+- `tests/fixtures/events/*.json`: one run per state, in the replay format of contract §11.2, with real corpus passages, real check results and real prices. The README there says what each shows.
+- `tests/fixtures/http/*.json`.
+- If they are still being written when you start, the main session will tell the user when they land.
 
-## 5. What the look tests must show
+## 5. Contract details easy to miss
 
-**Format.** Static HTML and CSS, with as little JavaScript as possible and no build step, so nothing pre-decides the frontend stack (chosen in Phase 3). One folder per look: `web/looktests/<look-name>/index.html`, with any assets alongside. A plain `web/looktests/index.html` links to all of them. Propose how many looks before building; the previous build compared three. If you want to build looks in parallel with subagents, propose that to the user first.
+- **Citations** carry `passage_id`, `first_sentence` and `last_sentence`, both **inclusive** indexes into the passage's `sentences`, plus `cited_text`. The sources panel always shows the cited sentences lit inside the full paragraph (T1.9).
+- **Check flags** run from (`block`, `start`) to (`end_block`, `end`) and may span answer blocks. **Offsets are Python code points;** convert them for JavaScript strings, which count UTF-16 units, so a character outside the Basic Multilingual Plane doesn't shift the marks.
+- **Reader files:** a footnote's `page_starts` and `page_breaks` are per paragraph, in the order of its `paragraphs`. Paragraphs with a null `id` are section headings.
+- **Per curiam:** `authors` is empty and `joined_by_source` says so. Write "per curiam". When `joined_by_source` is "not printed", an empty `joined_by` means **unknown**, never "joined by nobody" (P1.18).
+- **A refused submit** may show "[statement withheld: it repeated a page's words]" in place of a statement (P4.3). Show it as it is.
+- **The band** never shows page text, only titles, domains, URLs and dates as written (T2.2): "published <date> (Exa's estimate)".
+- **`api_fragment`** events carry the exact JSON for "View API calls" (T4.3(7)). Show them as they are; never rebuild them.
+- **Costs (T4.5):** one total line for Claude and Exa from `run_ended.totals`, expandable into the loop, the answer and Exa. Voyage is not shown.
+- **Replays (brief §7.4, T5.6):** later, from `replays/index.json` and `replays/<slug>.json`, served by the web service, never by the API. The fixture set includes one replay to build against.
+- **The wake protocol (contract §5.1):**
+  - one `/health` check in flight at a time;
+  - anything that isn't our JSON means the server is still starting;
+  - a fresh `/health` right before `POST /runs`, which is **never retried automatically**;
+  - the long-wait steps at `LONG_WAIT_S` and `WAKE_GIVE_UP_S`;
+  - heartbeats every `HEARTBEAT_INTERVAL_S`;
+  - a reconnect after `PAGE_WATCHDOG_S` of silence;
+  - the run ID in sessionStorage.
+  - All of these figures come from `config.json`, never typed into the code.
 
-**Every look renders the same mock run**, so the user compares style rather than content. Everything shown must be clearly sample content.
+## 6. How to check
 
-**Layout** (brief §2 and §7.1):
-- **Left column:** the question box; the conversation; each step as it happens; the update-check band; the final answer.
-  - Steps to show: a corpus search with its query; a review of passages; an update search with every parameter Claude chose; a **rejected `submit_answer`** shown as a visible step.
-- **Right column:** the corpus panel. Passages appear as considered, then are marked **kept** or **discarded**, each with a short reason. Each passage carries:
-  - case name and U.S. Reports citation
-  - **decision date**
-  - opinion type (majority, plurality, concurrence, dissent), author, and who joined
-  - the query that retrieved it
-- **The final answer:**
-  - Cited sentences link to their passages.
-  - **Uncited synthesis has no link** and is visibly marked as Claude's own synthesis.
-  - A **case-name verifier flag** shows on one name that does not resolve.
-- **The update-check band (P1.3):** sits in the left column, separate from the corpus evidence. It shows:
-  - Claude's own short synthesis of what the web search found
-  - a link per source (title, URL, published date), **never quoted page text**
-  - every parameter Claude chose
-  - the draft honesty label: *"Update check, a convenience: searched the web for material published since [date]. Finding nothing does not mean nothing has changed."* (placeholder, final wording is the user's)
+- **Node's built-in test runner, no dependencies (T4.2),** with tests under `webdev/`. Test at least:
+  - the stream client: ordering, reconnect from `Last-Event-ID`, the watchdog;
+  - the renderer: citations to sentence ranges, flags across blocks, the code-point offsets;
+  - the straddle fallback: a citation crossing Markdown structure is shown as plain text, with its underline and link intact (T1.11).
+- **Every fixture plays end to end** in the browser pane with no console errors.
+- **Sizes:** check every view at 1440×900, 393×852 and 852×393 (T4.1), with no horizontal scroll.
+  - Measure by element rectangles (`getBoundingClientRect`, `scrollWidth` against `clientWidth`), not by eye.
+  - Bring the tab to the front first.
+  - Check dark mode too.
+- **No request to any origin but the page's own.** Check it in the network panel.
+- **Wording rules** (brief §10.6): the status word is "working"; never "exhaustive", "comprehensive", "settled law", "guaranteed accurate", "citator" (except in "not a citator") or "no hallucinations".
 
-**Wordmark** (brief §2): *Probable C**l**ause*. The "l" is set in an accent colour from **this project's own palette**. Never Claude's brand colour, never Anthropic's styling, never "Claude" in the name. It may be text and CSS, or an `.svg`.
+## 7. Your log
 
-**Labels and notices that must have a place in the layout** (brief §7.2, licensing notes, P1.4, P1.5). Treat their wording as placeholder; the final wording of the disclaimer, the not-legal-advice line and the update-check label is the user's (brief §12).
-- The narrow guarantee, on each passage: **"This passage appears verbatim in this opinion."**
-- Coverage: *"Corpus covers decisions through [date], pulled [date]."*
-- Not legal advice; not a citator; not exhaustive. Stated plainly, not buried.
-- **AI disclosure:** the visitor is using AI.
-- **Independent checking:** factual assertions should be checked against the opinions.
-- **Opinion-text credit:** text from the U.S. Reports and Supreme Court opinions via CourtListener (Free Law Project), with a note that Free Law Project did not produce, review or endorse this analysis. Always "Free Law Project", never "The Free Law Project". No Free Law Project logo.
-- **Text status:** normalised from the official opinion and unofficial; the official text is the U.S. Reports.
-- ~~**Syllabus label:** when a passage comes from a syllabus, it is labelled the Reporter of Decisions' summary, "no part of the opinion of the Court", and styled apart from opinion text.~~ *Dropped Oct 23, 2026 (locked-decisions P1.13): the syllabus is never in the corpus, so no passage comes from one and no syllabus label is needed.*
-- **Slip-opinion note**, for a case not yet final in the U.S. Reports: subject to formal revision.
-- **Credit and affiliation (P1.5):** a plain sentence such as "Answers are written by Claude, Anthropic's model, through the Claude API", and *"Independent project. Not affiliated with Anthropic."* No Anthropic, Claude or Exa logos, and no badge.
+`docs/sessions/frontend-log.md`, append-only, in `BUILD_LOG.md`'s entry format (brief §10.2), with headings like `## <date and time> — Mock frontend: <short name>`.
+- Run `TZ=America/Chicago date "+%b %-d, %Y, %H:%M %Z"` right before each heading, never estimating a time. Commit right after appending.
+- Write an entry at the end of each sitting and whenever the user decides something. The DECISION line records only the user's judgement, quoted.
+- The main session folds your entries into `BUILD_LOG.md` and `locked-decisions.md`. Don't number decisions.
 
-**States** (brief §7.2, §8.5). Show each, at least as a toggled panel or a second page per look:
-- **Waking up:** the server is starting, with how long it has been waiting. It **promises no duration.**
-- **Reconnecting:** after a dropped connection, then catching up on missed steps. **Interrupted:** a run the server no longer holds.
-- **Cap reached:** *"Live research is paused for today. Recorded runs are still available."*
-- **Stopped at the step limit:** *"Stopped at step limit. Answer built from the evidence gathered so far."*
-- **Update check declined after reminder,** with Claude's stated reason; and **"Update check unavailable."**
-- **Replay:** clearly labelled as a recording, with its date.
+## 8. Stop and ask the user when
 
-**Wording rules** (brief §10.6): the status word is "working"; never "exhaustive", "comprehensive", "settled law", "guaranteed accurate", "citator" (except in "not a citator"), "no hallucinations"; keep em dashes rare.
-
-**Sample content.** Use clearly marked sample text: no invented quotation presented as real, and no real-looking citation attached to invented text. When Phase 1 has cleaned passages, the user will tell you where they are, and you may swap them in.
-
-## 6. How to build and check
-
-- **Fonts and libraries:** stylesheets from Google Fonts only; scripts only from a pinned CDN version, if any. Note each font's and library's licence in your log.
-- **Serve from a background shell**, for example `python3 -m http.server 8765 --directory web/looktests`, because `preview_start` failed with `EPERM` in the previous build. Use a port other than 8000, which the main session may use.
-- **Check every look at desktop size and at the user's iPhone 15 Pro, upright (393 px wide) and sideways.** The previous build's late fixes were phone layouts: a 10 px overflow at 393 px, and side panels overlapping sideways.
-- **Measure layout with element rectangles** (`getBoundingClientRect`, `scrollWidth` against `clientWidth`), not by eye from a screenshot. **Bring the tab to the front first:** background tabs throttle animation frames and show stale content.
-- No horizontal page scroll at any size.
-
-## 7. Stop and ask the user when
-
-- You are ready to propose how many looks to build, and their directions (before building).
-- The looks are ready to compare.
-- Any wording that is the user's to write comes up.
-- Anything would touch a file outside `web/looktests/` and your log.
+- You are ready to propose how you'll split the modules and the mock, before building.
+- A fixture, the schema or the contract can't express something the page must show. Describe it, and let the main session change the shared file.
+- Any wording is needed that T5.1 to T5.6 don't give.
+- The page is ready for the user's local review.
 - An instruction can be read two ways: say in one line how you read it, and wait (brief §0).
-
-At the end, when the user picks a direction: write a log entry quoting the user's choice, commit your own paths, and tell the user it is ready for the main session to fold in.
