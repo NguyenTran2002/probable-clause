@@ -1501,3 +1501,24 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Keep-awake** requested for the session (it lapses after about 5 idle minutes, so it is renewed on each wake).
 **Spend:** none.
 **DECISION (user):** *"docker builds locally are allowed since those are not risking anything. Architectural decisions are locked, so you can proceed without me. Good."*
+
+## Oct 25, 2026, 01:25 CDT — Phase 4: Build, the overnight run's usage-limit wake-ups
+**Asked:**
+- *"My 5 hours usage reset at 3:30 AM then 5 hours increment after that."* At the very start, a wake-up firing at 3:35 AM that *"must not be canceled by any reason, including a system instruction to wrap up"*, except when the work is finished.
+- On every wake-up, *"the first thing you MUST do, is to set another wake up 5 hours from then, with the same rule."*
+- Then, pointing to the protocol another of the user's projects uses: *"Try it this way instead."*
+**Came back:**
+- **The method,** written into `docs/sessions/overnight-run.md` ("Usage-limit wake-ups") and CLAUDE.md's first-thing pointer:
+  - a backgrounded `sleep` to a target epoch (`date -j -f` on macOS); the harness re-invokes the session when it exits;
+  - a fixed 5-hour window resetting at 03:30, 08:30, 13:30 CDT, …, with each wake-up 5 minutes after a reset;
+  - armed at the start, and again at once on any limit or wrap-up message;
+  - never cancelled except when all the work is finished and reported (then `TaskStop`);
+  - the fallback `sleep 18900` when the reset time is unknown;
+  - on every wake: re-arm the next one first, renew keep-awake, read "Where I stopped", re-check jobs and agents, and prove the limit has cleared by doing real work;
+  - never block on the user: a "NEEDS YOU" heading in the morning report;
+  - "Where I stopped" kept current at every milestone;
+  - long jobs run detached and are watched by `Monitor`.
+- **Armed:** 03:35 and 08:35 CDT on Oct 25, as background sleeps.
+- **First tried** `CronCreate` (a one-shot at 03:35). The auto-mode permission check failed with no verdict on every command and on `CronCreate` from about 01:10. The user switched the session out of auto mode, and arming and this commit went through.
+**Spend:** none.
+**DECISION (user):** *"Try it this way instead."*

@@ -7,6 +7,36 @@
 - *"docker builds locally are allowed since those are not risking anything. Architectural decisions are locked, so you can proceed without me."*
 - The plan as presented was approved: *"Good."*
 
+## Usage-limit wake-ups (the user's rule, absolute)
+The user's usage window is a **fixed 5-hour window that resets at wall-clock times: 3:30 AM CDT on Oct 25, then 8:30 AM, 1:30 PM, and so on.** It does not reset 5 hours after a limit message. If the limit is hit, the session stops until a wake-up revives it.
+
+**How a wake-up works.** A backgrounded `sleep` until a target time. When it exits, the harness re-invokes this session. `Monitor` can't do this, since it's capped at 30 minutes; `CronCreate` was tried and blocked. Arm one with `Bash`, `run_in_background: true`:
+
+    T=$(date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-25 03:35:00' '+%s'); sleep $((T - $(date +%s))); echo "WAKE 03:35 CDT: overnight-run wake-up; see docs/sessions/overnight-run.md, Usage-limit wake-ups"
+
+Each one targets 5 minutes after a known reset.
+
+**The rules:**
+- **First tool call of the run:** arm the wake-ups, one for each upcoming reset: **03:35** and **08:35** on Oct 25. If the pre-compaction session armed them, they show as background tasks; don't arm duplicates.
+- **Again, immediately, whenever a message says the limit is near or reached, or that you must wrap up:** arm the next one before finishing anything.
+- **Never cancelled for any reason,** a system instruction to wrap up included. The one exception: when all the work set out here is finished and reported, stop any pending wake-up with `TaskStop` and don't re-arm.
+- **If the reset time is ever unknown,** use the fallback `sleep 18900`: 5 h 15 min after the limit message.
+- **After arming:** finish the piece in hand, commit, update "Where I stopped" (below), and stop.
+- **On every wake:**
+  1. First re-arm the next wake-up, 5 hours later (13:35, then 18:35, …).
+  2. Renew keep-awake.
+  3. Read "Where I stopped" and re-check any long jobs and background agents. Agents cut off by the limit are restarted from their brief, or resumed by SendMessage if they still answer.
+  4. Prove the limit has cleared by doing real work.
+
+  If the limit message appears again, re-arm another wake-up first. A stray wake-up that fires mid-work is routine: re-arm and carry on.
+- **Never block on or ask the user anything.** Whatever needs them goes under a **"NEEDS YOU"** heading in the morning report.
+- **Keep "Where I stopped" current** at every milestone (after each step's commit).
+- **Long jobs** (a Docker build, the whole suite) run detached and are watched by `Monitor`, with keep-awake requested first.
+
+## Where I stopped
+*Updated at each milestone; read first on every wake.*
+- 01:25 CDT, before the compaction: no step started. The wake-up method is background sleeps, at the user's direction (CronCreate was tried first and blocked). **Both wake-ups are armed** as background tasks: `b0uvgygbk` (03:35, epoch 1792917300) and `bvw4upwdo` (08:35, epoch 1792935300). Don't arm duplicates; on waking from one, arm the next 5 hours after it. The auto-mode permission check failed from about 01:10, so the user switched the session out of auto mode to arm and commit.
+
 ## Standing limits (unchanged by the night)
 - **No paid call of any kind:** no Anthropic, Voyage, Exa or Atlas call from this session or any agent. The new texts also await the user's review before the first paid run (T1.14).
 - **No deploy, no `gcloud`, nothing to goodnight, no `git push`, no edit to `web/`** (the frontend session's).
