@@ -1,0 +1,392 @@
+"""Test support for part G: a fake RunContext, the dependencies on the real corpus, and a checker that holds every
+emitted stream to the event schema and to contract §6's order rules (the same rules tests/contract/test_fixtures.py
+holds the fixtures to). Every web page here is synthetic, on example.test."""
+
+import copy
+import json
+import re
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from jsonschema import Draft202012Validator
+
+from api import settings
+from api.checks import check_answer
+from api.loop import LoopDeps
+from api.loop.streamer import FakeAnthropic, FakeTurn, raw_usage
+from api.state.prices import PRICE_TABLE, failed_attempt_usage, price, price_sources
+from api.state.store import MemoryStore
+from api.types import RunFlags, RunStopped, Usage
+from api.web_updates.exa import FakeExaTransport, UpdateSearch, exa_response, exa_result
+
+ROOT = Path(__file__).resolve().parents[2]
+SCHEMA = json.loads((ROOT / "contracts" / "events.schema.json").read_text())
+VALIDATOR = Draft202012Validator(SCHEMA)
+CHICAGO = ZoneInfo(str(settings.TIME_ZONE.value))
+SERVICE_OF = {"loop": "anthropic", "composition": "anthropic", "embed": "voyage", "rerank": "voyage",
+              "update_search": "exa"}
+MODEL_OF = {"loop": str(settings.LOOP_MODEL.value), "composition": str(settings.COMPOSITION_MODEL.value),
+            "embed": str(settings.EMBED_MODEL.value), "rerank": str(settings.RERANK_MODEL.value), "update_search": "auto"}
+WITHHELD = "[statement withheld: it repeated a page's words]"
+
+
+class FakeCtx:
+    """A RunContext of our own: numbers events, prices with E's price(), keeps §6.2's totals, and its gate can be
+    scripted to raise RunStopped (`stop(service, purpose, gate_number)` returns an exception or None)."""
+
+    def __init__(self, *, question="Can police listen to a phone booth call without a warrant?",
+                 update_check_available=True, corpus_label="full", stop=None, seconds_left=600.0,
+                 run_id="run-loop-test-000001", exa_unavailable=None):
+        self.run_id = run_id
+        self.question = question
+        self.update_check_available = update_check_available
+        self.corpus_label = corpus_label
+        self.flags = RunFlags(exa_unavailable=exa_unavailable)
+        self.events: list[dict] = []
+        self.gates: list[tuple[str, str]] = []
+        self.paid: list[dict] = []
+        self.stop = stop
+        self._seconds_left = seconds_left
+        self._t = 0
+        self._start = datetime(2026, 10, 24, 22, 0, tzinfo=CHICAGO)
+        self._log: list[tuple[str, str, Usage, float]] = []
+
+    async def emit(self, kind: str, data: dict) -> int:
+        self._t += 1
+        n = len(self.events) + 1
+        at = (self._start + timedelta(milliseconds=self._t)).isoformat(timespec="milliseconds")
+        self.events.append({"v": 1, "run": self.run_id, "n": n, "t_ms": self._t, "at": at, "kind": kind,
+                            "data": copy.deepcopy(data)})
+        return n
+
+    async def before_paid_call(self, service, purpose) -> None:
+        self.gates.append((service, purpose))
+        if self.stop is not None:
+            err = self.stop(service, purpose, len(self.gates))
+            if err is not None:
+                raise err
+
+    async def record_usage(self, usage, *, purpose, attempt, max_attempts, outcome, error_kind, duration_ms,
+                           raw_usage=None, call_no=None) -> float:
+        service = SERVICE_OF[purpose]
+        assert usage is None or usage.service == service
+        priced = usage if usage is not None else failed_attempt_usage(service, MODEL_OF[purpose], 0)
+        cost = round(price(priced), 10)
+        shown = {"total_tokens": usage.input_tokens} if (raw_usage is None and service == "voyage" and usage) else raw_usage
+        data = {}
+        if call_no is not None:
+            data["call_no"] = call_no
+        data.update({"service": service, "purpose": purpose, "attempt": attempt, "max_attempts": max_attempts,
+                     "outcome": outcome, "error_kind": error_kind, "duration_ms": max(0, int(duration_ms)),
+                     "usage": shown, "cost_usd": cost, "estimated": bool(priced.estimated)})
+        self.paid.append({**data, "_usage": priced})
+        self._log.append((service, purpose, priced, cost))
+        await self.emit("paid_call", data)
+        return cost
+
+    def totals(self) -> dict:
+        a = [x for x in self._log if x[0] == "anthropic"]
+        return {
+            "claude": {
+                "calls": len(a),
+                "input_tokens": sum(u.input_tokens + u.cache_write_5m_tokens + u.cache_write_1h_tokens
+                                    + u.cache_read_tokens for _, _, u, _ in a),
+                "cache_read_tokens": sum(u.cache_read_tokens for _, _, u, _ in a),
+                "cache_write_tokens": sum(u.cache_write_5m_tokens + u.cache_write_1h_tokens for _, _, u, _ in a),
+                "output_tokens": sum(u.output_tokens for _, _, u, _ in a),
+                "cost_usd": {p: round(sum(c for _, pp, _, c in a if pp == p), 10) for p in ("loop", "composition")},
+            },
+            "exa": {"searches": sum(1 for x in self._log if x[0] == "exa"),
+                    "cost_usd": round(sum(x[3] for x in self._log if x[0] == "exa"), 10)},
+            "voyage": {"requests": sum(1 for x in self._log if x[0] == "voyage"),
+                       "cost_usd": round(sum(x[3] for x in self._log if x[0] == "voyage"), 10)},
+            "prices": price_sources(),
+        }
+
+    def seconds_left(self) -> float:
+        return self._seconds_left() if callable(self._seconds_left) else self._seconds_left
+
+    # helpers for assertions
+    def kinds(self) -> list[str]:
+        return [e["kind"] for e in self.events]
+
+    def of(self, kind: str) -> list[dict]:
+        return [e["data"] for e in self.events if e["kind"] == kind]
+
+    def ended(self) -> dict:
+        assert self.events[-1]["kind"] == "run_ended"
+        return self.events[-1]["data"]
+
+    def results(self, name: str | None = None) -> list[dict]:
+        return [d for d in self.of("tool_result") if name is None or d["name"] == name]
+
+
+def stop_on(purpose: str, reason: str, at: int = 1):
+    """A gate that raises RunStopped(reason) at the `at`-th gate for `purpose`."""
+    seen = {"n": 0}
+
+    def stop(service, p, n):
+        if p == purpose:
+            seen["n"] += 1
+            if seen["n"] == at:
+                return RunStopped(reason)
+        return None
+    return stop
+
+
+@dataclass
+class World:
+    corpus: object
+    keyword: object
+    meaning: object
+
+
+def make_deps(world: World, script=(), *, exa=(), voyage=None, store=None, tool_schema=None) -> tuple[LoopDeps, dict]:
+    from api.search.voyage import FakeVoyageClient
+    anthropic = FakeAnthropic(list(script))
+    transport = FakeExaTransport(list(exa), tool_schema=tool_schema if tool_schema is not None else
+                                 {"inputSchema": {"properties": {}}})
+    store = store or MemoryStore()
+    updates = UpdateSearch(transport, store)
+    voyage = voyage or FakeVoyageClient()
+    deps = LoopDeps(corpus=world.corpus, keyword=world.keyword, meaning=world.meaning, voyage=voyage,
+                    updates=updates, anthropic=anthropic)
+    return deps, {"anthropic": anthropic, "exa": transport, "store": store, "voyage": voyage}
+
+
+# ---------- scripted turns ----------
+
+_ids = {"n": 0}
+
+
+def tu(name: str, **inp) -> dict:
+    _ids["n"] += 1
+    return {"type": "tool_use", "id": f"toolu_test_{_ids['n']:05d}", "name": name, "input": inp}
+
+
+def turn(*uses, text: str | None = None, thinking: bool = True, stop_reason: str = "tool_use", usage=None,
+         **kw) -> FakeTurn:
+    content = []
+    if thinking:
+        content.append({"type": "thinking", "thinking": "", "signature": f"sig-{_ids['n']}"})
+    if text:
+        content.append({"type": "text", "text": text})
+    content.extend(uses)
+    return FakeTurn(content=content, stop_reason=stop_reason, usage=usage, **kw)
+
+
+def loop_usage(n: int, *, first: bool = False) -> dict:
+    """A plausible loop usage: a 1-hour write on the first call, cache reads after."""
+    return raw_usage(50, w1=12_000, output=400) if first else raw_usage(40, w5=2_000, read=12_000 + 1_000 * n, output=500)
+
+
+def cite_block(text: str, corpus, documents: list[str], pid: str, first: int, last: int) -> dict:
+    """An answer block citing sentences first..last (inclusive) of pid, as the API would send it (end exclusive)."""
+    p = corpus.passages[pid]
+    cited = p.text[p.sentences[first][0]:p.sentences[last][1]]
+    return {"type": "text", "text": text, "citations": [{
+        "type": "content_block_location", "cited_text": cited, "document_index": documents.index(pid),
+        "document_title": "t", "start_block_index": first, "end_block_index": last + 1}]}
+
+
+def composition(*blocks, stop_reason="end_turn", usage=None, **kw) -> FakeTurn:
+    content = [{"type": "thinking", "thinking": "", "signature": "sig-comp"}] + list(blocks)
+    return FakeTurn(content=content, stop_reason=stop_reason,
+                    usage=usage or raw_usage(9_000, output=1_500), **kw)
+
+
+def web_reply(*pages, cost=0.007) -> dict:
+    """pages: (slug, title, published, text)."""
+    return exa_response([exa_result(url=f"https://news.example.test/{slug}", title=f"[Sample] {title}",
+                                    published=published, text=text) for slug, title, published, text in pages],
+                        cost_total=cost)
+
+
+# ---------- the stream checker ----------
+
+def names_in(e: dict) -> list[str]:
+    d = e["data"]
+    if e["kind"] == "tool_result":
+        return list(d.get("found", [])) + list(d.get("matched_again", [])) + list(d.get("read", [])) + \
+            [k["id"] for k in d.get("kept", [])]
+    if e["kind"] == "composition_started":
+        return list(d["documents"])
+    if e["kind"] == "answer_block":
+        return [c["passage_id"] for c in d["citations"]]
+    if e["kind"] == "api_fragment":
+        return [d["passage_id"]]
+    return []
+
+
+def check_stream(events: list[dict], corpus, *, page_texts: list[str] = ()) -> None:
+    """Every event validates (P0.3) and contract §6's order rules hold."""
+    for e in events:
+        VALIDATOR.validate(e)
+    assert [e["n"] for e in events] == list(range(1, len(events) + 1))
+    assert events[0]["kind"] == "run_started"
+    kinds = [e["kind"] for e in events]
+    assert kinds.count("run_ended") == 1 and kinds[-1] == "run_ended"
+
+    # tool_call before tool_result, one result per call
+    calls, results = {}, set()
+    for e in events:
+        d = e["data"]
+        if e["kind"] == "tool_call":
+            assert d["tool_use_id"] not in calls
+            calls[d["tool_use_id"]] = d["name"]
+        elif e["kind"] == "tool_result":
+            assert calls.get(d["tool_use_id"]) == d["name"], f"result without its call at n={e['n']}"
+            assert d["tool_use_id"] not in results
+            results.add(d["tool_use_id"])
+    assert results == set(calls), "every tool call has a result"
+
+    # a passage's event before anything naming it
+    seen = set()
+    for e in events:
+        if e["kind"] == "passage":
+            assert e["data"]["id"] not in seen
+            seen.add(e["data"]["id"])
+            p = corpus.passages[e["data"]["id"]]
+            assert e["data"]["text"] == p.text and e["data"]["sentences"] == [[a, b] for a, b in p.sentences]
+        for pid in names_in(e):
+            assert pid in seen, f"{pid} named at n={e['n']} ({e['kind']}) before its passage event"
+
+    # fragments and paid calls (§6)
+    paid = {}
+    for i, e in enumerate(events):
+        if e["kind"] == "paid_call" and "call_no" in e["data"]:
+            paid.setdefault(e["data"]["call_no"], []).append(i)
+    for i, e in enumerate(events):
+        if e["kind"] != "api_fragment":
+            continue
+        d = e["data"]
+        assert d["call_no"] in paid, f"a fragment for call {d['call_no']}, which made no paid call"
+        if d["role"] == "request":
+            assert i < min(paid[d["call_no"]]), f"request fragment after its paid_call, n={e['n']}"
+        else:
+            assert i > max(paid[d["call_no"]]), f"response fragment before its paid_call, n={e['n']}"
+        assert re.fullmatch(r"(messages\[\d+\]\.)?content\[\d+\](\.content\[\d+\])?", d["path"]), d["path"]
+        assert (d["role"] == "request") == d["path"].startswith("messages[")
+    nos = sorted(paid)
+    assert nos == list(range(1, len(nos) + 1)), "Claude calls numbered from 1 without gaps"
+    for c, idxs in paid.items():
+        attempts = [events[i]["data"] for i in idxs]
+        assert [a["attempt"] for a in attempts] == list(range(1, len(attempts) + 1))
+        assert [a["outcome"] for a in attempts][:-1] == ["retrying"] * (len(attempts) - 1)
+
+    # loop fragments point at what was sent and returned (T4.3 item 7)
+    comp = next((e["data"] for e in events if e["kind"] == "composition_started"), None)
+    rounds, current = {}, 0
+    for e in events:
+        if e["kind"] == "round_started":
+            current = e["data"]["round"]
+        elif e["kind"] == "tool_call":
+            rounds.setdefault(current, {"calls": [], "results": {}})["calls"].append(e["data"])
+        elif e["kind"] == "tool_result":
+            rounds[current]["results"][e["data"]["tool_use_id"]] = e["data"]
+    for e in events:
+        d = e["data"]
+        if e["kind"] != "api_fragment" or (comp and d["call_no"] == comp["call_no"]):
+            continue
+        if d["role"] == "request":
+            m = re.fullmatch(r"messages\[(\d+)\]\.content\[(\d+)\]\.content\[(\d+)\]", d["path"])
+            assert m and int(m.group(1)) == 2 * (d["call_no"] - 1), d["path"]
+            prev = rounds[d["call_no"] - 1]
+            # the tool_result index is the tool_use's place in the response; a call to an unknown tool has no events,
+            # so fall back to finding the block among the round's results
+            ti = int(m.group(2))
+            call = prev["calls"][ti] if ti < len(prev["calls"]) else None
+            texts = [prev["results"][call["tool_use_id"]]["content"]] if call else []
+            if not any(d["json"]["text"] in t for t in texts):
+                texts = [r["content"] for r in prev["results"].values()]
+            assert d["json"]["type"] == "text" and any(d["json"]["text"] in t for t in texts)
+            assert f"[{d['passage_id']}]" in d["json"]["text"]
+        else:
+            block = d["json"]
+            assert block["type"] == "tool_use"
+            call = next(c for c in rounds[d["call_no"]]["calls"] if c["tool_use_id"] == block["id"])
+            res = rounds[d["call_no"]]["results"][block["id"]]
+            ids = set(res.get("found", [])) | set(res.get("matched_again", [])) | set(res.get("read", [])) | \
+                {k["id"] for k in res.get("kept", [])}
+            assert d["passage_id"] in ids
+            assert block["input"] == call["input"]
+
+    # composition documents and citations are exact slices of our passages
+    passages = {e["data"]["id"]: e["data"] for e in events if e["kind"] == "passage"}
+    frags = {(e["data"]["passage_id"], e["data"]["call_no"], e["data"]["role"], e["data"]["path"]): e["data"]["json"]
+             for e in events if e["kind"] == "api_fragment"}
+    if comp:
+        for i, pid in enumerate(comp["documents"]):
+            doc = frags[(pid, comp["call_no"], "request", f"messages[0].content[{i}]")]
+            p = passages[pid]
+            assert doc["type"] == "document" and doc["source"]["type"] == "content" and doc["context"]
+            assert [b["text"] for b in doc["source"]["content"]] == [p["text"][a:b] for a, b in p["sentences"]]
+            assert doc["citations"] == {"enabled": True}
+    blocks = [e["data"] for e in events if e["kind"] == "answer_block"]
+    assert [b["index"] for b in blocks] == list(range(len(blocks)))
+    for b in blocks:
+        for c in b["citations"]:
+            p = passages[c["passage_id"]]
+            assert 0 <= c["first_sentence"] <= c["last_sentence"] < len(p["sentences"])
+            a, z = p["sentences"][c["first_sentence"]][0], p["sentences"][c["last_sentence"]][1]
+            assert c["cited_text"] == p["text"][a:z]
+            assert c["call_no"] == comp["call_no"]
+            frag = frags[(c["passage_id"], c["call_no"], "response", c["path"])]
+            assert frag["text"] == b["text"]
+            di = comp["documents"].index(c["passage_id"])
+            assert any(x["type"] == "content_block_location" and x["document_index"] == di
+                       and x["start_block_index"] == c["first_sentence"]
+                       and x["end_block_index"] == c["last_sentence"] + 1 for x in frag["citations"])
+
+    # totals are the sum of the paid calls
+    ended = events[-1]["data"]
+    t = ended["totals"]
+    claude = [e["data"] for e in events if e["kind"] == "paid_call" and e["data"]["service"] == "anthropic"]
+    assert t["claude"]["calls"] == len(claude)
+    cost = {"loop": 0.0, "composition": 0.0}
+    for p in claude:
+        cost[p["purpose"]] += p["cost_usd"]
+        assert (p["outcome"] == "ok") == (p["error_kind"] is None)
+        if p["usage"] is None:
+            assert p["estimated"] is True and p["outcome"] in ("retrying", "failed")
+        if p["outcome"] == "ok":
+            assert p["usage"] is not None and p["estimated"] is False
+    assert t["claude"]["cost_usd"]["loop"] == round(cost["loop"], 10) or abs(t["claude"]["cost_usd"]["loop"] - cost["loop"]) < 1e-8
+    assert abs(t["claude"]["cost_usd"]["composition"] - cost["composition"]) < 1e-8
+    assert t["prices"] == price_sources()
+    assert ended["rounds"] == kinds.count("round_started")
+    assert ended["answer_chars"] == sum(len(b["text"]) for b in blocks)
+
+    # the checks event is F's check of the stream's own blocks
+    checks = [e["data"] for e in events if e["kind"] == "checks"]
+    if blocks:
+        assert len(checks) == 1
+        r = check_answer([b["text"] for b in blocks], [passages[i]["text"] for i in comp["documents"]], corpus.manifest)
+        assert checks[0] == json.loads(json.dumps(r, default=lambda o: o.__dict__))
+        assert kinds.index("checks") > max(i for i, k in enumerate(kinds) if k == "answer_block")
+    else:
+        assert checks == []
+
+    # warnings once each; the band before run_ended
+    codes = [e["data"]["code"] for e in events if e["kind"] == "warning"]
+    assert len(codes) == len(set(codes))
+    assert kinds.count("update_band") == 1 and kinds[-2] == "update_band"
+
+    # no web page text anywhere (T2.2, P1.7)
+    whole = json.dumps(events, ensure_ascii=False)
+    for text in page_texts:
+        assert text not in whole, "a web page's text reached an event"
+
+
+async def run_loop(world: World, script=(), *, ctx: FakeCtx | None = None, exa=(), page_texts=(), check=True, **kw):
+    """One full run against the fakes; the stream is checked unless `check=False`."""
+    from api.loop import execute_run
+    ctx = ctx or FakeCtx()
+    deps, fakes = make_deps(world, script, exa=exa, **kw)
+    await execute_run(ctx, deps)
+    if check:
+        check_stream(ctx.events, world.corpus, page_texts=page_texts)
+    assert not fakes["anthropic"].script, "scripted Claude turns were left unused"
+    return ctx, fakes

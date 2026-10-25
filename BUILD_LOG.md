@@ -1392,3 +1392,35 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Tests:** server and contract, 762 passed, 7 skipped.
 **Spend:** none.
 **DECISION (user):** *"Let's start Wave 2."* No new decision.
+
+## Oct 25, 2026, 00:07 CDT — Phase 4: Build, Wave 2, part G merged; Wave 2 complete
+**Asked:** Wave 2 (*"Let's start Wave 2."*); part G, contract §4.G.
+**Came back:**
+- **Part G merged:**
+  - `api/loop/`: `run.py`, `streamer.py`, `tools.py`, `format.py`, `prompts.py`, and `__init__.py` exporting the six names agreed with H;
+  - `tests/loop/`.
+  - What G built, and what Anthropic's docs said, are in the 23:52 entry.
+- **Review fixes (from the review logged at 23:52), each with a test:**
+  - a turn's tools run with the submit last, so a same-turn keep counts;
+  - G's texts are read from `api/prompts/`;
+  - the v1.3 end pairings;
+  - **a broken stream's spend:** a failed attempt records as output the larger of what the stream reported and an estimate from the characters it streamed, and counts against the output ceiling;
+  - no `retrying` record without a following attempt;
+  - **a citation whose text disagrees with our slice is not attached** and is logged as a mapping fault;
+  - SDK validation errors classified;
+  - no empty text block;
+  - the gap-filling choices marked `# GAP`.
+- **Mutation check:** 45 mutations at first, then 25 of the touched rules. All caught after one test was added.
+- **Tests:**
+  - loop and contract: 735 passed, 7 skipped;
+  - **the whole suite: 3,302 passed, 49 skipped.**
+- **Wave 2 is complete:** G, H and I are merged, each reviewed by Sonnet 5.5 high with its defects fixed. Contract v1.2 and v1.3 hold the rulings.
+- **Next, per P4.1:**
+  1. one Opus 5.5 xhigh review of the honesty-critical paths;
+  2. an end-to-end test of the whole backend on fakes;
+  3. the fixtures regenerated from G's formatter;
+  4. the user's decisions listed at 23:52;
+  5. the user's review of the prompt drafts;
+  6. paid build tests within $3, each priced and approved.
+**Spend:** none.
+**DECISION (user):** *"Let's start Wave 2."* No new decision.
