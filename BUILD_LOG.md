@@ -1756,3 +1756,9 @@ Then: *"The budget for paid build tests are sound."*
 - **Whole suite: 3,456 passed, 49 skipped.**
 **Spend:** none.
 **DECISION (user):** none new. This carries out P4.11 and P4.13, locked at 12:09.
+
+## Oct 25, 2026, 12:17 CDT — Phase 4: Build, the key for the paid build tests
+**Asked:** whether the paid build tests (`docs/design/paid-build-tests.md`) may use the key now in `.env`.
+**Came back:** yes, on the condition below. The keys reach the API only through `uv run --env-file .env`, which parses the file itself. The main session never opens, reads or prints `.env` or any key, and checks the keys only with `scripts/check_env.py`, which prints only set, empty, missing or commented out. No log, event or report carries a key.
+**Spend:** none yet.
+**DECISION (user):** *"Paid tests can use the keys in .env, but make sure to NOT read the file or print out the key."*

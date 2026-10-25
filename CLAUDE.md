@@ -89,7 +89,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 *Updated Oct 25, 2026, 12:16 CDT, before a planned compaction; the paid build tests come next.*
 
 - **Next: the paid build tests,** on the user's go, per `docs/design/paid-build-tests.md` (its budget approved at 12:09, P4.11 to P4.15's log entry). In order:
-  1. Confirm in one line that the user said the key in `.env` may be used for them. Check it with `uv run python scripts/check_env.py --phase 4`; never read `.env`.
+  1. **The keys in `.env` may be used** (the user, 12:17: *"make sure to NOT read the file or print out the key"*). They reach the API only through `uv run --env-file .env`. Check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key, and never echo one in a command, log or report.
   2. Write the small client the plan names. It posts a question to the local API, reads the stream, sends a heartbeat every `HEARTBEAT_INTERVAL_S`, and saves events under `data/verification/phase4/`. It makes no paid call itself. Test it against H's app on fakes first.
   3. Re-read Anthropic's pricing page and update `PRICE_TABLE`'s Anthropic date (contract §10).
   4. Start the API against `Probable_Clause_test` (`PC_ENV` unset) with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` in the background, keeping its log. Run tests 1 to 4 one at a time, checking the stop rule ($2.50 Anthropic, 8 Exa searches) after each.
