@@ -2071,3 +2071,55 @@ Then: *"The budget for paid build tests are sound."*
 **Came back:** the user read Wave 3's four rendered answers (`data/verification/wave3/answers/`).
 **Spend:** none.
 **DECISION (user):** *"I checked the answers, and quality is surprisingly good. Looks like we don't need Opus level reasoning when we already hand Sonnet all the necessary primary sources."* P4.20 stands as built.
+
+## Oct 25, 2026, 16:38 CDT — Phase 4: Build, the live Anthropic workspace and its key (P4.24)
+**Asked:** the main session's list before any deploy, item 1: a Console workspace and key for the live site with a $60 monthly limit (T3.4).
+**Came back:**
+- The user has set up the workspace, with a $60 monthly limit and alerts at several break points.
+- The live key goes into `.env` under its own name (the name is settled below, as a follow-up). A deployment script then creates the GCP secret from `.env` programmatically, without the key ever being read or printed by the session.
+**Spend:** none.
+**DECISION (user):** *"A separate Anthropic workspace for the live site with $60 monthly limit and alerts at multiple break points has been set up. I can put the new API key to .env, then you can have a deployment script programmatically create the secret in GCP without reading the key."*
+
+## Oct 25, 2026, 16:38 CDT — Phase 4: Build, the cloud setup's credentials (P4.25)
+**Asked:** item 2: how the registry, service accounts and secrets are set up (T3.5, part I's open questions), and whether production gets its own Voyage, Exa and Atlas credentials.
+**Came back:**
+- The GCP project is `probable-clause`, already reserved by the user (T3.5).
+- **Anthropic:** a separate live key (P4.24).
+- **Voyage and Exa:** the same keys as development.
+- **Atlas:** the same URI, with production writing to the separate `Probable_Clause` database (`PC_ENV=live`, T3.5). No new database user.
+**Spend:** none.
+**DECISION (user):** *"For cloud set up, I already reserved us a project probable-clause. Anthropic API key is separtae per item 1. Voyage and Exa reuse the same key is fine since the spend is so low. For Atlas, use a separate Probable_Clause database for production, same URI."*
+
+## Oct 25, 2026, 16:38 CDT — Phase 4: Build, green light to modify goodnight (P4.26)
+**Asked:** item 3: the goodnight block (T3.5), written in goodnight's repository, shown to the user first.
+**Came back:** the user's green light to modify goodnight to incorporate this site. What exactly it covers, and when the block goes live, is restated below as a follow-up.
+**Spend:** none.
+**DECISION (user):** *"Green light to modify goodnight to incorporate this site."*
+
+## Oct 25, 2026, 16:38 CDT — Phase 4: Build, Exa's terms: the risk accepted without a reply (P4.27)
+**Asked:** item 4: Exa's reply to the request for written permission (P1.3).
+**Came back:**
+- Exa has not replied.
+- The project proceeds without the reply. The update band shows only Claude's synthesis and links (P1.3), and the copy guard catches most cases (T2.3, P4.19).
+**Spend:** none.
+**DECISION (user):** *"Exa didn't respond to us yet. The risk is small because it's their literal service plus we already had guards to catch most cases."*
+
+## Oct 25, 2026, 16:38 CDT — Phase 4: Build, the main session builds and stands up the frontend (P4.28)
+**Asked:** the user's plan: the main session preps the ground, compacts, then builds the real frontend in this session.
+**Came back:**
+- The main session takes over `web/` and `webdev/`, and builds the real page itself, with no parallel builders. Fresh subagents only review: the honesty-critical paths and the narrow widths.
+- `docs/sessions/frontend-log.md` stays as the historical record. The old frontend session is retired (the user archives it), so there is never a second writer on `web/`.
+- **What this amends:**
+  - P0.3 and P1.6: the second session existed to develop the prototype in parallel;
+  - P4.1 item 5: "the frontend is built by the frontend session".
+**Spend:** none.
+**DECISION (user):** *"About the frontend, yes, we're changing locked arrangements. The previous arrangements are only meant to develop the frontend prototype in parallel, the merge and final stand up are always meant to be in the main thread. I agree with you building the frontend yourself without parallel builders."*
+
+## Oct 25, 2026, 16:38 CDT — Phase 4: Build, the local review clarified (P4.1)
+**Asked:** items 5 and 6: the user's sign-off on the local review, then a separate deploy green light.
+**Came back:**
+- The local review is the main session standing the whole app up locally, for the user to test it as a user.
+- The user's sign-off follows that testing.
+- There is no deploy green light until then. P4.1 is unchanged.
+**Spend:** none.
+**DECISION (user):** *"I want you to stand up the app locally for me to test it as an user."* and *"No deployment green light yet till I have tested the app locally."*

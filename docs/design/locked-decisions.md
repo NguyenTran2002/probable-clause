@@ -24,7 +24,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 23, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 23, 2026, 16:23 CDT — Phase 0: Bootstrap"
 
-### P0.3 A second Claude Code session for the mock frontend, in the same checkout
+### P0.3 A second Claude Code session for the mock frontend, in the same checkout — AMENDED by P4.28 (the main session builds and stands up the real frontend)
 
 - **Decision:** In Phase 4, the frontend is built by a **second Claude Code session** working on a mock frontend, instead of the frontend subagent named in brief §3. Both sessions work in the same folder and on the same branch (no worktree). The organization, as proposed by Claude and approved by the user:
   1. **File ownership, one writer per file.** The main session owns the backend, corpus, `scripts/`, `tests/`, deploy, `pyproject.toml`/`uv.lock`, and every shared document. The frontend session writes only under `web/` and its own notes file. The interfaces contract, CLAUDE.md, the brief and this file are read-only to it.
@@ -99,7 +99,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 23, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 23, 2026, 17:11 CDT — Phase 1: Corpus (decisions on licensing; prep for compaction and the second session)"
 
-### P1.6 Art-direction look tests start now, in a second session the user starts
+### P1.6 Art-direction look tests start now, in a second session the user starts — AMENDED by P4.28 (the second session's work ends with the prototype)
 
 - **Decision:** The Phase 3 art-direction look tests (brief §7.3) move forward to run alongside Phase 1, in a second Claude Code session that **the user starts**, in this same folder and branch (not a worktree), under P0.3's rules. Its brief is `docs/sessions/frontend-brief.md`. This changes P0.3's start condition for look tests only. The contract-bound mock frontend still waits for contract v1 (start of Phase 4). The art direction the user picks is locked by the main session in Phase 3 as a T-entry, from the frontend session's log.
 - **User's words:** *"Starting the look test in parallel with phase 1 would be nice?"* Then: *"I want to start the look test session myself, so prep the ground for that session, and let me know where to point that session to kick start it."*
@@ -875,7 +875,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 
 ## Phase 4: Build (decided in advance)
 
-### P4.1 The build plan: contract first, two waves of subagents, a local review before any deploy
+### P4.1 The build plan: contract first, two waves of subagents, a local review before any deploy — AMENDED by P4.28 (item 5: the main session builds the frontend); clarified 16:38, Oct 25 (the local review)
 
 - **Decision:** The Phase 4 build plan (brief §3, §12), proposed by Claude and locked by the user:
   1. **Step 0, the main session only:** the scaffold (`LICENSE` Apache 2.0, `api/`, `tests/`, `contracts/`; every dependency added at once, since only the main session touches `pyproject.toml`); T1.5 (no subagent); **interfaces contract v1** (`docs/design/contract.md` and `contracts/events.schema.json`: endpoints, run states, Atlas collections, a settings table with each value's basis, the price table, the per-opinion and replay formats, every module's signatures), checked against T1.1 to T5.6 by an **Opus 5.5 xhigh** subagent not shown the main session's reasoning; the prompt drafts for the user's review (T1.14), written while Wave 1 runs.
@@ -1062,3 +1062,38 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"The prompt drafts are approved. Run the four Wave 3 paid tests under P4.22's allowance."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:15 CDT — Phase 4: Build, Wave 3's prompt drafts approved (P4.23)"
+
+### P4.24 The live Anthropic workspace and its key (T3.4)
+
+- **Decision:** The user set up the live site's Console workspace with a $60 monthly limit and alerts at several break points. Its key goes into `.env` under its own name; a deployment script creates the GCP secret from `.env` without the session ever reading or printing the key.
+- **User's words:** *"A separate Anthropic workspace for the live site with $60 monthly limit and alerts at multiple break points has been set up. I can put the new API key to .env, then you can have a deployment script programmatically create the secret in GCP without reading the key."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, the live Anthropic workspace and its key (P4.24)"
+
+### P4.25 The cloud setup's credentials (T3.5)
+
+- **Decision:** Project `probable-clause` (reserved by the user); Anthropic a separate live key (P4.24); Voyage and Exa the development keys; Atlas the same URI, production writing to `Probable_Clause` (`PC_ENV=live`).
+- **User's words:** *"For cloud set up, I already reserved us a project probable-clause. Anthropic API key is separtae per item 1. Voyage and Exa reuse the same key is fine since the spend is so low. For Atlas, use a separate Probable_Clause database for production, same URI."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, the cloud setup's credentials (P4.25)"
+
+### P4.26 Green light to modify goodnight (T3.5)
+
+- **Decision:** The main session may modify goodnight's repository to add this site's block (T3.5's routing). What the green light covers and when the block goes live: see the log's follow-up.
+- **User's words:** *"Green light to modify goodnight to incorporate this site."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, green light to modify goodnight (P4.26)"
+
+### P4.27 Exa's terms: the risk accepted without a reply (P1.3)
+
+- **Decision:** Exa has not replied to the request for written permission; the project proceeds, with P1.3's synthesis-and-links band and the copy guard as the mitigation.
+- **User's words:** *"Exa didn't respond to us yet. The risk is small because it's their literal service plus we already had guards to catch most cases."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, Exa's terms: the risk accepted without a reply (P4.27)"
+
+### P4.28 The main session builds and stands up the frontend (amends P0.3, P1.6, P4.1)
+
+- **Decision:** The main session takes over `web/` and `webdev/` and builds the real page itself, no parallel builders (fresh subagents only review). `docs/sessions/frontend-log.md` stays as the record; the old frontend session is retired, so `web/` has one writer.
+- **User's words:** *"The previous arrangements are only meant to develop the frontend prototype in parallel, the merge and final stand up are always meant to be in the main thread. I agree with you building the frontend yourself without parallel builders."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:38 CDT — Phase 4: Build, the main session builds and stands up the frontend (P4.28)"
