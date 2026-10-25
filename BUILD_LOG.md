@@ -919,3 +919,9 @@ Append-only. Never edit past entries; corrections go in a later entry. Headings 
 **Spend:** none this sitting; Phase 3's only paid call was `scripts/probe_chunking.py` ($0.1422, T1.9).
 **DECISION (user):**
 - *"Design note approved. Close Phase 3."*
+
+## Oct 24, 2026, 20:02 CDT — Phase 3: Architecture, tagged
+**Asked:** Tag `phase-3-done` once the frontend session is idle with its work committed (P0.3).
+**Came back:** `git status` clean, no worktrees beyond the main checkout; the frontend session's last commit (45ccae0) is folded in. CLAUDE.md's tag line updated; `phase-3-done` placed on this commit. Next: Phase 4, step 0 of P4.1.
+**DECISION (user):**
+- *"Frontend session is closed and concluded."*
