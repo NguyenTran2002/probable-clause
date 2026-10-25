@@ -47,6 +47,8 @@ Each one targets 5 minutes after a known reset.
 
 - 02:22 CDT: **steps 4 and 5 done** (fixtures from the real code, contract v1.6 `estimated_usage` fix, frontend brief), committed. API image rebuilt after the loop merge and rechecked offline. Next: step 7, the final Opus 5.5 xhigh verification review; then step 8 (the paid-test plan draft is written, uncommitted: `docs/design/paid-build-tests.md`).
 
+- 02:49 CDT: **all eight steps done** and logged; the morning report is the closing message and BUILD_LOG's last entry. The wake-ups are stopped with `TaskStop`, as this guide allows once the work is finished and reported.
+
 ## Standing limits (unchanged by the night)
 - **No paid call of any kind:** no Anthropic, Voyage, Exa or Atlas call from this session or any agent. The new texts also await the user's review before the first paid run (T1.14).
 - **No deploy, no `gcloud`, nothing to goodnight, no `git push`, no edit to `web/`** (the frontend session's).
@@ -173,6 +175,18 @@ Add a line saying the fixtures were regenerated from the real code. If `docs/ses
 - **The morning report:** the closing message, with what was done and its commits, what's waiting on the user and why, the spend ($0), and the token use. A `PushNotification`, if the tool is available, when the night's work ends.
 
 ## Waiting on the user (don't decide these)
+- **Added during the night** (BUILD_LOG 01:34 to 02:49):
+  - **Four at once:** at $2.106, four reservations fit in the $10 day at once, not T3.5's "about five". Accept, or change the daily cap.
+  - **Composition retries:** the worst case reserves input only for the two failed composition attempts, while P4.10 prices their streamed output. A run can pass its reservation by cents, up to $0.48 in theory. Accept (the reviewer's advice), or reserve it ($2.586).
+  - **`update_skip_reason`** may sit beside a counted search, unguarded, so it could carry a page's words. Refuse it then, drop it, or guard it.
+  - **The worst case is by the estimator:** densely tokenized text can run past the reserve by about $0.04, logged and never stopped. Accept?
+  - **The `copy_guard` draft** opens with "some of the update findings", even when the note is flagged among them: a wording point for the prompt review.
+  - **Nits:**
+    - H's own `failed` ending sends `stop_kinds: []`;
+    - Voyage can leave a lone `retrying` record on an abandoned run;
+    - the corpus exemption's first build (about 0.24 s) could move to start-up;
+    - twelve moderate rounds barely fit the 370,000 loop budget on the fakes (measure it in the paid tests);
+    - three hyphenated `in-` words can no longer be quoted from their second half, which errs toward "not found".
 - **Their review of the prompt drafts:**
   - the five texts from 23:52 (`unknown_tool`, the two accepted-submit texts, `composition_scope_note`, `composition_coverage`);
   - `out_of_scope_no_note`;

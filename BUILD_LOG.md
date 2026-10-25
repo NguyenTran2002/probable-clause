@@ -1683,3 +1683,29 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 **Whole suite: 3,443 passed, 49 skipped.**
 **Spend:** none.
 **DECISION (user):** none new. Items 3 and 4 wait for the user.
+
+## Oct 25, 2026, 02:50 CDT — Phase 4: Build, overnight step 8 and the end of the run: the paid-test plan, the state, the morning report
+**Asked:** the overnight note's step 8.
+**Came back:**
+- **`docs/design/paid-build-tests.md`, a draft for the user's approval:**
+  - **Prices:** Anthropic's pricing page re-read at 01:37 CDT, unchanged from T3.4, with no long-context surcharge on these models.
+  - **Four tests:**
+    - an answered run with an update search;
+    - "hello" out of scope (P4.7, and a 1-hour cache read);
+    - a nothing-found reply;
+    - a second answered run.
+  - **They check:** mapping faults, thinking blocks passed back, cache classes, spend markers, the band, and the loop's input per round.
+  - **Expected:** $0.50 to $1.00 of Anthropic against the $3 ceiling, with a stop rule at $2.50, and 2 to 8 Exa searches of 10.
+  - **How:** the API alone on localhost against `Probable_Clause_test`, since `local.sh` also builds the web image, which can't build yet. That needs a small client sending heartbeats, written only on the user's go-ahead.
+- **The last Docker check:** the API image rebuilt on 5b71c1c imports and loads the corpus, indexes and exemption with `--network none`.
+- **CLAUDE.md**'s state section rewritten for the morning; **`docs/sessions/overnight-run.md`**'s "Where I stopped" and "Waiting on the user" updated.
+- **The night's commits:**
+  - 8721c14 (v1.5, shared changes);
+  - 4c7194b (loop patch);
+  - 299a640 (fixtures, v1.6, frontend brief);
+  - 5b71c1c (final review fixes);
+  - plus notes commits.
+- **The wake-ups (03:35, 08:35) are stopped:** the work is finished and reported, the one case the user's rule allows.
+- **Whole suite: 3,443 passed, 49 skipped.** Nothing pushed.
+**Spend:** none tonight. Phase 4 Anthropic is still $0 of $3, and Exa still 0 of 10.
+**DECISION (user):** none new. The questions for the user are in "Waiting on the user" in `docs/sessions/overnight-run.md`.

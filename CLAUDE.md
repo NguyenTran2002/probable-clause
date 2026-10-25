@@ -40,7 +40,8 @@ More, each from the brief:
 - `docs/research/licensing.md`: licences and terms of every source, with each quote string-matched against its page.
 - `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/research/retention.md`: what each provider keeps of what the page sends (Area 5, T5.5), quotes string-matched.
-- `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user).
+- `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user), kept for the record.
+- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests, for the user's approval.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
@@ -85,47 +86,42 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 01:06 CDT, before a planned compaction; an autonomous overnight run follows.*
+*Updated Oct 25, 2026, 02:49 CDT, at the end of the autonomous overnight run.*
 
-- **First tool call after the compaction:** make sure the **03:35** and **08:35** CDT wake-ups are armed: background `sleep`s to a target epoch, exactly as `docs/sessions/overnight-run.md`'s "Usage-limit wake-ups" says (don't duplicate ones already running). That rule is absolute: never cancel a wake-up except after finishing all the work, and on every wake first re-arm the next one, 5 hours later. Then read **`docs/sessions/overnight-run.md`** in full, its "Where I stopped" first. It is the approved plan for tonight, with its limits, the steps in order, and what waits for the user. Then call `mcp__ccd_host__request_keep_awake` (`until: "session_idle"`), say in one line that you are starting step 1, and work through the steps. The user is asleep: don't wait on them; queue questions for the morning report.
-- **State:** Phases 0 to 3 done (tag `phase-3-done`). Phase 4 Waves 1 and 2 merged and reviewed. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.10** are locked (P4.4 to P4.10 tonight). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
-- **Resume by reading** (after the overnight note):
+- **Start here:** the user reads the morning report (the overnight run's closing message, and BUILD_LOG's entries from "Oct 25, 2026, 01:34" on). What waits for them is under "Waiting on the user" in `docs/sessions/overnight-run.md` and in the last log entry. The overnight run's wake-ups are stopped; the guide stays for the record.
+- **State:** Phases 0 to 3 done (tag `phase-3-done`). Phase 4 Waves 1 and 2 merged and reviewed, then patched overnight for P4.6 to P4.10. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.10** are locked. `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **Resume by reading:**
   - the brief;
   - `locked-decisions.md`, P4.1 to P4.10 above all;
-  - `docs/design/contract.md` (**v1.4**; v1.5 is step 1 tonight) and `contracts/events.schema.json`;
+  - `docs/design/contract.md` (**v1.6**) and `contracts/events.schema.json`;
   - the shared code (`api/types.py`, `settings.py`, `errors.py`, `retry.py`, `protocols.py`, `api/prompts/`);
   - BUILD_LOG's entries from "22:58" (Wave 2) on;
-  - `tests/fixtures/README.md`.
+  - `tests/fixtures/README.md`;
+  - `docs/design/paid-build-tests.md` (the plan for the user's approval).
 - **Done in Phase 4 (all logged):**
   - Step 0 and the prompts (approved 21:55).
   - **Wave 1,** A to F.
   - **Voyage:** corpus embedded (a0a4d1f).
   - **Atlas:** E's tests pass against `Probable_Clause_test`.
-  - **Fixtures and the frontend brief** (5dd4d15, f6d70f6).
   - **Wave 2:**
     - I: deploy files, f5a3ca7;
     - H: API and lifecycle, ccd532e;
     - G: loop and composition, 84af0d4.
-    - Each part had a Sonnet 5.5 high review with real defects fixed. Contract v1.2 (1d322bf) and v1.3 (31567c1) hold the rulings.
-  - **A Voyage fix:** a failed attempt is priced at an estimate (86c6af2).
-  - **The end-to-end test** of the whole backend on fakes (a41c500).
-  - **The cross-part Opus 5.5 xhigh review** and **contract v1.4** (833bb8d):
-    - an ellipsis no longer drops a negation (a false pass in F);
-    - same-turn keeps are refused;
-    - `run_ended.stop_kinds`;
-    - `RunContext.call_not_billed` for Exa's 402 and 401;
-    - Voyage's per-run bound is enforced.
+    - Each part had a Sonnet 5.5 high review. Contracts v1.2 to v1.4 hold the rulings. The end-to-end test runs on fakes (a41c500).
   - **P4.4 to P4.10 locked** (2488bac, c997778, 1d785eb).
-  - **Whole suite: 3,322 passed, 49 skipped.** Nothing pushed.
-- **Tonight (the overnight note's steps):**
-  1. contract v1.5 and the shared changes for P4.6 to P4.10;
-  2. the loop patch;
-  3. review and merge;
-  4. the fixtures regenerated from the real code;
-  5. the frontend brief;
-  6. local Docker builds (allowed tonight by the user; never `local.sh` or `deploy.sh`);
-  7. a final Opus verification review;
-  8. a priced paid-test plan and the morning report.
+  - **Overnight, Oct 25:**
+    - **Contract v1.5** and the shared changes (8721c14): the reserve at 66,000, the run limit at 436,000, the worst case $2.106, `NOTE_MAX_CHARS`, F's note guard and corpus exemption, draft texts.
+    - **The loop patch,** reviewed (4c7194b).
+    - **Fixtures regenerated by driving the real backend on fakes,** with contract v1.6 adding `paid_call.estimated_usage` (a real defect in H's `interrupted` totals) and the frontend brief updated (299a640).
+    - **The final Opus review's fixes** (5b71c1c): ellipsis negations and hyphenated prefixes, the copy guard's Unicode, the spend flag from `stop_kinds`.
+    - **Docker:** the API image builds (427 MB) and loads offline. The web image stops at its page guard, as expected until `web/index.html` exists.
+  - **Whole suite: 3,443 passed, 49 skipped.** Nothing pushed.
+- **Next, on the user's word:**
+  - their answers to the morning report's questions;
+  - the prompt-draft review (T1.14);
+  - approving `docs/design/paid-build-tests.md`, then those tests;
+  - the frontend session on the regenerated fixtures;
+  - then the local review and the deploy steps (P4.1).
 - **P4.1's rules:**
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
@@ -134,7 +130,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Settled facts to build with:**
   - **Models:** loop `claude-sonnet-5-5` high (P2.1); composition `claude-opus-5-5` high (T1.8).
   - **Limits:** 12 steps; run input **436,000** (P4.6), with the loop 370,000 and the composition reserve 66,000; output 20,000; 3 update searches; $10 a day, $60 a month.
-  - **Worst case reserved:** about **$2.11** (P4.6; was $1.674).
+  - **Worst case reserved:** about **$2.11** (P4.6; was $1.674); four reservations fit in the $10 day at once.
   - **Places:** GCP project `probable-clause` (1066460440617), us-central1; Atlas `Probable_Clause` and `Probable_Clause_test`; Voyage at `https://api.voyageai.com/v1` (platform key); repo `NguyenTran2002/probable-clause`; page at `nguyennhattran.com/probable-clause`.
 - **The SDK, read from Anthropic's docs** (G's report, 23:52 and 00:46 entries):
   - adaptive thinking; `output_config.effort` "high"; a 1-hour breakpoint on the system block plus the top-level automatic one;
