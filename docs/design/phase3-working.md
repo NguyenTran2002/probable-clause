@@ -24,8 +24,8 @@
 | 2. The update check (Exa wrapper) | T2 | **Closed** Oct 24, 17:46 CDT (T2.1 to T2.5) |
 | 3. Run lifecycle and infrastructure | T3 | **Closed** Oct 24, 18:38 CDT (T3.1 to T3.7) |
 | 4. The interface | T4 | **Closed** Oct 24, 19:00 CDT (T4.1 to T4.5) |
-| 5. The user's wording and the replays | T5 | **Next**, after the compaction |
-| Design note (Phase 3's gate) | — | After Area 5 |
+| 5. The user's wording and the replays | T5 | **Closed** Oct 24, 19:40 CDT (T5.1 to T5.6) |
+| Design note (Phase 3's gate) | — | **Next**, after the compaction |
 
 Proposed by the main session on Oct 24, 2026; the user started on it with *"Let's start with Area 1, the research loop."* What each area covers is in the BUILD_LOG entry that closes it; the Area 1 list is below.
 
@@ -335,7 +335,7 @@ Decisions: T4.1 to T4.5 in `locked-decisions.md`; the closing log entry is "Oct 
 
 **Carried into Area 5:** wording for everything T4.1 to T4.5 left as placeholder: the landing pitch, the not-legal-advice line, the AI disclosure and affiliation lines (P1.4, P1.5), the answer key, the check line (T1.12), the band's honesty label and its replacement guarantee sentence, never calling source links verified (T2.3), the band's outcomes and "unavailable", "not summarised", "did not complete" (T2.3, T2.4), every T4.4 state and stop label, the out-of-scope and nothing-found messages (T1.10), the Voyage warning (T3.3), the cost line's label (T4.5), the reader's credit line per source (T4.3), the "researched from scratch" line (T4.4); the privacy note (T3.7), with Anthropic's, Voyage's and Exa's retention read and cited and Cloud Logging's default retention checked; the replays (brief §7.4).
 
-## Area 5: the user's wording and the replays (to open after the compaction)
+## Area 5: the user's wording and the replays
 
 Facts in brief §6.4, §7.2, §7.4, §10.6 and §12, P1.4, P1.5, P1.10, and the carried items above and in Areas 1 to 3. Resumed after the compaction at Oct 24, 2026, 19:06 CDT; the topics below put to the user for confirmation, with one addition proposed (the text-status note, in topic 2). Proposed topics:
 
@@ -364,3 +364,19 @@ Facts in brief §6.4, §7.2, §7.4, §10.6 and §12, P1.4, P1.5, P1.10, and the 
 - **Locked T5.5**, 19:36 CDT (log entry of that time): the note as drafted with the Voyage clause updated; the query rule (T1.14 amended); fonts self-hosted (T4.1 amended). **Next: topic 6, the replays, the last topic of Area 5.**
 - **Topic 6 opened, 19:38 CDT** (the replays). Facts: brief §2 (several stored questions, recorded through the built system in Phase 5, labelled, static, at least one showing the update check finding something), §7.4 (questions chosen with the user in Phase 3; the pre-*Chatrie* option is the user's, labelled if taken; live research always uses the full corpus), §12 (the replay questions are the user's wording); T2.3 (replays store the band without page text), T4.4 and T5.4 (labels), T4.5 (recorded figures with that date's prices). Without *Chatrie* the latest corpus case is *Carpenter* (2018-06-22, manifest). The prototype's three chips are placeholders. Put to the user: how many replays, candidate questions, the pre-*Chatrie* replay, rules for recording (never edited, re-recorded only deliberately, reviewed by the user), and the Phase 5 spend.
 - **Locked T5.6**, 19:39 CDT (log entry of that time), as asked. **All six Area 5 topics locked (T5.1 to T5.6).** Next: close Area 5 on the user's word, then the design note.
+
+---
+
+## Area 5 closed (Oct 24, 2026, 19:40 CDT): what carries forward
+
+Decisions: T5.1 to T5.6 in `locked-decisions.md`; the closing log entry is "Oct 24, 2026, 19:40 CDT — Phase 3: Architecture, Area 5 closed (the user's wording and the replays)". Facts behind T5.5: `docs/research/retention.md`.
+
+**The wording as locked:** every line on the page is final text in T5.1 to T5.5, with figures filled by code from the manifest, the run and the settings; a figure that is a placeholder (90 s, 5 minutes, 60 s, 10 minutes, 24 hours, 30 days, the counts) follows its setting. Text sent to Claude (tool results, rejections, prompts) is not page wording: it is written with the prompts in the build and reviewed by the user (T1.14), and a rejected submit shows it exactly (T5.4).
+
+**Build (Phase 4):** the `LICENSE` file, Apache 2.0, with the scaffold (T5.1); the three fonts as `.woff2` with the SIL Open Font License text, served by the web service, no Google Fonts link (T5.5, T4.1 amended); the query rule in the loop's system prompt (T5.5, T1.14 amended); the coverage line and the three dates from the manifest (T5.2); the check line and flags as worded (T5.2); the cost line's label (T5.2, T4.5); every state and stop label (T5.4); the band's text (T5.3); the privacy note with each provider linked to its source page (T5.5); the recording-only pre-*Chatrie* switch (drops one case from the index, vectors, catalog and coverage dates; never on the live API) and the replay file's fields (recording date, commit, models, prices) (T5.6); check where the project's Voyage key was created from its endpoint, and if it is an Atlas key, ask the user to turn the Atlas toggle off too (T5.5).
+
+**Phase 5:** record the five replays (about $2 to $3, the user's approval first), the user reviews each before publishing, none edited (T5.6); a question carrying a name, to check the query rule (T5.5); the five chips at 1440×900, 393×852 and 852×393 (T4.1); every T5.4 state reached on the real stack; the README drawn from T5.1's lines (brief §10.5).
+
+## The design note (Phase 3's gate; to write after the compaction)
+
+Brief §3: "a short design note, reviewed by the user". Proposed shape, to confirm with the user before writing: one file, `docs/design/design-note.md`, about two to three pages, pointing to the T-entries rather than restating them. Sections: what is being built and the narrow guarantee; a run end to end (start, the loop and its tools, keeping, submit and the rejection rules, composition and Citations, the two checks, the update check and its band); lifecycle and infrastructure (streaming, the heartbeat, retries, caps and spend, Cloud Run and goodnight, retention); the interface (the prototype as baseline and what changed); the wording and the replays; limits and costs as measured; accepted risks (the Exa terms, P1.3 and P1.7; the Usage Policy before Nov 12, P1.4; cold starts); placeholders to measure in Phase 5; the user's actions before live runs; what Phase 4 starts with (CLAUDE.md's list). Every figure traced to a T-entry or a measurement. The user's approval of the note closes Phase 3 (tag `phase-3-done`, after checking the frontend session is idle and committed).
