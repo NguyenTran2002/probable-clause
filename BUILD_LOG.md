@@ -1839,3 +1839,24 @@ Then: *"The budget for paid build tests are sound."*
 - **Whole suite: 3,464 passed, 49 skipped.**
 **Spend:** none.
 **DECISION (user):** none new. This carries out P4.17, locked at 12:55.
+
+## Oct 25, 2026, 13:04 CDT — Phase 4: Build, the paid build tests re-run after P4.16 and P4.17
+**Asked:** *"Send the 4 paid tests again."* After test 3 the Exa count was 7, and test 4 could take it to 10: within the Phase 4 ceiling of 10, past the plan's stop rule of 8. The main session asked; the user chose *"Run test 4 (Recommended)"* (allow Phase 4 up to its 10-search ceiling for this one test).
+**Came back:** same questions, same client, API on localhost against `Probable_Clause_test` (log `data/verification/phase4/server-r2.log`). Every earlier run's files are kept; the re-runs are labelled `r2-t1` to `r2-t4`, and each has a readable file under `data/verification/phase4/answers/`.
+
+  | # | Question | Ended | Rounds | Submits | Anthropic | Exa | Band | Quotations |
+  |---|---|---|---|---|---|---|---|---|
+  | 1 | thermal imager | answered, 37 citations | 5 | 1 | $0.3256 | 1 | found | 10 of 10 |
+  | 2 | "hello" | no_sources, out_of_scope | 1 | 1 | $0.0045 | 0 | not_run | none |
+  | 3 | onboard computer, 2027 | answered with a scope note | 3 | 1 | $0.1362 | 2 | found | 9 of 9 |
+  | 4 | phone location | answered, 33 citations | 8 | 1 | $0.4027 | 1 | found | 3 of 3 |
+
+- **P4.16 held:** every run sent exactly one `submit_answer`, alone in its turn, carrying its note, findings and overview together. No `same_turn` refusal was needed. Test 3's band now keeps the Mealey's finding that the first run lost, and tests 1, 3 and 4 keep their scope notes.
+- **P4.17:** no quotation flagged in any re-run (22 of 22 found).
+- **The update check ran in every answered run** this time (the first test 1 skipped it).
+- **Money:** each `paid_call.cost_usd` equals the price table by hand; every run ended `released=True` in the server log. The first call of test 1 rewrote the 1-hour cache for the changed system prompt ($0.0776), as expected. A read-only check of open reservations afterwards (`scripts/spend_report.py --open-reservations`) could not reach Atlas twice; see the next line.
+- **No mapping fault or warning** in the server log. No key-like string in the log or the saved events (scanned by count).
+- **The loop's input budget nearly bound.** Test 4's loop calls held 19.0k, 30.8k, 38.9k, 46.8k, 52.5k, 53.9k, 54.7k and 70.1k input tokens: **366,680 of `LOOP_INPUT_BUDGET` 370,000** in 8 rounds. One more research round would have stopped the loop on the budget, with the answer written from what was kept. The first runs' estimate (about round 7 or 8) holds. Put to the user.
+- **Thinking** stayed small: 0 to 87 tokens per loop call; 320 to 1,213 for the composition.
+**Spend:** these runs: Anthropic $0.8651 (28 calls), Exa 4 searches ($0.028), Voyage $0.0081. **Phase 4 so far: Anthropic $1.6729 of $3.00** (ledger `data/verification/phase4/spend.jsonl`, 47 lines), **Exa 8 of 10**, Voyage about $0.078 in all.
+**DECISION (user):** *"Run test 4 (Recommended)"*, for this one test: the Exa stop rule of 8 lifted to the Phase 4 ceiling of 10. Nothing else new.
