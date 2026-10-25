@@ -6,6 +6,8 @@ from api import settings
 from api.state import budget
 from api.state.budget import worst_case_components, worst_case_usd
 
+DAILY_CAP = settings.DAILY_CAP_USD     # the live value, read before tests/state/conftest.py pins $10 for E's tests
+
 
 def test_worst_case_is_two_dollars_ten_six_to_the_tenth_of_a_cent():
     assert round(worst_case_usd(), 3) == 2.106          # P4.6 (was 1.674)
@@ -47,10 +49,11 @@ def test_the_worst_case_follows_the_settings(monkeypatch):
     assert worst_case_components()["voyage"] == pytest.approx(0.05, abs=1e-9)
 
 
-def test_four_runs_fit_in_a_day_and_the_fifth_does_not():
-    # T3.5 had "about five at once at $1.67 within $10"; at P4.6's $2.106, four reservations fit at once
+def test_seven_runs_fit_in_a_day_and_the_eighth_does_not():
+    # P4.11: the daily cap is $15, so at P4.6's $2.106 seven reservations fit at once (at $10 it was four)
     w = worst_case_usd()
-    assert 4 * w <= settings.DAILY_CAP_USD.value < 5 * w
+    assert DAILY_CAP.value == 15.0
+    assert 7 * w <= DAILY_CAP.value < 8 * w
 
 
 def test_module_exposes_only_what_the_contract_names():

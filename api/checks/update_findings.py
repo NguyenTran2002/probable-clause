@@ -108,6 +108,8 @@ class CopyGuardReport:
     overview_flagged: bool = False
     note_flagged: bool = False                                   # P4.8
     note_pages: list[str] = field(default_factory=list)          # the pages the note repeats, by ID
+    skip_reason_flagged: bool = False                            # P4.13
+    skip_reason_pages: list[str] = field(default_factory=list)   # the pages the skip reason repeats, by ID
 
 
 def _readings(text: str) -> list[list[str]]:
@@ -163,12 +165,14 @@ def corpus_words(texts: Iterable[str]) -> CorpusWords:
 
 def copy_guard_report(statements: Sequence[str], overview: str | None, pages: Mapping[str, str],
                       n_words: int, *, note: str | None = None,
+                      skip_reason: str | None = None,
                       exempt: Container[tuple[str, ...]] = NO_EXEMPTION) -> CopyGuardReport:
-    """T2.3 item 3: a statement, the overview or (P4.8) the note that repeats `n_words` or more consecutive words of
-    any returned page, ignoring case, punctuation and spacing. A run of words that is also in `exempt` (the corpus,
+    """T2.3 item 3: a statement, the overview, (P4.8) the note or (P4.13) the update skip reason that repeats
+    `n_words` or more consecutive words of any returned page, ignoring case, punctuation and spacing. A run of words that is also in `exempt` (the corpus,
     from `corpus_words`) is not counted (P4.9). `pages` maps a page ID to its text. Statements are numbered from 1
     in the messages; `flagged_statements` holds 0-based indexes. Whether the note is guarded at all (a no-sources
-    reply once a page was returned) is the caller's call: pass it only then."""
+    reply once a page was returned) is the caller's call: pass it only then. The skip reason is guarded whenever it
+    is passed (P4.13: on every submit once a page was returned)."""
     if n_words < 1:
         raise ValueError("n_words must be at least 1")
     if not isinstance(pages, Mapping):
@@ -203,6 +207,13 @@ def copy_guard_report(statements: Sequence[str], overview: str | None, pages: Ma
             report.note_pages = ids
             report.problems.append(f"The note repeats {n_words} or more consecutive words of {pages_named(ids)}. "
                                    f"Rewrite it in your own words, then submit again.")
+    if skip_reason:
+        ids = copied_from(skip_reason)
+        if ids:
+            report.skip_reason_flagged = True
+            report.skip_reason_pages = ids
+            report.problems.append(f"The update skip reason repeats {n_words} or more consecutive words of "
+                                   f"{pages_named(ids)}. Rewrite it in your own words, then submit again.")
     return report
 
 

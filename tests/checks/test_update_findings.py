@@ -436,3 +436,39 @@ def test_an_invisible_character_between_words_does_not_hide_a_copy_either(sep):
     dirty = clean.replace(" ", sep)
     assert copy_guard_report([clean], None, {"web-1-1": dirty}, 10).flagged_statements == {0}
     assert copy_guard_report([dirty], None, {"web-1-1": clean}, 10).flagged_statements == {0}
+
+
+# --- P4.13: the update skip reason
+
+def test_the_skip_reason_is_flagged_and_names_the_page_only():
+    r = copy_guard_report([], None, PAGES, 10, skip_reason="Not needed. " + COPIED + ".")
+    assert r.skip_reason_flagged is True and r.skip_reason_pages == ["web-1-1"]
+    assert r.flagged_statements == set() and r.overview_flagged is False and r.note_flagged is False
+    [p] = r.problems
+    assert p.startswith("The update skip reason") and "web-1-1" in p
+    assert "drones" not in p and "photograph" not in p
+
+
+def test_a_reworded_skip_reason_passes():
+    r = copy_guard_report([], None, PAGES, 10, skip_reason="A newer ruling could not change what Katz held.")
+    assert r.skip_reason_flagged is False and r.skip_reason_pages == [] and r.problems == []
+
+
+def test_no_skip_reason_given_means_no_skip_reason_check():
+    for given in (None, ""):
+        r = copy_guard_report([COPIED], None, PAGES, 10, skip_reason=given)
+        assert r.skip_reason_flagged is False and len(r.problems) == 1
+
+
+def test_skip_reason_note_and_statements_are_reported_together():
+    r = copy_guard_report([COPIED], COPIED, PAGES, 10, note=COPIED, skip_reason=COPIED)
+    assert r.flagged_statements == {0} and r.overview_flagged and r.note_flagged and r.skip_reason_flagged
+    assert [p.split(" repeats")[0] for p in r.problems] == ["Statement 1", "The overview", "The note",
+                                                            "The update skip reason"]
+
+
+def test_the_exemption_covers_the_skip_reason_too():
+    page = {"web-1-1": "Writing in 1967 the Court said that " + KATZ + " is not a subject of protection."}
+    r = copy_guard_report([], None, page, 10, skip_reason=KATZ, exempt=corpus_words([KATZ]))
+    assert r.problems == [] and r.skip_reason_flagged is False
+    assert copy_guard_report([], None, page, 10, skip_reason=KATZ).skip_reason_flagged is True

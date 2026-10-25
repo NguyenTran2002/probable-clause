@@ -204,9 +204,10 @@ def sort_documents(ids, corpus: Corpus) -> list[str]:
     return sorted(ids, key=lambda pid: (corpus.passages[pid].decided, order[pid]))
 
 
-def withhold_flagged(inp: dict, flagged: set[int], overview_flagged: bool, *, note_flagged: bool = False) -> dict:
-    """P4.3: the input as stored, each flagged statement replaced; a flagged overview, and a flagged note (P4.8),
-    replaced by the same text."""
+def withhold_flagged(inp: dict, flagged: set[int], overview_flagged: bool, *, note_flagged: bool = False,
+                     skip_reason_flagged: bool = False) -> dict:
+    """P4.3: the input as stored, each flagged statement replaced; a flagged overview, a flagged note (P4.8) and a
+    flagged update skip reason (P4.13) replaced by the same text."""
     shown = copy.deepcopy(inp)
     findings = shown.get("update_findings")
     for i in flagged:
@@ -216,6 +217,8 @@ def withhold_flagged(inp: dict, flagged: set[int], overview_flagged: bool, *, no
         shown["update_overview"] = WITHHELD
     if note_flagged:
         shown["note"] = WITHHELD
+    if skip_reason_flagged:
+        shown["update_skip_reason"] = WITHHELD
     return shown
 
 
@@ -822,8 +825,9 @@ class _Run:
 
     def guard_report(self, inp):
         """The copy guard over the submit's statements and overview, one entry per finding so the indexes line up,
-        and over a no-sources reply's note (P4.8); runs of words that are also the corpus's are exempt (P4.9). None
-        when no page was returned in the run, or there is nothing to guard."""
+        over a no-sources reply's note (P4.8) and over the update skip reason on every submit (P4.13); runs of words
+        that are also the corpus's are exempt (P4.9). None when no page was returned in the run, or there is nothing
+        to guard."""
         if not isinstance(inp, dict) or not self.pages:
             return None
         findings = inp.get("update_findings")
@@ -833,10 +837,12 @@ class _Run:
                           for f in findings]
         overview = inp.get("update_overview") if isinstance(inp.get("update_overview"), str) else None
         note = inp["note"] if self.note_guarded(inp) else None
-        if not statements and not overview and not note:
+        skip = inp.get("update_skip_reason")
+        skip = skip if isinstance(skip, str) and skip.strip() else None
+        if not statements and not overview and not note and not skip:
             return None
         return copy_guard_report(statements, overview, {pid: pg.text for pid, pg in self.pages.items()},
-                                 COPY_GUARD_WORDS, note=note, exempt=corpus_exemption(self.corpus))
+                                 COPY_GUARD_WORDS, note=note, skip_reason=skip, exempt=corpus_exemption(self.corpus))
 
     def submit(self, inp, same_turn: bool) -> tuple[_Out, dict, bool]:
         """Rule 1, then the findings checks, the note cap (P4.6) and the copy guard, then rules 2 to 4, rule 4
@@ -844,10 +850,11 @@ class _Run:
         whether the submit was accepted."""
         guard = self.guard_report(inp)
         shown = inp
-        if guard is not None and (guard.flagged_statements or guard.overview_flagged or guard.note_flagged):
-            # P4.3, P4.8, and §1: no page's words are stored, whichever rule refuses the submit.
+        if guard is not None and (guard.flagged_statements or guard.overview_flagged or guard.note_flagged
+                                  or guard.skip_reason_flagged):
+            # P4.3, P4.8, P4.13, and §1: no page's words are stored, whichever rule refuses the submit.
             shown = withhold_flagged(inp, guard.flagged_statements, guard.overview_flagged,
-                                     note_flagged=guard.note_flagged)
+                                     note_flagged=guard.note_flagged, skip_reason_flagged=guard.skip_reason_flagged)
 
         def refuse(rule, text):
             log.info("run %s: submit refused (%s)", self.ctx.run_id, rule)
@@ -872,8 +879,11 @@ class _Run:
         if note is not None and len(note) > NOTE_MAX:                                    # P4.6
             return refuse("note_too_long", rejection("submit", "note_too_long", length=len(note)))
         if guard is not None and guard.problems:                                          # T2.3 item 3, P4.8
-            if guard.note_flagged and not guard.flagged_statements and not guard.overview_flagged:
+            others = bool(guard.flagged_statements or guard.overview_flagged)
+            if guard.note_flagged and not others and not guard.skip_reason_flagged:
                 text = rejection("submit", "copy_guard_note", pages=pages_named(guard.note_pages))
+            elif guard.skip_reason_flagged and not others and not guard.note_flagged:     # P4.13
+                text = rejection("submit", "copy_guard_skip_reason", pages=pages_named(guard.skip_reason_pages))
             else:
                 text = rejection("submit", "copy_guard", problems="\n".join(guard.problems))
             return refuse("copy_guard", text)

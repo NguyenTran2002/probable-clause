@@ -129,8 +129,8 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.11). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** loop `claude-sonnet-5-5` high (P2.1); composition `claude-opus-5-5` high (T1.8).
-  - **Limits:** 12 steps; run input **436,000** (P4.6), with the loop 370,000 and the composition reserve 66,000; output 20,000; 3 update searches; $10 a day, $60 a month.
-  - **Worst case reserved:** about **$2.11** (P4.6; was $1.674); four reservations fit in the $10 day at once.
+  - **Limits:** 12 steps; run input **436,000** (P4.6), with the loop 370,000 and the composition reserve 66,000; output 20,000; 3 update searches; **$15 a day** (P4.11), $60 a month.
+  - **Worst case reserved:** about **$2.11** (P4.6; was $1.674); seven reservations fit in the $15 day at once.
   - **Places:** GCP project `probable-clause` (1066460440617), us-central1; Atlas `Probable_Clause` and `Probable_Clause_test`; Voyage at `https://api.voyageai.com/v1` (platform key); repo `NguyenTran2002/probable-clause`; page at `nguyennhattran.com/probable-clause`.
 - **The SDK, read from Anthropic's docs** (G's report, 23:52 and 00:46 entries):
   - adaptive thinking; `output_config.effort` "high"; a 1-hour breakpoint on the system block plus the top-level automatic one;

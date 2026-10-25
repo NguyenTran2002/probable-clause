@@ -294,12 +294,126 @@ async def test_keep_reasons_are_not_guarded(world):
     assert COPIED in fakes["anthropic"].requests[-1]["messages"][0]["content"][0]["context"]
 
 
-async def test_the_skip_reason_is_not_guarded(world):
-    script = [update(), turn(tu("submit_answer", out_of_scope=True, note=CLEAN_NOTE, update_skip_reason=COPIED),
-                             usage=loop_usage(2))]
-    ctx, _ = await run_loop(world, script, exa=[page_reply()], page_texts=[COPY_LEAD])
+# ---------- P4.13: the update skip reason, guarded on every submit once a page was returned ----------
+
+COPIED_SKIP = "No update check was needed here. " + COPIED
+CLEAN_SKIP = "A newer ruling could not change what Katz held."
+
+
+def test_withholding_a_flagged_skip_reason():
+    inp = {"out_of_scope": True, "note": "kept as sent", "update_skip_reason": "copied"}
+    shown = withhold_flagged(inp, set(), False, skip_reason_flagged=True)
+    assert shown == {"out_of_scope": True, "note": "kept as sent", "update_skip_reason": WITHHELD}
+    assert inp["update_skip_reason"] == "copied"                         # Claude's input untouched
+    assert withhold_flagged(inp, set(), False)["update_skip_reason"] == "copied"
+
+
+async def test_an_answered_run_s_skip_reason_that_repeats_a_page_is_refused_and_withheld(world):
+    script = [search(), keep_and_update(), submit(update_skip_reason=COPIED_SKIP),
+              submit(update_skip_reason=CLEAN_SKIP), answer(world)]
+    ctx, fakes = await run_loop(world, script, exa=[page_reply()], page_texts=[COPY_LEAD, COPIED])
+    assert rules(ctx) == ["copy_guard", None]
+    refused = ctx.results("submit_answer")[0]
+    assert refused["is_error"]
+    assert refused["content"] == rejection("submit", "copy_guard_skip_reason", pages=pages_named(["web-1-1"]))
+    assert "web-1-1" in refused["content"] and COPIED not in refused["content"]
+    first, second = submit_calls(ctx)
+    assert first == {"out_of_scope": False, "update_skip_reason": WITHHELD}
+    assert second["update_skip_reason"] == CLEAN_SKIP
+    # Claude's own conversation keeps its input (P4.3)
+    sent = [b for r in fakes["anthropic"].requests for m in r["messages"] if m["role"] == "assistant"
+            for b in m["content"] if b.get("name") == "submit_answer"]
+    assert any(b["input"].get("update_skip_reason") == COPIED_SKIP for b in sent)
+    assert ctx.ended()["state"] == "answered"
+    assert COPIED not in json.dumps(ctx.events)
+
+
+async def test_an_out_of_scope_skip_reason_that_repeats_a_page_is_refused_and_withheld(world):
+    script = [update(), turn(tu("submit_answer", out_of_scope=True, note=CLEAN_NOTE, update_skip_reason=COPIED_SKIP),
+                             usage=loop_usage(2)),
+              turn(tu("submit_answer", out_of_scope=True, note=CLEAN_NOTE, update_skip_reason=CLEAN_SKIP),
+                   usage=loop_usage(3))]
+    ctx, _ = await run_loop(world, script, exa=[page_reply()], page_texts=[COPY_LEAD, COPIED])
+    assert rules(ctx) == ["copy_guard", None]
+    assert ctx.results("submit_answer")[0]["content"] == \
+        rejection("submit", "copy_guard_skip_reason", pages="page web-1-1")
+    assert submit_calls(ctx)[0] == {"out_of_scope": True, "note": CLEAN_NOTE, "update_skip_reason": WITHHELD}
+    assert ctx.ended()["no_sources_reason"] == "out_of_scope" and ctx.ended()["note"] == CLEAN_NOTE
+    assert COPIED not in json.dumps(ctx.events)
+
+
+async def test_a_nothing_found_skip_reason_that_repeats_a_page_is_refused_and_withheld(world):
+    script = [search(), update(), submit(note=CLEAN_NOTE, update_skip_reason=COPIED_SKIP),
+              submit(note=CLEAN_NOTE, update_skip_reason=CLEAN_SKIP)]
+    ctx, _ = await run_loop(world, script, exa=[page_reply()], page_texts=[COPY_LEAD, COPIED])
+    assert rules(ctx) == ["copy_guard", None]
+    assert submit_calls(ctx)[0]["update_skip_reason"] == WITHHELD and submit_calls(ctx)[0]["note"] == CLEAN_NOTE
+    assert ctx.ended()["no_sources_reason"] == "nothing_found"
+    assert COPIED not in json.dumps(ctx.events)
+
+
+async def test_a_skip_reason_is_not_guarded_before_any_page_was_returned(world):
+    # no update search ran, so no page exists: even words that match a page that was never fetched pass
+    script = [search(), keep(), submit(update_skip_reason=COPIED_SKIP), answer(world)]
+    ctx, _ = await run_loop(world, script)
     assert rules(ctx) == [None]
-    assert submit_calls(ctx)[0]["update_skip_reason"] == COPIED
+    assert submit_calls(ctx)[0]["update_skip_reason"] == COPIED_SKIP
+
+
+async def test_a_skip_reason_quoting_the_court_that_a_page_also_quotes_is_accepted(world):
+    quoting = 'Not needed: Katz\'s line that "' + KATZ_Q + '" is not in question.'
+    copying = 'Not needed. "' + KATZ_Q + '" ' + PAGE_OWN
+    script = [search(), keep_and_update(), submit(update_skip_reason=copying), submit(update_skip_reason=quoting),
+              answer(world)]
+    ctx, _ = await run_loop(world, script, exa=[page_reply(COURT_PAGE)], page_texts=[PAGE_OWN])
+    assert rules(ctx) == ["copy_guard", None]
+    assert submit_calls(ctx)[0]["update_skip_reason"] == WITHHELD
+    assert submit_calls(ctx)[1]["update_skip_reason"] == quoting
+
+
+async def test_a_skip_reason_flagged_with_a_note_or_a_statement_gets_every_problem(world):
+    script = [search(), update(),
+              submit(note=COPIED_NOTE, update_skip_reason=COPIED_SKIP,
+                     update_findings=[{"statement": COPIED, "sources": ["web-1-1"]}],
+                     update_overview="One sample page describes a ruling."),
+              submit(note=COPIED_NOTE, update_skip_reason=COPIED_SKIP),
+              submit(note=CLEAN_NOTE, update_skip_reason=COPIED_SKIP),
+              submit(note=COPIED_NOTE, update_skip_reason=CLEAN_SKIP),
+              submit(note=CLEAN_NOTE, update_skip_reason=CLEAN_SKIP,
+                     update_findings=[{"statement": CLEAN_STATEMENT, "sources": ["web-1-1"]}])]
+    ctx, _ = await run_loop(world, script, exa=[page_reply()], page_texts=[COPY_LEAD, COPIED])
+    assert rules(ctx) == ["copy_guard"] * 4 + [None]
+    n = int(settings.COPY_GUARD_WORDS.value)
+    pages = {"web-1-1": PAGE}
+    contents = [r["content"] for r in ctx.results("submit_answer")]
+    everything = copy_guard_report([COPIED], "One sample page describes a ruling.", pages, n, note=COPIED_NOTE,
+                                   skip_reason=COPIED_SKIP)
+    assert contents[0] == rejection("submit", "copy_guard", problems="\n".join(everything.problems))
+    assert all(x in contents[0] for x in ("Statement 1", "The note", "The update skip reason"))
+    both = copy_guard_report([], None, pages, n, note=COPIED_NOTE, skip_reason=COPIED_SKIP)
+    assert contents[1] == rejection("submit", "copy_guard", problems="\n".join(both.problems))
+    # a note alone and a skip reason alone keep their own texts; with a statement the skip reason is not alone
+    assert contents[2] == rejection("submit", "copy_guard_skip_reason", pages="page web-1-1")
+    assert contents[3] == rejection("submit", "copy_guard_note", pages="page web-1-1")
+    calls = submit_calls(ctx)
+    for shown in calls[:2]:
+        assert shown["note"] == WITHHELD and shown["update_skip_reason"] == WITHHELD
+    assert calls[0]["update_findings"][0]["statement"] == WITHHELD
+    assert calls[2]["note"] == CLEAN_NOTE and calls[2]["update_skip_reason"] == WITHHELD
+    assert calls[3]["note"] == WITHHELD and calls[3]["update_skip_reason"] == CLEAN_SKIP
+    assert COPIED not in json.dumps(ctx.events)
+
+
+async def test_a_skip_reason_flagged_with_a_statement_only_gets_every_problem(world):
+    script = [search(), keep_and_update(),
+              submit(update_skip_reason=COPIED_SKIP, update_findings=[{"statement": COPIED, "sources": ["web-1-1"]}]),
+              submit(update_skip_reason=CLEAN_SKIP, update_findings=[{"statement": CLEAN_STATEMENT,
+                                                                       "sources": ["web-1-1"]}]), answer(world)]
+    ctx, _ = await run_loop(world, script, exa=[page_reply()], page_texts=[COPY_LEAD, COPIED])
+    assert rules(ctx) == ["copy_guard", None]
+    content = ctx.results("submit_answer")[0]["content"]
+    assert "Statement 1" in content and "The update skip reason" in content
+    assert submit_calls(ctx)[0]["update_skip_reason"] == WITHHELD
 
 
 async def test_a_flagged_note_never_reaches_atlas(world):
@@ -340,6 +454,50 @@ async def test_a_flagged_note_never_reaches_atlas(world):
     assert [{k: v for k, v in e.items() if k != "created"} for e in stored] == events
     calls = [e["data"]["input"] for e in stored if e["kind"] == "tool_call" and e["data"]["name"] == "submit_answer"]
     assert calls[0]["note"] == WITHHELD
+    dumped = json.dumps(stored, default=str) + json.dumps(record, default=str)
+    assert COPIED not in dumped and COPY_LEAD not in dumped and "court of appeals held" not in dumped
+
+
+async def test_a_flagged_skip_reason_never_reaches_atlas(world):
+    """P4.13, through H's app and the store: the stream and the run record hold the withheld text, never the skip reason."""
+    from api.server import AppDeps, create_app
+    from api.state.store import MemoryStore
+    from tests.loop.support import check_stream
+    from tests.server.support import Client, FakeClock, lifespan
+
+    script = [update(), turn(tu("submit_answer", out_of_scope=True, note=CLEAN_NOTE, update_skip_reason=COPIED_SKIP),
+                             usage=loop_usage(2)),
+              turn(tu("submit_answer", out_of_scope=True, note=CLEAN_NOTE, update_skip_reason=CLEAN_SKIP),
+                   usage=loop_usage(3))]
+    clock = FakeClock()
+    store = MemoryStore(clock=lambda: clock.now())
+    deps, fakes = make_deps(world, script, store=store, exa=[page_reply()])
+
+    async def factory():
+        return AppDeps(store=store, execute_run=execute_run, loop_deps=deps, commit="g-v15", clock=clock)
+
+    app = create_app(factory)
+    client = Client(app)
+    async with lifespan(app):
+        resp = await client.post("/runs", {"question": "Can the police scan a house with a thermal camera?"})
+        assert resp.status == 201
+        run_id = resp.json()["run_id"]
+        s = client.stream(f"/runs/{run_id}/events")
+        for _ in range(50):
+            await clock.settle()
+            s.pump()
+            if s.closed:
+                break
+        assert s.closed, "the run did not end"
+        events = s.events()
+        await clock.settle()
+        stored = await store.read_events(run_id, 0)
+        record = await store.get_run_record(run_id)
+    assert not fakes["anthropic"].script
+    check_stream(events, world.corpus, page_texts=[COPY_LEAD, COPIED])
+    assert [{k: v for k, v in e.items() if k != "created"} for e in stored] == events
+    calls = [e["data"]["input"] for e in stored if e["kind"] == "tool_call" and e["data"]["name"] == "submit_answer"]
+    assert calls[0]["update_skip_reason"] == WITHHELD and calls[1]["update_skip_reason"] == CLEAN_SKIP
     dumped = json.dumps(stored, default=str) + json.dumps(record, default=str)
     assert COPIED not in dumped and COPY_LEAD not in dumped and "court of appeals held" not in dumped
 

@@ -508,7 +508,7 @@ def test_refused_submits_withhold_flagged_statements(path):
                                                          "no_update_check", "no_note", "note_too_long", None)   # None: bad input (v1.3)
             inp = calls[d["tool_use_id"]]["input"]
             texts = ([f["statement"] for f in inp.get("update_findings") or []] + [inp.get("update_overview") or ""]
-                     + [inp.get("note") or ""])      # the note too (P4.8, v1.5)
+                     + [inp.get("note") or "", inp.get("update_skip_reason") or ""])   # the note (P4.8), the skip reason (P4.13)
             withheld = [t for t in texts if t == WITHHELD]
             if sub.get("rule") == "copy_guard":
                 assert withheld, "a submit refused by the copy guard is stored with its flagged statements withheld (P4.3)"

@@ -1734,3 +1734,25 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 5. *"Wording look goods to me."*
 
 Then: *"The budget for paid build tests are sound."*
+
+## Oct 25, 2026, 12:15 CDT — Phase 4: Build, the patches for P4.11 and P4.13; contract v1.7
+**Asked:** *"Let's do the patches first, the update skip reason gap looks like we only need a sonnet subagent at high effort there."*
+**Came back:**
+- **P4.11, the main session:**
+  - `DAILY_CAP_USD` is 15.0;
+  - `tests/state/test_budget.py` asserts $15 and seven reservations at once;
+  - E's money tests were written around $10 (five runs at $1.674, a $10.074 refusal). They test how the caps work, not the cap's value, so a new `tests/state/conftest.py` pins $10 for them;
+  - CLAUDE.md, contract §4.E and a comment in `tests/server/test_http.py` are updated.
+- **P4.13, one builder (Sonnet 5.5 at high effort, `api/checks/update_findings.py`, `api/loop/run.py`, their tests):**
+  - `copy_guard_report(..., skip_reason=)` with `skip_reason_flagged` and `skip_reason_pages`;
+  - G guards a non-blank `update_skip_reason` on every submit once a page was returned, and withholds it in the stored `tool_call` whichever rule refuses;
+  - the refusal is `copy_guard_skip_reason` when the skip reason is the only flagged text, `copy_guard_note` when only the note is, else `copy_guard` with all problems;
+  - 5 new tests in F's file, and new tests in `tests/loop/test_v15.py`, including a run through H's app and `MemoryStore` showing a flagged skip reason never reaches stored events or the run record. The old test asserting P4.8's unguarded skip reason was replaced.
+  - **Mutants:** guard removed (7 tests fail), not withheld (7), only on no-sources replies (5), wrong text (3), exemption ignored (2). "Guarded with no pages" is equivalent.
+  - The main session read the diff and found it right.
+- **The refusal text:** `rejections.json`'s `submit.copy_guard_skip_reason` mirrors the approved `copy_guard_note`, with "the update skip reason" for "the note" (P4.13).
+- **Fixture test:** `tests/contract/test_fixtures.py`'s withheld check includes the skip reason. The fixtures regenerated unchanged.
+- **Contract v1.7:** §4.E, §4.F, §4.G, §6. The frontend brief gained one line.
+- **Whole suite: 3,456 passed, 49 skipped.**
+**Spend:** none.
+**DECISION (user):** none new. This carries out P4.11 and P4.13, locked at 12:09.

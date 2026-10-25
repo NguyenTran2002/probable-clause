@@ -108,7 +108,7 @@ SHUTDOWN_GRACE_S = _s(5, "main session's: uvicorn's --timeout-graceful-shutdown,
 ATLAS_OP_TIMEOUT_S = _s(5, "PLACEHOLDER, main session's: every other Atlas operation, so a reservation never waits pymongo's 30 s default")
 
 # Caps (P2.7, T3.4)
-DAILY_CAP_USD = _s(10.0, "P2.7")
+DAILY_CAP_USD = _s(15.0, "P2.7 amended by P4.11")
 MONTHLY_CAP_USD = _s(60.0, "P2.7")
 
 # Atlas (T3.4, T3.5)
