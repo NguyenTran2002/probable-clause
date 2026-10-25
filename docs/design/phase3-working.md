@@ -337,12 +337,12 @@ Decisions: T4.1 to T4.5 in `locked-decisions.md`; the closing log entry is "Oct 
 
 ## Area 5: the user's wording and the replays (to open after the compaction)
 
-Facts in brief §6.4, §7.2, §7.4, §10.6 and §12, P1.4, P1.5, P1.10, and the carried items above and in Areas 1 to 3. Proposed topics, to confirm with the user when the area opens:
+Facts in brief §6.4, §7.2, §7.4, §10.6 and §12, P1.4, P1.5, P1.10, and the carried items above and in Areas 1 to 3. Resumed after the compaction at Oct 24, 2026, 19:06 CDT; the topics below put to the user for confirmation, with one addition proposed (the text-status note, in topic 2). Proposed topics:
 
 | # | Topic | Status | Notes |
 |---|---|---|---|
 | 1 | The standing lines | Open | Landing pitch; not-legal-advice line; AI disclosure (on its own line, T4.1); affiliation (P1.5); "Sources and credits" and the reader's credit per source (T4.3); whether "live" may be used (brief default 6, §10.6) |
-| 2 | The guarantee, coverage and checks | Open | "This passage appears verbatim in this opinion." (brief §7.2); the coverage line; the answer key; the check line and flag notes, "not in this corpus" (T1.12, P1.10); the cost line's label (T4.5) |
+| 2 | The guarantee, coverage and checks | Open | "This passage appears verbatim in this opinion." (brief §7.2); the coverage line; the answer key; the check line and flag notes, "not in this corpus" (T1.12, P1.10); the cost line's label (T4.5); **proposed addition:** the text-status note (normalised from the official opinion, brief §4.5; unofficial, U.S. Reports the official text; straight quotation marks, P1.17; no syllabus, P1.13; *Chatrie* a slip opinion subject to revision, P1.11; licensing.md §1) |
 | 3 | The update-check band | Open | Honesty label (brief §6.4); a replacement for §6.4's guarantee sentence; links never called verified; the outcomes and failure lines (T2.3, T2.4) |
 | 4 | Run states and stop labels | Open | Every T4.4 state; the stop labels (T1.11, T3.3, T3.5); out-of-scope and nothing-found messages (T1.10); the Voyage warning (T3.3); "researched from scratch" |
 | 5 | The privacy note | Open | T3.7's contents; Anthropic, Voyage and Exa retention read and cited; Cloud Logging's default retention; goodnight's request logs (T3.5) |
