@@ -106,7 +106,7 @@ def test_spend_gate_stops_before_anything_else(sandbox, rc):
     r, calls = sandbox(PC_TEST_SPEND_RC=str(rc))
     assert r.returncode == rc
     assert [c[0] for c in calls] == ["uv"], calls      # not even git: the gate is first
-    assert "spend_report.py" in calls[0][1] and "--open-reservations" in calls[0][1]
+    assert "spend_report.py" in calls[0][1] and "--open-reservations" not in calls[0][1]
 
 
 @pytest.mark.parametrize("rc", [1, 2])
@@ -134,7 +134,8 @@ def test_spend_gate_command(sandbox):
     r, calls = sandbox()
     assert calls[0][0] == "uv"
     cmd = calls[0][1]
-    assert cmd.startswith("run --frozen --env-file .env python scripts/spend_report.py --open-reservations")
+    # v2.0 (P4.21): no reservations to check; the live month must be readable
+    assert re.match(r"run --frozen --env-file \.env python scripts/spend_report\.py --month \d{4}-\d{2} --env live$", cmd), cmd
     assert "--env live" in cmd                          # the report defaults to the test database
 
 

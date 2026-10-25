@@ -53,5 +53,5 @@ EXPOSE 8080
 
 # One process, one worker: runs live in memory on the instance (T3.1). Cloud Run sets $PORT.
 # --no-access-log: uvicorn's access line carries the client address and the run ID path (T3.7).
-# --timeout-graceful-shutdown: SHUTDOWN_GRACE_S, so reservations are released before Cloud Run's SIGKILL (contract v1.2).
+# --timeout-graceful-shutdown: SHUTDOWN_GRACE_S, so runs are closed and their spend recorded before Cloud Run's SIGKILL (contract v1.2).
 CMD ["sh", "-c", "exec uvicorn api.main:app --host 0.0.0.0 --port \"${PORT:-8080}\" --no-access-log --no-server-header --timeout-graceful-shutdown 5"]

@@ -15,15 +15,18 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# 1. The spend gate comes before anything else (T3.5): stop on open reservations (exit 1), an
-#    unreadable store (exit 2), or any other failure. --env live: the report defaults to the test database.
-#    It runs again right before the API is replaced (step 5), because a run started while the images were
-#    building would be lost when the revision changes.
+# 1. The spend gate comes before anything else (T3.5; contract 4.I, v2.0): the live database must be readable,
+#    so the API about to be deployed can admit runs (P4.21: there are no reservations to check any more). It stops on
+#    an unreadable store (exit 2) or any other failure. --env live: the report defaults to the test database. It runs
+#    again right before the API is replaced (step 5). A run in progress when the revision changes is cut off, and
+#    nothing detects it (contract 4.I).
 spend_gate() {
     local spend_rc=0
-    uv run --frozen --env-file .env python scripts/spend_report.py --open-reservations --env live || spend_rc=$?
+    local month
+    month="$(TZ=America/Chicago date +%Y-%m)"
+    uv run --frozen --env-file .env python scripts/spend_report.py --month "$month" --env live || spend_rc=$?
     if [ "$spend_rc" -ne 0 ]; then
-        echo "deploy.sh: stopping ($1). Spend report exit $spend_rc (1: a reservation is open; 2: unreadable)." >&2
+        echo "deploy.sh: stopping ($1). Spend report exit $spend_rc (2: the live database is unreadable)." >&2
         exit "$spend_rc"
     fi
 }

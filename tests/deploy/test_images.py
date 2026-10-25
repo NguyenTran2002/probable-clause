@@ -151,7 +151,7 @@ def test_no_absolute_local_paths_in_deploy_files():
 
 
 def test_api_image_shuts_down_within_cloud_runs_grace():
-    # contract v1.2: the lifespan shutdown releases reservations before Cloud Run's SIGKILL, 10 s after SIGTERM
+    # contract v1.2, v2.0: the lifespan shutdown closes runs and records their spend before Cloud Run's SIGKILL, 10 s after SIGTERM
     from api import settings
     grace = int(settings.SHUTDOWN_GRACE_S.value)
     assert f"--timeout-graceful-shutdown {grace}" in read("api.Dockerfile")
