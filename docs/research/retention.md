@@ -1,6 +1,6 @@
 # Retention of what the page sends out
 
-*Read Oct 24, 2026, 19:28 CDT (America/Chicago), by the main session for Area 5, topic 5 (the privacy note, T3.7), at the user's direction: "Read the retention pages yourself, no subagent." Each quote below was string-matched against its page by `scripts/verify_quotes.py` (cache under `data/cache/pages/`, gitignored), except where noted. Labels as in `licensing.md`: **DOC** the page says it; **INF** our reading.*
+*Read Oct 24, 2026, 19:28 CDT (America/Chicago), by the main session for Area 5, topic 5 (the privacy note, T3.7), at the user's direction: "Read the retention pages yourself, no subagent." Each quote below was string-matched against its page by `scripts/verify_quotes.py` (cache under `data/cache/pages/`, gitignored), except where noted. Labels as in `licensing.md`: **DOC** the page says it; **INF** our reading; **USER** checked by the user in their own account.*
 
 ## What leaves this app, and to whom
 
@@ -30,6 +30,7 @@ The project's Voyage organisation is managed in the Atlas console (BUILD_LOG, Oc
 | "MongoDB can collect the data that you send to the Atlas Embedding and Reranking API and use it to improve Voyage AI models" | DOC | https://www.mongodb.com/docs/voyageai/management/model-training-data/ |
 | The setting is the toggle "Help Improve Voyage AI Models" on the Atlas Organization Settings page; "Free users aren't eligible to opt out" (a payment method on file is required) | DOC | https://www.mongodb.com/docs/atlas/tutorial/manage-organization-settings/ |
 | Neither page states the default setting or a retention period | DOC (absence) | both |
+| **Opted out, Oct 24, 2026** (reported by the user at 19:36 CDT with a screenshot of the Voyage AI dashboard, not committed): the dashboard's Terms of Service page offers a switch to opt out of its Section 3(iii), "which means that Voyage won't use your data for training other future models (except finetuned models for yourself)", with a payment method required; the user's switch reads "Opted Out". This is the Voyage dashboard's own setting, separate from the Atlas toggle above | USER (screenshot) | the Voyage AI dashboard, Terms of Service |
 
 ## Exa
 
@@ -46,7 +47,8 @@ The project's Voyage organisation is managed in the Atlas console (BUILD_LOG, Oc
 |---|---|---|
 | Cloud Run request logs: "These logs are created automatically" | DOC | https://docs.cloud.google.com/run/docs/logging |
 | Cloud Logging "retains the log entries in the _Default bucket for 30 days, unless you configure custom retention for the bucket" | DOC | https://docs.cloud.google.com/logging/docs/store-log-entries |
-| goodnight is a Cloud Run service (Phase 2 findings §6), so its request logs, which see the visitor's address, follow its own project's `_Default` bucket; whether that project sets custom retention is not recorded | INF | — |
+| goodnight is a Cloud Run service (Phase 2 findings §6), so its request logs, which see the visitor's address, follow its own project's `_Default` bucket | INF | — |
+| goodnight keeps request logs for 30 days, the default (checked by the user, Oct 24, 2026, 19:36 CDT: *"goodnight keeps request logs for 30 days, the default"*) | USER | — |
 | This app's own services sit behind goodnight, which forwards no client IP (T3.5), so their request logs see the gateway's address | INF | T3.5 |
 
 ## Google Fonts (the page's three faces, T4.1)
