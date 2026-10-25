@@ -41,7 +41,7 @@ More, each from the brief:
 - `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/research/retention.md`: what each provider keeps of what the page sends (Area 5, T5.5), quotes string-matched.
 - `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user), kept for the record.
-- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests, for the user's approval.
+- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
 - `scripts/check_env.py`: reports which secrets are set.
 - `scripts/probe_courtlistener.py`: one authenticated request to confirm the CourtListener token works.
@@ -86,14 +86,14 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 25, 2026, 12:16 CDT, before a planned compaction; the paid build tests come next.*
+*Updated Oct 25, 2026, 12:29 CDT, after the paid build tests.*
 
-- **Next: the paid build tests,** on the user's go, per `docs/design/paid-build-tests.md` (its budget approved at 12:09, P4.11 to P4.15's log entry). In order:
-  1. **The keys in `.env` may be used** (the user, 12:17: *"make sure to NOT read the file or print out the key"*). They reach the API only through `uv run --env-file .env`. Check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key, and never echo one in a command, log or report.
-  2. Write the small client the plan names. It posts a question to the local API, reads the stream, sends a heartbeat every `HEARTBEAT_INTERVAL_S`, and saves events under `data/verification/phase4/`. It makes no paid call itself. Test it against H's app on fakes first.
-  3. Re-read Anthropic's pricing page and update `PRICE_TABLE`'s Anthropic date (contract §10).
-  4. Start the API against `Probable_Clause_test` (`PC_ENV` unset) with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` in the background, keeping its log. Run tests 1 to 4 one at a time, checking the stop rule ($2.50 Anthropic, 8 Exa searches) after each.
-  5. Report per the plan, then write a BUILD_LOG entry and update the Anthropic ledger.
+- **The paid build tests are done** (BUILD_LOG, "Oct 25, 2026, 12:29 CDT"): four runs through `scripts/run_client.py` against `Probable_Clause_test`, $0.8078 of Anthropic, 4 Exa searches. Money, cache classes, citations, thinking and the out-of-scope path held. Events and the server log are under `data/verification/phase4/` (local).
+- **Next: two findings for the user's decision** (that entry's items 1 and 2), then the queue below:
+  1. **Two `submit_answer` calls in one turn:** G judges each and the last accepted wins, so findings or a scope note are lost (seen in tests 3 and 4). A fix would be a contract change (v1.8) and a P4.16 decision.
+  2. **A capitalised first letter fails the quotation check** (T1.12 read strictly; "[P]resumptively" is the convention).
+  - Also reported, no action proposed: test 1 skipped its update search; test 3 answered with a scope note rather than nothing found; the loop's input budget would stop a research-heavy run at about round 7 or 8.
+- **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
 - **State:** Phases 0 to 3 done (tag `phase-3-done`). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.15** are locked (P4.11 to P4.15 at 12:09; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
@@ -149,6 +149,6 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - Exa's reply or the risk accepted (P1.3);
   - **the review of the prompt drafts** (T1.14);
   - sign-off on the local review, then a separate deploy green light (P4.1).
-- **Spend so far:** Anthropic ledger $0.6964 (Phases 2 and 3); Phase 4 Anthropic $0 of its $3 ceiling; Voyage in Phase 4 about $0.0635 at list price; Exa in Phase 4 none of its 10 searches.
+- **Spend so far:** Anthropic ledger $0.6964 (Phases 2 and 3); Phase 4 Anthropic $0.8078 of its $3 ceiling (ledger `data/verification/phase4/spend.jsonl`); Voyage in Phase 4 about $0.070 at list price; Exa in Phase 4 4 of its 10 searches.
 - **How the corpus is built** (re-runnable, in order): `scripts/pull_courtlistener.py`, `fetch_official_pdfs.py`, `build_corpus.py` (`CORPUS_OUT=<dir>`), `verify_corpus.py` (`VERIFY_OUT=<dir>`), `verify_lineup.py`, `build_manifest.py`, `filter_check.py`.
 - **Known, left as built** (P1.22 and later): "supersensitive" (*Jardines*); paragraph division inside the *Kyllo* and *Carpenter* appendices and one *Shultz* footnote; one *Ciraolo* footnote marker one character early; `lineup.json`'s *White* and *Chatrie* lineups (report only); *Kyllo*'s `header_footnotes_dropped`; *Chatrie*'s "Pet. for. Cert." typo (the splitter guards against it).
