@@ -1638,3 +1638,48 @@ The layout list gains the Phase 4 scripts, `data/vectors/`, `tests/fixtures/`, `
 - **Whole suite: 3,415 passed, 49 skipped.**
 **Spend:** none.
 **DECISION (user):** none new.
+
+## Oct 25, 2026, 02:49 CDT — Phase 4: Build, overnight step 7: the final verification review and its fixes
+**Asked:** the overnight note's step 7. A read-only review by Opus 5.5 at xhigh effort of the night's commits, then fixes for clear defects the locked decisions already cover, with the rest queued.
+**Came back:** the suite passed (3,415) at the review; the review's findings, most severe first:
+1. **Defect: an ellipsis could still drop a negation missing from the word list.** Three real corpus quotations passed `check_answer` with their meaning reversed:
+   - *Jardines*, "nowhere";
+   - *Carpenter*, "hardly";
+   - *Kyllo*, "non-" of "non-intrusive".
+
+   **Fixed** (T1.12, v1.4):
+   - `_NEGATIONS` gains "nowhere", "nobody", "hardly", "scarcely", "barely" and "absent";
+   - no quotation or piece starts right after a negating prefix and its hyphen (so "intrusive" is never quoted out of "non-intrusive", with an ellipsis or without);
+   - after the fix review, a bracket may not strip or add a hyphenated prefix either.
+2. **Risk: invisible characters hid a copy from the copy guard.** Soft hyphens, zero-width spaces and ligatures did. **Fixed** (T2.3, "ignoring case, punctuation and spacing"):
+   - the guard folds NFKC;
+   - it reads every invisible format character (Unicode Cf) both ways, dropped and as a space, and a run in either reading counts;
+   - the corpus exemption gets the same treatment.
+
+   The fix review caught that my first version, which only dropped them, joined two words when the character stood between them. Fixed before commit.
+3. **Risk, queued for the user:** the worst case reserves input only for the two failed composition attempts, while P4.10 prices their streamed output. A run's spend can pass its reservation by cents typically, and by up to $0.48 in theory. The caps stay correct, since `settle` records the full cost. The reviewer recommends accepting it, as P4.10 accepted hidden thinking; the alternative is $2.586.
+4. **Risk, queued for the user:** P4.8 leaves `update_skip_reason` unguarded "because the update is skipped", but the code accepts a skip reason beside a counted search. Once a page is returned it could carry page words into events. Options: refuse or drop the skip reason once a search counted, or guard it.
+5. **Nit: a spend limit met by the composition after its first block didn't pause research.** That run ends `answered`. **Fixed** (T3.3, T5.4): H sets the flag when `stop_kinds` holds a spend kind.
+6. **Nit, queued:** H's own `failed` ending sends `stop_kinds: []`, so a loop limit reached before an internal error isn't recorded.
+7. **Nit: a stale "$1.67" in contract §4.E.** **Fixed.**
+8. **Nit, queued:** Voyage records `retrying` before the next attempt's gate, so an abandoned run can leave a "retrying" record with nothing after it.
+
+**Verified fine by the review:**
+- no path leaks a flagged note, statement or overview (request fragments carry only passage blocks);
+- the corpus exemption on real cases;
+- P4.6 and P4.7;
+- P4.10's counting and the $2.106 arithmetic;
+- v1.6's `estimated_usage`, for every kind of estimated attempt;
+- the fixtures, regenerated in a scratch copy byte for byte, with no page text;
+- the v1.4 fixes.
+
+**The fix review** (Sonnet 5.5 at high effort):
+- it found the joined-words regression above and the bracket-hyphen gap, both fixed;
+- across 6,422 random verbatim 8-word corpus spans the quotation results were unchanged;
+- 3 of 1,469 spans starting after a hyphen are now refused: "chief" of "case-in-chief", "law" of "mother-in-law" and one other, all `in-`. That errs toward "not found", which is the safe direction;
+- building the corpus exemption takes about 0.24 s, once per corpus.
+
+**Tests:** 28 new ones, with mutation checks of each new rule. The fixtures are regenerated and unchanged. Contract v1.6 text added (§4.F, §4.H).
+**Whole suite: 3,443 passed, 49 skipped.**
+**Spend:** none.
+**DECISION (user):** none new. Items 3 and 4 wait for the user.

@@ -7,6 +7,7 @@ Every returned string is written to Claude and stored in events. A message names
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Container, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
@@ -109,13 +110,34 @@ class CopyGuardReport:
     note_pages: list[str] = field(default_factory=list)          # the pages the note repeats, by ID
 
 
+def _readings(text: str) -> list[list[str]]:
+    """The text's words (T2.3 item 3): lower case, punctuation and spacing gone; an apostrophe inside a word joins it.
+    Compatibility forms are folded (NFKC: a ligature, a full-width letter). An invisible format character (Unicode
+    Cf: a soft hyphen, a zero-width space, a direction mark) is read both ways, dropped (inside a word) and as a space
+    (between words), so it can hide a copy neither way. One reading when the text has none."""
+    text = unicodedata.normalize("NFKC", text).lower()
+    joined = "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
+    out = [_WORD.findall(_APOSTROPHE.sub("", joined))]
+    if joined != text:
+        split = "".join(" " if unicodedata.category(ch) == "Cf" else ch for ch in text)
+        out.append(_WORD.findall(_APOSTROPHE.sub("", split)))
+    return out
+
+
 def _words(text: str) -> list[str]:
-    """Lower case, punctuation and spacing gone; an apostrophe inside a word joins it (T2.3 item 3)."""
-    return _WORD.findall(_APOSTROPHE.sub("", text.lower()))
+    """The first reading: invisible format characters dropped."""
+    return _readings(text)[0]
 
 
 def _grams(words: list[str], n: int) -> set[tuple[str, ...]]:
     return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def _text_grams(text, n: int) -> set[tuple[str, ...]]:
+    """Every run of `n` words in any reading of the text."""
+    if not isinstance(text, str):
+        return set()
+    return set().union(*(_grams(words, n) for words in _readings(text)))
 
 
 class CorpusWords:
@@ -124,7 +146,8 @@ class CorpusWords:
     Held as one string (about 2 MB for the corpus) rather than a set of word runs (about 60 MB at 10 words)."""
 
     def __init__(self, texts: Iterable[str]):
-        self._text = "\n" + "\n".join(" " + " ".join(_words(t)) + " " for t in texts if isinstance(t, str)) + "\n"
+        lines = (" " + " ".join(words) + " " for t in texts if isinstance(t, str) for words in _readings(t))
+        self._text = "\n" + "\n".join(lines) + "\n"
 
     def __contains__(self, gram) -> bool:
         return isinstance(gram, tuple) and bool(gram) and f" {' '.join(gram)} " in self._text
@@ -150,11 +173,11 @@ def copy_guard_report(statements: Sequence[str], overview: str | None, pages: Ma
         raise ValueError("n_words must be at least 1")
     if not isinstance(pages, Mapping):
         pages = {f"#{i}": t for i, t in enumerate(pages, start=1)}
-    page_grams = {pid: _grams(_words(text if isinstance(text, str) else ""), n_words) for pid, text in pages.items()}
+    page_grams = {pid: _text_grams(text, n_words) for pid, text in pages.items()}
     report = CopyGuardReport()
 
     def copied_from(text: str) -> list[str]:
-        grams = _grams(_words(text if isinstance(text, str) else ""), n_words)
+        grams = _text_grams(text, n_words)
         if not grams:
             return []
         ids = []

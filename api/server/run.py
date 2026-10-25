@@ -53,6 +53,9 @@ def _kind(e: BaseException) -> str:
     return e.kind if isinstance(e, ServiceError) else type(e).__name__
 
 
+# The two spend kinds of api/protocols.StopKind (the same pair as api/loop/run.py SPEND_STOP's values).
+SPEND_STOP_KINDS = frozenset({"console_spend_limit", "tier_spend_cap"})
+
 
 def estimated_usage(priced: Usage) -> dict | None:
     """v1.6: the tokens an estimated Claude attempt was priced at, ours and never shown as Claude's `usage`, so the
@@ -450,9 +453,11 @@ class Run:
             state = ended.get("state") or ("interrupted" if outcome == "cancelled" else "failed")
             stop_kind = ended.get("stop_kind")
             now = self.clock.now()
-            if state == "spend_limit":
+            if state == "spend_limit" or SPEND_STOP_KINDS & set(ended.get("stop_kinds") or ()):
                 # T3.3, T5.4: a spend limit pauses live research until the 1st; set before the release, so no new
-                # run can reserve in between. Both stop kinds of the state (console_spend_limit, tier_spend_cap).
+                # run can reserve in between. Both stop kinds of the state (console_spend_limit, tier_spend_cap),
+                # also when the composition met one after its first block and the run ended answered (v1.4's
+                # stop_kinds; the final review, Oct 25, 2026).
                 try:
                     await self.store.set_flag("anthropic_spend_limit", now)
                 except Exception as e:

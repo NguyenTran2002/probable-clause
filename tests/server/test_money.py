@@ -397,6 +397,28 @@ async def test_a_spend_limit_pauses_live_research_until_the_1st(kind):
         assert (await h.client.get("/health")).json()["live_research"] == "paused_month"
 
 
+@pytest.mark.parametrize("kind", ["console_spend_limit", "tier_spend_cap"])
+async def test_a_spend_limit_met_by_the_composition_pauses_research_too(kind):
+    # the final review, Oct 25, 2026: the composition broke after its first block on the spend limit, so the run is
+    # answered and incomplete with the stop in stop_kinds; research still pauses until the 1st (T3.3, T5.4)
+    h = make_app(ending("answered", answer_end="incomplete",
+                        extra={"failure_reason": "spend_limit", "stop_kinds": [kind]}))
+    async with lifespan(h.app):
+        await begin(h)
+        await h.clock.settle()
+        until = await h.store.flag_until("anthropic_spend_limit", h.clock.now())
+        assert until is not None and until.isoformat() == "2026-11-01T00:00:00-05:00"
+
+
+async def test_a_run_with_no_spend_stop_sets_no_flag():
+    h = make_app(ending("step_limit", stop_kind="step_limit", answer_end="complete",
+                        extra={"stop_kinds": ["step_limit"]}))
+    async with lifespan(h.app):
+        await begin(h)
+        await h.clock.settle()
+        assert await h.store.flag_until("anthropic_spend_limit", h.clock.now()) is None
+
+
 async def test_the_flag_is_set_before_the_reservation_is_released():
     order = []
     store = FlakyStore()

@@ -39,7 +39,9 @@ _ELLIPSIS_CONTENT = re.compile(r"[\s.…]*[.…][\s.…]*")
 _TRAILING_PUNCTUATION = ".,"    # T1.12: punctuation inside the closing quote mark; American style puts only these two there
 
 # A bracket may not add or remove a negation (T1.12 review). Words, and prefixes that negate the word they start.
-_NEGATIONS = {"not", "no", "never", "nor", "none", "nothing", "neither", "without", "cannot"}
+_NEGATIONS = {"not", "no", "never", "nor", "none", "nothing", "neither", "without", "cannot",
+              # the final review, Oct 25, 2026: these reverse a sentence just as well when an ellipsis drops them
+              "nowhere", "nobody", "hardly", "scarcely", "barely", "absent"}
 _NEGATING_PREFIXES = ("un", "in", "im", "il", "ir", "non", "dis")
 _PREFIX_REMAINDER_MIN = 4       # "reasonable" and "unreasonable" pair up; "to" and "into" do not
 
@@ -242,15 +244,20 @@ def _plain(word: str) -> str:
 
 
 def _negated(words) -> bool:
+    """A negation word in an ellipsis's gap. A piece never starts right after a negating prefix and its hyphen
+    (`_to_pattern`), so "non-" cannot be dropped that way; a gap holding a whole prefixed word ("non-intrusive",
+    "unreasonable") is allowed, as an ellipsis omits whole words."""
     return any(w in _NEGATIONS or w.endswith("n't") for w in map(_plain, words))
 
 
 def _prefix_pair(a_words, b_words) -> bool:
-    """"unreasonable" in one and "reasonable" in the other: a bracket that strips or adds a negating prefix."""
+    """"unreasonable" (or "non-intrusive") in one and "reasonable" (or "intrusive") in the other: a bracket that
+    strips or adds a negating prefix."""
     for a in map(_plain, a_words):
         for b in map(_plain, b_words):
             for p in _NEGATING_PREFIXES:
-                if (a == p + b and len(b) >= _PREFIX_REMAINDER_MIN) or (b == p + a and len(a) >= _PREFIX_REMAINDER_MIN):
+                if ((a in (p + b, p + "-" + b) and len(b) >= _PREFIX_REMAINDER_MIN)
+                        or (b in (p + a, p + "-" + a) and len(a) >= _PREFIX_REMAINDER_MIN)):
                     return True
     return False
 
@@ -346,7 +353,8 @@ def _to_pattern(group) -> Piece:
             parts.append("(?i:" + _spaced(" ".join(value.split())) + ")")
     first = group[0][1][0]
     last = group[-1][1][-1]
-    start = r"(?<![\w'])" if first.isalnum() else ""
+    # never right after a negating prefix and its hyphen: "intrusive" quoted out of "non-intrusive" reverses it
+    start = (r"(?<![\w'])" + "".join(rf"(?<!\b(?i:{p})-)" for p in _NEGATING_PREFIXES)) if first.isalnum() else ""
     end = r"(?![\w'])" if last.isalnum() else ""
     pattern = re.compile("(?=(" + start + "".join(parts) + end + "))")    # lookahead: every start, overlapping too
     return Piece(pattern, tuple(value for kind, value in group if kind == "t"))

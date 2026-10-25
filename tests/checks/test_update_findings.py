@@ -399,3 +399,40 @@ def test_source_id_shape_is_ascii_only():
     arabic = "web-١-٢"      # Arabic-indic digits: \d would match them
     problems = check_update_findings([finding(sources=[arabic])], None, RETURNED, 1)
     assert len(problems) == 1 and arabic not in problems[0]
+
+
+# --- invisible and compatibility characters do not hide a copy (the final review, Oct 25, 2026)
+
+@pytest.mark.parametrize("dirty", [
+    "Police departments across the coun\u00adtry have begun using drones to photograph backyards",   # soft hyphen
+    "Police departments across the coun\u200btry have begun using drones to photograph backyards",   # zero-width space
+    "Police departments across the coun\u2060try have begun using drones to photograph backyards",   # word joiner
+    "Police departments across the coun\ufefftry have begun using drones to photograph backyards",   # BOM
+    "Police departments across the \uff43ountry have begun using drones to photograph backyards",    # full-width c
+])
+def test_invisible_characters_in_the_page_do_not_hide_a_copy(dirty):
+    # the odd character sits in the fifth word, so without the fix neither side keeps ten words in a row
+    clean = "Police departments across the country have begun using drones to photograph backyards."
+    assert copy_guard_report([clean], None, {"web-1-1": dirty}, 10).flagged_statements == {0}
+    assert copy_guard_report([dirty], None, {"web-1-1": clean}, 10).flagged_statements == {0}
+
+
+def test_a_ligature_in_the_page_does_not_hide_a_copy():
+    page = {"web-1-1": "The of\ufb01cers \ufb01led a warrant application \ufb01rst and the judge signed it that very afternoon."}
+    s = "The officers filed a warrant application first and the judge signed it that very afternoon"
+    assert copy_guard_report([s], None, page, 10).flagged_statements == {0}
+
+
+def test_the_exemption_is_normalised_the_same_way():
+    page = {"web-1-1": "Writing in 1967 the Court said that " + KATZ + " is not a subject of protection."}
+    exempt = corpus_words([KATZ.replace("protects", "pro\u00adtects")])
+    assert copy_guard_report([KATZ], None, page, 10, exempt=exempt).problems == []
+
+
+@pytest.mark.parametrize("sep", ["​", "‎", "‏", "⁠", "‍"])
+def test_an_invisible_character_between_words_does_not_hide_a_copy_either(sep):
+    # read both ways: an invisible character inside a word joins it, one standing for a space splits it
+    clean = "Police departments across the country have begun using drones to photograph backyards."
+    dirty = clean.replace(" ", sep)
+    assert copy_guard_report([clean], None, {"web-1-1": dirty}, 10).flagged_statements == {0}
+    assert copy_guard_report([dirty], None, {"web-1-1": clean}, 10).flagged_statements == {0}

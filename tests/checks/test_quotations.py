@@ -750,3 +750,82 @@ def test_an_ellipsis_takes_the_smallest_gap():
     assert r.quotations_found == 1 and r.flags == []
     r = check_answer(['He wrote "Not the first time . . . did search the house".'], [source], MANIFEST)
     assert r.quotations_found == 1
+
+
+# ---- more negation words, and a negating prefix dropped by an ellipsis (the final review, Oct 25, 2026)
+
+@pytest.mark.parametrize("source,whole,dropped", [
+    ("That right is nowhere to be found in the annals of Anglo-American jurisprudence.",
+     "is nowhere to be found in the annals", "is . . . to be found in the annals"),
+    ("A statutory disclosure requirement is hardly sufficient to give someone an ownership interest.",
+     "disclosure requirement is hardly sufficient to give someone", "disclosure requirement is . . . sufficient to give someone"),
+    ("The officers searched and nobody objected to the entry of the house that night.",
+     "officers searched and nobody objected to the entry", "officers searched and . . . objected to the entry"),
+    ("The warrant was scarcely supported by the affidavit the officer had sworn that day.",
+     "warrant was scarcely supported by the affidavit", "warrant was . . . supported by the affidavit"),
+    ("The device was barely visible from the street where the officers had parked.",
+     "device was barely visible from the street", "device was . . . visible from the street"),
+    ("The search was valid absent exigent circumstances that would justify the entry.",
+     "search was valid absent exigent circumstances", "search was valid . . . exigent circumstances"),
+    ("It is a non-intrusive device which emits no rays or beams and shows a crude visual image.",
+     "is a non-intrusive device which emits no rays", "is a . . . intrusive device which emits no rays"),
+    ("The entry was un-announced and the officers carried their weapons drawn into the room.",
+     "entry was un-announced and the officers carried", "entry was . . . announced and the officers carried"),
+])
+def test_an_ellipsis_over_another_negation_or_a_negating_prefix_is_flagged(source, whole, dropped):
+    r = check_answer([f'The Court wrote "{whole}".'], [source], MANIFEST)
+    assert (r.quotations_checked, r.quotations_found) == (1, 1), whole      # the control: the quote itself is found
+    r = check_answer([f'The Court wrote "{dropped}".'], [source], MANIFEST)
+    assert r.quotations_checked == 1 and r.quotations_found == 0, dropped
+    assert [f.kind for f in r.flags] == ["quotation_not_found"]
+
+
+def test_the_real_corpus_cases_of_the_final_review_are_flagged():
+    from api.corpus.store import Corpus
+    from tests.loop.support import ROOT
+    corpus = Corpus.load(ROOT)
+    for pid, whole, dropped in [
+        ("jardines-3-p1", "that is nowhere to be found in the annals of Anglo-American jurisprudence",
+         "that is . . . to be found in the annals of Anglo-American jurisprudence"),
+        ("carpenter-4-p47", "a statutory disclosure requirement is hardly sufficient to give someone an ownership interest",
+         "a statutory disclosure requirement is . . . sufficient to give someone an ownership interest"),
+        ("kyllo-1-p3", "is a non-intrusive device which emits no rays or beams",
+         "is a . . . intrusive device which emits no rays or beams"),
+        ("kyllo-1-p3", "non-intrusive device which emits no rays or beams", ". . . intrusive device which emits no rays or beams"),
+    ]:
+        text = corpus.passages[pid].text
+        r = check_answer([f'The Court wrote "{whole}".'], [text], corpus.manifest)
+        assert r.quotations_found == 1, (pid, whole)
+        r = check_answer([f'The Court wrote "{dropped}".'], [text], corpus.manifest)
+        assert r.quotations_checked == 1 and r.quotations_found == 0, (pid, dropped)
+
+
+def test_a_hyphenated_word_in_a_gap_that_is_not_a_negating_prefix_still_matches():
+    source = "The officers made a long-term plan and the court approved the warrant that day."
+    r = check_answer(['He wrote "officers made a . . . plan and the court approved".'], [source], MANIFEST)
+    assert r.quotations_found == 1 and r.flags == []
+
+
+def test_a_quotation_never_starts_right_after_a_negating_prefix():
+    source = "On remand the court found that it is a non-intrusive device which emits no rays or beams at all."
+    for q in ["intrusive device which emits no rays", ". . . intrusive device which emits no rays"]:
+        r = check_answer([f'He wrote "{q}".'], [source], MANIFEST)
+        assert r.quotations_checked == 1 and r.quotations_found == 0, q
+    r = check_answer(['He wrote "a non-intrusive device which emits no rays".'], [source], MANIFEST)
+    assert r.quotations_found == 1
+    r = check_answer(['He wrote "Non-intrusive devices emit nothing at all".'], ["Non-intrusive devices emit nothing at all, it said."], MANIFEST)
+    assert r.quotations_found == 1
+
+
+def test_a_quotation_may_start_after_a_hyphen_that_is_not_a_negating_prefix():
+    source = "The officers made a long-term plan and the court approved the warrant that day."
+    r = check_answer(['He wrote "term plan and the court approved".'], [source], MANIFEST)
+    assert r.quotations_found == 1
+
+
+def test_a_bracket_that_strips_a_hyphenated_negating_prefix_is_flagged():
+    source = "On remand the court found that it is a non-intrusive device on the house which emits no rays."
+    r = check_answer(['He wrote "it is a [intrusive] device on the house".'], [source], MANIFEST)
+    assert r.quotations_checked == 1 and r.quotations_found == 0
+    r = check_answer(['He wrote "it is a [non-intrusive] device on the house".'], [source], MANIFEST)
+    assert r.quotations_found == 1
