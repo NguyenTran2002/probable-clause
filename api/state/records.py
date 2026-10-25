@@ -15,7 +15,9 @@ but `run` is optional. Strings are accepted only as the run ID, an ISO date or t
     `searches`         {`meaning`, `exact`, `web`}: integers >= 0
     `keeps`            integer >= 0
     `tokens`           Claude's tokens {`input`, `cache_read`, `cache_write`, `output`}: integers >= 0
-    `cost_usd`         {`claude_loop`, `claude_composition`, `exa`, `voyage`}: numbers >= 0
+    `update_rounds`    integer >= 0 (the update step's rounds)
+    `update_end`       how the update step ended: "submitted", "stopped", "failed", "abandoned" or null
+    `cost_usd`         {`claude_loop`, `claude_update`, `claude_composition`, `exa`, `voyage`}: numbers >= 0
     `calls`            billed attempts {`claude`, `exa`, `voyage`}: integers >= 0
     `retries`          {`claude`, `voyage`}: integers >= 0
     `checks`           counts {`quotations_checked`, `quotations_found`, `citations_checked`, `citations_found`,
@@ -51,7 +53,7 @@ FORBIDDEN_KEYS = frozenset({"question", "answer", "answer_text", "answer_blocks"
 
 # The strings a stop detail may carry (T3.7): a fixed, small set of words, none of them free text.
 DETAIL_STRINGS = frozenset(STOP_KINDS | set(RUN_STATES) | {
-    "loop", "composition", "embed", "rerank", "update_search",       # purposes
+    "loop", "update", "composition", "embed", "rerank", "update_search",       # purposes (and the update step)
     "anthropic", "exa", "voyage",                                    # services
     "full", "before_chatrie",                                        # corpus labels
     "degraded", "unavailable",                                       # Voyage-warning words
@@ -142,11 +144,13 @@ RUN_RECORD_SPEC = {
     "state": _enum(*RUN_STATES),
     "stop_kind": _enum(None, *STOP_KINDS),
     "rounds": _int,
+    "update_rounds": _int,
+    "update_end": _enum(None, "submitted", "stopped", "failed", "abandoned"),
     "answer_chars": _int,
     "searches": _counts("meaning", "exact", "web"),
     "keeps": _int,
     "tokens": _counts("input", "cache_read", "cache_write", "output"),
-    "cost_usd": {k: _num for k in ("claude_loop", "claude_composition", "exa", "voyage")},
+    "cost_usd": {k: _num for k in ("claude_loop", "claude_update", "claude_composition", "exa", "voyage")},
     "calls": _counts("claude", "exa", "voyage"),
     "retries": _counts("claude", "voyage"),
     "checks": _counts("quotations_checked", "quotations_found", "citations_checked", "citations_found", "not_in_corpus", "flags"),

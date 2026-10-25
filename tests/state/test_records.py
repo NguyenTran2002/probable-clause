@@ -9,7 +9,8 @@ GOOD = {
     "run": "AbC_123-xyz", "started_date": "2030-05-14", "started_time": "12:00:00", "state": "answered", "stop_kind": None,
     "rounds": 4, "answer_chars": 812, "searches": {"meaning": 2, "exact": 1, "web": 1}, "keeps": 5,
     "tokens": {"input": 1000, "cache_read": 800, "cache_write": 200, "output": 300},
-    "cost_usd": {"claude_loop": 0.1, "claude_composition": 0.1, "exa": 0.007, "voyage": 0.001},
+    "update_rounds": 3, "update_end": "submitted",
+    "cost_usd": {"claude_loop": 0.1, "claude_update": 0.05, "claude_composition": 0.1, "exa": 0.007, "voyage": 0.001},
     "calls": {"claude": 6, "exa": 1, "voyage": 4}, "retries": {"claude": 0, "voyage": 1},
     "checks": {"quotations_checked": 3, "quotations_found": 3, "citations_checked": 2, "citations_found": 2,
                "not_in_corpus": 0, "flags": 0},
@@ -210,3 +211,40 @@ def test_not_too_many_keys_and_not_a_dict():
 def test_the_denylist_still_applies_as_a_second_check_to_numbers_under_telling_names():
     for key in ("question", "query", "prompt", "answer", "note", "text"):
         bad_detail({key: 1})
+
+
+# --- the update step's fields (contract v2.0, §8) -----------------------------------------------------------------------
+
+@pytest.mark.parametrize("end", ["submitted", "stopped", "failed", "abandoned", None])
+def test_update_end_accepts_its_four_words_and_null(end):
+    assert records.check_run_record({"run": "r1", "update_end": end, "update_rounds": 0}) == "r1"
+
+
+@pytest.mark.parametrize("end", ["done", "Submitted", "", "answered", 1, True, ["submitted"]])
+def test_update_end_refuses_anything_else(end):
+    assert "update_end" in refused({"run": "r1", "update_end": end})
+
+
+@pytest.mark.parametrize("rounds", [-1, 1.5, "3", True, None, 2 ** 53])
+def test_update_rounds_is_a_non_negative_integer(rounds):
+    assert "update_rounds" in refused({"run": "r1", "update_rounds": rounds})
+
+
+def test_claude_update_cost_is_a_number_of_zero_or_more_beside_the_other_costs():
+    assert records.check_run_record({"run": "r1", "cost_usd": {"claude_update": 0.0}}) == "r1"
+    assert records.check_run_record({"run": "r1", "cost_usd": {"claude_loop": 1, "claude_update": 2.5, "claude_composition": 0.1}}) == "r1"
+    for bad in (-0.01, float("nan"), float("inf"), "0.1", None, True):
+        assert "claude_update" in refused({"run": "r1", "cost_usd": {"claude_update": bad}})
+    assert "claude_updates" in refused({"run": "r1", "cost_usd": {"claude_updates": 0.1}})
+
+
+def test_update_fields_are_not_a_way_to_carry_text():
+    assert "update_end" in refused({"run": "r1", "update_end": "the update found a case about my question"})
+    assert "update_summary" in refused({"run": "r1", "update_summary": 1})
+
+
+def test_update_is_an_allowed_detail_word():
+    assert "update" in records.DETAIL_STRINGS
+    assert records.check_stop_detail({"purpose": "update", "step": "update"}) == {"purpose": "update", "step": "update"}
+    with pytest.raises(ValueError):
+        records.check_stop_detail({"purpose": "updates"})

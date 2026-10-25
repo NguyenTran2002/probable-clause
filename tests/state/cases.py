@@ -427,6 +427,20 @@ async def case_run_records_are_replaced_by_run_and_hold_only_the_allowed_shape(s
     assert (await store.get_run_record("r1"))["state"] == "step_limit"
 
 
+async def case_run_records_carry_the_update_steps_fields(store):
+    rec = {"run": "r9", "state": "answered", "rounds": 4, "update_rounds": 3, "update_end": "stopped",
+           "cost_usd": {"claude_loop": 0.1, "claude_update": 0.05, "claude_composition": 0.1, "exa": 0.007, "voyage": 0.001}}
+    await store.upsert_run_record(rec)
+    assert await store.get_run_record("r9") == rec
+    await store.upsert_run_record({**rec, "update_end": None})
+    assert (await store.get_run_record("r9"))["update_end"] is None
+    with pytest.raises(ValueError):
+        await store.upsert_run_record({"run": "r9", "update_end": "finished"})
+    with pytest.raises(ValueError):
+        await store.upsert_run_record({"run": "r9", "update_rounds": -1})
+    assert (await store.get_run_record("r9"))["update_end"] is None
+
+
 async def case_ensure_indexes_can_run_twice(store):
     await store.ensure_indexes()
     await store.ensure_indexes()
