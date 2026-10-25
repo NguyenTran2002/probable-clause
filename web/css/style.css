@@ -546,7 +546,8 @@ body.playing .scratch { display: none; }
 
 /* notices above the answer: the scope note, the Voyage warning, the replay banner (T4.4 #7, #11); never red */
 .notice { margin: 0 0 1rem; padding: 0.65rem 0.9rem; border-left: 3px solid var(--brand); border-radius: 0 10px 10px 0; background: var(--surface); font-size: 0.9375rem; }
-.notice.replay { margin: 0; }
+/* the replay notice stays at the top from the start; everything after it stacks from the bottom (the user, Oct 25, 2026) */
+.notice.replay { margin: 0 0 auto; }
 .notice .whose { margin-bottom: 0.2rem; }
 .stop-label { margin: 0 0 1rem; padding: 0.55rem 0.85rem; border: 1px solid var(--line); border-radius: 10px; font-size: 0.9375rem; font-weight: 600; }
 .stop-label.end { margin: 1rem 0 0; }

@@ -1,4 +1,4 @@
-// The step log's pace (pace.js): tool calls and the stage after research at least the gap apart on screen (1 s here),
+// The step log's pace (pace.js): research's tool calls at least the gap apart on screen (1 s here),
 // every event in order, quiet events
 // never held, and a skip shows everything at once.
 import { test } from 'node:test';
@@ -27,7 +27,7 @@ function clock() {
     },
   };
 }
-const ev = (n, kind) => ({ n, kind, data: {} });
+const ev = (n, kind, step = 'research') => ({ n, kind, data: { step } });
 
 test('tool calls that arrive together appear 1 s apart, everything in order', () => {
   const c = clock();
@@ -104,7 +104,7 @@ test('whenIdle waits for the last held event; stop drops everything; a drawing f
   assert.deepEqual(shown, [1]);
 });
 
-test('every fixture, paced: each event once, in order, and tool calls and the stage start never closer than the page\'s gap', () => {
+test('every fixture, paced: each event once, in order, and research\'s tool calls never closer than the page\'s gap', () => {
   const dir = new URL('../../tests/fixtures/events/', import.meta.url);
   const files = readdirSync(dir).filter(f => f.endsWith('.json'));
   assert.ok(files.length >= 30);
@@ -117,24 +117,25 @@ test('every fixture, paced: each event once, in order, and tool calls and the st
     for (const e of events) { c.advance(Math.max(0, e.t_ms - c.now())); p.push(e); }
     c.advance(60_000);
     assert.deepEqual(shown.map(s => s[0]), events.map(e => e.n), name);
-    const stage = shown.findIndex(s => ['update_started', 'composition_started', 'update_band'].includes(s[1]));
-    const paced = shown.filter((s, i) => s[1] === 'tool_call' || i === stage).map(s => s[2]);
+    const step = new Map(events.map(e => [e.n, e.data.step]));
+    const paced = shown.filter(s => s[1] === 'tool_call' && step.get(s[0]) === 'research').map(s => s[2]);
     for (let i = 1; i < paced.length; i++) assert.ok(paced[i] - paced[i - 1] >= TOOL_CALL_GAP_MS, `${name}: paced item ${i}`);
   }
 });
 
-test('the stage after research waits 1 s after "Finishing research"; only its first event is held', () => {
+test('only research is paced: the answer, the update check and their tool calls are never held', () => {
   const c = clock();
   const shown = [];
   const p = createPacer(e => shown.push([e.n, c.now()]), { ...c, gapMs: 1000 });
-  p.push(ev(1, 'tool_call'));           // keep_passages
-  c.advance(1010);
-  p.push(ev(2, 'tool_call'));           // submit_answer, already 1 s after: shown at once
-  p.push(ev(3, 'tool_result'));
-  p.push(ev(4, 'update_started'));
-  p.push(ev(5, 'round_started'));
-  p.push(ev(6, 'composition_started'));
-  assert.deepEqual(shown.map(s => s[0]), [1, 2, 3]);
-  c.advance(1000);
-  assert.deepEqual(shown.slice(3), [[4, 2010], [5, 2010], [6, 2010]], 'the groups appear together, 1 s after step 5');
+  p.push(ev(1, 'tool_call'));                   // keep_passages
+  c.advance(200);
+  p.push(ev(2, 'tool_call'));                   // submit_answer: held until 1 s after step 4
+  p.push(ev(3, 'update_started'));
+  p.push(ev(4, 'composition_started'));
+  p.push(ev(5, 'tool_call', 'update'));          // the update check's submit
+  assert.deepEqual(shown.map(s => s[0]), [1]);
+  c.advance(800);
+  assert.deepEqual(shown.slice(1), [[2, 1000], [3, 1000], [4, 1000], [5, 1000]], 'everything after step 5 arrives with it');
+  p.push(ev(6, 'tool_call', 'update'));
+  assert.deepEqual(shown.at(-1), [6, 1000]);
 });

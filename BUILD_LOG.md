@@ -2334,3 +2334,19 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 **DECISION (user):**
 - The 3 s gap, quoted above.
 - On testing: *"Since we're doing quick iterations, you don't need to run exhaustive test after each iteration. Instead, run tests for what matters only. Once we've finished iterating, we will run the full suite. This is so we can speed up during the iteration process."* Saved to the main session's memory. The full suite (Python and Node) and the browser sweep run once iterating ends, before the sign-off.
+
+## Oct 25, 2026, 18:41 CDT — Frontend: the user's review, round 4 (only research paced; the replay notice at the top)
+**Asked:**
+- *"This delay should not apply to the composition call writing the answer or the update check, just for the research loop."*
+- *"This line "Recorded run, Oct 25, 2026. A real run, replayed at its recorded pace. It makes no new calls.", I want it spawn up top at the start of the run while everything else spawns bottom and get pushed up."*
+**Came back:**
+- **The pace:** only research's tool calls (`step: "research"`) are held, 3 s apart, the first never.
+  - "Finishing research" (`submit_answer`) is one of them, so it is still paced.
+  - Round 2's wait for the stage after research is removed; it read the user's round-2 request the other way. The groups, the update check's calls and the answer arrive with step 5.
+- **The replay notice:** `margin-bottom: auto` in the thread's column, so it sits at the top from the start while the rest stacks from the bottom. Once the run outgrows the pane, it scrolls away with the conversation.
+- **Checked (only what changed):**
+  - `webdev/test/pace.test.mjs` passes (6 tests; the stage test replaced by one where nothing after research is held).
+  - In the browser at the start of a replay: the notice at 124 to 189 px of a pane running 92 to 943, the question at 800 to 882, the composer below.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the two quotes above.
