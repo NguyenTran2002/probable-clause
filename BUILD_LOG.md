@@ -2893,3 +2893,18 @@ The source hues, flag red and system-following dark mode are kept from T4.1. It 
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"Looks really good. Lock."* Locked as P4.43.
+
+## Oct 26, 2026, 00:39 CDT — Frontend: the user's review, round 26; the margin notes on phones
+**Asked (the user):** *"Quick check, on mobile, the noting in the frontend is not working?"* The main session explained that P4.36 turns the notes off below 760 px. The user: *"Just turn on notes on phone quickly."*
+**Came back:**
+- **The phone gate is removed.** `web/js/margin.js` no longer skips notes below 760 px.
+- **Room for the notes (the main session's call).** Removing the gate alone showed no note, because on a phone the hero covered every keyword but "right" (hero from 53 px to 740 px on a 375 × 812 view). The phone layout in `web/css/style.css` now starts the hero 11rem down. The amendment's first lines ("right", "secure", "persons", "houses", "effects") stay clear above it, with room for one note beside one of their words.
+- **The pause control is shown on phones** (WCAG 2.2.2), in the top right corner. At the bottom it overlapped "How Claude's citations work", and the notes already keep out of its box.
+**Cost:** at 375 × 812, the second recorded-run chip now sits below the first view, about 50 px lower than before.
+**Checked:**
+- In the mock at 375 × 812, notes appeared on "effects" (*Jacobsen*), "houses" (*Dunn*) and "home", each with its leader. Nothing scrolls sideways, and the pause control and the link don't overlap.
+- Starting a recorded run clears the notes and shows the run screen.
+- Node tests: 84 of 84 pass.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none yet. This would amend P4.36's "no notes on phones" if locked.

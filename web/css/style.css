@@ -723,11 +723,13 @@ body.playing .scratch { display: none; }
 
 /* ---------- phone: one pane at a time ---------- */
 @media (max-width: 759px) {
-  .first { padding: 2rem 1rem 4.5rem; }
+  /* room above the hero for the amendment's first lines, so a note can write itself beside one of their words */
+  .first { padding: 11rem 1rem 4.5rem; }
+  /* the pause control goes to the top corner, clear of "How Claude's citations work"; notes keep out of its box */
+  .motion { top: 0.5rem; bottom: auto; right: 0.5rem; }
   /* the hero fills a phone's first view: the print stays fainter and the halo would only push the page sideways */
   .amend p { color: color-mix(in oklch, var(--ink) 5%, var(--bg)); }
   .hero::before { inset: 0; background: none; }
-  .motion { display: none; }
   .below { gap: 3rem; padding-top: 3rem; }
   .pitch { font-size: 1rem; }
   .pitch .lead { font-size: 1.125rem; }

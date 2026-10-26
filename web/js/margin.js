@@ -152,10 +152,8 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
     later(() => { o.n.remove(); o.p.remove(); going = going.filter(x => x !== o); }, fast ? 700 : 1500);
   }
 
-  // on a phone the hero fills the first view, so there is no room for notes and no control to show (style.css)
-  const narrow = matchMedia('(max-width: 759px)');
   function tick() {
-    if (exiting || paused || !visible || document.hidden || narrow.matches) return;
+    if (exiting || paused || !visible || document.hidden) return;
     if (live.length >= 2) erase(live[0]);
     const free = notes.filter(n => !live.some(o => o.note.at === n.at)).sort(() => Math.random() - 0.5);
     for (const n of free) if (show(n)) break;
