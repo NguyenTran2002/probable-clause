@@ -18,13 +18,17 @@ const RUN_KEY = 'probable-clause-run';
 for (const f of document.forms) f.addEventListener('submit', e => e.preventDefault());
 const body = document.body;
 
+// resolves once the new view is fully in, the transition done (or skipped)
 function swap(view) {
   const go = () => { body.dataset.view = view; scrollTo(0, 0); };
   if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const t = document.startViewTransition(go);
     // a transition skipped or aborted by a quick second swap is not an error
     for (const pr of [t.ready, t.finished, t.updateCallbackDone]) pr.catch(() => {});
-  } else go();
+    return t.finished.catch(() => {});
+  }
+  go();
+  return Promise.resolve();
 }
 
 // ---------- the standing lines (T5.1, T5.2, T5.5), filled from corpus.json ----------
@@ -91,7 +95,8 @@ async function boot() {
   function toRun() {
     if (body.dataset.view !== 'landing') { swap('run'); return; }
     const my = token;
-    margin.exit().then(() => { if (my === token) { swap('run'); margin.stop(); } });
+    // the landing is cleared only after the transition has taken its picture of "probable clause"
+    margin.exit().then(() => { if (my === token) swap('run').then(() => { if (body.dataset.view === 'run') margin.stop(); }); });
   }
 
   // ---------- replays ----------

@@ -2745,3 +2745,17 @@ Timings under viewport emulation are throttled, so only the order was checked, n
 **Failures:** the defect above.
 **Spend:** none.
 **DECISION (user):** the report, quoted above. A defect fix, no lock needed.
+
+## Oct 25, 2026, 23:40 CDT — Frontend: the user's review, round 22; "probable clause" no longer turns back into "cause"
+**Asked (the user):** *"Final polish, the animation currently goes: probable cause -> probable clause -> but then BACK to probable cause"*
+**Came back:** a defect in `web/js/main.js`. `toRun()` called `swap('run')` and then, in the same moment, `margin.stop()`. That cleared the landing and took the "l" out of "clause" before the view transition photographed the old frame, so the cross-fade showed "probable cause".
+- In the mock, an instrumented `startViewTransition` recorded "probable clause" when it was called and "probable cause" when the old frame was captured.
+- Now `swap()` returns a promise that resolves when the transition has finished, or skipped. `toRun()` clears the landing only then, and only if the run screen is still showing, so a quick "home" isn't undone.
+- P4.36 to P4.38 are unchanged.
+**Checked:**
+- Node: all 84 passed.
+- **The mock, instrumented:** the old frame is captured with "probable clause". After the transition the hidden landing has reset, with no notes and no "l", and the run screen shows.
+- **Going home:** "probable cause", with the leaving state cleared.
+**Failures:** the defect above.
+**Spend:** none.
+**DECISION (user):** the report, quoted above. A defect fix, no lock needed.
