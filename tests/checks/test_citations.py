@@ -405,3 +405,29 @@ def test_corpus_names_resolve_with_their_usual_abbreviations(written):
     assert [f.text for f in r.flags if "v." in f.text] == [], written
     r = check(f"The Court looked at {written} next.")
     assert (r.citations_checked, r.citations_found) == (1, 1), written
+
+
+# --- a name ends at an opening parenthesis (P4.48)
+
+@pytest.mark.parametrize("written", [
+    "A 2026 dissent in *Chatrie v. United States* (Alito, joined by Thomas and Barrett) lists *Ciraolo* among them.",
+    "A 2026 dissent in Chatrie v. United States (Alito, joined by Thomas and Barrett) lists Ciraolo among them.",
+    "See Carpenter v. United States (Roberts, C. J.) on this.",
+    "See Kyllo v. United States [Scalia, J.] on this.",
+])
+def test_a_parenthetical_after_a_corpus_name_is_not_part_of_it(written):
+    # The replays, Oct 26, 2026: backyard-from-air flagged "Chatrie v. United States* (Alito" as not in the corpus.
+    r = check(written)
+    assert flagged(r) == [], written
+    assert r.not_in_corpus == []
+
+
+def test_a_name_not_in_the_corpus_is_flagged_without_its_parenthetical():
+    answer = "In Hester v. Ohio (Holmes, J.) the field was open."
+    r = check(answer)
+    assert flagged(r) == ["Hester v. Ohio"]
+
+
+def test_a_year_parenthetical_still_resolves():
+    r = check("In *Carpenter v. United States* (2018), the Court held so.")
+    assert flagged(r) == []

@@ -5,7 +5,7 @@ Short names ("Katz") and short cites ("389 U. S., at 351") are not checked, and 
 
 How a name is read. Each " v. " in the text with a capitalised word on both sides is a candidate. The words on its
 right are walked out over capitalised words, stopping at punctuation that ends a clause, a line, a dash, "and", a
-lowercase word or a word that opens a sentence. The candidate resolves if a manifest case name fits it:
+lowercase word, a word that opens a sentence or an opening bracket (P4.48: "Chatrie v. United States (Alito, …)"). The candidate resolves if a manifest case name fits it:
  - the right party must EQUAL the manifest's (so "Hester v. United States Postal Service" is not Hester);
  - the left party only has to END with the manifest's, whatever stands before it (so "In" or "See" before the name
    cannot hide a corpus case). Residual looseness, kept on purpose: "Whitfield Katz v. United States" resolves as
@@ -32,6 +32,7 @@ _MANIFEST_REPORTER = re.compile(r"(\d{1,3})\s+U\.\s?S\.\s+(\d{1,4}|_{2,})")
 _LEAD_CHARS = "*_\"“”‘’'([{"
 _TRAIL_CHARS = "*_\"“”‘’')]},;:!?."
 _OPENERS = "([{\"“‘'"
+_BRACKETS = "([{"
 _CLAUSE_ENDS = ",;:)]}!?."
 
 _ABBREVIATIONS = {"co", "corp", "inc", "ltd", "llc", "assn", "ass'n", "assoc", "bros", "dept", "dep't", "no", "mr",
@@ -213,6 +214,8 @@ def _walk_right(tokens: list[_Token], v: int) -> tuple[list[_Token], bool]:
             break
         if (j > v + 1 and t.low in _AFTER_A_NAME) or not (_is_name_word(t) or _is_connector(t)):
             break
+        if j > v + 1 and any(c in _BRACKETS for c in t.lead):
+            break               # a parenthetical after the name, "(Alito, joined by …)", is not part of it (P4.48)
         if t.low == "the" and not _is_the_after_of(tokens, j, -1) and j != v + 1:
             break
         out.append(t)

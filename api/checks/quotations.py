@@ -1,7 +1,8 @@
 """The quotation check (T1.12): every quotation of QUOTATION_MIN_WORDS or more words must appear in the kept passages.
 
 Allowed, and nothing more (T1.12): punctuation inside the closing quote mark; nested quotes changed between
-double and single; ellipses for omitted words; bracketed alterations, including those already in the source.
+double and single; ellipses for omitted words; bracketed alterations, including those already in the source; and
+Markdown emphasis marks, which are not words (P4.48: "*Katz*" inside a quotation reads as "Katz").
 A changed capital is a bracketed alteration ("[t]he"); an unbracketed one is not forgiven. A bracket may stand for
 a few source words but never adds or removes a negation.
 
@@ -34,6 +35,9 @@ _PARAGRAPH_BREAK = re.compile(r"\n[ \t\r]*\n")
 _BLOCKQUOTE_MARK = re.compile(r"[ \t]*(?:>[ \t]?)+")
 # An apostrophe inside a word stays, also beside a bracket: "[Carpenter]'s", "agent['s]". Any other single mark goes.
 _NOT_INSIDE_A_WORD = re.compile(r"(?<![\w\[\]])'|'(?![\w\]])")
+# Markdown emphasis (P4.48): every asterisk goes, and an underscore not inside a word ("supplemental_information"
+# in a URL stays). From the source too, so star paging ("Commentaries *225") still matches.
+_EMPHASIS = re.compile(r"\*+|(?<![^\W_])_+|_+(?![^\W_])")
 _SPECIAL = re.compile(r"\[([^\[\]]*)\]|(?:\.\s*){3,4}|…")  # a bracket group, or an ellipsis
 _ELLIPSIS_CONTENT = re.compile(r"[\s.…]*[.…][\s.…]*")
 _TRAILING_PUNCTUATION = ".,"    # T1.12: punctuation inside the closing quote mark; American style puts only these two there
@@ -174,8 +178,9 @@ def _emit(found: list[Quotation], text: str, segments: list[tuple[int, int]]):
 
 def _strip_marks(s: str) -> str:
     """Curly to straight, then every double mark and every single mark that is not an apostrophe inside a
-    word goes. Applied to the quotation and to the source alike, so nested quotes may change (T1.12)."""
-    s = s.translate(_TO_STRAIGHT).replace('"', "")
+    word goes, and so do Markdown emphasis marks (P4.48). Applied to the quotation and to the source alike, so
+    nested quotes may change (T1.12)."""
+    s = _EMPHASIS.sub("", s.translate(_TO_STRAIGHT).replace('"', ""))
     return _NOT_INSIDE_A_WORD.sub("", s)
 
 

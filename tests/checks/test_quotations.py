@@ -872,3 +872,59 @@ def test_a_bracket_that_strips_a_hyphenated_negating_prefix_is_flagged():
     assert r.quotations_checked == 1 and r.quotations_found == 0
     r = check_answer(['He wrote "it is a [non-intrusive] device on the house".'], [source], MANIFEST)
     assert r.quotations_found == 1
+
+
+# --- Markdown emphasis inside a quotation (P4.48): the marks are not words
+
+JONES_SRC = ('We may have to grapple with these "vexing problems" in some future case where a classic trespassory '
+             "search is not involved and resort must be had to Katz analysis; but there is no reason for rushing "
+             "forward to resolve them here.")
+CHATRIE_N7_SRC = ("In leveling that charge, the dissent re-ups arguments, point-for-point, that Carpenter specifically "
+                  "rejected. Compare post, at 8, 13.")
+
+
+def test_an_italicised_case_name_inside_a_quotation_is_found():
+    # The replays, Oct 26, 2026: gps-tracking-car quoted Jones with *Katz* in italics.
+    r = check('a future case "where a classic trespassory search is not involved and resort must be had to *Katz* '
+              'analysis"', kept=[JONES_SRC])
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+    assert r.flags == []
+
+
+def test_an_italicised_name_before_closing_punctuation_is_found():
+    # geofence-warrants: "… that *Carpenter* specifically rejected."
+    r = check('"re-ups arguments, point-for-point, that *Carpenter* specifically rejected."', kept=[CHATRIE_N7_SRC])
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+@pytest.mark.parametrize("marked", ["_Katz_", "**Katz**", "***Katz***", "__Katz__"])
+def test_every_emphasis_form_is_ignored(marked):
+    r = check(f'"where a classic trespassory search is not involved and resort must be had to {marked} analysis"',
+              kept=[JONES_SRC])
+    assert (r.quotations_checked, r.quotations_found) == (1, 1), marked
+
+
+def test_emphasis_does_not_forgive_a_changed_word():
+    r = check('It said "what a person *knowingly* reveals to the public, even in his own home" there.')
+    assert (r.quotations_checked, r.quotations_found) == (1, 0)
+
+
+def test_emphasis_over_the_whole_quotation_is_found():
+    r = check('It said "*what a person knowingly exposes to the public, even in his own home*" there.')
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_star_paging_in_the_source_still_matches():
+    # Ciraolo: "See 4 Blackstone, Commentaries *225." The marks go from both sides alike.
+    src = "(1886)). See 4 Blackstone, Commentaries *225. The protection afforded the curtilage is essentially"
+    r = check('"See 4 Blackstone, Commentaries *225. The protection afforded the curtilage"', kept=[src])
+    assert (r.quotations_checked, r.quotations_found) == (1, 1)
+
+
+def test_an_underscore_inside_a_word_is_kept():
+    # Chatrie's footnotes cite URLs with underscores inside words; those are text, not emphasis.
+    src = "available at https://www.example.com/supplemental_information_geofence_warrants_united_states.pdf (archived)"
+    r = check('"https://www.example.com/supplemental_information_geofence_warrants_united_states.pdf"', kept=[src])
+    assert r.quotations_found == r.quotations_checked
+    r = check('"https://www.example.com/supplementalinformationgeofencewarrantsunitedstates.pdf"', kept=[src])
+    assert r.quotations_found == 0
