@@ -169,9 +169,11 @@ html { scroll-behavior: smooth; }
 .motion { position: absolute; right: 1rem; bottom: 1rem; z-index: 1; border: 0; background: none; padding: 0.25rem 0.4rem;
   font: inherit; font-size: 0.8125rem; color: var(--muted); cursor: pointer; }
 .motion:hover { color: var(--ink); }
-/* a run starts: everything but the wordmark steps back, which moves to the bar (the view transition) */
-.hero > :not(.wordmark), .first > .more, .motion { transition: opacity 0.45s ease; }
-.first.leaving .hero > :not(.wordmark), .first.leaving > .more, .first.leaving .motion, .first.leaving .hero::before { opacity: 0; }
+/* a run starts: everything steps back, the wordmark too (the user, Oct 25, 2026), so only the amendment's "probable
+   clause" is left; the wordmark then leaves the view transition, and the bar's appears with the page */
+.hero > *, .first > .more, .motion { transition: opacity 0.45s ease; }
+.first.leaving .hero > *, .first.leaving > .more, .first.leaving .motion, .first.leaving .hero::before { opacity: 0; }
+.first.leaving .wordmark { view-transition-name: none; }
 .hero .wordmark { font-size: clamp(2.75rem, 8vw, 5.25rem); line-height: 1; view-transition-name: wordmark; }
 .pitch { margin: 1.25rem 0 2rem; font-size: 1.0625rem; color: var(--muted); }
 .pitch p { margin: 0; }

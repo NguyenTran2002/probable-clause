@@ -2696,3 +2696,19 @@ The main session's calls from 23:08 are locked with it, as the user approved the
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** a longer hang, quoted above. The 2.9 s is the main session's call, not yet locked.
+
+## Oct 25, 2026, 23:29 CDT — Frontend: the user's review, round 20; only "probable clause" is left at the exit's end
+**Asked (the user):** *"Additionally, I want everything disappear other than the probable clause letters in the amendment, including every other highlights and text literally everything"*
+**Came back:** before this change, the exit's last frame still showed the hero's wordmark, which was kept so it could fly into the bar.
+- The wordmark now fades with everything else in 0.45 s.
+- While the page is leaving, the wordmark drops out of the view transition (`view-transition-name: none`), so the bar's wordmark appears with the run screen and doesn't fly in from an invisible one.
+- Everything else already went: the notes, their leaders and underlines erase, and the other words fall with their underlines.
+- The change is `web/css/style.css` only, in the `.first.leaving` rules.
+- This departs from P4.36 point 3, "the wordmark moving into the bar". It is not locked until the user says so.
+**Checked:** the mock server, with notes on screen when the run starts.
+- Frozen before the run screen: the only things visible in the landing are "probable", "c|l|ause" and the "l", and no leader is left.
+- Unfrozen: the run screen shows with the bar's wordmark at full opacity.
+- Going home brings the hero's wordmark back at full opacity, with its transition name restored, and the amendment reads "probable cause" again.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the request, quoted above. Not a lock.
