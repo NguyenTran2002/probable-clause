@@ -121,7 +121,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **The former fonts are removed** (P4.47, 01:18): `web/fonts/` holds only Founding print and Caveat.
 - **Still open, the user's call:**
   - from BUILD_LOG 17:50, the skipped band line's repeated reason and the cost line counting our estimates.
-- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-ed2dd8e` at 01:46, the code of `84c0db4`, serving the four replays; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
+- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-d20ae44` at 01:50, serving the four committed replays; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
 - **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (84). Contract v2.1 (`config.json` gains seven figures).
 - **Done today since Wave 3** (BUILD_LOG 16:15 to 16:46):
   - P4.23, the prompts approved;

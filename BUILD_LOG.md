@@ -3271,3 +3271,15 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the four recordings approved as recorded, `replays/` committed and taken out of the exclude. Locked as P4.50.
+
+## Oct 26, 2026, 01:50 CDT — The replays committed: tests and the rebuilt stack (P4.50)
+**Asked (the user):** the check for P4.50 (01:48).
+**Came back:** nothing changed. The stack was rebuilt from the committed tree.
+**Checked:**
+- the whole suite: 2,959 passed, 54 skipped. The deploy tests pass with `replays/` committed: the web image still copies it only through its bind mount;
+- the Node tests: 84 of 84;
+- `deploy/local.sh` rebuilt both images (`local-d20ae44`). The web service serves the five `replays/` files byte for byte as committed (SHA-256 compared).
+
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none beyond P4.50. Next, in the user's order: the deploy, only on its explicit green light, with the cloud setup script (P4.30) and the goodnight block (P4.26), each on its own green light. T5.6's fifth replay stays open.
