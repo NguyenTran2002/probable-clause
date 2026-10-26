@@ -63,18 +63,6 @@ export function coverageDates(cov) {
   return `Latest decision in everything pulled: ${longDate(cov.latest_decision_full_pull)}. Latest in the corpus: ${longDate(cov.latest_decision_in_corpus)}. Pulled: ${shortDate(cov.ingested)}.`;
 }
 export const ANSWER_KEY = 'Underlined sentences cite a passage Claude kept; hover or tap one to see the exact sentences it cites. A citation shows where the words are, not that they prove the point, so read the passage. Sentences without a line are Claude’s own synthesis and have no source.';
-export const CHECKS_PREFIX = 'Checked by this site’s code, not by AI: ';
-export function checksParts(c) {
-  const parts = [];
-  parts.push(c.quotations_checked === 0 ? 'No quotations to check.'
-    : `${plural(c.quotations_found, 'quotation')} found in the passages Claude kept`);
-  // T5.2 gives "No quotations to check." only; its counterpart for citations is the main session's
-  parts.push(c.citations_checked === 0 ? 'No full case names or U.S. Reports citations to check.'
-    : `${num(c.citations_found)} full case names and U.S. Reports citations found in the corpus`);
-  return parts;
-}
-export const CHECKS_NOT_IN_CORPUS = n => `${num(n)} not in this corpus: `;
-export const CHECKS_SHORT_NAMES = 'Short case names, such as "Katz", are not checked.';
 export const FLAG_QUOTATION = 'Quotation not found in the passages Claude kept. Check it against the opinions before relying on it.';
 export function flagCitation(corpus) {
   return `Not in this corpus. This check knows only the ${num(corpus.case_count)} cases here, so a real case outside them is flagged too.`;
@@ -205,7 +193,8 @@ export function stopNothingKept(state, cfg) {
   return `Stopped at ${limit} before Claude kept any passages, so no answer was written.`;
 }
 export const CUT_OFF = 'Cut off at the answer’s length limit.';
-export const INCOMPLETE = 'Incomplete: the answer stopped partway because of an error. The checks ran on the part shown.';
+// T5.4's line without its sentence on the checks (P4.34)
+export const INCOMPLETE = 'Incomplete: the answer stopped partway because of an error.';
 export const COMPOSITION_FAILED = reason => `The answer could not be written: ${reason}. The passages Claude kept are still in the sources panel. Asking again starts a new run.`;
 export const FAILED_NOTHING_KEPT = reason => `The run failed: ${reason}. Nothing was kept, so no answer was written.`;
 export const NO_SOURCES_LABEL = 'Claude’s reply · no sources';
@@ -216,9 +205,9 @@ export const FROM_SCRATCH = 'Each question is researched from scratch; Claude do
 export const REFUSED_TITLE = 'Submission refused by this site’s rules';
 export const finished = (rounds, s) => `Finished: ${plural(rounds, 'tool round')} and the answer, ${num(s)} s.`;
 // main session's: T5.4 #9's line for a no-sources reply, and the label for an answer cut short by a failed or
-// interrupted run, which T5.4's "Incomplete" line does not fit, since the checks did not run on it
+// interrupted run; neither label mentions the checks (P4.34)
 export const finishedReply = (rounds, s) => `Finished: ${plural(rounds, 'tool round')} and Claude\u2019s reply, ${num(s)} s.`;
-export const PARTIAL_UNCHECKED = 'Incomplete: the run ended before the answer was finished, and the checks did not run on it.';
+export const PARTIAL_UNCHECKED = 'Incomplete: the run ended before the answer was finished.';
 // T5.6 #2's label for the replay recorded on the corpus without Chatrie.
 export const BEFORE_CHATRIE = ['Recorded with a corpus that ends before ', { i: 'Chatrie v. United States' }, ' (June 29, 2026), to show the update check finding it. Live research uses the full corpus.'];
 

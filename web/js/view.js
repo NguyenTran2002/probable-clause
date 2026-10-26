@@ -192,18 +192,7 @@ export function createView({ cfg, corpus, md }) {
     if (labels.end) sec.append(h('p', { class: 'stop-label end' }, labels.end === 'cut_off' ? T.CUT_OFF : T.INCOMPLETE));
     else if (e && ['failed', 'interrupted', 'abandoned'].includes(e.state) && run.blocks.length) sec.append(h('p', { class: 'stop-label end' }, T.PARTIAL_UNCHECKED));
     if (run.band && run.band.outcome === 'found' && run.blocks.length) sec.append(h('p', { class: 'pointer' }, T.BAND_POINTER));
-    if (run.checks) {
-      const c = run.checks;
-      const line = h('p', { class: 'checks' }, T.CHECKS_PREFIX, T.checksParts(c).join(' · '));
-      if (c.not_in_corpus.length) {
-        line.append(` · ${T.CHECKS_NOT_IN_CORPUS(c.not_in_corpus.length)}`);
-        c.not_in_corpus.forEach((name, i) => line.append(i ? ', ' : '', h('i', null, name)));
-        line.append('.');
-      }
-      else if (!/\.$/.test(line.textContent)) line.append('.');
-      line.append(` ${T.CHECKS_SHORT_NAMES}`);
-      sec.append(line);
-    }
+    // no line under the answer for the checks: they are an add-on, shown only as flags when they catch something (P4.34)
     if (!run.blocks.length && (run.composition.failed || (e && e.state === 'failed' && run.keepOrder.length))) {
       sec.append(h('p', { class: 'stop-label' }, T.COMPOSITION_FAILED(T.failureWords(e ? e.failure_reason : run.composition.failed.error_kind))));
     }

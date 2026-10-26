@@ -801,7 +801,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:14 CDT — Phase 3: Architecture, Area 5 (the standing lines, T5.1)"
 
-### T5.2 The guarantee, coverage, checks, cost label and text-status note (rewords T1.12's example line)
+### T5.2 The guarantee, coverage, checks, cost label and text-status note (rewords T1.12's example line) — AMENDED by P4.34 (#4's line under the answer removed; the flags stay)
 
 - **Decision:** Area 5, topic 2, every recommended draft. Final text; figures in angle brackets or shown as examples are filled by code (counts and dates from the manifest and the run):
   1. **The guarantee, on every passage card:** *"This passage appears word for word in this opinion, as normalised from the official text."* (replaces brief §7.2's "This passage appears verbatim in this opinion.", since the corpus copy is normalised).
@@ -827,7 +827,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:21 CDT — Phase 3: Architecture, Area 5 (the update-check band, T5.3)"
 
-### T5.4 Run states and stop labels
+### T5.4 Run states and stop labels — AMENDED by P4.34 (#6's "Incomplete" label drops its sentence on the checks)
 
 - **Decision:** Area 5, topic 4, every recommended draft. Final text for the states placed by T4.4; angle brackets are filled by code, and figures that are placeholders (90 s, 5 minutes, 60 s, 10 minutes, 3 attempts, 24 hours) follow their settings when measured:
   1. **Waking (T3.6):** step *"Starting the research server"*, status line *"<s> s"*; after 90 s *"This is taking longer than usual. After a quiet spell the server starts from cold. While you wait, you can watch a recorded run:"* with the chips; after 5 minutes *"The research server did not start. Try again, or watch a recorded run."* with a **Try again** button. Only after this build has measured starts (brief §7.2): *"Usually <a> to <b> s to start (measured <dates>; Google does not guarantee it)."*
@@ -1133,3 +1133,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"The frontend plan looks good. Approved."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 16:49 CDT — Phase 4: Build, the frontend build plan approved (P4.33)"
+
+### P4.34 The checks are an add-on, shown only as flags (amends T5.2 #4 and T5.4 #6)
+
+- **Decision:** the project showcases Claude's citations; the quotation and citation checks are a quality-of-life add-on, not a guarantee.
+  1. The checks line under each answer ("Checked by this site's code, not by AI: …") is removed.
+  2. The flags and their notes stay as they are: when a check catches something, the words are flagged in the answer.
+  3. No label mentions the checks. The incompleteness stays (the main session's reading):
+     - a partial answer from a failed or interrupted run: *"Incomplete: the run ended before the answer was finished."*;
+     - T5.4's end label: *"Incomplete: the answer stopped partway because of an error."*
+  4. The step log's "Checked the answer" step is unchanged.
+- **User's words:** *"My pov is that the project's is show casing claude citations, and these additional checks are good quality of life add on, not guarantees."* Then: *"The line under each answer goes. The flags and their notes stay as they are. (i. e. when the check catches something, we still flag) "The checks did not run on it", on a partial answer should probably not display anything because again the checks are add on, not the key piece. Update and log my decision."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 19:59 CDT — Frontend: the user's review, round 8; the checks are an add-on, shown only as flags (P4.34)"

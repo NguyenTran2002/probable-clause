@@ -2416,3 +2416,25 @@ After the discussion: *"Let's give this a try: the dock keeps the status, the co
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the direction quoted above. Not a lock; the main session's calls are the order (disclaimers before the cost line), the sizes, and the bar's link style.
+
+## Oct 25, 2026, 19:59 CDT — Frontend: the user's review, round 8; the checks are an add-on, shown only as flags (P4.34)
+**Asked (the user):** "I think we can also remove this line "Checked by this site's code..." to reduce clutter. Thoughts?" The main session advised folding it rather than removing it, since on a clean answer it is the only sign the checks ran. The user: *"My pov is that the project's is show casing claude citations, and these additional checks are good quality of life add on, not guarantees."* Then:
+> * The line under each answer goes.
+> * The flags and their notes stay as they are. (i. e. when the check catches something, we still flag)
+> * "The checks did not run on it", on a partial answer should probably not display anything because again the checks are add on, not the key piece.
+> * Update and log my decision.
+
+**Came back:**
+- **The checks line under the answer is removed.** Its texts are removed too: `CHECKS_PREFIX`, `checksParts`, `CHECKS_NOT_IN_CORPUS`, `CHECKS_SHORT_NAMES`, and the `.checks` style.
+- **The flags are unchanged:** the quotation flag and the citation flag, each with its note, in the answer where the words are.
+- **The labels on a partial answer.** The main session's reading of the third point: the incompleteness itself is not about the checks and stays; only the words about the checks go.
+  - `PARTIAL_UNCHECKED` is now *"Incomplete: the run ended before the answer was finished."*
+  - By the same reasoning, T5.4's end label `INCOMPLETE` drops its last sentence, "The checks ran on the part shown." It is now *"Incomplete: the answer stopped partway because of an error."* This point is the main session's extension, flagged to the user.
+- **Left as is:** the step log's "Checked the answer" step, which is a step in the log, not a claim under the answer.
+- **Checked (only what changed), in the mock:**
+  - `check-flags`: 2 flagged spans with their 2 notes, no checks line, and the disclaimers and cost line at the end.
+  - `composition-incomplete-stream-broken`: the end label reads "Incomplete: the answer stopped partway because of an error.", and no sentence about the checks remains under the answer.
+  - Node: 71 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the four points quoted above; locked as P4.34, amending T5.2 #4 and T5.4 #6.

@@ -544,7 +544,7 @@ body.playing .scratch { display: none; }
 .notice .whose { margin-bottom: 0.2rem; }
 .stop-label { margin: 0 0 1rem; padding: 0.55rem 0.85rem; border: 1px solid var(--line); border-radius: 10px; font-size: 0.9375rem; font-weight: 600; }
 .stop-label.end { margin: 1rem 0 0; }
-.pointer, .checks { margin: 1rem 0 0; font-size: 0.875rem; color: var(--muted); }
+.pointer { margin: 1rem 0 0; font-size: 0.875rem; color: var(--muted); }
 .answer .standard { margin: 0 0 0.8rem; color: var(--muted); }
 .prose h3, .prose h4, .prose h5, .prose h6 { margin: 1.4rem 0 0.5rem; font-size: 1.0625rem; letter-spacing: -0.005em; }
 .prose h3:first-child { margin-top: 0; }
