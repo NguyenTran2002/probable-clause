@@ -112,9 +112,10 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - P4.43, the palette, Evergreen deepened;
   - P4.44, the margin notes on phones;
   - P4.45, the fonts, Founding print. **Every family is named once, in `style.css`'s type tokens** (`--ui`, `--src`, `--display`, `--display-i`, `--code`, `--hand`); `fonts.css` loads the files;
-  - P4.46, back to the top before the exit (`toTop()` in `main.js`, `TOP_CAP_MS` 1,500 ms measured), and the frontend finished.
+  - P4.46, back to the top before the exit (`toTop()` in `main.js`, `TOP_CAP_MS` 1,500 ms measured), and the frontend finished;
+  - P4.47, the former fonts removed.
+- **The former fonts are removed** (P4.47, 01:18): `web/fonts/` holds only Founding print and Caveat.
 - **Still open, the user's call:**
-  - the former fonts' files in `web/fonts/`, unused;
   - from BUILD_LOG 17:50, the skipped band line's repeated reason and the cost line counting our estimates.
 - **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-2341af0` at 01:15; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
 - **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (84). Contract v2.1 (`config.json` gains seven figures).
@@ -151,7 +152,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
 - **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.46** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.47** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
   - `locked-decisions.md`, P4.1 to P4.22 above all (P4.18 to P4.22 amend or supersede 14 earlier entries, marked in their headings);
@@ -189,7 +190,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.47). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.48). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** research and the update step `claude-sonnet-5-5` high (P2.1, P4.19); composition `claude-sonnet-5-5` high (P4.20, built).
   - **Limits (P4.18, built):** 12 research rounds; loop input 2M, loop output 16,000; update rounds 8, update input 2M, update output 6,000; 5 update searches; composition output 16,000; no run-wide limit; `MAX_CONCURRENT_RUNS` 5; `RUN_WATCHDOG_S` 2,400. **$15 a day** (P4.11), $60 a month, unchanged.

@@ -1272,7 +1272,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:41 CDT — Frontend: the user's review, round 26 locked; the margin notes show on phones (P4.44)"
 
-### P4.45 The fonts are Founding print, each named once in a type token (amends T4.1's fonts)
+### P4.45 The fonts are Founding print, each named once in a type token (amends T4.1's fonts; AMENDED by P4.47 (the former fonts removed))
 
 - **Decision:** as built in round 27 (cf58b57).
   1. **The type tokens:** every family the page uses is named once, in `web/css/style.css`'s type block:
@@ -1307,3 +1307,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Frontend is finished. Lock."* Then: *"I'm thinking we should do in order: 1. Full test. 2. Populate and cache in parallel a few runs. (Questions need approval first.) 3. Deploy."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:15 CDT — Frontend: the user's review, round 28 locked; the frontend finished (P4.46)"
+
+### P4.47 The former fonts are removed (amends P4.45 point 4)
+
+- **Decision:** the former fonts' files are deleted from `web/fonts/`: Instrument Sans, Newsreader and JetBrains Mono, 10 `.woff2` files and their 3 OFL texts. Their 12 `@font-face` rules are removed from `web/css/fonts.css`. What is left is the 17 faces Founding print and Caveat use, with their 4 OFL texts. The Phase 1 look tests (`web/looktests/`) keep their own links to Google Fonts, unchanged as the record (P1.6).
+- **User's words:** *"Remove the old font files."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:18 CDT — Frontend: the former fonts removed (P4.47)"

@@ -3039,3 +3039,20 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none beyond P4.46.
+
+## Oct 26, 2026, 01:18 CDT — Frontend: the former fonts removed (P4.47)
+**Asked (the user):** *"Remove the old font files."*
+**Came back:**
+- Deleted 10 `.woff2` files and 3 OFL texts from `web/fonts/`: Instrument Sans, Newsreader and JetBrains Mono.
+- Removed their 12 `@font-face` rules from `web/css/fonts.css`, and rewrote its opening comment to match.
+- What is left: 17 faces (Caveat plus Founding print's 16) and 4 OFL texts. `web/fonts/` is now 424 KB.
+- Every `url()` in `fonts.css` names a file that exists. The credits page names no fonts, so nothing else changed.
+- `web/looktests/machinery/` loads those families from Google Fonts itself, not from `web/fonts/`, so it is untouched (P1.6's record).
+- P4.45's heading now says P4.47 amends it.
+**Checked:**
+- in the mock: the page's font set lists only Caveat, IBM Plex Sans and Mono, and Libre Caslon Text and Display, with none in error. The six files fetched all answered 200. The body is in IBM Plex Sans and the amendment in Libre Caslon Display;
+- Node tests: 84 of 84;
+- the deploy tests: 40 passed, 2 skipped (the web image's guard still finds `.woff2` files and an OFL text).
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Remove the old font files."* Locked as P4.47.
