@@ -1422,3 +1422,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Add and redeploy now."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 03:11 CDT — Phase 5: the cost line's note on estimates, and a redeploy now (P5.4)"
+
+### P5.5 The README and the prompts published now, ahead of Phase 5's checks; the time as measured; the first push (amends brief §3's Phase 5 order and §2 item 8)
+
+- **Decision:**
+  - The README is written and published now, as a complete document with no open item, before the cold-start and disconnect checks. It is updated when those checks are run.
+  - Every prompt is published in `docs/PROMPTS.md`, by a new `scripts/extract_prompts.py` covering both conversations (main and frontend). It is re-exported, and its figures copied into the README, before any later push (brief §10.5).
+  - The build time is shown as measured: part time over about two and a half days, in four sittings, with the rule stated. It is not given as "full-time days".
+  - The previous project is not named in this project's new text; it was a reference for this conversation only.
+  - Transcript cleanup is left alone for now (P0.5 stands).
+  - Green light for the first push of `main` and the phase tags to `github.com/NguyenTran2002/probable-clause`.
+- **User's words:** *"I'm overriding Phase 5 for this instance to bring our GitHub page online asap as the site is already live. We will write the README as a complete document, with no open item. When we had a chance to do a cold start test, then we will update it."* *"Your recommendations are sound. One thing to note though, do NOT mention the [previous] project in this project. It's meant to be a reference within this conversation only."* *"Wrap up the repo, then push. You have my green light."* *"Don't worry about transcript clean up for now."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 04:06 CDT — Phase 5: the README and the prompts published now, and the first push (P5.5)"

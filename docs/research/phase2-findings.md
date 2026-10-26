@@ -4,7 +4,7 @@
 
 **How this was done.** Six research agents (Sonnet 5.5, high or extra-high effort) read current documentation on Oct 24, 2026, each claim with its source and an exact quote. The main session then ran paid checks on the product's own model and effort (Sonnet 5.5, high; P2.1), from committed scripts: `scripts/probe_loop.py` (a simulated research loop on the real corpus), `scripts/probe_exa.py` (Exa's hosted MCP server), with `scripts/probe_common.py` keeping the spend ledger. Every quote was then re-checked: `scripts/verify_quotes.py` re-fetched each page, and an agent not told the conclusions checked by hand the quotes a plain string match could not read (tables, PDFs, registry replies). The agents' notes, quotes and the probe outputs stay local under `data/verification/phase2/` (gitignored).
 
-**Tags.** **DOC**: the vendor's own documentation, pricing or terms. **OBSERVED**: our paid checks, Oct 24, 2026. **PREVIOUS BUILD**: the previous build's own records (the Haiku Decision API repository). **THIRD-PARTY**: someone else's page. **INFERRED**: reasoning, not a source.
+**Tags.** **DOC**: the vendor's own documentation, pricing or terms. **OBSERVED**: our paid checks, Oct 24, 2026. **PREVIOUS BUILD**: the previous build's own records (its repository). **THIRD-PARTY**: someone else's page. **INFERRED**: reasoning, not a source.
 
 **Spend.** Anthropic: 16 calls, $0.5541 (ledger total; ceiling $2). Exa: 9 requests from the free credit; the five successful responses report $0.029 in all; two failed requests and two error replies reported no cost (whether the two failed requests were billed is not known).
 
