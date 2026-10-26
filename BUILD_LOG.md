@@ -3317,3 +3317,35 @@ It amends P4.40.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** round 29 locked as is (P4.51).
+
+## Oct 26, 2026, 02:33 CDT — The replays: a tighter question recorded to replace the geofence chip
+**Asked (the user):** *"Go with "Can police get your Google location history without a warrant?" Record it under the P4.48 allowance and let me review before export."* The reason given: the geofence question is "too broad, leading to Claude trying to read as many passages as possible".
+**Came back:**
+- **The run:** `location-history-warrant`, run `HvxrPtB_UvIVgr1SorxjTA`, started at 02:32 on `local-a3b1dbe` (`PC_ENV=test`, `Probable_Clause_test`), with `scripts/run_client.py`. The backend is the same as at `84c0db4`: `git diff 84c0db4 HEAD -- api` is empty. It answered in full with no stop:
+
+| Run | Rounds | Kept of found | Reads | Answer blocks | Citations | Quotations | Names and cites | Web search band | Time | Cost |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `location-history-warrant` | 6 | 25 of 50 | 2 | 59 | 29 | 2 of 2 | 0 of 0 | found | 51 s | $0.2413 |
+| `geofence-warrants` (01:39, for comparison) | 6 | 40 of 95 | 12 | 112 | 56 | 8 of 8 | 1 of 1 | nothing relevant | 64 s | $0.3511 |
+
+  - **No flags.**
+  - **Kept:** 18 passages from *Chatrie*'s majority, 3 from *Carpenter* (the warrant rule and its exigency exception), 2 from Jackson's concurrence, 2 from Gorsuch's, and 2 from Alito's dissent.
+  - **Web search band:** found. Its findings are the Fourth Circuit setting argument on remand (Mealey's, Oct 20, 2026) and *State v. Hobbs* (N.J. App., Oct 2, 2026, as a Paul, Weiss memo reports it), which applied *Chatrie* to suppress geofence evidence.
+- **Read against the opinion, two points for the user's review** (the checks don't test either one):
+  - **The dissent's joins.** The answer says "Alito, J., dissenting (joined by Justices Thomas and Barrett)". The heading has Thomas joining Part I only and Barrett joining Parts II–B, II–C–1 and II–C–2. The two cited passages, `chatrie-4-p24` and `chatrie-4-p30`, sit in II–B–2 and II–C–2, so Barrett joins them and Thomas does not.
+  - **Exigency.** The answer says "The *Chatrie* majority passages here do not separately discuss exceptions for Location History." That is true of the kept passages, but the majority's footnote 11 (`chatrie-1-n11`, not kept) says the decision "does not call into doubt, in such circumstances, a warrantless geofence search".
+- **Files:**
+  - the events, summary and client log are in `data/verification/replays/` (local, kept);
+  - the rendered answer is `data/verification/replays/answers/location-history-warrant-HvxrPtB_UvIVgr1SorxjTA.md`.
+- **Not exported.** `replays/` is unchanged and still holds the four approved replays (P4.50), the user's review first.
+
+**Checked:** the run's events through `render_run.py`; the two points above against `data/corpus/cases/chatrie.json`.
+**Failures:** none.
+**Spend:**
+- $0.2413 (`spend_report.py`; test database month total $4.9212);
+- 1 Exa search;
+- left of P4.48's allowance: $1.7523 and 5 Exa searches.
+
+**DECISION (user):** none yet. Open:
+- whether this run replaces `geofence-warrants`, as recorded or re-recorded;
+- T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
