@@ -3455,3 +3455,19 @@ It amends P4.40.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the location-history replay approved, committed in place of `geofence-warrants`, as quoted. Locked as P4.52.
+
+## Oct 26, 2026, 02:44 CDT — Correction to 02:43: a typo; CLAUDE.md updated for P4.52
+**Asked (the user):** nothing; the main session's correction.
+**Came back:**
+- The 02:43 entry says "Phones 1, 2 and 4 are byte for byte the files P4.50 approved." It should say **chips** 1, 2 and 4: `phone-search-arrest`, `gps-tracking-car` and `backyard-from-air`.
+- **CLAUDE.md's current state** now records:
+  - P4.52;
+  - the chips' order;
+  - the allowance left: $1.5370 and 4 Exa searches;
+  - the running stack, `local-c648401`;
+  - the next number, P4.53.
+
+**Checked:** nothing beyond the files.
+**Failures:** the typo at 02:43.
+**Spend:** none.
+**DECISION (user):** none.
