@@ -3505,3 +3505,48 @@ It amends P4.40.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"GitHub link github.com/NguyenTran2002/probable-clause is correct. We will push soon."* On the off switch: *"Sure."* On the public addresses: *"Not a problem."* Then: *"I'll greenlight 1, 2, and 3. For green light 4, I'd do the live paid run on the domain myself."* Locked as P5.1.
+
+## Oct 26, 2026, 03:06 CDT — Phase 5: deployed, live at nguyennhattran.com/probable-clause (P5.1)
+**Asked:** P5.1's green lights 1 to 3: the setup script, `deploy/deploy.sh`, goodnight's block.
+**Came back:**
+- **The setup script, `deploy/setup.sh`** (042b36d, P4.30), with `tests/deploy/test_setup.py` (8 tests under stubs):
+  - it enables Cloud Run, Artifact Registry, Secret Manager and IAM;
+  - it creates the registry `probable-clause` and the service accounts `pc-api` and `pc-web`;
+  - it creates four secrets from `.env`, each value written by a uv-started Python process straight into gcloud's standard input; the Anthropic secret takes `ANTHROPIC_API_KEY_LIVE`;
+  - it gives `pc-api` alone `secretmanager.secretAccessor` on each;
+  - it is safe to rerun: each piece is made only when missing.
+- **Before the cloud,** both images were built locally for linux/amd64, without pushing. The API image started under emulation on `Probable_Clause_test` and was ready in 3.6 s.
+- **Green light 1, the setup script,** ran after 02:52 and before 02:58 CDT (its own time was not recorded) and exited 0. The check that followed:
+  - each secret compared against `.env` inside a Python process, printing only "matches": 4 of 4;
+  - each secret's only reader is `pc-api`;
+  - the live and development Anthropic keys differ.
+  - gcloud warned "filter keys were not present … state" while each secret had no version yet; harmless.
+  - `gcloud auth configure-docker` found the registry's helper already in `~/.docker/config.json`, so nothing there changed.
+- **Green light 2, `deploy.sh`,** ran from 02:58:25 to 02:59:31 CDT and exited 0, at commit `042b36d`:
+  - the spend check read `Probable_Clause`: no spend in October;
+  - `probable-clause-api-00001-hpd` at `https://probable-clause-api-1066460440617.us-central1.run.app`, `PC_ENV=live`;
+  - `probable-clause-web-00001-vl4` at `https://probable-clause-web-1066460440617.us-central1.run.app`;
+  - read back: automatic scaling, max 1 (API) and 2 (web), request-based billing, startup boost, ingress all.
+- **The first cold-start sample** (brief §3, §8.5), from Cloud Run's logs, a start after a deploy:
+  - "Starting new instance" (DEPLOYMENT_ROLLOUT) at 07:59:03.18 UTC, ready at 07:59:18.44 UTC: **15.3 s**;
+  - the app was ready 11.8 s after its process started; about 3.1 s before that was the container;
+  - the app's steps: corpus 3.4 s, keyword index 0.16 s, vectors 0.23 s, Atlas indexes 0.60 s, **clients and the loop 7.4 s** (1.1 s locally under emulation). That step is the largest share and is for Phase 5 to look at.
+- **Smoke tests on the Cloud Run addresses:** the API's `/health` 200 with commit `042b36d`; the web's page, `replays/index.json` (the four chips in order), the location-history replay, `config.json`, `corpus.json`, an opinion file, the credits and privacy pages all 200; `geofence-warrants.json` and `api/health` on the web service 404, as built.
+- **Green light 3, goodnight** (`~/Documents/Developer/framedbytran`, never pushed):
+  - the block, fenced `# === probable-clause ===` in `goodnight/nginx.conf`, committed as 29983d4, with a line in that repo's CLAUDE.md (7d62d8c):
+    - a bare `/probable-clause` 302s to `/probable-clause/`;
+    - `/probable-clause/api/*` goes to the API with the prefix stripped, buffering and caching off, 300 s read timeout;
+    - everything else under the prefix goes to the web service, prefix stripped;
+    - `X-Forwarded-For`, `X-Real-IP` and `Forwarded` are cleared on both, so no client IP is forwarded (T3.5). Without that, nginx would pass the inbound `X-Forwarded-For` through.
+  - **Checked before it went live:** `nginx -t` passed; goodnight's image run locally served the page, a replay, an opinion and the live API's `/health` under the prefix, and `/goodnight`, `/jev-demo/`, `/haiku-decision-api/health` and the catch-all redirect as before.
+  - **Deployed** with goodnight's own `deploy.sh` from 03:03:34 to 03:05:03 CDT: `goodnight-00015-nt9` serves 100%, replacing `goodnight-00014-llq` (the rollback revision).
+- **On the domain:**
+  - every path above answers 200 under `https://nguyennhattran.com/probable-clause/`, and the API's `/health` reports commit `042b36d`;
+  - the domain's other routes are unchanged: `/goodnight`, `/self-exempt`, `/jev-demo/`, `/ads-workbench/`, `/fullstackinsurancepoc/`, `/statefunclaimsadjudicator/`, `/haiku-decision-api/` 200, and `/` 302s to `/goodnight`;
+  - in the browser at 375×812: no sideways scroll, no console errors, the wake call 200, and the phone-search replay played to "Finished: 5 tool rounds and the answer, 43 s."
+- **No live run was made.** The first one is the user's (P5.1).
+
+**Checked:** as above; `tests/deploy/` 48 passed, 2 skipped.
+**Failures:** none.
+**Spend:** none on Anthropic, Voyage or Exa. Cloud Run, Artifact Registry and Secret Manager now bill in `probable-clause`, min 0 instances.
+**DECISION (user):** none beyond P5.1.
