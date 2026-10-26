@@ -2922,3 +2922,14 @@ CLAUDE.md's current state is updated for the compaction.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"Lock frontend as is."* Locked as P4.44.
+
+## Oct 26, 2026, 00:42 CDT — Frontend: the user's review continues
+**Asked (the user):** *"Nope, iterating is still on. Prep for compaction."*
+**Came back:**
+- "Lock frontend as is" (00:41) locked P4.44 only. It was not the local review's sign-off.
+- The full suite, the browser sweep and the sign-off wait until the user says iterating is done.
+- CLAUDE.md's current state now says so.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Nope, iterating is still on."*

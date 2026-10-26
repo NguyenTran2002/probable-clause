@@ -91,7 +91,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 26, 2026, 00:41 CDT: the user's local review, rounds 1 to 26 done; P4.36 to P4.44 locked from it; the user: "Lock frontend as is."*
+*Updated Oct 26, 2026, 00:42 CDT: the user's local review, rounds 1 to 26 done; P4.36 to P4.44 locked from it; iterating continues.*
 
 - **The review rounds** (BUILD_LOG from "Oct 25, 2026, 17:50 CDT" to "Oct 26, 2026, 00:41 CDT"): each round the user asks, the main session builds, tests only what changed (the user: full suite when iterating ends), logs, commits by path and rebuilds `deploy/local.sh`. Locks from the review:
   - P4.36, the landing;
@@ -102,7 +102,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - P4.42, "Search opinions" and the placeholder;
   - P4.43, the palette, Evergreen deepened (round 25: warm paper from `--hn`, a deep brand from `--h0`, `--live` for what is working, a green-black API window);
   - P4.44, the margin notes on phones (round 26: the phone hero 11rem down, the pause control top right).
-- **Ask the user first:** whether "Lock frontend as is" (00:41) ends the iterating. The main session did not take it as the local review's sign-off, and nothing of it is logged. If iterating is done, the next steps are:
+- **Iterating continues** (the user, 00:42: *"Nope, iterating is still on."*). After the compaction, wait for the user's next round. When the user says iterating is done:
   - the full suite (Python and Node) and the browser sweep;
   - the sign-off in the user's words, logged;
   - delete `replays/`.
