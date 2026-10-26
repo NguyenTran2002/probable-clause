@@ -2569,3 +2569,11 @@ It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. T
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the wording and the redo, quoted above. Not a lock; the main session's calls are the figure's step wording, "only this paragraph", and footnotes counted as footnotes.
+
+## Oct 25, 2026, 21:10 CDT — Frontend: the user's review, round 15; the scroll hint's wording
+**Asked (the user):** *"Quick change, update "How the citations work" to "How Claude's citations work""*
+**Came back:** `HOW_IT_WORKS`, the first screen's link down to the figure, now reads "How Claude’s citations work", with a typographic apostrophe as in the pitch. The figure's heading stays "Follow one citation". Its comment no longer calls this string the figure's heading.
+**Checked:** Node passed 77. The change is a string only, so it was not checked in the browser.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the wording quoted above. Not a lock.
