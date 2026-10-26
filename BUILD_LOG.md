@@ -2722,3 +2722,26 @@ The main session's calls from 23:08 are locked with it, as the user approved the
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** lock the 2.9 s exit and the final frame, quoted above. Locked as P4.38.
+
+## Oct 25, 2026, 23:35 CDT — Frontend: the user's review, round 21; no note writes once a run starts
+**Asked (the user):** *"Sometimes, as the l insertion animation plays, you can still see some notes getting written"*
+**Came back:** a defect in `web/js/margin.js`. It reproduced in the mock at 1280×800, with a run started while a note was writing:
+- **A note kept writing.** Its next line wrote itself 0.56 s after the run started. The exit erased the lines already written, but the timer for the next line, and the one for its citation, were still pending.
+- **A new note started.** A whole new note began at 2.2 s. The page queues two ticks when it opens (0.6 s and 2.8 s), and only the repeating interval was stopped on exit, not those.
+- **The same gap, a third way:** a note already being erased by the normal cycle was not in the list the exit erased, so it kept its slow erase.
+
+The fix:
+- the exit now cancels every pending timer before it schedules its own;
+- a tick does nothing once the exit has begun;
+- the exit fast-erases every note on the page, including those already erasing, which are now tracked (`going`).
+
+P4.36 to P4.38 are unchanged.
+**Checked:**
+- Node: all 84 passed.
+- **The mock at 1280×800,** a run started mid-note: nothing written after the click but the line already writing at the moment of the click. No note was born, notes and leaders were all gone by 1.5 s, and the run screen showed.
+- **A run started with a note erasing:** nothing written, and nothing left by 1.5 s.
+- **Going home:** the notes resume, two on the page.
+Timings under viewport emulation are throttled, so only the order was checked, not the times.
+**Failures:** the defect above.
+**Spend:** none.
+**DECISION (user):** the report, quoted above. A defect fix, no lock needed.

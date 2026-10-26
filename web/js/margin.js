@@ -72,7 +72,7 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
   motion.hidden = reduce;
   first.append(motion);
 
-  let timers = [], loop = null, live = [], paused = false, visible = true, exiting = null;
+  let timers = [], loop = null, live = [], going = [], paused = false, visible = true, exiting = null;
   const later = (f, ms) => { const t = setTimeout(f, reduce ? 0 : ms); timers.push(t); return t; };
   const box = el => { const a = el.getBoundingClientRect(), b = first.getBoundingClientRect(); return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height }; };
   const heroBox = () => { const b = box(hero), s = getComputedStyle(hero); const px = parseFloat(s.paddingLeft), py = parseFloat(s.paddingTop); return { x: b.x + px, y: b.y + py, w: b.w - 2 * px, h: b.h - 2 * py }; };
@@ -141,6 +141,7 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
 
   function erase(o, fast) {
     live = live.filter(x => x !== o);
+    if (!going.includes(o)) going.push(o);
     o.span.classList.remove('on');
     o.n.classList.remove('cited');
     o.p.style.opacity = 0;
@@ -148,13 +149,13 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
       l.style.transitionDuration = `${fast ? 220 : 380}ms`;
       later(() => l.classList.remove('go'), i * (fast ? 120 : 260));
     });
-    later(() => { o.n.remove(); o.p.remove(); }, fast ? 700 : 1500);
+    later(() => { o.n.remove(); o.p.remove(); going = going.filter(x => x !== o); }, fast ? 700 : 1500);
   }
 
   // on a phone the hero fills the first view, so there is no room for notes and no control to show (style.css)
   const narrow = matchMedia('(max-width: 759px)');
   function tick() {
-    if (paused || !visible || document.hidden || narrow.matches) return;
+    if (exiting || paused || !visible || document.hidden || narrow.matches) return;
     if (live.length >= 2) erase(live[0]);
     const free = notes.filter(n => !live.some(o => o.note.at === n.at)).sort(() => Math.random() - 0.5);
     for (const n of free) if (show(n)) break;
@@ -164,7 +165,7 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
     timers.forEach(clearTimeout); timers = [];
     clearInterval(loop); loop = null;
     for (const o of live) { o.n.remove(); o.p.remove(); }
-    live = [];
+    live = []; going = [];
     first.querySelectorAll('.note, .ins').forEach(e => e.remove());
     leads.replaceChildren();
   }
@@ -200,7 +201,10 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
       if (exiting) return exiting;
       clearInterval(loop); loop = null;
       if (reduce) return (exiting = Promise.resolve());
-      live.slice().forEach(o => erase(o, true));
+      // nothing more is written once a run starts: drop every pending line, citation and tick, then erase every note
+      // still on the page, those already erasing too (their own removal was one of the dropped timers)
+      timers.forEach(clearTimeout); timers = [];
+      [...live, ...going].forEach(o => erase(o, true));
       first.classList.add('leaving');
       const pc = para.querySelector('.pc');
       for (const w of para.querySelectorAll('.wd')) {
