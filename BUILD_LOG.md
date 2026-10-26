@@ -2814,3 +2814,51 @@ The mock's sample events carry old timestamps, so a mock live run counts as catc
 **Failures:** the defect above.
 **Spend:** none.
 **DECISION (user):** the report, quoted above. A defect fix, no lock needed.
+
+## Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; the step log shows research only (P4.39)
+**Asked (the user):** after trying rounds 23 and 24: *"Looking good! Lock as is."*
+**Came back:** P4.39 locks the step log as built in round 23 (f1b5883), with no code change:
+- the log shows research's steps only and ends at "Finished research";
+- the "Writing the answer" and "Update check, running beside the answer" groups go, with their intro lines, "Checked the answer", "No tools in this call…", the web search's steps and its refused summaries;
+- a pause or resume after research still shows.
+It amends P4.3: a summary the copy guard refused is no longer shown anywhere on the page. Its stored and streamed events are unchanged. It also replaces the main session's two groups (P4.31, step 0's call) and T5.3 #6's step-log lines.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Lock as is."* Locked as P4.39.
+
+## Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; "Later developments" under the answer (P4.40)
+**Asked (the user):** *"Lock as is."*
+**Came back:** P4.40 locks the web search's box as built in round 23 (f1b5883), with no code change:
+- it sits under the answer and its two warnings, above the run's cost line;
+- it comes in when the run ends, once both the answer and the web search are done, and while the search runs on after the answer, "Still checking the web for anything newer…" holds its place;
+- its dashed edge is inked around it from the top left (0.9 s) and its lines come up one by one, or a plain fade with reduced motion;
+- the pointer under the answer comes with it.
+It amends T4.3 #4 (the band above the answer) and P4.31's placement.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Lock as is."* Locked as P4.40.
+
+## Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; the web search's wording (P4.41)
+**Asked (the user):** *"Lock as is."* On the drafts before round 23: *"your drafts on later devs and such are good"*, and on the pointer: *"Approve the necessary change in wording."*
+**Came back:** P4.41 locks the wording in `web/js/text.js` as built in round 23 (f1b5883), with no code change. "Update check" is retired from what the page shows: the box is "Later developments" and the feature "the web search". It amends:
+- T5.3 #1 to #5: the label, the guarantee, the box's parts, the outcome lines and the pointer;
+- T5.1 #6: the credits' "for the web search";
+- T5.5: the privacy note's "for the web search";
+- T5.6 #2: the pre-*Chatrie* label's "to show the web search finding it".
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Lock as is."* Locked as P4.41.
+
+## Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; "Search opinions" and the placeholder (P4.42)
+**Asked (the user):** *"Lock as is."* On the button before round 23: *"Search Opinions, how about that?"*
+**Came back:** P4.42 locks, as built in round 23 (f1b5883), with no code change:
+- the button reads "Search opinions" on the landing and in the dock, in sentence case, on one line at phone width;
+- the question box's placeholder is "What has the Court said about heat cameras aimed at a house?"
+It replaces the main session's "Research" and placeholder (P4.31). The new replay questions for T5.6 are not part of this lock and are still to be settled.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Lock as is."* Locked as P4.42.

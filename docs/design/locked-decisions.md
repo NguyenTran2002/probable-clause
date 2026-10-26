@@ -740,7 +740,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:52 CDT — Phase 3: Architecture, Area 4 (the frontend stack, T4.2)"
 
-### T4.3 Where Areas 1 to 3 change the prototype (amends T3.1: the reader fetches whole opinions from the web service) — AMENDED by P4.35 (#3: the tag after each citation reads as a citation, not as the passage ID; #1: the ID moves to the card's small print)
+### T4.3 Where Areas 1 to 3 change the prototype (amends T3.1: the reader fetches whole opinions from the web service) — AMENDED by P4.35 (#3: the tag after each citation reads as a citation, not as the passage ID; #1: the ID moves to the card's small print); AMENDED by P4.40 (#4: the box sits under the answer and comes in when the run ends)
 
 - **Decision:** Area 4, topic 3. The prototype (T4.1) keeps its look; only these change:
   1. **Source cards (P2.3: no discards).** A card starts **Found** and becomes **Kept** with Claude's reason; a re-keep replaces the reason (T1.7). When the answer is done each card ends **kept and cited** (its hue), **kept, not cited** (its hue, labelled) or **not kept** (grey, folded to one line, no reason). The count reads "N found, K kept". Real IDs (`katz-3-p12`, T1.6). "Found by" lists every search or read that returned the passage; a passage matched again gets no new card. A paragraph's footnotes sit folded inside its card; a footnote gets its own card only when a search matches it alone or it is kept (T1.6). Passages from reads get cards too, folded like the rest.
@@ -785,7 +785,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:00 CDT — Phase 3: Architecture, Area 4 (costs shown, T4.5)"
 
-### T5.1 The standing lines (settles brief defaults 2 and 6)
+### T5.1 The standing lines (settles brief defaults 2 and 6) — AMENDED by P4.41 (#6: the credits say "for the web search")
 
 - **Decision:** Area 5, topic 1. The page's standing wording, final text:
   1. **Landing pitch:** *"Ask about the Fourth Amendment and surveillance technology, from wiretaps to phone location data. Claude searches 32 Supreme Court cases, keeps the passages that bear on your question, and writes an answer whose every citation leads to the exact sentences it rests on."*
@@ -814,7 +814,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:18 CDT — Phase 3: Architecture, Area 5 (the guarantee, coverage and checks, T5.2)"
 
-### T5.3 The update-check band's wording (replaces brief §6.4's draft label and guarantee sentence)
+### T5.3 The update-check band's wording (replaces brief §6.4's draft label and guarantee sentence) — AMENDED by P4.41 (#1 to #5: the box is "Later developments", new wording) and P4.39 (#6: no web-search steps in the log)
 
 - **Decision:** Area 5, topic 3, every recommended draft. Final text; angle brackets are filled by code from the run:
   1. **Honesty label,** under the heading "Update check": *"A convenience, kept apart from the evidence above. Claude searched the web for later developments, with the settings listed below. Finding nothing does not mean nothing has changed: a web search can miss pages, and a date filter skips pages with no published date."*
@@ -843,7 +843,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:25 CDT — Phase 3: Architecture, Area 5 (run states and stop labels, T5.4)"
 
-### T5.5 The privacy note (amends T1.14: a rule on personal details in queries; amends T4.1: fonts served by our own web service)
+### T5.5 The privacy note (amends T1.14: a rule on personal details in queries; amends T4.1: fonts served by our own web service) — AMENDED by P4.41 ("for the web search")
 
 - **Decision:** Area 5, topic 5 (T3.7's privacy note), facts in `docs/research/retention.md`:
   1. **The note, final text,** each provider's name linking to the page its claim comes from:
@@ -858,7 +858,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 19:36 CDT — Phase 3: Architecture, Area 5 (the privacy note, T5.5)"
 
-### T5.6 The replays: five recorded runs, one on a corpus that ends before *Chatrie*
+### T5.6 The replays: five recorded runs, one on a corpus that ends before *Chatrie* — AMENDED by P4.41 (#2: the label says "to show the web search finding it")
 
 - **Decision:** Area 5, topic 6 (brief §2 Replay mode, §7.4):
   1. **Four replays on the full corpus,** the questions as the chips' text:
@@ -896,7 +896,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 20:50 CDT — Phase 4: Build, the passage count corrected (P4.2)"
 
-### P4.3 A submit refused by the copy guard is stored with its flagged statements withheld (amends T3.1)
+### P4.3 A submit refused by the copy guard is stored with its flagged statements withheld (amends T3.1) — AMENDED by P4.39 (a refused web-search summary is no longer shown on the page; the stored events are unchanged)
 
 - **Decision:** When the copy guard (T2.3) refuses a `submit_answer`, the `tool_call` event stored and streamed for it (and so Atlas and any replay) carries Claude's input exactly, **except that each statement the guard flagged** (in `update_findings` or `update_overview`) is replaced by *"[statement withheld: it repeated a page's words]"*. Claude's own conversation keeps its input unchanged; it goes only to Anthropic and is never stored by this site. The refusal message to Claude names the statement by number and the page by its ID and never quotes the page (contract §4.F). This amends T3.1's "tool call (exactly what Claude sent)" for this one case, so that no web page text is stored or shown (T2.2, P1.3, P1.7). The step log still shows that the submit was refused, by which rule, and which statement was withheld.
 - **Considered:** withholding all findings of a refused submit (hides statements that passed the guard); keeping the input exact (page text in Atlas and published replays, against P1.7).
@@ -1201,3 +1201,49 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Tried it, lock the 2.9 s exit and the final frame with only "probable clause"."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 23:31 CDT — Frontend: the user's review, rounds 19 and 20 locked; the exit's hold and final frame (P4.38)"
+
+### P4.39 The step log shows research only (amends P4.3; replaces P4.31's two groups and T5.3 #6)
+
+- **Decision:** as built in round 23 (f1b5883).
+  1. **The log** shows research's steps and ends at "Finished research". The answer writing itself and the later-developments box (P4.40) are the progress after research.
+  2. **Gone:** the "Writing the answer" and "Update check, running beside the answer" groups and their intro lines, "Checked the answer", "No tools in this call…", the web search's steps, and its refused summaries.
+  3. **A pause or resume after research** still shows in the log.
+  4. **The copy guard's refusals** of the web search's summary are not shown on the page; the box shows only Claude's accepted summary. Amends P4.3's "The step log still shows that the submit was refused"; the stored and streamed events are unchanged. Research's own refusals (brief §5.4) still show in the log.
+- **User's words:** *"I want to remove these elements because they are redundant. User can already see the answer being written and the update result whether they ran or not."* On the refusals: *"The guard and refused site wording is something we built to protect ourselves. I'm thinking it's not even necessary to report to the user ... Just show them the final result?"* Then: *"Looking good! Lock as is."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; the step log shows research only (P4.39)"
+
+### P4.40 "Later developments" sits under the answer and is inked in when the run ends (amends T4.3 #4)
+
+- **Decision:** as built in round 23 (f1b5883).
+  1. **Place:** under the answer and its two warnings, above the run's cost line.
+  2. **When:** when the run ends, once both the answer and the web search are done, so it never pushes what is being read. While the web search runs on after the answer is written, *"Still checking the web for anything newer…"* holds its place.
+  3. **Arrival:** its dashed edge is inked around it clockwise from the top left (0.9 s), then its lines come up one by one (0.07 s apart); with reduced motion, a plain fade. A replay skipped to the end, or a reload catching up, shows it without animation.
+  4. **The pointer** under the answer (P4.41) comes in with the box.
+- **User's words:** *"I want it move to the very bottom, and we will show it after the answer finishes streaming if streaming finishes first then show it whenever the update check finishes. I want an on-brand insertion animation not something abrupt."* Then: *"Looking good! Lock as is."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; "Later developments" under the answer (P4.40)"
+
+### P4.41 The web search's wording: "Later developments" (amends T5.3 #1 to #5, T5.1 #6, T5.5, T5.6 #2)
+
+- **Decision:** as built in round 23 (f1b5883); final text, `web/js/text.js`. "Update check" is no longer shown; the box is "Later developments" and the feature "the web search".
+  1. **Heading** *"Later developments"*; **label** *"Claude searched the web for anything newer than these opinions. Kept apart from the evidence above. If it finds nothing, that doesn't mean nothing has changed: web searches miss pages."*
+  2. **Guarantee** *"Each point is Claude's summary of the pages it links. This site checks only that the pages came from this search, not what they say. Open them to check."*
+  3. **Parts:** *"What Claude found, in its own words"*; *"Claude's overview"*; *"How Claude searched"*; *"Set by this site: up to <n> results a search, at most <m> searches, each page cut to <k> characters before Claude reads it."* Each link keeps *"published <date> (Exa's estimate)"* or *"no published date"*.
+  4. **Outcomes:** *"Nothing newer found. That doesn't mean nothing has changed."*; *"Claude didn't search the web: <reason>"*; *"Web search unavailable: this month's search credit is used up. It's back on the 1st."* and the other unavailable lines with the same opening; *"This search didn't finish; nothing came back."*; *"The run stopped before Claude could summarise what it found. The pages are listed below."*
+  5. **Pointer** (found only): *"Claude found later developments that may bear on this. They aren't part of the evidence for this answer; see below."*
+  6. **Status lines:** *"Writing the answer · checking the web for anything newer"*, *"Checking the web for anything newer · the answer is written"*, *"Checking the web for anything newer"*.
+  7. **Elsewhere:** the credits, the privacy note and the pre-*Chatrie* label say "the web search"; the cost breakdown's part is "Web search (Claude)".
+- **User's words:** *"'update check' is something vague and hard to grasp what it means to the average user too. I want to draft new wordings with you."* On the drafts: *"your drafts on later devs and such are good"*; on the pointer: *"Approve the necessary change in wording."* Then: *"Looking good! Lock as is."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; the web search's wording (P4.41)"
+
+### P4.42 The button reads "Search opinions"; the placeholder (replaces P4.31's lines)
+
+- **Decision:** as built in round 23 (f1b5883).
+  1. **The button** reads *"Search opinions"* on the landing and in the dock, in sentence case like "Ask another question", on one line at phone width.
+  2. **The placeholder** is *"What has the Court said about heat cameras aimed at a house?"*
+  3. **Not in this lock:** the new replay questions for T5.6, still to be settled before the replays are recorded (P4.32).
+- **User's words:** *"Search Opinions, how about that? 'Find the Court's words' is too damn long for a button."* Then: *"Looking good! Lock as is."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; "Search opinions" and the placeholder (P4.42)"
