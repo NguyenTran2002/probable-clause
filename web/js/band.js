@@ -26,9 +26,14 @@ export function renderBand(band, cfg, limits) {
   const pages = new Map((band.pages || []).map(p => [p.id, p]));
   const o = band.outcome;
 
+  // the overview first, under its own heading, then the findings with the line on what this site checks (the user,
+  // round 29, Oct 26, 2026); a short outcome line still comes before the overview it explains
+  const overview = () => { if (band.overview) sec.append(h('h3', null, T.BAND_OVERVIEW), h('p', { class: 'summary' }, ...withheld(band.overview))); };
+
   if (o === 'found') {
-    sec.append(h('p', { class: 'label' }, T.BAND_GUARANTEE));
+    overview();
     sec.append(h('h3', null, T.BAND_FINDINGS));
+    sec.append(h('p', { class: 'label' }, T.BAND_GUARANTEE));
     sec.append(h('ul', { class: 'findings' }, (band.findings || []).map(f => h('li', null,
       h('p', null, ...withheld(f.statement)),
       h('ul', { class: 'links' }, (f.sources || []).map(id => pages.get(id)).filter(Boolean).map(linkItem))))));
@@ -43,9 +48,7 @@ export function renderBand(band, cfg, limits) {
   } else if (o === 'not_summarised') {
     sec.append(h('p', { class: 'outcome' }, T.BAND_NOT_SUMMARISED));
   }
-  if (band.overview) {
-    sec.append(h('p', { class: 'summary' }, h('span', { class: 'whose' }, T.BAND_OVERVIEW), ...withheld(band.overview)));
-  }
+  if (o !== 'found') overview();
 
   const searches = band.searches || [];
   if (searches.length) {

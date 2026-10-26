@@ -3283,3 +3283,24 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none beyond P4.50. Next, in the user's order: the deploy, only on its explicit green light, with the cloud setup script (P4.30) and the goodnight block (P4.26), each on its own green light. T5.6's fifth replay stays open.
+
+## Oct 26, 2026, 02:16 CDT — Frontend: the user's review, round 29; the later-developments box reordered, its scroll capped
+**Asked (the user):** *"I want us to rearrange the later development box because they can get quite long an unituitive."* The new order: the heading; the line on what Claude searched; *"Claude's overview (and promote the header?)"*; *"What Claude found, in its own words"*; the line on what this site checks; the links and summaries; *"How Claude searched"*; every page the search returned. Then: *"scroll to expose at most to the line "Claude's overview" only, and nothing more, not even the overview content, so that user can still see the actual answer above and won't get disoriented."* And: *"in case the answer finishes streaming but the later development search has not, then, the user already did their own scrolling (up down doesn't matter), we shall not scroll them automatically anymore but let them find the section on their own."*
+**Came back:** built in `web/js/band.js` and `web/js/view.js`:
+1. **The order,** for a box with findings: "Later developments"; the line on what Claude searched (T5.3); "Claude's overview" and the overview; "What Claude found, in its own words"; the line on what this site checks (moved under that heading, since it is about the points below it); the points and their links; "How Claude searched"; every page returned.
+2. **The overview heading is promoted:** it was a small muted label inside the overview's paragraph and is now a subheading like the box's other two. For a box without findings, the short outcome line ("Nothing newer found…", the skip or unavailable line) still comes first and the overview after it, since the overview explains it (main session's call).
+3. **The scroll at the run's end** stops with the box's first subheading at the bottom of the conversation, 12 px clear: "Claude's overview" where there is one, otherwise the next subheading. It never scrolls up, and the dock growing at the run's end keeps the same limit. A box with no subheading follows to the bottom as before. The heading's place is measured from the box and the heading's offset inside it, since the heading itself moves while the box inks in.
+4. **Hands off after the visitor's own scroll:** once the answer is written and the web search still runs, any scroll of the visitor's, up or down, means the run's end does not scroll at all. The flag clears with the next run. It is set by the same input detection as the pinning (a wheel, touch, key or scrollbar grab within a second), so scrolls of the page's own never set it.
+
+**Checked:**
+- Node tests: 84 of 84.
+- In the browser on the mock (8765), served from the working tree:
+  - the GPS replay: the box's children are in the new order, and the run's end stopped with "Claude's overview" 898 px down a 908 px pane, against a bottom 1,277 px further, with the answer's last lines in view;
+  - the same replay with its last web search moved to end 12 s after the answer, in the page only (the committed file is unchanged): with no input, the waiting line came at 44 s and was followed, then the box came in 12 s later and the scroll stopped at the overview heading. With a wheel scroll up during the wait, the box came in and nothing moved (4,472 px before and after);
+  - at phone width (375 × 812), the backyard replay skipped to the end stopped with the overview heading at 560 px in a 571 px pane, the answer's end still showing.
+- A first attempt at the moved-search test played 4× fast. That bunched research's tool calls, and the 3 s spacing between them (`pace.js`) held the whole run back to one burst. It was the test's doing, so the test was re-run at the recorded pace.
+- Nothing else is affected, so the Python suite was not re-run (quick-iteration rule).
+
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the direction above, as quoted. Not locked: round 29 waits for the user's look. The local stack (8080) is rebuilt from this commit for it.

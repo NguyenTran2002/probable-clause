@@ -29,6 +29,9 @@ export function createView({ cfg, corpus, md }) {
 
   let run = createRun(), steps = null, bandSlot = null, answerSlot = null, endSlot = null, costSlot = null, replayDate = null;
   let bandShown = false;
+  // the box's first subheading, the furthest a run's end scrolls, and whether the visitor scrolled while the
+  // web search ran on after the answer, after which the run's end does not scroll at all (round 29)
+  let bandCap = null, leftAlone = false;
   let answerNodes = null;
   const phone = () => matchMedia('(max-width: 759px)').matches;
 
@@ -42,7 +45,20 @@ export function createView({ cfg, corpus, md }) {
   $$('.tabs button[data-pane]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pane === (document.body.dataset.pane || 'thread'))));
   $$('.tabs button[data-pane]').forEach(b => b.addEventListener('click', () => setPane(b.dataset.pane)));
   function near(pane) { return pane.scrollHeight - pane.scrollTop - pane.clientHeight < 260; }
-  function follow(pane, glide = true) { pane.scrollTo({ top: pane.scrollHeight, behavior: glide && smooth() ? 'smooth' : 'auto' }); }
+  function follow(pane, glide = true) {
+    const behavior = glide && smooth() ? 'smooth' : 'auto';
+    if (pane !== threadScroll || !bandCap) { pane.scrollTo({ top: pane.scrollHeight, behavior }); return; }
+    // the later-developments box can run long: the run's end shows it only down to its first subheading ("Claude's
+    // overview"), so the answer above stays in view, and it never scrolls back up (the user, round 29, Oct 26, 2026)
+    const top = capBottom(bandCap) - pane.clientHeight;
+    if (top > pane.scrollTop + 1) pane.scrollTo({ top, behavior });
+  }
+  // measured from the box and the heading's offset in it, not the heading's own box, which moves while the box inks in
+  function capBottom(head) {
+    const sec = head.offsetParent;
+    return sec.getBoundingClientRect().top - threadScroll.getBoundingClientRect().top + threadScroll.scrollTop
+      + head.offsetTop + head.offsetHeight + 12;
+  }
 
   // Following the newest content: a pane stays pinned to its bottom until the visitor scrolls it away, and pins again
   // when they scroll back near the bottom. Pinning is decided by the visitor's own scrolling, never by measuring at
@@ -56,11 +72,16 @@ export function createView({ cfg, corpus, md }) {
     for (const t of ['wheel', 'touchstart', 'touchmove']) pane.addEventListener(t, mark, { passive: true });
     pane.addEventListener('pointerdown', e => { if (e.target === pane) mark(); });    // the scrollbar itself
     // within a second of the visitor's input, a scroll is theirs (momentum included); ours never change the pin
-    pane.addEventListener('scroll', () => { if (performance.now() - touched.get(pane) < 1000) pinned.set(pane, near(pane)); }, { passive: true });
+    pane.addEventListener('scroll', () => {
+      if (performance.now() - touched.get(pane) >= 1000) return;
+      pinned.set(pane, near(pane));
+      // any scroll of theirs, up or down, once the answer is written and the web search still runs (round 29)
+      if (pane === threadScroll && !run.ended && webWaiting()) leftAlone = true;
+    }, { passive: true });
   }
   // the dock grows when a run ends (the line under the composer returns): a pinned conversation keeps its last line
   // in view instead of sliding under the dock
-  new ResizeObserver(() => { if (pinned.get(threadScroll)) follow(threadScroll, false); }).observe(threadScroll);
+  new ResizeObserver(() => { if (pinned.get(threadScroll) && !leftAlone) follow(threadScroll, false); }).observe(threadScroll);
   // an opened fold near the bottom (the cost line's parts) scrolls up far enough to show all of it
   function revealFold(e) {
     const pr = threadScroll.getBoundingClientRect(), er = e.getBoundingClientRect();
@@ -91,6 +112,8 @@ export function createView({ cfg, corpus, md }) {
     thread.append(answerSlot, endSlot, bandSlot, costSlot);
     answerNodes = null;
     bandShown = false;
+    bandCap = null;
+    leftAlone = false;
     threadScroll.scrollTo(0, 0);
     sourcesPane.scrollTo(0, 0);
     for (const pane of pinned.keys()) pinned.set(pane, true);
@@ -120,7 +143,7 @@ export function createView({ cfg, corpus, md }) {
     placeBand(quiet);
     if (ev.kind === 'composition_started') announce(T.runStatus.answer);
     status();
-    if (pinThread) follow(threadScroll, !quiet);
+    if (pinThread && !leftAlone) follow(threadScroll, !quiet);
     if (pinSources && (ev.kind === 'tool_result' || ev.kind === 'passage')) follow(sourcesPane, !quiet);
     redraw();
     setQuiet(false);
@@ -163,15 +186,21 @@ export function createView({ cfg, corpus, md }) {
       bandShown = true;
       if (!b) return;
       bandSlot.append(b);
+      bandCap = b.querySelector('h3');
       if (!quiet) inkIn(b);
       if (run.band.outcome === 'found') showAnswer();      // the pointer under the answer comes with the box
       return;
     }
-    const answerDone = !run.keepOrder.length || run.checks || run.composition.failed
-      || (run.composition.started && !run.open.composition);
-    const waiting = run.researchDone && run.open.update && answerDone;
+    const waiting = webWaiting();
     if (waiting && !bandSlot.firstChild) bandSlot.append(fresh(h('p', { class: 'band-waiting' }, T.BAND_WAITING)));
     else if (!waiting) clear(bandSlot);
+  }
+
+  // the answer is written (or none will be) and the web search runs on
+  function webWaiting() {
+    const answerDone = !run.keepOrder.length || run.checks || run.composition.failed
+      || (run.composition.started && !run.open.composition);
+    return run.researchDone && run.open.update && answerDone;
   }
 
   // ---------- the answer ----------
