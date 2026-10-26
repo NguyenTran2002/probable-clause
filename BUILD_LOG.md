@@ -3024,3 +3024,18 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none. Stopping the API container made `local.sh` remove both containers, by design (its cleanup), so the web container was started alone by hand for the check.
 **Spend:** none.
 **DECISION (user):** *"Frontend is finished. Lock."* Locked as P4.46. The order: full test, then the replays (questions approved first), then the deploy. The replays stay frontend-only (the user's words above). That is already the case, so nothing changed.
+
+## Oct 26, 2026, 01:16 CDT — Frontend: finished; prepared for compaction
+**Asked (the user):** *"Prepare for compaction."*
+**Came back:** CLAUDE.md's current state now covers:
+- the frontend finished (P4.46);
+- the user's order: the full test, then the replays (questions approved first, P4.22's remaining allowance), then the deploy on its green light;
+- the replays kept frontend-only;
+- the review's locks, P4.36 to P4.46;
+- what stays the user's call;
+- `local-2341af0` on 8080;
+- the next number, P4.47.
+**Checked:** nothing, since nothing changed in the code.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none beyond P4.46.
