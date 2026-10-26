@@ -36,33 +36,48 @@
 
   <div class="below" id="how">
 
-  <!-- The trace figure (T5.1 #2): one citation from a run on Oct 25, 2026 (Kyllo v. United States), followed from
-       the answer, to the sentence in the kept passage, to the citation in the API response. -->
-  <figure class="trace">
+  <!-- The trace figure (T5.1 #2), as three steps (the user, Oct 25, 2026): one citation from a run on Oct 25, 2026
+       (Kyllo v. United States), followed from the claim, to the sentence in the opinion, to the API response, whose
+       quote the API copies from the opinion. The step wording is in text.js; the annotated response is trimmed to the
+       three fields that carry the point, with the full response one click away. -->
+  <figure class="trace" aria-labelledby="how-title">
     <h2 class="how" id="how-title"></h2>
-    <figcaption id="trace-caption"></figcaption>
-    <div class="trace-row">
-      <div class="t-card">
-        <p class="t-where">In the answer</p>
-        <p><span class="t-cited">The question presented was whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home is a "search."</span> <span class="pill h1" title="kyllo-1-p1">Kyllo at 29</span></p>
-      </div>
-      <span class="t-link" aria-hidden="true"></span>
-      <div class="t-card t-source h1">
-        <p class="t-where">In the passages Claude kept</p>
-        <p class="t-case"><i>Kyllo v. United States</i>, 533 U.S. 27, majority</p>
-        <p class="t-text"><span class="hit">This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a "search" within the meaning of the Fourth Amendment.</span></p>
-      </div>
-      <span class="t-link" aria-hidden="true"></span>
-      <div class="t-card t-wire">
-        <p class="t-where">In the API response</p>
+    <p class="fig-lead" id="trace-caption"></p>
+    <ol class="fig-steps">
+      <li class="fig-step">
+        <div class="fig-say"><span class="fig-n" aria-hidden="true">1</span><h3></h3><p></p></div>
+        <div class="t-card">
+          <p><span class="t-cited">The question presented was whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home is a "search."</span> <span class="pill h1" title="kyllo-1-p1">Kyllo at 29</span></p>
+        </div>
+      </li>
+      <li class="fig-step">
+        <div class="fig-say"><span class="fig-n" aria-hidden="true">2</span><h3></h3><p></p></div>
+        <div class="t-card t-source h1">
+          <p class="t-case"><i>Kyllo v. United States</i>, 533 U.S. 27</p>
+          <p class="t-text"><span class="hit">This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a "search" within the meaning of the Fourth Amendment.</span> <span class="pin">533 U.S., at 29</span></p>
+        </div>
+      </li>
+      <li class="fig-step">
+        <div class="fig-say"><span class="fig-n" aria-hidden="true">3</span><h3></h3><p></p></div>
+        <div class="t-card t-wire">
+<pre><span class="cm" data-note="0"></span>
+<span class="k">"document_title"</span>: <span class="s">"Kyllo v. United States (2001), Scalia, majority"</span>,
+<span class="cm" data-note="1"></span>
+<span class="k">"start_block_index"</span>: <span class="n">0</span>, <span class="k">"end_block_index"</span>: <span class="n">1</span>,
+<span class="cm" data-note="2"></span>
+<span class="k">"cited_text"</span>: <span class="s">"This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a \"search\" within the meaning of the Fourth Amendment."</span></pre>
+          <details class="fig-full">
+            <summary id="fig-full"></summary>
 <pre><span class="k">"type"</span>: <span class="s">"content_block_location"</span>,
 <span class="k">"document_title"</span>: <span class="s">"Kyllo v. United States (2001), Scalia, majority"</span>,
 <span class="k">"document_index"</span>: <span class="n">0</span>,
 <span class="k">"start_block_index"</span>: <span class="n">0</span>,
 <span class="k">"end_block_index"</span>: <span class="n">1</span>,
 <span class="k">"cited_text"</span>: <span class="s">"This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a \"search\" within the meaning of the Fourth Amendment."</span></pre>
-      </div>
-    </div>
+          </details>
+        </div>
+      </li>
+    </ol>
   </figure>
 
   <footer class="fine" id="landing-fine"></footer>

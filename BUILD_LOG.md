@@ -2543,3 +2543,29 @@ It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. T
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** quoted above; locked as P4.35, amending T4.3 #1 and #3.
+
+## Oct 25, 2026, 21:07 CDT — Frontend: the user's review, round 14; the read step's target and the three-step citation figure
+**Asked (the user):** with a screenshot of a read step showing `kyllo-1-p13` and "1 before, 2 after": *"One place where we missed. Also, change it to 1 paragraph before, 2 paragraphs after for accuracy and clarity. Redo the relevant part of the landing page as well."* The main session read the last sentence as building the three-step citation section it had mocked, which its previous reply had offered.
+**Came back:**
+- **The read step names its target as a citation (P4.35),** with the target Claude sent as hover text.
+  - **A passage ID** gets the passage's tag ("Kyllo at 39, ¶13").
+  - **A page target** reads as a citation: "katz:351" becomes "Katz at 351", and Chatrie's "chatrie-2:12" becomes "Chatrie, slip op. at 12 (dissenting)".
+  - **Anything else** shows as sent. `readTarget` is in `model.js`; `pageTarget` and `readAround` are in `text.js`.
+- **The span reads in paragraphs:** "1 paragraph before, 2 paragraphs after", and "no paragraphs before, 1 paragraph after" when one side is empty.
+  - **Both sides empty** reads "only this paragraph". That wording is the main session's.
+  - **A footnote target** counts footnotes, since a read adds passages of the target's own kind (the tool's description).
+- **The landing figure is three numbered steps,** as mocked in round 13's discussion.
+  - **Heading:** "Follow one citation". **Lead:** "A real answer from this site, traced back to the Court’s words in three steps."
+  - **Step 1, "Claude makes a claim":** the answer's sentence with its tag, "Kyllo at 29".
+  - **Step 2, "The citation points into the opinion":** the opinion's sentence, highlighted, with "533 U.S., at 29".
+  - **Step 3, "Code copies the quote, word for word":** the API response trimmed to three fields, each with a comment: "// which opinion", "// which sentences" and "// the quote, copied by code". "Show the full API response" folds out the six-line original.
+  - **Layout:** each step's words sit in a 17rem column beside its card on wider screens, and above it below 760 px. The column is now 60rem.
+  - **Wording** (`FIG_STEPS`, `FIG_NOTES`, `FIG_FULL`, `FIG_TITLE`, and a new `TRACE_CAPTION`) lives in `text.js`. The figure's old row and connector styles are removed.
+- **Checked (only what changed):**
+  - Node: 77 passed, with a new test of the read target and the span.
+  - **The mock's `step-limit-stop`:** the reads show "Jones at 404, ¶9" and "Knotts at 281, ¶15 | 1 paragraph before, 1 paragraph after", each with its ID as hover text.
+  - **The landing at 1440×900:** the words' column is 272 px and the cards are 656 px.
+  - **The landing at 393×852:** the cards are 361 px with no horizontal scroll, and the full response opens.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the wording and the redo, quoted above. Not a lock; the main session's calls are the figure's step wording, "only this paragraph", and footnotes counted as footnotes.

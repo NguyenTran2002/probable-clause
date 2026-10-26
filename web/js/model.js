@@ -5,7 +5,7 @@
 // Each item is one thing the visitor watches happen: a Claude call waiting for its reply (shown only while it waits
 // or when it needed a retry), a tool call with its result, a pause or a resume.
 
-import { passageTag } from './text.js';
+import { passageTag, pageTarget, SHORT_NAMES } from './text.js';
 
 export const HUES = ['h1', 'h2', 'h3', 'h4'];
 const SEARCHES = new Set(['search_meaning', 'search_exact']);
@@ -74,6 +74,17 @@ export function tagsFor(run, ids, minLevel = 0) {
     if (!bumped) break;
   }
   return new Map(ps.map(p => [p.id, label(p)]));
+}
+// a read's target: a passage ID, a case and page ("katz:351") or, in Chatrie, an opinion and page ("chatrie-1:12")
+export function readTarget(run, target) {
+  const p = run.passages.get(target);
+  if (p) return { tag: tagOf(run, target), footnote: p.kind === 'footnote' };
+  const m = /^([a-z_]+)(-\d+)?:(\d+)$/.exec(target);
+  if (m && SHORT_NAMES[m[1]]) {
+    const opinion = m[2] ? [...run.passages.values()].find(q => q.opinion_id === m[1] + m[2]) || { opinion_type: 'majority' } : null;
+    return { tag: pageTarget(m[1], Number(m[3]), opinion), footnote: false };
+  }
+  return { tag: null, raw: target, footnote: false };
 }
 // the cards and the step log list many passages from the same pages, so theirs always carry the paragraph (level 1),
 // and the author when even that is shared

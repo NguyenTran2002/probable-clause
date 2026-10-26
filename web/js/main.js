@@ -39,7 +39,10 @@ function standing(corpus) {
     h('p', null, T.coverageLine(corpus)), h('p', { class: 'aff' }, T.AFFILIATION), h('p', { class: 'links' }, ...links()));
   clear($('#bar-links')).append(...links());
   $('#trace-caption').textContent = T.TRACE_CAPTION;
-  $('#how-title').textContent = T.HOW_IT_WORKS;
+  $$('.fig-step').forEach((li, i) => { $('h3', li).textContent = T.FIG_STEPS[i][0]; $('.fig-say p', li).textContent = T.FIG_STEPS[i][1]; });
+  $$('.fig-step .cm').forEach(c => { c.textContent = T.FIG_NOTES[Number(c.dataset.note)]; });
+  $('#fig-full').textContent = T.FIG_FULL;
+  $('#how-title').textContent = T.FIG_TITLE;
   $('#more').textContent = T.HOW_IT_WORKS;
   $('#from-scratch').textContent = T.FROM_SCRATCH;
 }

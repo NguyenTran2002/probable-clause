@@ -3,7 +3,7 @@
 // from the run model; each one's element is kept and refreshed in place, so nothing already shown moves.
 
 import { h, fresh, clear } from './dom.js';
-import { callVisible, hueOf, tagOf } from './model.js';
+import { callVisible, hueOf, tagOf, readTarget } from './model.js';
 import { quoted } from './sources.js';
 import * as T from './text.js';
 
@@ -152,10 +152,13 @@ export function createSteps(container, { cfg, onGoto }) {
         li.append(h('p', { class: 'meta' }, searchMeta(inp)));
         break;
       }
-      case 'read_passages':
-        li.append(h('p', { class: 'query mono' }, ...withheld(String(inp.target ?? ''))),
-          h('p', { class: 'meta' }, `${inp.before ? `${inp.before} before` : 'none before'}, ${inp.after ? `${inp.after} after` : 'none after'}`));
+      case 'read_passages': {
+        // the target as a citation reads (P4.35), the ID Claude sent as its hover text
+        const t = readTarget(run, String(inp.target ?? ''));
+        li.append(h('p', { class: 'query', attrs: { title: inp.target } }, ...(t.tag ? [t.tag] : withheld(t.raw))),
+          h('p', { class: 'meta' }, T.readAround(inp.before, inp.after, t.footnote)));
         break;
+      }
       case 'search_web_updates':
         li.append(queryLine(inp.query ?? ''),
           h('p', { class: 'meta' }, webMeta(inp)));

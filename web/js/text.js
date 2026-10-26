@@ -39,7 +39,16 @@ export function pitch(corpus) {
 }
 // the first screen's pointer to the figure below it, and the figure's heading
 export const HOW_IT_WORKS = 'How the citations work';
-export const TRACE_CAPTION = 'Each cited sentence carries a citation the Claude API returned: which kept passage it rests on, and exactly which of that passage’s sentences. Follow one from the answer, to those sentences in the passage, to the part of the API response that links them.';
+// the trace figure's three steps (the user, Oct 25, 2026): each [title, line]; then the annotated response's notes
+export const FIG_STEPS = [
+  ['Claude makes a claim', 'Each sentence Claude draws from the opinions carries a citation, shown as a tag after it.'],
+  ['The citation points into the opinion', 'It names the case and the exact sentences the claim relies on.'],
+  ['Code copies the quote, word for word', 'The Claude API returns where the quote sits and copies it from the opinion, so the AI never retypes it.'],
+];
+export const FIG_NOTES = ['// which opinion', '// which sentences', '// the quote, copied by code'];
+export const FIG_FULL = 'Show the full API response';
+export const FIG_TITLE = 'Follow one citation';
+export const TRACE_CAPTION = 'A real answer from this site, traced back to the Court’s words in three steps.';
 export const NOT_ADVICE = 'Research, not legal advice: it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.';
 export const AI_DISCLOSURE = 'This is AI. Claude, Anthropic’s AI model, does the research and writes the answers through the Claude API. Check what it says against the opinions and linked sources before relying on it.';
 export const AFFILIATION = 'Independent project. Not affiliated with Anthropic.';
@@ -356,6 +365,19 @@ export function passageTag(p, level = 0) {
   const role = ROLE[p.opinion_type];
   const who = level >= 2 && role && p.authors.length ? `${andList(p.authors)}, ` : '';
   return `${name}${at}${note}${para}${role ? ` (${who}${role})` : ''}`;
+}
+// a read's span (the user, Oct 25, 2026: "1 paragraph before, 2 paragraphs after"); a footnote target reads around
+// footnotes, since a read adds passages of the target's own kind
+export function readAround(before, after, footnote) {
+  const one = footnote ? 'footnote' : 'paragraph';
+  const side = (n, where) => (n ? `${plural(n, one)} ${where}` : `no ${one}s ${where}`);
+  if (!before && !after) return `only this ${one}`;
+  return `${side(before || 0, 'before')}, ${side(after || 0, 'after')}`;
+}
+// a read whose target is a page ("katz:351", or "chatrie-1:12" for a slip opinion's opinion), named as a citation
+export function pageTarget(caseKey, page, opinion) {
+  return passageTag({ id: '', kind: 'paragraph', case_key: caseKey, case_name: caseKey, page_start: page,
+    slip_opinion: !!opinion, opinion_type: opinion ? opinion.opinion_type : 'majority', authors: [] });
 }
 export const passageId = id => `ID ${id}.`;
 export const decided = iso => `Decided ${longDate(iso)}.`;

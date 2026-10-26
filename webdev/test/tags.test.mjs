@@ -3,8 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { passageTag, SHORT_NAMES } from '../../web/js/text.js';
-import { createRun, apply, tagsFor, tagOf } from '../../web/js/model.js';
+import { passageTag, SHORT_NAMES, readAround } from '../../web/js/text.js';
+import { createRun, apply, tagsFor, tagOf, readTarget } from '../../web/js/model.js';
 
 const DIR = new URL('../../tests/fixtures/events/', import.meta.url);
 const NAMES = readdirSync(DIR).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
@@ -54,6 +54,21 @@ test('every fixture: the answer\'s tags are distinct, and so are the tags of eve
     const all = [...run.passages.keys()].map(id => tagOf(run, id));
     assert.equal(new Set(all).size, all.length, name);
   }
+});
+
+test('a read names its target as a citation and its span in paragraphs (or footnotes)', () => {
+  assert.equal(readAround(1, 2), '1 paragraph before, 2 paragraphs after');
+  assert.equal(readAround(0, 1), 'no paragraphs before, 1 paragraph after');
+  assert.equal(readAround(undefined, undefined), 'only this paragraph');
+  assert.equal(readAround(2, 0, true), '2 footnotes before, no footnotes after');
+  const run = createRun();
+  const p = { ...base, id: 'kyllo-1-p13', kind: 'paragraph', page_start: 39 };
+  run.passages.set(p.id, p);
+  run.passages.set('chatrie-2-p1', { ...base, case_key: 'chatrie', slip_opinion: true, opinion_id: 'chatrie-2', opinion_type: 'dissent', id: 'chatrie-2-p1', kind: 'paragraph', page_start: 1 });
+  assert.deepEqual(readTarget(run, 'kyllo-1-p13'), { tag: 'Kyllo at 39, ¶13', footnote: false });
+  assert.equal(readTarget(run, 'katz:351').tag, 'Katz at 351');
+  assert.equal(readTarget(run, 'chatrie-2:12').tag, 'Chatrie, slip op. at 12 (dissenting)');
+  assert.deepEqual(readTarget(run, 'nonsense'), { tag: null, raw: 'nonsense', footnote: false });
 });
 
 // the whole corpus, from build_web_data.py's local output when it is there (gitignored, so skipped otherwise)
