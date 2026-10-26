@@ -2590,3 +2590,11 @@ It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. T
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** option B, quoted above, with the locked wording kept. Not a lock; the main session's calls are the heading "What it won’t do" and the two-line footer.
+
+## Oct 25, 2026, 21:22 CDT — Frontend: the user's review, round 16 closed; the footer stays two lines
+**Asked (the user):** *"Keep the footer's two lines with the locked wording."*
+**Came back:** no change. The footer built at 21:17 stays as it is (7101ec2): the coverage line (T5.2 #2), then the affiliation line (T5.1 #5) with the links. The shortened single line from the mock-up is dropped.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the locked wording stays, quoted above. Not a lock.
