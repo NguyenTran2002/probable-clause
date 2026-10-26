@@ -98,6 +98,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - **Services:** `probable-clause-api-00002-f67` and `probable-clause-web-00002-jfn`, from `deploy.sh` (the first deploy's were `-00001-hpd` and `-00001-vl4`). A redeploy is `./deploy/deploy.sh` on a clean tree, on the user's green light.
   - **goodnight:** the `# === probable-clause ===` block in `~/Documents/Developer/framedbytran/goodnight/nginx.conf` (29983d4; CLAUDE.md note 7d62d8c; never pushed), live as `goodnight-00015-nt9`; the revision before it is `goodnight-00014-llq`. It clears `X-Forwarded-For`, `X-Real-IP` and `Forwarded`. The off switch is removing that block (P5.1).
   - **First cold-start sample** (after the deploy): 15.3 s from "Starting new instance" to ready; the app's own 11.8 s, of which "clients and the loop" is 7.4 s.
+  - **First live run** (the user's, BUILD_LOG 03:30): `_o1-_Zf7-NAjvA-xR_QDZA`, answered, $0.1991; kept in `data/verification/live/` by `scripts/fetch_run.py` (reads an ended run's stored events back through the API before Atlas's 24-hour TTL).
   - **GitHub:** the page links to `github.com/NguyenTran2002/probable-clause`; the repo has no remote yet and is pushed on the user's word (P5.1).
 - **Phase 5 still to do** (brief §3): the open items below; the wake protocol against a cold API and a long-idle sample (§8.5); the disconnect tests and the grace window (§8.5); the README (§10.5); whether to publish the prompts (§2 item 8, ask).
 - **Phase 4's closing order (P4.46, BUILD_LOG "Oct 26, 2026, 01:15 CDT"), all done:**

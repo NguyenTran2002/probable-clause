@@ -3589,3 +3589,23 @@ It amends P4.40.
 **Failures:** the stalled log query.
 **Spend:** none on Anthropic, Voyage or Exa.
 **DECISION (user):** none beyond P5.4.
+
+## Oct 26, 2026, 03:30 CDT — Phase 5: the first live run, the user's own (P5.1)
+**Asked (the user):** *"Record this run."* The user sent the site's first live run on the domain at 03:25 CDT (P5.1's green light 4, the user's own).
+**Came back:**
+- **The run:** `_o1-_Zf7-NAjvA-xR_QDZA`, question "What does the police need to enter a house?", from 03:25:10 to 03:26:07 CDT, on revision `probable-clause-api-00002-f67` (commit `62d6272`), full corpus, all three steps on `claude-sonnet-5-5`.
+- **Outcome:**
+  - `answered`, answer complete (5,214 characters, 45 blocks, 22 citations to 11 passages);
+  - 5 research rounds: 3 meaning searches, 1 exact search, 3 keep calls, 13 passages kept;
+  - no stop, no retry, no estimated attempt (so P5.4's note did not show);
+  - the scope note says the corpus lacks the home-entry cases themselves (such as *Payton*), seen only as cited in later opinions.
+- **The checks:** quotations 22 of 22 found; case names 5 of 8 found, with three flagged as not in the corpus: *Warden v. Hayden*, *Schneckloth v. Bustamonte* and *Payton v. New York*. All three are real cases outside the 32; the flag says a real case outside them is flagged too, so the check behaved as built.
+- **The web search was skipped by Claude,** no Exa search. Its reason: the question concerns the baseline rule for entering a home, and the corpus runs through mid-2026, so a web check was unlikely to turn up anything bearing on it.
+- **Spend:** Claude $0.1970 (research $0.1408, web search step $0.0056, answer $0.0506), Voyage $0.0020 (6 requests), Exa $0. Together $0.1991, which is what `spend_report.py --env live` reads for the day: 1 run started, no stops. 190,474 input tokens, 145,198 of them from cache; 4,580 output.
+- **Through goodnight** (the API's request log): `POST /runs` 201; one event stream for 56.6 s with no reconnect; a heartbeat every 10 s, each 204. The first real stream through goodnight's block worked.
+- **Kept** (keep every run): the 229 events, numbered 1 to 229 with no gap, are in `data/verification/live/live-first-_o1-_Zf7-NAjvA-xR_QDZA.jsonl` with its summary, and the rendered answer in `data/verification/live/answers/`. They were read back through the live API's `GET /runs/{id}/events` by the new `scripts/fetch_run.py`, which starts nothing and never overwrites a saved run; Atlas drops the events after 24 hours (T3.7). Local only, not committed (P4.32).
+
+**Checked:** the counts above by script from the saved events.
+**Failures:** none.
+**Spend:** the run's $0.1991, on the live workspace (Anthropic) and the shared Voyage key; no spend by the main session.
+**DECISION (user):** none.
