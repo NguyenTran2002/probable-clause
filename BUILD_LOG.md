@@ -2598,3 +2598,48 @@ It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. T
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the locked wording stays, quoted above. Not a lock.
+
+## Oct 25, 2026, 23:08 CDT — Frontend: the user's review, round 17; the annotated amendment on the landing
+**Asked (the user):** the landing is *"too minimal and it's not hooking enough"*, and they wanted it to *"scream constitutional vibe"*. Mock-ups led to the user's choices:
+- the scope: *"Rework the first view only: the amendment as the backdrop behind the wordmark and the question box, everything else and T4.1's look kept."*
+- the layout: *"Move the hero down and drop the amendment's lines higher, so more notes fit above it."*
+- the exit into a run, which keeps "probable cause" (the user: *"What about a direction where when a run initiate, the forth amendments just disappear or exit somehow?"*).
+- the notes. The user asked what links a word to a quote. The answer was that a note should be the Court's reading of the word. They set the rule: *"each note is the Court's reading of its word, from majority opinions that are still good law."* Then: *"Keep 60 limit because otherwise we're pasting paragraphs on screen."*, *"allow marked omission, proceed"*, and *"Approve the 26 as listed, with each quote's own page and the quoting lines. Build the landing."*
+- the font: *"Yes, download Caveat (Recommended)"*.
+**Came back:**
+- **The notes:** `web/js/margin.js` (new). The amendment's text (`AMENDMENT` in text.js) sits large and pale behind the first view. The hero now sits at the foot of the first view and the amendment starts at its head.
+  - A handwritten note writes itself beside a word the hero leaves visible, every 3.6 s, with at most two on screen at once. The older note erases itself, and a leader runs to the word's underline.
+  - The 26 notes are `MARGIN_NOTES` in text.js. Each has a quote (at most 60 characters, any omission marked " … "), its passage ID, the page the quote starts on, and a "quoting" line where the majority adopts someone else's words.
+  - On screen the quote marks curl and inner quotes become single. No word changes.
+- **The exit:** when a run or replay starts:
+  - the notes erase and the pitch, the form and the runs step back;
+  - the amendment's words fall away except *probable cause*, which gets a written caret and "l";
+  - after 2.1 s the run screen shows, with the wordmark moving into the bar as before.
+  - The run itself starts at once underneath, so nothing waits on the show. With reduced motion there's no exit and two still notes.
+- **A pause control:** a "Pause the notes" button, needed because content that moves for more than five seconds must be pausable (WCAG 2.2.2). The main session added it on its own call. On phones the hero fills the first view, so there are no notes and no button.
+- **The font:** Caveat v23, Latin, from fonts.gstatic.com (74,572 bytes), with its OFL text, `@font-face` in fonts.css. No third party is contacted at runtime (T5.5).
+- **The quote work:**
+  - Three agent rounds: Opus 5.5, high effort, read-only, writing only to the scratchpad.
+  - Each list was checked by a scratch script against `web/_generated` (verbatim pieces in order, majority only, length, the page the quote starts on), and the main session read each pick in its paragraph.
+  - Dropped on the way: dissents and history lines (the user's rule); 4 picks whose meaning changed without their qualifiers; a "place" note that turned a fair probability into a certainty. Papers, the place, and Oath or affirmation have no notes, because no short, faithful majority reading exists in the corpus.
+- **The test:** `webdev/test/margin.test.mjs` (new). It checks that:
+  - the amendment's text and its anchors are right;
+  - every note is at most 60 characters with properly marked omissions and no banned word;
+  - every note is copied from a majority opinion of its case in the committed corpus;
+  - from `web/_generated`, every note's passage and its citation via `passageTag`;
+  - the curled quote marks;
+  - a note's spot and leader.
+**Checked:**
+- Node: 84 passed.
+- **The mock server, at 1440×900, light:** notes appear with the Caveat face loaded, and there is no horizontal scroll.
+- **At 1280×800, dark:** the hero is at 228–720, the link down at 744, and the first view fits.
+- **At the pane's width:** the exit fades the words by 1.1 s, writes the "l" by 1.5 s, and shows the run by 2.3 s. Going home brings the amendment and notes back.
+- **At 375×812, dark:** no horizontal scroll, and no notes or button.
+- Timing taken under viewport emulation was throttled to one timer a second, so the exit was timed without emulation.
+**Failures:** in the first browser pass, the pause button overlapped the "How Claude’s citations work" link on a phone. Fixed by hiding both the notes and the button below 760 px.
+**Spend:** none paid. The agents ran on the session's plan.
+**DECISION (user):** the design and the 26 notes, quoted above. Not a lock. The main session's calls:
+- the pace (3.6 s per note, 45 ms per character, a 2.1 s exit);
+- the pause control and its wording;
+- no notes on phones;
+- the curled marks.

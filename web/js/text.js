@@ -50,6 +50,51 @@ export const FIG_FULL = 'Show the full API response';
 export const FIG_TITLE = 'Follow one citation';
 // the heading of the figure's closing note, which holds NOT_ADVICE and AI_DISCLOSURE
 export const LIMITS_TITLE = 'What it won’t do';
+
+// ---------- the landing's annotated amendment (the user, Oct 25, 2026) ----------
+// The Fourth Amendment behind the first view. [words|key] marks an anchor a margin note can point to (the key is the
+// words themselves when none is given); {probable cause} is also the phrase the exit keeps.
+export const AMENDMENT = '[The right of the people|right] to be [secure] in their [persons], [houses], papers, and [effects], against [unreasonable] [searches] and [seizures], shall not be violated, and no [Warrants] shall issue, but upon {probable cause}, supported by Oath or affirmation, and [particularly describing|particularly] the place to be searched, and the [persons or things|things] to be seized.';
+// The margin notes, approved by the user: "each note is the Court's reading of its word, from majority opinions that are
+// still good law". Each quote is copied from its passage (straight quotation marks, as the corpus has them), at most
+// 60 characters, any omission marked " … "; cite is the page the quote starts on; quoting names whose words the
+// majority adopts. webdev/test/margin.test.mjs checks every one against the corpus.
+export const MARGIN_NOTES = [
+  { at: 'right', quote: 'as against the Government, the right to be let alone', id: 'chatrie-1-p53', cite: 'Chatrie, slip op. at 32', quoting: 'quoting Olmstead (Brandeis, dissenting)' },
+  { at: 'secure', quote: 'to secure "the privacies of life" against "arbitrary power."', id: 'carpenter-1-p13', cite: 'Carpenter at 305', quoting: 'quoting Boyd' },
+  { at: 'persons', quote: 'the Fourth Amendment protects people, not places.', id: 'katz-1-p6', cite: 'Katz at 351' },
+  { at: 'persons', quote: 'protects persons and their private conversations', id: 'jones-1-p12', cite: 'Jones at 407', quoting: 'quoting Alderman' },
+  { at: 'houses', quote: 'the home is first among equals', id: 'jardines-1-p11', cite: 'Jardines at 6' },
+  { at: 'houses', quote: 'In the home, our cases show, all details are intimate', id: 'kyllo-1-p11', cite: 'Kyllo at 37' },
+  { at: 'houses', quote: 'a firm line at the entrance to the house', id: 'kyllo-1-p14', cite: 'Kyllo at 40', quoting: 'quoting Payton' },
+  { at: 'houses', quote: 'the right of a man to retreat into his own home', id: 'silverman-1-p14', cite: 'Silverman at 511' },
+  { at: 'houses', quote: 'an open field is neither a "house" nor an "effect,"', id: 'dunn-1-p15', cite: 'Dunn at 303' },
+  { at: 'effects', quote: 'It is beyond dispute that a vehicle is an "effect"', id: 'jones-1-p8', cite: 'Jones at 404' },
+  { at: 'effects', quote: 'sealed packages are in the general class of effects', id: 'jacobsen-1-p8', cite: 'Jacobsen at 114' },
+  { at: 'effects', quote: 'the term "effects" is less inclusive than "property"', id: 'oliver-1-p9', cite: 'Oliver at 177' },
+  { at: 'unreasonable', quote: 'Warrantless searches are presumptively unreasonable', id: 'karo-1-p21', cite: 'Karo at 717' },
+  { at: 'unreasonable', quote: 'the ultimate touchstone … is \'reasonableness.\'', id: 'riley-1-p14', cite: 'Riley v. California at 381', quoting: 'quoting Brigham City' },
+  { at: 'unreasonable', quote: 'The Fourth Amendment prohibits only unreasonable searches.', id: 'grady-1-p9', cite: 'Grady at 310' },
+  { at: 'unreasonable', quote: 'search is not to be made legal by what it turns up', id: 'chatrie-1-p38', cite: 'Chatrie, slip op. at 23', quoting: 'quoting Di Re' },
+  { at: 'searches', quote: 'look over or through for the purpose of finding something', id: 'kyllo-1-n1', cite: 'Kyllo at 32 n.1', quoting: 'quoting Webster’s 1828 dictionary' },
+  { at: 'searches', quote: 'thermal imaging qualified as a search', id: 'chatrie-1-p35', cite: 'Chatrie, slip op. at 20' },
+  { at: 'searches', quote: 'mere visual observation does not constitute a search', id: 'jones-1-p20', cite: 'Jones at 412' },
+  { at: 'seizures', quote: 'Fourth Amendment governs … the recording of oral statements', id: 'katz-1-p8', cite: 'Katz at 353' },
+  { at: 'seizures', quote: 'Some seizures can be justified by an articulable suspicion', id: 'jacobsen-1-n20', cite: 'Jacobsen at 121 n.20' },
+  { at: 'Warrants', quote: 'get a warrant.', id: 'riley-1-p66', cite: 'Riley v. California at 403' },
+  { at: 'Warrants', quote: 'the Government\'s obligation is a familiar one—get a warrant.', id: 'carpenter-1-p42', cite: 'Carpenter at 317' },
+  { at: 'probable', quote: 'a fluid concept—turning on the assessment of probabilities', id: 'chatrie-1-p49', cite: 'Chatrie, slip op. at 30', quoting: 'quoting Gates' },
+  { at: 'particularly', quote: 'As to what is to be taken, nothing is left to the discretion', id: 'berger-1-p23', cite: 'Berger at 58', quoting: 'quoting Marron' },
+  { at: 'things', quote: '"conversation" was within the Fourth Amendment\'s protections', id: 'berger-1-p13', cite: 'Berger at 51' },
+];
+// a note as shown: curly marks around it; the opinion's own quotation marks, now inside a quotation, become single
+// ones, and apostrophes curl. Only the marks change, never a word.
+export function noteQuote(q) {
+  return `“${q.replace(/(^|[\s(—])["']/g, '$1‘').replace(/["']/g, '’')}”`;
+}
+// the control that stops the notes (WCAG 2.2.2: moving content that lasts more than five seconds can be paused)
+export const MOTION_PAUSE = 'Pause the notes';
+export const MOTION_PLAY = 'Play the notes';
 export const TRACE_CAPTION = 'A real answer from this site, traced back to the Court’s words in three steps.';
 export const NOT_ADVICE = 'Research, not legal advice: it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.';
 export const AI_DISCLOSURE = 'This is AI. Claude, Anthropic’s AI model, does the research and writes the answers through the Claude API. Check what it says against the opinions and linked sources before relying on it.';

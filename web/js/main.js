@@ -10,6 +10,7 @@ import { playReplay } from './replay.js';
 import { createPacer } from './pace.js';
 import { createView } from './view.js';
 import { makeMarkdown } from './answer.js';
+import { createMargin } from './margin.js';
 import * as T from './text.js';
 
 const RUN_KEY = 'probable-clause-run';
@@ -60,6 +61,9 @@ async function boot() {
   const view = createView({ cfg, corpus, md });
   const waker = createWaker(cfg);
   standing(corpus);
+  // the annotated amendment behind the first view (margin.js), running only while the landing shows
+  const margin = createMargin($('#landing .first'));
+  if (body.dataset.view === 'landing') margin.start();
   for (const id of ['#q', '#q2']) $(id).maxLength = cfg.QUESTION_MAX_CHARS;
   $('#q').placeholder = T.ASK_PLACEHOLDER;
 
@@ -83,6 +87,12 @@ async function boot() {
     if (pacer) { pacer.stop(); pacer = null; }
     setPlaying(false);
   }
+  // the landing's exit plays first; the run starts underneath at once, so the show never holds the run up
+  function toRun() {
+    if (body.dataset.view !== 'landing') { swap('run'); return; }
+    const my = token;
+    margin.exit().then(() => { if (my === token) { swap('run'); margin.stop(); } });
+  }
 
   // ---------- replays ----------
   let replays = [];
@@ -102,7 +112,7 @@ async function boot() {
     try { rec = await loadReplay(slug); } catch { return; }
     if (my !== token) return;
     view.reset({ question: rec.question, replay: rec });
-    swap('run');
+    toRun();
     setPlaying(true, true);
     const pace = pacer = createPacer((ev, o) => { if (my === token) view.onEvent(ev, o); });
     player = playReplay(rec.events, (ev, o) => pace.push(ev, o), () => pace.whenIdle(() => { if (my === token) setPlaying(false); }));
@@ -126,7 +136,7 @@ async function boot() {
     stopAll();
     session.del(RUN_KEY);
     view.reset({ question });
-    swap('run');
+    toRun();
     setPlaying(true);
     const my = token;
     const steps = view.steps();
@@ -233,7 +243,7 @@ async function boot() {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); e.target.form.requestSubmit(); }
     });
   }
-  $('#home').addEventListener('click', () => { stopAll(); session.del(RUN_KEY); view.clearThread(true); swap('landing'); $('#q').focus(); });
+  $('#home').addEventListener('click', () => { stopAll(); session.del(RUN_KEY); view.clearThread(true); swap('landing'); margin.start(); $('#q').focus(); });
 
   // ---------- a reload goes straight back into its run (T3.2, T4.4 #6) ----------
   const saved = session.get(RUN_KEY);
