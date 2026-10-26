@@ -705,7 +705,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 (protections and retention, T3.7)"
 
-### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6) — AMENDED by T5.5 (the fonts are served by our own web service, not Google Fonts)
+### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6) — AMENDED by T5.5 (the fonts are served by our own web service, not Google Fonts); AMENDED by P4.43 (the palette is Evergreen deepened)
 
 - **Decision:** Area 4, topic 1. The prototype at `web/looktests/machinery/` as of commit badc05f is the art direction and **the baseline for the build**: what it shows stays, except where Area 4's topic 3 changes it to match Areas 1 to 3 or topic 4 adds to it.
   - **Character:** a tech demo first, legal in flavour, for a technical visitor who came to see Claude and Citations.
@@ -1247,3 +1247,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Search Opinions, how about that? 'Find the Court's words' is too damn long for a button."* Then: *"Looking good! Lock as is."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; "Search opinions" and the placeholder (P4.42)"
+
+### P4.43 The palette is Evergreen deepened (amends T4.1's palette)
+
+- **Decision:** as built in round 25 (9491bcb), in the tokens at the top of `web/css/style.css`. The court's side is paper and the machinery's side is the API window.
+  1. **Paper:** the neutrals take a warm hue (`--hn` 85) in both modes.
+  2. **Brand:** a deep, quiet green (`--h0` 158): oklch(0.42 0.085) in light, oklch(0.76 0.10) in dark.
+  3. **Live green (`--live`):** the brighter green, oklch(0.52 0.14) in light and oklch(0.82 0.13) in dark. It is used only for what is working right now: the working step's marker, the waiting line's dot and the carets.
+  4. **The API window:** a green-black panel in both modes, darker than the page in dark.
+  5. **Kept from T4.1:** the four source hues at equal lightness and chroma, red for check flags only, and dark mode that follows the system, with no switch on the page.
+  6. **Contrast:** every text pairing passes 4.5:1 in both modes, measured by script (BUILD_LOG 00:31). This closes the light-mode contrast item open since 17:50.
+- **User's words:** *"I want tech and legal at the same time but that's hard to mix. What do you think?"* Then: *"Let's try evergreen deepened."* Then: *"Looks really good. Lock."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:35 CDT — Frontend: the user's review, round 25 locked; the palette is Evergreen deepened (P4.43)"

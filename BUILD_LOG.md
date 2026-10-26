@@ -2880,3 +2880,16 @@ The main session's call: the light `--live` went from 0.60 to 0.52 lightness, so
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none yet; a try for the user to look at.
+
+## Oct 26, 2026, 00:35 CDT — Frontend: the user's review, round 25 locked; the palette is Evergreen deepened (P4.43)
+**Asked (the user):** *"Looks really good. Lock."*
+**Came back:** P4.43 locks the palette as built in round 25 (9491bcb), with no code change:
+- warm paper neutrals;
+- a deep, quiet brand green;
+- `--live` for what is working right now;
+- a green-black API window.
+The source hues, flag red and system-following dark mode are kept from T4.1. It amends T4.1's palette and closes the light-mode contrast item from 17:50.
+**Checked:** nothing, since nothing changed (contrast was measured at 00:31).
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Looks really good. Lock."* Locked as P4.43.
