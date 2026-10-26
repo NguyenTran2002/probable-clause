@@ -3431,3 +3431,27 @@ It amends P4.40.
 **DECISION (user):** none yet. Open:
 - approving the swap, which commits `replays/` and amends P4.50;
 - T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
+
+## Oct 26, 2026, 02:43 CDT — The replays: the location-history replay approved and committed (P4.52)
+**Asked (the user):** *"I reviewed the location-history replay. Approved: commit replays/ with it in place of geofence-warrants."*
+**Came back:** locked as P4.52, amending P4.50.
+- **Committed in `replays/`:** all at `84c0db4` except the third, at `a3b1dbe`:
+
+| Chip | Replay | Run | Events |
+|---|---|---|---|
+| 1 | `phone-search-arrest` | `LHdjNk0iXw_0fRhlj1MzlA` | 353 |
+| 2 | `gps-tracking-car` | `9iRQPOXNhjC6NlqhUK5nIw` | 333 |
+| 3 | `location-history-warrant` | `bLe0Pl-WUxOnNjQWauyXmg` | 301 |
+| 4 | `backyard-from-air` | `pdUkkt0HsWENVDDY_gWkKw` | 378 |
+
+  - `geofence-warrants.json` is deleted from `replays/`. It stays in git history at `d20ae44`, and its run's events are kept in `data/verification/replays/`.
+  - Phones 1, 2 and 4 are byte for byte the files P4.50 approved.
+- **Before committing:**
+  - a scan of `location-history-warrant.json` found no local paths, user names or key-like strings;
+  - `tests/deploy/test_images.py`, the tests that touch `replays/`, passed 14 of 14;
+  - the stack on 8080 already serves these files (02:40). Its image was built from this working tree, so it needs no rebuild for the swap.
+
+**Checked:** the scan and the tests above.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the location-history replay approved, committed in place of `geofence-warrants`, as quoted. Locked as P4.52.

@@ -1335,7 +1335,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:45 CDT — The replays: every one from the newest recordings (P4.49)"
 
-### P4.50 The four replays are approved and committed (T5.6, P4.32)
+### P4.50 The four replays are approved and committed (T5.6, P4.32) — AMENDED by P4.52 (the third chip is the location-history question)
 
 - **Decision:** the user reviewed the four recordings and approved them as recorded. All four were recorded on `84c0db4` with no flags:
   - `phone-search-arrest` (run `LHdjNk0iXw_0fRhlj1MzlA`);
@@ -1367,3 +1367,19 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I want us to rearrange the later development box because they can get quite long an unituitive."* Then: *"scroll to expose at most to the line "Claude's overview" only, and nothing more, not even the overview content, so that user can still see the actual answer above and won't get disoriented."* Then: *"in case the answer finishes streaming but the later development search has not, then, the user already did their own scrolling (up down doesn't matter), we shall not scroll them automatically anymore but let them find the section on their own."* Then: *"Lock as is."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:16 CDT — Frontend: the user's review, round 29; the later-developments box reordered, its scroll capped" and "Oct 26, 2026, 02:26 CDT — Frontend: the user's review, round 29 locked; the later-developments box reordered (P4.51)"
+
+### P4.52 The geofence chip replaced by the location-history question (amends P4.50)
+
+- **Decision:** the third chip is "Can police get your Google location history without a warrant?" (`location-history-warrant`, run `bLe0Pl-WUxOnNjQWauyXmg`, recorded at 02:36 on `a3b1dbe`, whose backend is the same as `84c0db4`'s). It replaces `geofence-warrants`.
+  - The chips' order: `phone-search-arrest`, `gps-tracking-car`, `location-history-warrant`, `backyard-from-air`.
+  - The other three replays are unchanged from P4.50.
+  - `replays/geofence-warrants.json` leaves `replays/`, so the page no longer serves it. Its run's events stay in `data/verification/replays/`.
+  - The run is approved as recorded:
+    - no flags, 18 of 18 quotations found;
+    - its web search band reads "nothing relevant", though the overview mentions follow-on activity;
+    - footnote 11 on exigency (`chatrie-1-n11`) was not kept.
+  - The first take at 02:32 (`HvxrPtB_UvIVgr1SorxjTA`) is kept, not exported.
+  - T5.6's fifth replay stays open.
+- **User's words:** *"I want to replace the question "What has the Court said about geofence warrants?" with something else. It's an alright run, but it's not the best to demo because it's too broad, leading to Claude trying to read as many passages as possible."* Then: *"Go with "Can police get your Google location history without a warrant?""* Then: *"Export the 02:36 location-history run (bLe0Pl-WUxOnNjQWauyXmg) in place of geofence-warrants, as the third chip"*. Then: *"I reviewed the location-history replay. Approved: commit replays/ with it in place of geofence-warrants."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:33 CDT — The replays: a tighter question recorded to replace the geofence chip", "02:37 CDT — The replays: the location-history question re-recorded", "02:40 CDT — The replays: the location-history run exported as the third chip, uncommitted, on the local stack" and "02:43 CDT — The replays: the location-history replay approved and committed (P4.52)"
