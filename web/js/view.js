@@ -1,11 +1,11 @@
-// The run screen: the conversation (the question, the step log, the update-check band, the answer) and the sources
+// The run screen: the conversation (the question, the step log, the answer, the later-developments box) and the sources
 // panel, fed one event at a time through the run model. Live runs, reattached runs and replays all play here.
 
 import { h, $, $$, clear, fresh, setQuiet } from './dom.js';
 import { createRun, apply, answerLabels, hueOf, tagsFor } from './model.js';
 import { createSteps } from './steps.js';
 import { createSources, lightSentences, unlightSentences } from './sources.js';
-import { renderBand } from './band.js';
+import { renderBand, inkIn } from './band.js';
 import { renderCosts } from './costs.js';
 import { createApiModal } from './apicalls.js';
 import { createReader } from './reader.js';
@@ -27,7 +27,8 @@ export function createView({ cfg, corpus, md }) {
     d.addEventListener('click', e => { if (e.target === d && downOnBackdrop) d.close(); });
   }
 
-  let run = createRun(), steps = null, bandSlot = null, answerSlot = null, endSlot = null, replayDate = null;
+  let run = createRun(), steps = null, bandSlot = null, answerSlot = null, endSlot = null, costSlot = null, replayDate = null;
+  let bandShown = false;
   let answerNodes = null;
   const phone = () => matchMedia('(max-width: 759px)').matches;
 
@@ -81,12 +82,15 @@ export function createView({ cfg, corpus, md }) {
     thread.append(h('div', { class: 'ask-msg', attrs: { hidden: !question } }, h('p', { class: 'bubble' }, question)));
     const stepsBox = h('div', { class: 'steps-box' });
     thread.append(stepsBox);
-    steps = createSteps(stepsBox, { cfg, onGoto: id => gotoSource(id) });
-    bandSlot = h('div', { class: 'band-slot' });
+    steps = createSteps(stepsBox, { onGoto: id => gotoSource(id) });
     answerSlot = h('div', { class: 'answer-slot' });
     endSlot = h('div', { class: 'end-slot' });
-    thread.append(bandSlot, answerSlot, endSlot);
+    bandSlot = h('div', { class: 'band-slot' });
+    costSlot = h('div', { class: 'end-slot' });
+    // the answer, its two warnings, then the later-developments box, then the run's cost (the user, round 23)
+    thread.append(answerSlot, endSlot, bandSlot, costSlot);
     answerNodes = null;
+    bandShown = false;
     threadScroll.scrollTo(0, 0);
     sourcesPane.scrollTo(0, 0);
     for (const pane of pinned.keys()) pinned.set(pane, true);
@@ -110,10 +114,10 @@ export function createView({ cfg, corpus, md }) {
     apply(run, ev);
     steps.sync(run);
     sources.sync(run);
-    if (ev.kind === 'update_band') showBand();
     if (ev.kind === 'answer_block' || ev.kind === 'checks' || ev.kind === 'run_ended' || ev.kind === 'composition_started'
       || ev.kind === 'warning') showAnswer();
     if (ev.kind === 'run_ended') showEnd();
+    placeBand(quiet);
     if (ev.kind === 'composition_started') announce(T.runStatus.answer);
     status();
     if (pinThread) follow(threadScroll, !quiet);
@@ -148,8 +152,27 @@ export function createView({ cfg, corpus, md }) {
     if (e) announce(s);
   }
 
-  // ---------- the band, above the answer (T4.3 #4) ----------
-  function showBand() { const b = renderBand(run.band, cfg, run.limits); clear(bandSlot); if (b) bandSlot.append(fresh(b)); }
+  // ---------- later developments: the box under the answer (the user, round 23, Oct 26, 2026) ----------
+  // It comes in once both the answer and the web search are done, which is when the run ends, so it never pushes
+  // what is being read. While the web search runs on after the answer is written, a quiet line holds its place.
+  function placeBand(quiet) {
+    if (bandShown) return;
+    if (run.ended) {
+      clear(bandSlot);
+      const b = run.band && renderBand(run.band, cfg, run.limits);
+      bandShown = true;
+      if (!b) return;
+      bandSlot.append(b);
+      if (!quiet) inkIn(b);
+      if (run.band.outcome === 'found') showAnswer();      // the pointer under the answer comes with the box
+      return;
+    }
+    const answerDone = !run.keepOrder.length || run.checks || run.composition.failed
+      || (run.composition.started && !run.open.composition);
+    const waiting = run.researchDone && run.open.update && answerDone;
+    if (waiting && !bandSlot.firstChild) bandSlot.append(fresh(h('p', { class: 'band-waiting' }, T.BAND_WAITING)));
+    else if (!waiting) clear(bandSlot);
+  }
 
   // ---------- the answer ----------
   function showAnswer() {
@@ -192,7 +215,7 @@ export function createView({ cfg, corpus, md }) {
     answerNodes = prose;
     if (labels.end) sec.append(h('p', { class: 'stop-label end' }, labels.end === 'cut_off' ? T.CUT_OFF : T.INCOMPLETE));
     else if (e && ['failed', 'interrupted', 'abandoned'].includes(e.state) && run.blocks.length) sec.append(h('p', { class: 'stop-label end' }, T.PARTIAL_UNCHECKED));
-    if (run.band && run.band.outcome === 'found' && run.blocks.length) sec.append(h('p', { class: 'pointer' }, T.BAND_POINTER));
+    if (bandShown && run.band && run.band.outcome === 'found' && run.blocks.length) sec.append(h('p', { class: 'pointer' }, T.BAND_POINTER));
     // no line under the answer for the checks: they are an add-on, shown only as flags when they catch something (P4.34)
     if (!run.blocks.length && (run.composition.failed || (e && e.state === 'failed' && run.keepOrder.length))) {
       sec.append(h('p', { class: 'stop-label' }, T.COMPOSITION_FAILED(T.failureWords(e ? e.failure_reason : run.composition.failed.error_kind))));
@@ -213,10 +236,11 @@ export function createView({ cfg, corpus, md }) {
     // the disclaimers, once under each run's answer rather than always in the dock (the user, Oct 25, 2026); the
     // AI disclosure starts its own line (T4.1)
     clear(endSlot).append(h('div', { class: 'run-fine' }, h('p', null, T.NOT_ADVICE), h('p', null, T.AI_DISCLOSURE)));
+    clear(costSlot);
     if (e.totals) {
       const costs = renderCosts(e.totals, replayDate);
       costs.addEventListener('toggle', () => { if (costs.open) requestAnimationFrame(() => revealFold(costs)); });
-      endSlot.append(costs);
+      costSlot.append(costs);
     }
   }
 

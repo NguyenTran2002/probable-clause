@@ -2759,3 +2759,46 @@ Timings under viewport emulation are throttled, so only the order was checked, n
 **Failures:** the defect above.
 **Spend:** none.
 **DECISION (user):** the report, quoted above. A defect fix, no lock needed.
+
+## Oct 26, 2026, 00:15 CDT — Frontend: the user's review, round 23; the log trimmed to research, "Later developments" under the answer, "Search opinions"
+**Asked (the user):** *"Build round 23: the trimmed log, the web check below the answer with the new wording and reveal, Search opinions, and the new placeholder."*
+The discussion before it, in the user's words:
+- *"I want to remove these elements because they are redundant. User can already see the answer being written and the update result whether they ran or not."*
+- *"we will show it after the answer finishes streaming if streaming finishes first then show it whenever the update check finishes. I want an on-brand insertion animation not something abrupt."*
+- *"'update check' is something vague and hard to grasp what it means to the average user too."* On the main session's drafts: *"your drafts on later devs and such are good"*. The pointer's "above" to "below": *"Approve the necessary change in wording."*
+- On the copy guard's refusals: *"The guard and refused site wording is something we built to protect ourselves. I'm thinking it's not even necessary to report to the user ... Just show them the final result?"*, agreed.
+- The button: *"Search Opinions, how about that? 'Find the Court's words' is too damn long for a button."* It is set in sentence case, "Search opinions", to match "Ask another question".
+- The "No tools in this call…" line: *"it's already implicit and we don't want to dig into the weed too deep here."*
+
+**Came back:**
+- **The step log** (`web/js/steps.js`) shows research only and ends at "Finished research". The "Writing the answer" and "Update check, running beside the answer" groups are gone, with their intro lines, "Checked the answer", the web search's steps and its refused summaries. A pause or resume after research still shows.
+- **The box** (`web/js/view.js`, `band.js`) now sits under the answer and its two warnings, above the run's cost line. It comes in when the run ends, which is when both the answer and the web search are done, so it never pushes what is being read.
+  - If the answer finishes first, a quiet line holds its place: "Still checking the web for anything newer…", with the pulsing dot.
+  - **Its arrival:** its dashed edge is inked around it clockwise from the top left (0.9 s), and its lines come up one by one (0.07 s apart). The drawn edge then hands over to the box's own border. With reduced motion it is a plain fade. A replay skipped to the end, or a reload catching up, shows it without animation, as before.
+  - The pointer under the answer comes in with the box.
+- **The wording** (`web/js/text.js`), as drafted in the discussion:
+  - the heading "Later developments";
+  - the label, the guarantee, the findings and overview headings, "How Claude searched", the site's settings line (without "no Exa highlights or summaries"), "Nothing newer found…", "Claude didn't search the web: <reason>", "Web search unavailable: …", the not-summarised line and the pointer ("…see below");
+  - the status lines: "checking the web for anything newer";
+  - the credits, the privacy note, the pre-*Chatrie* label and the cost part: "web search".
+  - The label drops "a date filter skips pages with no published date"; each page still shows its date or "no published date".
+- **The button** reads "Search opinions" on the landing and in the dock, set from `T.SEARCH`. On a phone it stays on one line: `.primary` gets `white-space: nowrap`, and the question box (`.field textarea`) takes `width: 0` so its default width no longer pushes the dock past the screen. That overflow was found in this round's check and fixed.
+- **The placeholder:** "What has the Court said about heat cameras aimed at a house?"
+- **Not changed:** the chips. Their text comes from the recorded runs, so the new questions arrive with the replays (P4.32).
+
+**Checked:**
+- Node: all 84 passed.
+- **The mock, a run whose web search ends after the answer:**
+  - the log ends at "Finished research";
+  - the waiting line appears once the answer is done, with the status "Checking the web for anything newer · the answer is written";
+  - at the end the order is answer, warnings, box, cost line.
+- **A run whose search found something:** the new wording throughout, and the pointer "…see below" under the answer.
+- **The reveal, on a recorded run with its animations paused halfway:** the dashed edge drawn from the top left around past the right side, and the lines coming up in order.
+- **Phone width (375 px), landing and dock:** the button on one line and no sideways scroll.
+- **Desktop (1280 px):** the landing form is unchanged.
+
+The mock's sample events carry old timestamps, so a mock live run counts as catching up and plays without animations. The reveal was therefore checked on a recorded run.
+
+**Failures:** the phone overflow above, fixed before commit.
+**Spend:** none.
+**DECISION (user):** the requests and agreements quoted above. To lock after the user tries it: the trimmed log, the box's place and arrival, and the refusals left off the page (amending P4.3's step-log line); the new wording (amending T5.3 and the pointer, T1.11's line); the button; the placeholder; and the new questions for T5.6, still to be settled.

@@ -1,5 +1,7 @@
-// The update-check band (T2.3, T4.3 #4, T5.3; outcomes by contract §6, step 0's unavailable lines). It sits in the
-// conversation above the answer, kept apart from the corpus evidence. It never shows page text: only titles,
+// The later-developments box, the web search's result (T2.3, T4.3 #4, T5.3; outcomes by contract §6, step 0's
+// unavailable lines; renamed and moved under the answer by the user, round 23). It is kept apart from the corpus
+// evidence, and shows only Claude's accepted summary: a summary the copy guard sent back is never shown (the user,
+// Oct 26, 2026). It never shows page text: only titles,
 // domains, URLs and dates as Exa gave them (T2.2). Links are built here from Exa's URL fields, opened apart from
 // the page with noopener noreferrer (T3.7). It is never called verified.
 
@@ -55,7 +57,7 @@ export function renderBand(band, cfg, limits) {
         dl.append(h('dt', null, label), h('dd', null, ...withheld(v == null || (Array.isArray(v) && !v.length) ? T.NOT_SET : Array.isArray(v) ? v.join(', ') : String(v))));
       }
       const block = h('div', { class: 'search' }, dl);
-      if (s.status !== 'ok') block.append(h('p', { class: 'meta' }, s.status === 'unavailable' ? T.WEB_STATUS.unavailable : T.BAND_INCOMPLETE));
+      if (s.status !== 'ok') block.append(h('p', { class: 'meta' }, s.status === 'unavailable' ? T.WEB_UNAVAILABLE : T.BAND_INCOMPLETE));
       sec.append(block);
     }
     // the settings the run itself recorded, so a replay states what it ran with, not today's figures
@@ -75,4 +77,36 @@ export function renderBand(band, cfg, limits) {
 function linkItem(p) {
   const [title, domain, date] = T.pageLine(p);
   return h('li', null, webLink(p.url, title), h('span', null, `${domain} · ${date}`));
+}
+
+// The box arrives the way the landing's notes write themselves: its dashed edge is inked around it from the top left,
+// then its lines come up one by one (the user, round 23, Oct 26, 2026). With reduced motion, a plain fade.
+const NS = 'http://www.w3.org/2000/svg';
+export function inkIn(sec) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    sec.classList.add('fresh');
+    setTimeout(() => sec.classList.remove('fresh'), 450);
+    return;
+  }
+  const { width: w, height: ht } = sec.getBoundingClientRect();
+  if (!w || !ht) return;
+  const r = parseFloat(getComputedStyle(sec).borderTopLeftRadius) || 0;
+  const a = 0.5, b = w - 0.5, c = ht - 0.5;
+  const d = `M${a + r},${a} H${b - r} A${r},${r} 0 0 1 ${b},${a + r} V${c - r} A${r},${r} 0 0 1 ${b - r},${c} H${a + r} `
+    + `A${r},${r} 0 0 1 ${a},${c - r} V${a + r} A${r},${r} 0 0 1 ${a + r},${a}`;
+  const svg = document.createElementNS(NS, 'svg');
+  for (const [k, v] of [['class', 'ink'], ['width', w], ['height', ht], ['aria-hidden', 'true']]) svg.setAttribute(k, v);
+  // the dashed edge shows only where the pen, a solid stroke in the mask, has already passed
+  const mask = document.createElementNS(NS, 'mask'), pen = document.createElementNS(NS, 'path'), edge = document.createElementNS(NS, 'path');
+  mask.id = 'ink-mask';
+  pen.setAttribute('d', d); pen.setAttribute('class', 'pen');
+  edge.setAttribute('d', d); edge.setAttribute('class', 'edge'); edge.setAttribute('mask', 'url(#ink-mask)');
+  mask.append(pen);
+  svg.append(mask, edge);
+  [...sec.children].forEach((e, i) => e.style.setProperty('--i', i));
+  sec.append(svg);
+  pen.style.setProperty('--len', pen.getTotalLength());
+  sec.classList.add('inking');
+  setTimeout(() => sec.classList.add('inked'), 950);
+  setTimeout(() => { sec.classList.remove('inking', 'inked'); svg.remove(); }, 1500);
 }

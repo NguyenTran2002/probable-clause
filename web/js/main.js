@@ -70,6 +70,7 @@ async function boot() {
   if (body.dataset.view === 'landing') margin.start();
   for (const id of ['#q', '#q2']) $(id).maxLength = cfg.QUESTION_MAX_CHARS;
   $('#q').placeholder = T.ASK_PLACEHOLDER;
+  for (const b of [$('#ask .primary'), $('#send')]) b.textContent = T.SEARCH;
 
   let live = null;          // the stream of the live run on screen
   let player = null;        // the replay on screen

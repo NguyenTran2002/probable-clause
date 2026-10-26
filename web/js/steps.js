@@ -1,6 +1,7 @@
-// The step log (T4.1, T4.3, T4.4; step 0's call under P4.31): research's steps, then two groups stacked in the one
-// column, "Writing the answer" and "Update check, running beside the answer", each with its own spinner. Items come
-// from the run model; each one's element is kept and refreshed in place, so nothing already shown moves.
+// The step log (T4.1, T4.3, T4.4; step 0's call under P4.31): research's steps only. The answer writing itself below
+// and the later-developments box are progress enough, so neither has steps here (the user, round 23, Oct 26, 2026);
+// a pause or resume after research still shows. Items come from the run model; each one's element is kept and
+// refreshed in place, so nothing already shown moves.
 
 import { h, fresh, clear } from './dom.js';
 import { callVisible, hueOf, tagOf, readTarget } from './model.js';
@@ -14,54 +15,17 @@ export function withheld(str) {
   return String(str).split(WITHHELD).filter(s => s !== '').map(s => (WITHHELD.test(s) ? h('span', { class: 'withheld' }, s) : s));
 }
 
-export function createSteps(container, { cfg, onGoto }) {
+export function createSteps(container, { onGoto }) {
   const els = new Map();       // item -> {li, sig}
-  let groups = null;            // {composition: {sec, ol, head}, update: {...}}
   const research = h('ol', { class: 'steps', attrs: { 'aria-label': 'Research steps' } });
   const pre = h('ol', { class: 'steps pre' });     // the waking step and refusals before any event
   const post = h('ol', { class: 'steps post' });   // the run's last step
-  container.append(pre, research);
-  const tail = h('div', { class: 'groups' });
-  container.append(tail, post);
-  const pages = new Map();      // web page id -> page, for counting a search's undated pages
-
-  function group(key, title) {
-    const head = h('h3', { class: 'group-head working' }, title);
-    const ol = h('ol', { class: 'steps' });
-    const sec = h('section', { class: 'group', attrs: { 'aria-label': title } }, head, ol);
-    return { sec, ol, head };
-  }
-
-  function ensureGroups(run) {
-    if (groups || !run.researchDone) return;
-    if (!run.composition.started && !run.update.started) return;
-    groups = {};
-    if (run.update.started && run.update.kept.length) {
-      groups.composition = group('composition', T.GROUP_ANSWER);
-      groups.update = group('update', T.GROUP_UPDATE);
-      tail.append(fresh(h('p', { class: 'group-intro' }, T.UPDATE_STARTED(run.update.kept.length))),
-        groups.composition.sec, groups.update.sec);
-    } else if (run.update.started) {
-      // nothing kept: no answer is written, so the update check is the only thing after research
-      groups.update = { ol: research };
-      groups.composition = { ol: research };
-      tail.append(fresh(h('p', { class: 'group-intro' }, T.UPDATE_ONLY)));
-    } else {
-      groups.composition = { ol: research };           // only the answer follows: no groups to tell apart
-    }
-  }
-
-  function listEl(step) {
-    if (step === 'research') return research;
-    if (!groups) return research;
-    return (groups[step] || groups.composition).ol;
-  }
+  container.append(pre, research, post);
 
   function sync(run) {
-    ensureGroups(run);
     for (const [step, list] of Object.entries(run.lists)) {
       for (const it of list) {
-        const show = it.type !== 'call' || callVisible(it);
+        const show = step === 'research' ? it.type !== 'call' || callVisible(it) : it.type === 'paused' || it.type === 'resumed';
         const sig = signature(run, it);
         let rec = els.get(it);
         if (!show) { if (rec) { rec.li.remove(); els.delete(it); } continue; }
@@ -70,15 +34,10 @@ export function createSteps(container, { cfg, onGoto }) {
           rec = { li, sig: null };
           els.set(it, rec);
           // a Claude call's item sits before the tools it led to
-          const parent = listEl(step);
-          parent.append(fresh(li));
+          research.append(fresh(li));
         }
         if (rec.sig !== sig) { render(run, it, rec.li); rec.sig = sig; }
       }
-    }
-    if (groups && groups.update && groups.update.head) {
-      groups.composition.head.classList.toggle('working', run.open.composition);
-      groups.update.head.classList.toggle('working', run.open.update);
     }
   }
 
@@ -86,8 +45,7 @@ export function createSteps(container, { cfg, onGoto }) {
   function signature(run, it) {
     const r = it.result;
     const ids = r ? [...(r.found || []), ...(r.read || []), ...(r.kept || []).map(k => k.id)] : [];
-    const extra = it.type === 'composition' ? run.blocks.length > 0 : '';
-    return `${it.state}|${it.lines.length}|${r ? 1 : 0}|${ids.map(id => hueOf(run, id)).join()}|${extra}`;
+    return `${it.state}|${it.lines.length}|${r ? 1 : 0}|${ids.map(id => hueOf(run, id)).join()}`;
   }
 
   function render(run, it, li) {
@@ -99,14 +57,6 @@ export function createSteps(container, { cfg, onGoto }) {
       li.append(h('h3', null, T.PAUSED));
     } else if (it.type === 'resumed') {
       li.append(h('h3', null, T.RESUMED));
-    } else if (it.type === 'composition') {
-      const title = it.state === 'working' ? T.WRITING(it.documents) : it.state === 'failed' || it.state === 'stopped'
-        ? (run.blocks.length ? T.WROTE_PART : T.WRITE_FAILED) : T.WROTE(it.documents);
-      li.append(h('h3', null, title), h('p', { class: 'meta' }, T.WRITING_META));
-    } else if (it.type === 'update_end') {
-      li.append(h('h3', null, T.UPDATE_STEP_ENDED[it.end]));
-    } else if (it.type === 'checks') {
-      li.append(h('h3', null, T.CHECKED));
     } else if (it.type === 'tool') {
       renderTool(run, it, li);
     }
@@ -134,7 +84,7 @@ export function createSteps(container, { cfg, onGoto }) {
     // a service that failed after its retries (meaning search unavailable) is not this site refusing the call
     const failedService = r && r.is_error && it.lines.some(l => l.kind === 'failed');
     if (failedService) title = done;
-    else if (r && r.is_error && it.name !== 'search_web_updates') title = T.TOOL_ERROR_TITLE;
+    else if (r && r.is_error) title = T.TOOL_ERROR_TITLE;
     const head = h('h3', null, title);
     li.append(head);
     const inp = it.input || {};
@@ -159,28 +109,15 @@ export function createSteps(container, { cfg, onGoto }) {
           h('p', { class: 'meta' }, T.readAround(inp.before, inp.after, t.footnote)));
         break;
       }
-      case 'search_web_updates':
-        li.append(queryLine(inp.query ?? ''),
-          h('p', { class: 'meta' }, webMeta(inp)));
-        break;
       case 'submit_answer':
         if (inp.note != null) li.append(h('p', { class: 'say' }, ...withheld(String(inp.note))));
-        break;
-      case 'submit_update':
-        if (Array.isArray(inp.update_findings)) {
-          li.append(h('ul', { class: 'said' }, inp.update_findings.map(f => h('li', null,
-            ...withheld(typeof f === 'object' && f ? String(f.statement ?? '') : String(f)),
-            f && Array.isArray(f.sources) && f.sources.length ? h('span', { class: 'mono src' }, ` ${f.sources.join(', ')}`) : null))));
-        }
-        if (inp.update_overview != null) li.append(h('p', { class: 'say' }, ...withheld(String(inp.update_overview))));
-        if (inp.update_skip_reason != null) li.append(h('p', { class: 'say' }, ...withheld(String(inp.update_skip_reason))));
         break;
       default:
         break;
     }
     if (!r) return;
     if (failedService) { li.append(h('p', { class: 'meta' }, ...withheld(r.content || ''))); return; }
-    if (refusedSubmit || r.wrong_step || (r.is_error && it.name !== 'search_web_updates')) {
+    if (refusedSubmit || r.wrong_step || r.is_error) {
       li.append(h('p', { class: 'refused' }, ...withheld(r.content || '')));
       return;
     }
@@ -195,21 +132,6 @@ export function createSteps(container, { cfg, onGoto }) {
       head.textContent = `${T.STEP_TITLES.keep_passages[1]}: ${ids.length}${again ? `, ${again} with a new reason` : ''}`;
       if (ids.length) li.append(chips(run, ids));
       if (r.refused && r.refused.length) li.append(h('p', { class: 'refused' }, ...withheld(r.content || '')));
-    } else if (it.name === 'search_web_updates') {
-      for (const p of r.web || []) pages.set(p.id, p);
-      if (r.web_status === 'ok') {
-        const ids = [...(r.web || []).map(p => p.id), ...(r.web_repeats || [])];
-        const undated = ids.filter(id => pages.get(id) && !pages.get(id).published).length;
-        const line = T.webSearched(ids.length, undated);
-        const cut = line.indexOf(' Linked');
-        head.textContent = line.slice(0, cut);
-        li.append(h('p', { class: 'meta' }, line.slice(cut + 1)));
-      } else {
-        head.textContent = T.WEB_SEARCHING;
-        li.append(h('p', { class: 'meta' }, T.WEB_STATUS[r.web_status] || T.BAND_INCOMPLETE));
-        if (r.web_status === 'refused_by_us' || r.web_status === 'refused_by_exa') li.append(h('p', { class: 'refused' }, ...withheld(r.content || '')));
-      }
-      li.append(h('p', { class: 'meta' }, T.bandFixed(run.limits ? { ...cfg, UPDATE_SEARCHES_PER_RUN: run.limits.update_searches } : cfg)));
     }
   }
 
@@ -262,11 +184,4 @@ function searchMeta(inp) {
   if (f.include_footnotes === false) bits.push('no footnotes');
   if (inp.max_results != null) bits.push(`up to ${inp.max_results} results`);
   return bits.join(' \u00b7 ');
-}
-
-function webMeta(inp) {
-  const v = x => (x == null || (Array.isArray(x) && !x.length) ? T.NOT_SET : Array.isArray(x) ? x.join(', ') : String(x));
-  return [`published from ${v(inp.start_published_date)}`, `to ${v(inp.end_published_date)}`, `category ${v(inp.category)}`,
-    `type ${v(inp.type)}`, `results ${v(inp.num_results)}`, `include domains ${v(inp.include_domains)}`,
-    `exclude domains ${v(inp.exclude_domains)}`].join(' · ');
 }
