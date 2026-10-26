@@ -3075,3 +3075,67 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none. No live run was started. Only replays were played.
 **DECISION (user):** none. Next is the replays (step 2): the questions go to the user for approval first.
+
+## Oct 26, 2026, 01:34 CDT — The replays recorded: four runs, three with false or arguable flags (the user's step 2)
+**Asked (the user):** *"Run the four replay questions"*:
+1. "What has the Court said about searching a phone after an arrest?"
+2. "When is tracking a car with GPS a search?"
+3. "What has the Court said about geofence warrants?"
+4. "Can police watch a backyard from the air?"
+
+**Came back:**
+- Four real paid runs, started together at 01:28 on the local API (`local-c74b3e0`, `PC_ENV=test`, the development keys, `Probable_Clause_test`) with `scripts/run_client.py`.
+- Every run answered in full (`answered`, `complete`, no stop) on the full corpus.
+
+| Run | Rounds | Kept of found | Answer blocks | Citations | Web search band | Time | Cost |
+|---|---|---|---|---|---|---|---|
+| `phone-search-arrest` | 5 | 28 of 55 | 101 | 50 | nothing relevant | 63 s | $0.3027 |
+| `gps-tracking-car` | 5 | 28 of 54 | 85 | 42 | nothing relevant | 61 s | $0.3257 |
+| `geofence-warrants` | 7 | 40 of 80 | 112 | 62 | nothing relevant (Chatrie's remand reported in the overview) | 81 s | $0.4316 |
+| `backyard-from-air` | 6 | 19 of 44 | 67 | 33 | found (no new decision on drones; commentary) | 53 s | $0.3050 |
+
+- **Files:**
+  - the events and summaries are in `data/verification/replays/` (local, kept);
+  - the rendered answers are in `data/verification/replays/answers/`.
+- **`scripts/export_replay.py` (new):** writes the replay files of contract §11.2 and `index.json` from saved events, in the order given.
+  - Before writing, it checks each run: envelopes numbered 1 to N, the schema, `run_started` first and `run_ended` last, one run, and no page text on a web result.
+  - It rebuilt the earlier local thermal-imager replay byte for byte from its events.
+  - It exported the four runs to `replays/` in the user's order, with commit `c74b3e0`. The two local review files were removed: they were copies of Wave 3's runs, which stay in `data/verification/wave3/`.
+  - `replays/` is still excluded from git and nothing in it is committed, since T5.6 has the user review each recording before it is published.
+- **The answer checks' flags,** read against the opinions:
+  - **`phone-search-arrest`:** none. 14 of 14 quotations were found.
+  - **`gps-tracking-car`, false:**
+    - flagged: "where a classic trespassory search is not involved and resort must be had to *Katz* analysis" (*Jones*, `jones-1-p21`);
+    - the opinion has these words exactly;
+    - the answer italicised *Katz* inside the quotation, and the quotation check compares the `*` marks literally;
+    - with the marks removed, `check_quotation` finds it.
+  - **`geofence-warrants`, false, same cause:**
+    - flagged: "re-ups arguments, point-for-point, that *Carpenter* specifically rejected." (`chatrie-1-n7`);
+    - the opinion has these words exactly.
+  - **`backyard-from-air`, false (citation check):**
+    - flagged: "*Chatrie v. United States* (Alito, joined by Thomas and Barrett)" as `not_in_corpus`;
+    - the case-name walk runs on into a parenthesis that opens with a capitalised word and reads the name as "Chatrie v. United States (Alito", which matches no case;
+    - it is the same without italics. "*Carpenter v. United States* (2018)" is not flagged;
+    - the page draws it in red beside a Chatrie citation.
+  - **`backyard-from-air`, arguable (quotation check):**
+    - flagged: "knowingly expose[] [an area] to the public" (*Florida v. Riley*);
+    - the opinion quotes *Katz*: "What a person knowingly exposes to the public";
+    - "[an area]" is an inserted bracket with no source words behind it, so the flag holds under the check's rules (T1.12), though the bracketing is ordinary legal style.
+- These are defects in part F's checks (`api/checks/quotations.py`, `api/checks/citations.py`), found on the final code after the user said the frontend was finished. Nothing is fixed. T5.6 makes it the user's call, run by run: publish as recorded with the flags, or re-record.
+
+**Checked:**
+- in the browser, on the rebuilt local stack (`local-3fc61d0`, which differs only in `BUILD_LOG.md`):
+  - the four chips at 375×812 in the user's order, no sideways scroll;
+  - each replay played at its recorded pace and skipped to its end (the finish line, the cost line, "Later developments");
+  - the flags drawn: `phone-search-arrest` 0, `gps-tracking-car` 1, `geofence-warrants` 1, `backyard-from-air` 2;
+- `replays/geofence-warrants.json` is 1.03 MB and is served as 169 KB gzipped.
+
+**Failures:** the three runs' false flags above. No run failed.
+**Spend:**
+- Anthropic, Voyage and Exa together: $1.3651 today in `Probable_Clause_test` (`spend_report.py`; month $3.6735);
+- Exa: 4 searches;
+- left of P4.22's allowance: about $1.09 and 13 Exa searches.
+
+**DECISION (user):** none yet. Open:
+- whether to publish each flagged run as recorded or to fix the checks and re-record it (T5.6);
+- T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*, which was not in this request.
