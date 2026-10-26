@@ -14,8 +14,8 @@ Times are Chicago time (CDT). A prompt more than two hours after the one before 
 | Words in the build | 12,062, median 22 a prompt |
 | Span of the build | 2026-10-23 16:15 to 2026-10-26 04:08 CDT |
 | Time in the build | 35.1 hours, in 4 sittings |
-| After the build | 4 prompts in 1 sitting, 0.2 hours; not counted above |
-| Context compactions | 32 |
+| After the build | 8 prompts in 1 sitting, 0.7 hours; not counted above |
+| Context compactions | 32 in the build, 1 after it |
 | Subagents started | 75 (27 sonnet, high effort; 23 opus, default effort; 11 opus, xhigh effort; 6 sonnet, xhigh effort; 5 opus, high effort; 3 the parent model, default effort) |
 
 ### Sittings
@@ -26,7 +26,7 @@ Times are Chicago time (CDT). A prompt more than two hours after the one before 
 | 2 | 2026-10-24 12:47 | 2026-10-25 02:50 | 14.0 | 139 | 4,405 | build |
 | 3 | 2026-10-25 12:08 | 2026-10-25 16:11 | 4.0 | 19 | 909 | build |
 | 4 | 2026-10-25 16:14 | 2026-10-26 04:08 | 11.9 | 107 | 4,445 | build |
-| 5 | 2026-10-26 11:39 | 2026-10-26 11:52 | 0.2 | 4 | 170 | after the build |
+| 5 | 2026-10-26 11:39 | 2026-10-26 12:22 | 0.7 | 8 | 353 | after the build |
 
 ## Sitting 1: 2026-10-23 16:15 to 21:20 CDT
 
@@ -1840,7 +1840,7 @@ Times are Chicago time (CDT). A prompt more than two hours after the one before 
 > Good luck! It has been a wild ride!
 
 
-## Sitting 5 (after the build): 2026-10-26 11:39 to 11:52 CDT
+## Sitting 5 (after the build): 2026-10-26 11:39 to 12:22 CDT
 
 **Oct 26, 11:39** · main
 
@@ -1869,3 +1869,27 @@ Times are Chicago time (CDT). A prompt more than two hours after the one before 
 >
 >
 > I'd check the README after you push and edit if needed. If it's good, there would be no further action from me. Treat this as the very last prompt sent by me. Good luck! It has been a ride!
+
+*Context compacted at 11:55.*
+
+**Oct 26, 12:10** · main
+
+> I checked CLAUDE.md, and I want to modify the current version to highlight the process more and call attention to it much earlier, similar to how we did it with "~/Documents/Developer/[another project]/README.md".
+>
+> Read the referenced file, and draft a new local draft.
+
+**Oct 26, 12:16** · main
+
+> The "Here for the process?" section is too long. It's meant to be a pointer with some hook information but not laying out everything in the interest of space.
+
+**Oct 26, 12:19** · main
+
+> Let's take out the "and one stretch run overnight while the author slept" part at the very beginning. We still leave it in the full body below as I think an engineer understanding how to build with claude code will see how well the overnight run is regulated and carried out. However, having that part at the very beginning can trigger an HR recruiter who might not be that familiar with Claude Code.
+
+**Oct 26, 12:21** · main
+
+> Everything looks good to me. You'll just need to re-export the prompt (including this one), update some counters here and there, commit, then push.
+>
+> If I find any thing needs editing, I'll see you here again.
+>
+> What a ride!

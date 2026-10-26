@@ -190,6 +190,8 @@ def render(prompts, groups, compactions, agents):
     total_h = sum(hours(g["start"], g["end"]) for g in built)
     later_h = sum(hours(g["start"], g["end"]) for g in later)
     later_n = sum(len(g["prompts"]) for g in later)
+    b_comp = sum(1 for c in compactions if c <= ended)
+    later_comp = len(compactions) - b_comp
     per_conv = {c: sum(1 for p in b_prompts if p["conversation"] == c) for c in ("main", "frontend")}
     lines = [
         "# Every prompt",
@@ -219,7 +221,7 @@ def render(prompts, groups, compactions, agents):
         f"| Time in the build | {total_h:.1f} hours, in {len(built)} sittings |",
         f"| After the build | {later_n} prompts in {len(later)} sitting{'' if len(later) == 1 else 's'}, "
         f"{later_h:.1f} hours; not counted above |" if later else "| After the build | none |",
-        f"| Context compactions | {len(compactions)} |",
+        f"| Context compactions | {b_comp} in the build" + (f", {later_comp} after it |" if later_comp else " |"),
         f"| Subagents started | {sum(agents.values())} ({'; '.join(f'{n} {k}' for k, n in agents.items())}) |",
         "",
         "### Sittings",
@@ -249,7 +251,7 @@ def render(prompts, groups, compactions, agents):
              "build_words": sum(b_counts), "median_words": statistics.median(b_counts), "build_sittings": len(built),
              "build_hours": round(total_h, 1), "start": local(built[0]["start"]), "end": local(built[-1]["end"]),
              "after_build_prompts": later_n, "after_build_sittings": len(later), "after_build_hours": round(later_h, 1),
-             "compactions": len(compactions), "subagents": agents}
+             "build_compactions": b_comp, "after_build_compactions": later_comp, "subagents": agents}
     flags = [f"{local(p['at'])} [{', '.join(h)}] {t[:160]!r}" for p, (t, h) in zip(prompts, texts) if h]
     return "\n".join(lines).rstrip() + "\n", stats, flags
 

@@ -3661,3 +3661,19 @@ It amends P4.40.
 **Failures:** the extractor's sitting-end rule (above), found by a dry run before anything was published; my first in-memory test of the fix let one sitting run into the next, a mistake in the test only, corrected before the real change. For the health check's reply I used a temporary file in `/tmp` rather than the scratchpad; it was deleted at once.
 **Spend:** none. `/health` calls no paid service.
 **DECISION (user):** P5.6, as asked above.
+
+## Oct 26, 2026, 12:22 CDT — Phase 5: the README's opening points to the process; the build section expanded (P5.7)
+**Asked (the user):** *"I want to modify the current version to highlight the process more and call attention to it much earlier"*, from a reference README the user named (read for its structure only; nothing copied, not named here). Then: *"The "Here for the process?" section is too long. It's meant to be a pointer with some hook information but not laying out everything in the interest of space."* Then: *"Let's take out the "and one stretch run overnight while the author slept" part at the very beginning. We still leave it in the full body below as I think an engineer understanding how to build with claude code will see how well the overnight run is regulated and carried out. However, having that part at the very beginning can trigger an HR recruiter who might not be that familiar with Claude Code."* Then: *"Everything looks good to me. You'll just need to re-export the prompt (including this one), update some counters here and there, commit, then push."*
+**Came back:**
+- **The opening:** the affiliation line moved under the title in italics; the not-legal-advice statement is its own paragraph; a one-sentence "Here for the process?" callout (35.1 hours over four sittings, 304 prompts, every one published) links to the build section.
+- **The build section,** still at the end:
+  - "The numbers" gains three rows, each counted by a script: 358 commits up to the first push (`git rev-list --count 4ad0ea2`); 134 entries in `locked-decisions.md` and 198 in `BUILD_LOG.md` up to the first push; 75 subagents.
+  - "How the work was run" opens with the author's *"Zoom out and discuss this holistically with me first before we proceed."* and gains points on discussing then locking (35 of the 304 build prompts use "discuss", 10 invite a push back, 23 open a Phase 3 topic), the two conversations in one folder, the subagent model and effort rule (stated as a rule, since 23 earlier subagents ran at default effort), the overnight run of Oct 25 (01:27 to 02:50, 9 commits, no paid calls, nothing pushed), planned compactions, the priced paid tests ($0.5383 of $3.00 and 3 of 20 searches in Wave 3), and the page's 29 review rounds.
+  - The timeline gains a row for this sitting, after the build; "The record" links the overnight plan and the frontend log.
+- **The prompts,** re-exported: the build is unchanged (304 prompts, 12,062 words, 35.1 hours, four sittings); after the build, 8 prompts in one sitting, 0.7 hours so far. 22 prompts carry a redaction (the 21 before and one from this sitting); the flag list was read and no local path, e-mail address or the previous project's name is in the file.
+- **The extractor:** compactions are now split at the build's end, like prompts and hours: 32 in the build, 1 after it (this sitting's).
+
+**Checked:** every new count by script (the prompts file for prompt counts, git, the log, `locked-decisions.md`); each "Open topic" prompt's time falls in Phase 3; no banned words, em dashes, "the user", local paths or the previous project's name in the README; every relative link resolves.
+**Failures:** a first count of prompts saying "open to" (32) was mostly "Open topic"; it was dropped before the draft was shown.
+**Spend:** none.
+**DECISION (user):** P5.7, as asked above.

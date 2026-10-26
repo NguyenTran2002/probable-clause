@@ -1445,3 +1445,14 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I want to be clear that we're not including this as development time as the app is already done and no longer being modified, but we will re-export and publish the prompts again."* *"Looks good to me. Proceed with: Fix the extractor, Log the sample, Re-export the prompts, Update README, Commit, Push."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 11:51 CDT — Phase 5: a cold start measured after 7 h 24 min idle; later sittings are not build time (P5.6)"
+
+### P5.7 The README's opening points to the process in one sentence; the build section expanded (amends P5.5)
+
+- **Decision:**
+  - A one-sentence "Here for the process?" callout sits near the top, after the opening, with the build's hours, sittings and prompts and a link to "How this was built with Claude Code". It is a pointer, not a summary.
+  - The overnight run is not named in the callout; it stays in the build section, where its plan and limits are shown.
+  - The build section stays at the end and gains the numbers (commits, decisions, subagents) and the points on how the work was run.
+  - Compactions are counted like prompts and hours: those after the build are listed apart.
+- **User's words:** *"I want to modify the current version to highlight the process more and call attention to it much earlier"* *"It's meant to be a pointer with some hook information but not laying out everything in the interest of space."* *"We still leave it in the full body below as I think an engineer understanding how to build with claude code will see how well the overnight run is regulated and carried out. However, having that part at the very beginning can trigger an HR recruiter who might not be that familiar with Claude Code."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 12:22 CDT — Phase 5: the README's opening points to the process; the build section expanded (P5.7)"

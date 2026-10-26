@@ -1,14 +1,14 @@
 # Probable Clause
 
+*Independent project. Not affiliated with Anthropic.*
+
 **Claude's Citations, on Supreme Court opinions about the Fourth Amendment and surveillance.** Ask a question; Claude searches 32 cases, keeps the passages that bear on it with a reason for each, and writes an answer whose citations carry the cited sentences, copied from the opinions by the Claude API, not retyped by the model.
 
 **Live at [nguyennhattran.com/probable-clause](https://nguyennhattran.com/probable-clause/).** Four recorded runs play on the page without calling anything; live research runs a real, paid run.
 
-> Independent project. Not affiliated with Anthropic.
->
-> Research, not legal advice: it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.
+**Research, not legal advice:** it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.
 
-Built by Nguyen Tran with Claude Code. Every prompt is published in [docs/PROMPTS.md](docs/PROMPTS.md); [how this was built](#how-this-was-built-with-claude-code) is at the end.
+> **Here for the process?** Built part time with Claude Code: 35.1 hours over four sittings and 304 prompts, every one published. See [How this was built with Claude Code](#how-this-was-built-with-claude-code).
 
 ## Contents
 
@@ -187,17 +187,22 @@ Then open http://localhost:8765. A real run needs the keys named in [`.env.examp
 
 ## How this was built with Claude Code
 
-One person and Claude Code (Claude Opus 5.5), from the first prompt to this README. The author planned, decided and approved; Claude researched, wrote the code, ran the paid tests and deployed only on an explicit green light. Two Claude Code conversations worked in the same folder: the **main** one ran every phase, and a **frontend** one built the art-direction look tests on Oct 23, 2026. Claude started 75 subagents along the way (Opus 5.5 and Sonnet 5.5) for research, corpus verification, building parts of the backend against a written contract, and reviews.
+One person and Claude Code (Claude Opus 5.5), from the first prompt to this README. The author planned, decided and approved; Claude researched, wrote the code, ran the paid tests and deployed only on an explicit green light. Two Claude Code conversations worked in the same folder: the **main** one ran every phase, and a **frontend** one built the art-direction look tests on Oct 23, 2026.
+
+### The numbers
 
 | | |
 |---|---|
 | Time | built part time over about two and a half days (Oct 23 to 26, 2026): four sittings, 35.1 hours in all from each sitting's first prompt to its last activity, up to the first push to GitHub. A prompt more than two hours after the one before starts a new sitting; shorter breaks are counted, so this is not time at the desk. Work after the push, such as the cold-start measurement below, is not counted. |
 | Prompts typed | 304 in the build (289 main, 15 frontend), 12,062 words, median 22 words a prompt. Prompts after the build are listed in [docs/PROMPTS.md](docs/PROMPTS.md) and not counted here |
-| Context compactions | 32 |
+| Commits | 358 up to the first push, never squashed or rewritten |
+| Decisions | 134 entries in [docs/design/locked-decisions.md](docs/design/locked-decisions.md), superseded ones kept and marked; 198 entries in [BUILD_LOG.md](BUILD_LOG.md) |
+| Subagents | 75, on Opus 5.5 and Sonnet 5.5 (the split by model and effort is at the top of [docs/PROMPTS.md](docs/PROMPTS.md)) |
+| Context compactions | 32 in the build |
 | Code | about 9,300 lines of Python in `api/`, 5,500 in `scripts/`, 21,100 in `tests/`; about 4,200 lines of JavaScript, CSS and HTML in `web/` (the look tests aside) |
 | Tests | 2,967 Python tests passing (54 skipped), 86 Node tests |
 
-Every figure comes from a script: the prompts, hours and subagents from the transcripts by [`scripts/extract_prompts.py`](scripts/extract_prompts.py) (its full figures are at the top of [docs/PROMPTS.md](docs/PROMPTS.md)), the rest from git and the test runs.
+Every figure comes from a script: the prompts, hours and subagents from the transcripts by [`scripts/extract_prompts.py`](scripts/extract_prompts.py) (its full figures are at the top of [docs/PROMPTS.md](docs/PROMPTS.md)), the rest from git, the log and the test runs.
 
 ### Timeline
 
@@ -209,15 +214,23 @@ Each phase ends with a git tag. Times are Chicago time (CDT).
 | 1. Corpus | Oct 23, 21:17 | 48 | The inclusion rule, the pull, cleaning, verification by scripts and subagents, frozen; look tests in the frontend conversation |
 | 2. Research | Oct 24, 13:59 | 11 | Current documentation and small paid checks: models, prices, Citations, Exa, limits |
 | 3. Architecture | Oct 24, 20:03 | 121 | Five areas discussed topic by topic, each topic locked in the author's words; the design note |
-| 4. Build | Oct 26, 02:52 | 168 | The interfaces contract, subagent waves against it, paid build tests, the page built and reviewed in 29 rounds, the four replays |
+| 4. Build | Oct 26, 02:52 | 168 | The interfaces contract, subagent waves against it, an overnight patch round, paid build tests, the page built and reviewed in 29 rounds, the four replays |
 | Deploy | Oct 26, 03:06 | | Live on Cloud Run behind the author's gateway; the first live run at 03:25 |
 | After the build: a cold start | Oct 26, 11:42 | | One cold start measured after 7 h 24 min idle: 32.5 s as the caller saw it, 31.5 s on Cloud Run's side. The app was not modified, and this is not counted as build time |
+| After the build: this README reworked | Oct 26, 12:10 | | The opening now points to this section, which gained the commit, decision and subagent counts and the points on discussion, the two conversations and the overnight run. Prompts re-exported; not counted as build time |
 
 ### How the work was run
 
-- **A brief, then decisions in the author's words.** The brief ([PROBABLE_CLAUSE_KICKOFF.md](PROBABLE_CLAUSE_KICKOFF.md)) was frozen at the first commit. Every later decision is an entry in [docs/design/locked-decisions.md](docs/design/locked-decisions.md), quoting the author, with a dated entry in [BUILD_LOG.md](BUILD_LOG.md), the authoritative record. A superseded decision stays, marked.
+The author's way of working, in one early prompt: *"Zoom out and discuss this holistically with me first before we proceed."*
+
+- **Discuss, then lock.** Of the 304 prompts, 35 use the word "discuss" and 10 invite Claude to push back. In Phase 3 the architecture was taken one topic at a time, each opened by its own prompt ("Open topic 6, submit_answer and the rejection rules."), 23 of them. Each point, once settled, was locked in the author's words as an entry in [docs/design/locked-decisions.md](docs/design/locked-decisions.md), with a dated entry in [BUILD_LOG.md](BUILD_LOG.md), the authoritative record. The brief ([PROBABLE_CLAUSE_KICKOFF.md](PROBABLE_CLAUSE_KICKOFF.md)) was frozen at the first commit; a superseded decision stays, marked.
 - **Green lights.** Each phase gate, every paid run beyond a small check, every deploy and every cloud change waited for an explicit go. Claude never saw a key: a permission rule blocks `.env`, keys reach programs only as environment variables, and a script reports only whether each key is set.
-- **Contract first.** Before any subagent wrote backend code, the main conversation wrote [docs/design/contract.md](docs/design/contract.md) and a machine-checked event schema ([contracts/events.schema.json](contracts/events.schema.json)); each part had one owner.
+- **Two conversations, one folder.** The first prompt proposed it: *"I'd want to be iterating on a mock frontend with a second claude code session to cut time and be more efficient."* The frontend conversation built the look tests while the main one pulled the corpus, under written rules: one writer per file, commits by path, no stash, reset or branch switch. Once the backend was built, the main conversation took the page over (P4.28).
+- **Contract first, then subagent waves.** Before any subagent wrote backend code, the main conversation wrote [docs/design/contract.md](docs/design/contract.md) and a machine-checked event schema ([contracts/events.schema.json](contracts/events.schema.json)); each part had one owner. From Phase 4 on, the author's rule set each subagent's model and effort: Sonnet 5.5 or Opus 5.5, high or extra-high effort, never max. Subagents never committed: the main conversation committed each part's files by name.
+- **An overnight run.** At 1 AM on Oct 25 the author asked for a plan Claude could carry out alone, with the main conversation orchestrating subagents: *"I'd set you off then go to bed as it's 1:00 AM."* The plan, its limits and what had to wait for the author were written to [docs/sessions/overnight-run.md](docs/sessions/overnight-run.md) and approved before a compaction. From 01:27 to 02:50 Claude ran the patch round on its own: the shared changes, a loop patch built by one subagent and reviewed by another, the test fixtures regenerated from the real code, and a final review with its fixes. Nine commits, no paid calls, nothing pushed. The morning report's five questions became five decisions at 12:09 (P4.11 to P4.15).
+- **Planned compactions.** The conversations were compacted 32 times. Before a planned one, Claude was asked to "prep the ground": CLAUDE.md's "Current state and next step" was rewritten so work resumed from the files, not from memory.
+- **Paid tests on a priced plan.** Paid build tests ran from a written plan with a ceiling ([docs/design/paid-build-tests.md](docs/design/paid-build-tests.md)); Wave 3's tests spent $0.5383 of a $3.00 ceiling and 3 of 20 web searches. Every paid run's events are kept.
+- **Small rounds on the page.** The page was reviewed in 29 rounds, each checked by the author before the next; the palette and the fonts were redone mid-review.
 - **Times from the clock, counts from scripts.** Every time in the log comes from `date`, run just before it is written; every count in this README comes from a script.
 
 ### A few of the author's decisions
@@ -248,6 +261,8 @@ Each is recorded in the build log.
 - [CLAUDE.md](CLAUDE.md): the working file Claude Code read at the start of every session.
 - [PROBABLE_CLAUSE_KICKOFF.md](PROBABLE_CLAUSE_KICKOFF.md): the brief, unchanged since the first commit.
 - [docs/design/design-note.md](docs/design/design-note.md) and [docs/design/contract.md](docs/design/contract.md): the architecture and the interfaces contract.
+- [docs/sessions/overnight-run.md](docs/sessions/overnight-run.md): the plan for the overnight run, and where it stopped.
+- [docs/sessions/frontend-log.md](docs/sessions/frontend-log.md): the frontend conversation's own log.
 - [docs/PROMPTS.md](docs/PROMPTS.md): every prompt.
 
 ## Licence and credits
