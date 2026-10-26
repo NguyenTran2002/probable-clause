@@ -3400,3 +3400,34 @@ It amends P4.40.
 **DECISION (user):** none yet. Open:
 - which run, if either, replaces `geofence-warrants`;
 - T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
+
+## Oct 26, 2026, 02:40 CDT — The replays: the location-history run exported as the third chip, uncommitted, on the local stack
+**Asked (the user):** *"Export the 02:36 location-history run (bLe0Pl-WUxOnNjQWauyXmg) in place of geofence-warrants, as the third chip, and stand it up locally so I can look at it in the page."*
+**Came back:**
+- **The export:** `scripts/export_replay.py` wrote the four replays in this order:
+  1. `phone-search-arrest`, at `84c0db4`;
+  2. `gps-tracking-car`, at `84c0db4`;
+  3. `location-history-warrant` (run `bLe0Pl-WUxOnNjQWauyXmg`), at `a3b1dbe`, the commit its API reported. The backend at `a3b1dbe` is the same as at `84c0db4`;
+  4. `backyard-from-air`, at `84c0db4`.
+  - The three approved replays came out byte for byte the same (`git diff` shows only `index.json`).
+  - `replays/geofence-warrants.json` is removed from the working tree. It is still in git at `d20ae44`, and its run's events are kept in `data/verification/replays/`.
+  - `replays/location-history-warrant.json` is 446,687 bytes.
+- **Nothing is committed.** `replays/` differs from the approved P4.50 set until the user approves the swap.
+- **The stack:** `deploy/local.sh` was stopped and rerun. The web image copies `replays/` from the working tree, so it serves the uncommitted export:
+  - the API reports `local-c648401`;
+  - `index.json` lists the four chips in the order above;
+  - `geofence-warrants.json` returns 404.
+
+**Checked:** in the browser on `localhost:8080`:
+- the four chips in order, at 375×812 with no sideways scroll;
+- the location-history replay, skipped to its end:
+  - "Finished: 5 tool rounds and the answer, 49 s.";
+  - "Recorded run, Oct 26, 2026.";
+  - the cost line, "about $0.21 at list prices";
+  - Later developments, which reads "Nothing newer found. That doesn't mean nothing has changed." and then the overview, "Web reports after the corpus date describe follow-on activity in Chatrie and early lower-court use of it."
+
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none yet. Open:
+- approving the swap, which commits `replays/` and amends P4.50;
+- T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
