@@ -3007,3 +3007,20 @@ Node tests: 84 of 84.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none yet.
+
+## Oct 26, 2026, 01:15 CDT — Frontend: the user's review, round 28 locked; the frontend finished (P4.46)
+**Asked (the user):** *"Frontend is finished. Lock. Prepare for compaction. Then, I'm thinking we should do in order: 1. Full test. 2. Populate and cache in parallel a few runs. (Questions need approval first.) 3. Deploy."* Also: *"I want cache replay to be a frontend isolation. The frontend getting loaded still wake backend, but cache replay should not rely on any extra components. (Let me know if this is not already the case.)"*
+**Came back:**
+- P4.46 locks round 28 (2341af0) as built, with no code change, and ends the local review: iterating is over.
+- The user's order for what comes next is recorded in P4.46.
+- **Replays are already frontend-only.** A replay is two static files on the web service: `replays/index.json` and `replays/<slug>.json`. The same page code plays them as it plays a live run. Everything a replay opens (`config.json`, `corpus.json`, `opinions/*.json`) is static on the web service too. The only API call on the landing is the wake (`api/health`), which a replay never waits on. Production's `nginx.conf` has no `/api/` location, so the web service does not depend on the API at all.
+- `replays/` keeps the two local review files until the real replays replace them in step 2.
+**Checked:** the web container alone, from the 2341af0 image with no API container, so `/api/health` answered 502:
+- the page loaded (200);
+- the thermal-imager chip played. After "Skip to the end" the answer showed 8,741 characters and 60 controls, with `playing` cleared;
+- the network log showed only static files, apart from the landing's wake retries to `api/health` (all 502);
+- the reader's files are served (`opinions/berger-1.json`, 200).
+The full stack was then rebuilt with `deploy/local.sh`.
+**Failures:** none. Stopping the API container made `local.sh` remove both containers, by design (its cleanup), so the web container was started alone by hand for the check.
+**Spend:** none.
+**DECISION (user):** *"Frontend is finished. Lock."* Locked as P4.46. The order: full test, then the replays (questions approved first), then the deploy. The replays stay frontend-only (the user's words above). That is already the case, so nothing changed.

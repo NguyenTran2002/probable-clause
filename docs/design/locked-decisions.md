@@ -1294,3 +1294,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I agree it's the same tension of legal and tech. Propose and mock up a few fonts."* Then: *"Try stand up founding print. Also, use master variables to make things easier for us in the future as well."* Then: *"Lock founding print."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:05 CDT — Frontend: the user's review, round 27 locked; the fonts are Founding print (P4.45)"
+
+### P4.46 Back to the top before the exit; the frontend is finished (adds to P4.36 point 3)
+
+- **Decision:** as built in round 28 (2341af0).
+  1. **Back to the top:** "Search opinions" or a recorded-run chip, clicked while the landing is scrolled down, first glides the page back to the top. The exit, with its inserted "l" (P4.37, P4.38), starts at the top. It also starts when the page stops moving for 8 frames, or after `TOP_CAP_MS` (1,500 ms, measured) at the latest. At the top, or with reduced motion, the exit starts at once. The run starts underneath at once either way.
+  2. **The frontend is finished:** the user's local review (frontend plan step 9) ends here, at 2341af0, with rounds 1 to 28 and P4.36 to P4.46. Iterating is over.
+  3. **Next, in the user's order:**
+     - the full test;
+     - a few runs recorded as replays, run in parallel, with the questions approved first (P4.32, T5.6);
+     - the deploy, on its own green light (P4.1).
+- **User's words:** *"Frontend is finished. Lock."* Then: *"I'm thinking we should do in order: 1. Full test. 2. Populate and cache in parallel a few runs. (Questions need approval first.) 3. Deploy."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:15 CDT — Frontend: the user's review, round 28 locked; the frontend finished (P4.46)"
