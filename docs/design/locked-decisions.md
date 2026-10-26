@@ -1158,3 +1158,30 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Yes, lock it as P4.35 and build it: tags like "Kyllo at 29", the opinion type when it isn't the majority, "n.1" for footnotes, the ¶ mark only when two tags in one answer would match, and the real ID kept in the hover text, the card's small print and the API view."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 20:57 CDT — Frontend: the user's review, round 13; a passage's tag reads as a citation (P4.35)"
+
+### P4.36 The landing page (adds to T4.1; T4.1's look is kept)
+
+- **Decision:** the landing page as built in the user's review, round 17 (f13afd3).
+  1. **The first view:** the Fourth Amendment's text sits large and pale behind it; the hero (wordmark, pitch, question box, recorded runs) sits at its foot, the amendment from its head.
+  2. **The margin notes:** a handwritten note (Caveat, self-hosted with its OFL text, T5.5) writes itself beside a word the hero leaves visible, with a leader to that word's underline. At most two show at once; a new one comes every 3.6 s and the older one erases.
+     - **The rule** (the user's words): *"each note is the Court's reading of its word, from majority opinions that are still good law."*
+     - **Each quote:** at most 60 characters, copied from its passage. Any omission is marked " … ", and nothing that limits the rule is ever cut.
+     - **Each citation:** the page the quote starts on, plus a "quoting" line where the majority adopts someone else's words.
+     - **The 26 notes:** `MARGIN_NOTES` in `web/js/text.js`. `webdev/test/margin.test.mjs` checks them against the corpus.
+  3. **The exit:** when a run or replay starts:
+     - the notes erase and the rest of the hero steps back;
+     - the words fall away except *probable cause*, which takes a written caret and "l";
+     - after 2.1 s the run screen shows, with the wordmark moving into the bar. The run itself starts at once.
+  4. **The main session's calls, locked with the page:**
+     - the pace: 3.6 s per note, 45 ms per character, a 2.1 s exit;
+     - a "Pause the notes" control (WCAG 2.2.2);
+     - no notes on phones;
+     - the opinions' quotation marks shown curled, inner ones single.
+     - With reduced motion: two still notes and no exit.
+  5. **Below the first view, as it stood:**
+     - the figure "Follow one citation";
+     - "What it won’t do" with T5.1 #3 and #4;
+     - the two-line footer.
+- **User's words:** *"Looks good! Lock this landing page"* (after the round-17 build; the design and the 26 notes were approved in the words quoted in the 23:08 entry).
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 23:15 CDT — Frontend: the user's review, round 17 locked; the landing page (P4.36)"

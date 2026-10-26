@@ -2643,3 +2643,17 @@ It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. T
 - the pause control and its wording;
 - no notes on phones;
 - the curled marks.
+
+## Oct 25, 2026, 23:15 CDT — Frontend: the user's review, round 17 locked; the landing page (P4.36)
+**Asked (the user):** after trying round 17 at localhost:8080: *"Looks good! Lock this landing page"*
+**Came back:** P4.36 locks the landing page as built at 23:08 (f13afd3); no code change.
+- The first view: the annotated amendment behind the hero, which sits at the foot.
+- The 26 margin notes and the rule they follow.
+- The exit into a run.
+- Caveat.
+- Everything below the first view as it stood: the figure, "What it won’t do", the footer.
+The main session's calls from 23:08 are locked with it, as the user approved the page as built: the pace, the pause control and its wording, no notes on phones, and the curled marks.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** lock the landing page, quoted above. Locked as P4.36.
