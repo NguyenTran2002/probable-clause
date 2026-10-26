@@ -2673,3 +2673,11 @@ The main session's calls from 23:08 are locked with it, as the user approved the
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the complaint, quoted above. The fix is the main session's call, not yet locked.
+
+## Oct 25, 2026, 23:27 CDT — Frontend: the user's review, round 18 locked; the exit's inserted "l" (P4.37)
+**Asked (the user):** after trying round 18: *"Lock the inserted l because that's clearer."*
+**Came back:** P4.37 locks the exit's "l" as built at 23:25 (7c3c8da). P4.36 point 3 is amended: *probable cause* takes no written caret or Caveat "l". Instead the "l" is set into "c|ause" in the amendment's italic and the page's green, as in the wordmark, and the last frame reads "probable clause". No code change.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** lock the inserted "l", quoted above. Locked as P4.37.

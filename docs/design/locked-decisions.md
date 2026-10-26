@@ -1185,3 +1185,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Looks good! Lock this landing page"* (after the round-17 build; the design and the 26 notes were approved in the words quoted in the 23:08 entry).
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 23:15 CDT — Frontend: the user's review, round 17 locked; the landing page (P4.36)"
+
+### P4.37 The exit's inserted "l" (amends P4.36 point 3)
+
+- **Decision:** when a run or replay starts, *probable cause* takes no written caret or handwritten "l". Instead the missing "l" is set into the word as "c|ause", in the amendment's own italic and the page's green, matching the wordmark's "l". Its room opens and it drops in, with nothing clipping it, so the exit's last frame reads "probable clause". As built in round 18 (7c3c8da).
+- **User's words:** *"Lock the inserted l because that's clearer."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 23:27 CDT — Frontend: the user's review, round 18 locked; the exit's inserted "l" (P4.37)"
