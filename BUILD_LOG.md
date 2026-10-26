@@ -2862,3 +2862,21 @@ It replaces the main session's "Research" and placeholder (P4.31). The new repla
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"Lock as is."* Locked as P4.42.
+
+## Oct 26, 2026, 00:31 CDT — Frontend: the user's review, round 25; the palette tried as Evergreen deepened
+**Asked (the user):** *"I want tech and legal at the same time but that's hard to mix. What do you think?"* The main session proposed splitting by role: the court's words on paper, the machinery on the dark API window, with one bright green kept for what is live. It sketched three directions (Evergreen deepened, court navy, oxblood and brass) next to the current palette. The user: *"Let's try evergreen deepened. Modify the palette directly?"*
+**Came back:** only the tokens at the top of `web/css/style.css` changed, as a try, not a lock.
+- **Neutrals:** a new neutral hue `--hn` (85) warms them to paper. `--h0` (158) now sets only the brand and the API window.
+- **Brand:** lowered from oklch(0.52 0.17) to oklch(0.42 0.085) in light, and from oklch(0.72 0.14) to oklch(0.76 0.10) in dark.
+- **New `--live`:** the brighter green, oklch(0.52 0.14) in light and oklch(0.82 0.13) in dark. It is used only by the working step's marker, the waiting line's dot and the two carets.
+- **The API window:** a green-black panel in both modes.
+- **Shadows and the dialog backdrop:** tinted from the paper hue, no longer green.
+- **Unchanged:** the source hues, the flag red and the dark mode that follows the system (T4.1).
+The main session's call: the light `--live` went from 0.60 to 0.52 lightness, so the step number on it passes 4.5:1.
+**Checked:**
+- **Contrast, by a script** (OKLCH to sRGB, WCAG ratios), both modes. In light: ink 16.2, muted 6.3 (5.8 on surface), brand text 7.8, the button 7.8, the live marker 4.8, the flag 5.1, the API window's text 13.4 and its muted text 5.9, the four source hues 4.6 to 5.0. In dark every pair is 6.5 or more. The old light brand on the old paper measured 4.7.
+- **Looked at in the mock,** in light and dark at 1280 px: the landing, a replay skipped to the end, the sources panel and the API window.
+- No Node tests were run, since nothing they cover changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none yet; a try for the user to look at.
