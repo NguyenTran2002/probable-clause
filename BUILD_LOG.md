@@ -2473,3 +2473,17 @@ After the discussion: *"Let's give this a try: the dock keeps the status, the co
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the pitch's wording and emphasis, quoted above. Not a lock; the main session offered copy suggestions in its reply, none applied.
+
+## Oct 25, 2026, 20:33 CDT — Frontend: the user's review, round 11; the pitch's first line
+**Asked (the user):** "Swap to "Claude’s Citations"" and "The first line becomes "See Claude’s Citations in action. Ask anything about the Fourth Amendment and surveillance, from wiretaps to phone location data."" On the main session's suggested ending ("…and writes an answer where every citation points to the exact sentences it rests on."): *"it doesn't really make sense to a reader what that means. We need to more intuitively, while still accurately, describe what citations really does and how it does it. You're allowed to refetch the docs if needed."*
+**Came back:**
+- **The pitch's lead is now the user's line, word for word.** The second line is unchanged until the user picks a new one.
+- **Anthropic's citations page was re-read** (platform.claude.com/docs/en/build-with-claude/citations, fetched just now). What it says, in the main session's words:
+  - The model marks its citations in a standard format.
+  - The API turns them into locations in the documents and takes `cited_text` from the document itself. The page calls that "better citation reliability": citations "are guaranteed to contain valid pointers to the provided documents".
+  - For custom content documents, the blocks are used as given, and a citation names a range of them. Here each block is one sentence.
+- **Wording options** for what citations do are in the reply, none applied.
+- **Checked:** Node passed 71. The change is a string only, so it was not checked in the browser.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the first line, quoted above. Not a lock.

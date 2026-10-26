@@ -33,7 +33,7 @@ export const REPO_URL = 'https://github.com/NguyenTran2002/probable-clause';
 // two lines (the user's wording, Oct 25, 2026): the lead in bold, then the rest, quieter, with its last two words marked
 export function pitch(corpus) {
   return {
-    lead: 'See Claude Citations in action. Ask anything about the Fourth Amendment and surveillance technology, from wiretaps to phone location data.',
+    lead: 'See Claude’s Citations in action. Ask anything about the Fourth Amendment and surveillance, from wiretaps to phone location data.',
     more: [`Claude searches ${num(corpus.case_count)} Supreme Court cases, keeps the passages that bear on your question, and writes an answer with `, { em: 'precise citations' }, '.'],
   };
 }
