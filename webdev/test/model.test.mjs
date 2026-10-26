@@ -157,3 +157,20 @@ test('stop labels: limits at the top, cut off and incomplete at the end', () => 
   assert.equal(f.composition.item.state, 'failed');
   assert.ok(f.band, 'the update step beside a failed composition still ends with its band');
 });
+
+test('estimated attempts are counted for the cost note, Claude and Exa only (P5.4)', () => {
+  for (const name of full) {
+    const d = load(name);
+    const run = play(d.events);
+    const want = d.events.filter(e => e.kind === 'paid_call' && e.data.estimated && e.data.service !== 'voyage').length;
+    assert.equal(run.estimated, want, name);
+  }
+  assert.ok(play(load('composition-failed-before-first-block').events).estimated > 0, 'a fixture with an estimate');
+  assert.equal(play(load('answered-phone-location-records').events).estimated, 0, 'an ordinary run has none');
+});
+
+test('the estimate note counts attempts (P5.4)', async () => {
+  const { COST_ESTIMATED } = await import('../../web/js/text.js');
+  assert.equal(COST_ESTIMATED(1), 'Includes this site’s estimate for 1 attempt that reported no usage.');
+  assert.equal(COST_ESTIMATED(3), 'Includes this site’s estimate for 3 attempts that reported no usage.');
+});

@@ -145,6 +145,8 @@ export function costParts(t) {
     [`Exa (${plural(t.exa.searches, 'search', 'searches')})`, t.exa.cost_usd || 0]];
 }
 export const COST_NOTE = 'Computed by this site from each response’s token counts and the providers’ list prices; not an invoice. Voyage AI, used for meaning search, is not included.';
+// P5.4: only when the total includes estimates (T3.3), so the note above is never the whole story
+export const COST_ESTIMATED = n => `Includes this site’s estimate for ${plural(n, 'attempt')} that reported no usage.`;
 export const COST_REPLAY = date => `Recorded ${date}, priced at that date’s list prices.`;
 export const TEXT_STATUS = 'The opinion text is unofficial; only the U.S. Reports are authoritative. It was normalised from the sources above: page numbers and running heads were removed (U.S. Reports pages are shown in the margin instead), words broken across lines were rejoined, and every quotation mark was made straight. The syllabus, counsel listings and lineup are left out, since they are not the Court’s words. A few misreadings in the sources were corrected against the printed page.';
 

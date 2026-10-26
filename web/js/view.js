@@ -267,7 +267,7 @@ export function createView({ cfg, corpus, md }) {
     clear(endSlot).append(h('div', { class: 'run-fine' }, h('p', null, T.NOT_ADVICE), h('p', null, T.AI_DISCLOSURE)));
     clear(costSlot);
     if (e.totals) {
-      const costs = renderCosts(e.totals, replayDate);
+      const costs = renderCosts(e.totals, replayDate, run.estimated);
       costs.addEventListener('toggle', () => { if (costs.open) requestAnimationFrame(() => revealFold(costs)); });
       costSlot.append(costs);
     }

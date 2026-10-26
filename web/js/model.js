@@ -26,6 +26,7 @@ export function createRun() {
     keepOrder: [],
     fragments: new Map(),       // passage id -> [api_fragment data]
     calls: new Map(),           // call_no -> [paid_call data], every attempt of one Claude call
+    estimated: 0,               // Claude and Exa attempts priced from this site's estimate (P5.4); Voyage is not in the shown total
     update: { started: false, kept: null, ended: null },
     composition: { started: false, callNo: null, documents: [], item: null, failed: null },
     blocks: [],
@@ -127,6 +128,7 @@ export function apply(run, ev) {
     }
 
     case 'paid_call': {
+      if (d.estimated && d.service !== 'voyage') run.estimated += 1;
       if (d.service === 'anthropic') {
         const list = run.calls.get(d.call_no) || [];
         list.push(d);
