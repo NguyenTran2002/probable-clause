@@ -6,7 +6,7 @@
 # Keys reach the API from .env through `uv run --env-file` (which parses it, quotes stripped) and
 # `docker run -e NAME` with no value, so only those four variables are passed; this script never reads .env. Ctrl-C stops and cleans up.
 # A question asked on the page is a real paid run on the development keys; the user decides what to ask.
-# replays/ is copied into the web image when present; for the review it holds local-only files, never committed.
+# replays/ is copied into the web image when present: the approved replays, committed (P4.50).
 
 set -euo pipefail
 

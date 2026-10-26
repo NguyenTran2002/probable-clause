@@ -45,7 +45,7 @@ RUN test -f /usr/share/nginx/html/index.html \
 
 COPY --from=data /out/ /usr/share/nginx/html/
 
-# replays/ is written in Phase 5 and may not exist yet: a bind mount of the build context
+# replays/ holds the approved replays (P4.50). A bind mount of the build context
 # copies it only when it is there, so the image builds either way.
 RUN --mount=type=bind,source=.,target=/ctx \
     rm -rf /usr/share/nginx/html/looktests /usr/share/nginx/html/_generated /usr/share/nginx/html/webdev \

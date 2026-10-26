@@ -1334,3 +1334,16 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Hold up, I want the newest recordings used across the board, not using anything separate for phones."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:45 CDT — The replays: every one from the newest recordings (P4.49)"
+
+### P4.50 The four replays are approved and committed (T5.6, P4.32)
+
+- **Decision:** the user reviewed the four recordings and approved them as recorded. All four were recorded on `84c0db4` with no flags:
+  - `phone-search-arrest` (run `LHdjNk0iXw_0fRhlj1MzlA`);
+  - `gps-tracking-car` (`9iRQPOXNhjC6NlqhUK5nIw`);
+  - `geofence-warrants` (`SAKUNhVxhcGBpbEdiVE2RQ`);
+  - `backyard-from-air` (`pdUkkt0HsWENVDDY_gWkKw`).
+
+  `replays/` leaves `.git/info/exclude`, and its five files (`index.json` and the four replays) are committed and copied into the web image. A replay is re-recorded only deliberately, with the user (T5.6 #3). T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*, is not part of this approval and stays open.
+- **User's words:** *"I reviewed the four replays. Approved: commit replays/ and take it out of the exclude."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:48 CDT — The replays approved and committed (P4.50)"

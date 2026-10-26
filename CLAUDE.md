@@ -91,16 +91,16 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 26, 2026, 01:47 CDT: the full test passed (01:26); the four replays are recorded on `84c0db4` after the check fixes (P4.48, P4.49) and exported. Next: the user's review of the replays, then the deploy.*
+*Updated Oct 26, 2026, 01:47 CDT: the full test passed (01:26); the four replays are recorded on `84c0db4` after the check fixes (P4.48, P4.49) and exported. Then the user approved the four and they are committed (P4.50, 01:48). Next: the deploy, on its green light.*
 
 - **Next, in the user's order (P4.46, BUILD_LOG "Oct 26, 2026, 01:15 CDT"):**
   1. **The full test: done** (BUILD_LOG 01:26). Every suite passed and the browser sweep was clean. Since the fixes (P4.48) the whole suite is 2,959 passed and 54 skipped.
-  2. **The replays: recorded, waiting on the user's review (T5.6)** (BUILD_LOG 01:34, 01:35, 01:43, 01:45, 01:47):
+  2. **The replays: done, approved and committed (P4.50)** (BUILD_LOG 01:34, 01:35, 01:43, 01:45, 01:47):
      - The four chips, in the user's order, are in `replays/` (contract §11.2), written by `scripts/export_replay.py`:
        - all four were recorded at `84c0db4`, after P4.48 fixed two false-flag defects in `api/checks/`: `phone-search-arrest` at 01:45 (P4.49), and the other three at 01:39;
        - no replay is specific to a screen size: the page picks a replay by its slug alone.
        - All four have no flags.
-     - `replays/` is still in `.git/info/exclude` and uncommitted. On the user's approval of the recordings: take `replays/` out of the exclude, commit the five files, and rebuild.
+     - **Approved and committed (P4.50, 01:48):** `replays/` is out of `.git/info/exclude`, and its five files are in git. Re-record a replay only deliberately, with the user (T5.6 #3).
      - Every run's events are kept in `data/verification/replays/`, the superseded first recordings included. The rendered answers are in `data/verification/replays/answers/`.
      - **P4.48's allowance:** $3.00 and 10 Exa searches, counted from the test database's $3.6735. At 01:46 the total was $4.6799, so $1.0064 and 4 searches are used.
      - **Still open:** T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*, which the user's request did not include.
@@ -156,7 +156,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
 - **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.49** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.50** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
   - `locked-decisions.md`, P4.1 to P4.22 above all (P4.18 to P4.22 amend or supersede 14 earlier entries, marked in their headings);
@@ -194,7 +194,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.50). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.51). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** research and the update step `claude-sonnet-5-5` high (P2.1, P4.19); composition `claude-sonnet-5-5` high (P4.20, built).
   - **Limits (P4.18, built):** 12 research rounds; loop input 2M, loop output 16,000; update rounds 8, update input 2M, update output 6,000; 5 update searches; composition output 16,000; no run-wide limit; `MAX_CONCURRENT_RUNS` 5; `RUN_WATCHDOG_S` 2,400. **$15 a day** (P4.11), $60 a month, unchanged.

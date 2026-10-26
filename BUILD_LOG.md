@@ -3248,3 +3248,26 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **DECISION (user):** P4.49, as quoted. Open:
 - the user's review of the four recordings before they are committed and published (T5.6);
 - T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
+
+## Oct 26, 2026, 01:48 CDT — The replays approved and committed (P4.50)
+**Asked (the user):** *"I reviewed the four replays. Approved: commit replays/ and take it out of the exclude."*
+**Came back:** locked as P4.50.
+- **`.git/info/exclude`:** its `replays/` line and that line's comment are removed (it is local to this checkout and not committed).
+- **Committed in `replays/`:** `index.json` and the four replays, 2.3 MB in all. All four are at `84c0db4`:
+
+| Replay | Run | Events |
+|---|---|---|
+| `phone-search-arrest` | `LHdjNk0iXw_0fRhlj1MzlA` | 353 |
+| `gps-tracking-car` | `9iRQPOXNhjC6NlqhUK5nIw` | 333 |
+| `geofence-warrants` | `SAKUNhVxhcGBpbEdiVE2RQ` | 629 |
+| `backyard-from-air` | `pdUkkt0HsWENVDDY_gWkKw` | 378 |
+
+- Before committing, a scan of the five files found no local paths, user names or key-like strings.
+- **Stale comments updated:**
+  - `deploy/local.sh` no longer says the replays are never committed;
+  - `deploy/web.Dockerfile` no longer says they are written in Phase 5. Its conditional copy is unchanged.
+
+**Checked:** see the next entry's test run.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the four recordings approved as recorded, `replays/` committed and taken out of the exclude. Locked as P4.50.
