@@ -2802,3 +2802,15 @@ The mock's sample events carry old timestamps, so a mock live run counts as catc
 **Failures:** the phone overflow above, fixed before commit.
 **Spend:** none.
 **DECISION (user):** the requests and agreements quoted above. To lock after the user tries it: the trimmed log, the box's place and arrival, and the refusals left off the page (amending P4.3's step-log line); the new wording (amending T5.3 and the pointer, T1.11's line); the button; the placeholder; and the new questions for T5.6, still to be settled.
+
+## Oct 26, 2026, 00:22 CDT — Frontend: the user's review, round 24; the box's page links line up on the left
+**Asked (the user):** *"Looking good! 1 thing to patch, why is the indentation so weird here?"* The screenshot showed the list of every page the search returned, staggered across the box.
+**Came back:** a clash of class names in `web/css/style.css`. A general `.links` rule, written for the fine print's row of links (`main.js`: flex, wrapping, centred), also matched the box's page lists, which `band.js` gives the same class. Each page link was laid out as a centred flex item, so each line started at a different place. The defect predates round 23; the box at the bottom of the run made it plain.
+- **The fix:** the rule now applies only to `p.links`, the fine print's paragraph. The box's lists (`ul.links`) keep their own rules.
+**Checked:**
+- Node: all 84 passed.
+- **The mock, a run whose search found something:** all three page lists in the box are blocks, and every link starts at the box's left edge.
+- **The landing's fine print:** its row of links is still flex, laid out as before (its own `#landing-fine` rule).
+**Failures:** the defect above.
+**Spend:** none.
+**DECISION (user):** the report, quoted above. A defect fix, no lock needed.

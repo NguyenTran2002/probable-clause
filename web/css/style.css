@@ -624,7 +624,8 @@ button:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.6; }
 .chiplist { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .step .chiplist { margin-top: 0.6rem; }
 .fine .block { margin-top: 0.4rem; }
-.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1.25rem; margin: 0.2rem 0 0.4rem !important; }
+/* the fine print's row of links (main.js); the later-developments box's page lists share the name, not the look */
+p.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1.25rem; margin: 0.2rem 0 0.4rem !important; }
 /* centred under the composer, in its column: auto side margins, as .dock > * sets them */
 .scratch { margin: 0.4rem auto 0; font-size: 0.8125rem; color: var(--muted); text-align: center; }
 body.playing .scratch { display: none; }
