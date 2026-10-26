@@ -1315,7 +1315,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:18 CDT — Frontend: the former fonts removed (P4.47)"
 
-### P4.48 The replays' check fixes, the re-recording and its allowance (T5.6, after P4.22)
+### P4.48 The replays' check fixes, the re-recording and its allowance (T5.6, after P4.22) — AMENDED by P4.49 (#3: all four re-recorded)
 
 - **Decision:**
   1. **The two defects in part F's checks found in the replays (BUILD_LOG 01:34) are fixed, tests first:**
@@ -1327,3 +1327,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Fix the two check bugs with tests, then re-record the three flagged runs. New allowance: $3.00 and 10 Exa searches."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:35 CDT — The replays: the check fixes, the re-recording and its allowance (P4.48)"
+
+### P4.49 Every replay from the newest recordings (amends P4.48 #3)
+
+- **Decision:** all four replays are recorded on the same, newest code. `phone-search-arrest`, kept from `c74b3e0` under P4.48 #3, is re-recorded on `84c0db4` like the other three. Its first recording stays in `data/verification/replays/`, kept but not exported. The same recordings play at every screen size: there is no separate replay for phones.
+- **User's words:** *"Hold up, I want the newest recordings used across the board, not using anything separate for phones."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:45 CDT — The replays: every one from the newest recordings (P4.49)"

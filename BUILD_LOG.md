@@ -3204,3 +3204,15 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **DECISION (user):** none beyond P4.48. Open:
 - the user's review of the four recordings before they are committed and published (T5.6);
 - T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
+
+## Oct 26, 2026, 01:45 CDT — The replays: every one from the newest recordings (P4.49)
+**Asked (the user):** *"Hold up, I want the newest recordings used across the board, not using anything separate for phones."*
+**Came back:** locked as P4.49, amending P4.48 #3.
+- The main session's reading, stated to the user: there is no phone-only recording, and every replay plays at every screen size. The "phone" replay is the question about searching a phone after an arrest, kept from `c74b3e0`.
+- Either way the action is the same: re-record `phone-search-arrest` on `84c0db4`, so all four replays come from the same code.
+- The first recording stays in `data/verification/replays/`.
+
+**Checked:** nothing yet.
+**Failures:** none.
+**Spend:** none yet. About $0.30 expected, inside P4.48's $2.198 and 7 Exa searches left.
+**DECISION (user):** as quoted. Locked as P4.49.
