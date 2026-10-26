@@ -97,7 +97,28 @@ async function boot() {
     if (body.dataset.view !== 'landing') { swap('run'); return; }
     const my = token;
     // the landing is cleared only after the transition has taken its picture of "probable clause"
-    margin.exit().then(() => { if (my === token) swap('run').then(() => { if (body.dataset.view === 'run') margin.stop(); }); });
+    toTop().then(() => {
+      if (my !== token) return;
+      margin.exit().then(() => { if (my === token) swap('run').then(() => { if (body.dataset.view === 'run') margin.stop(); }); });
+    });
+  }
+  // a search or a chip from lower down first glides back to the top, so the exit's "l" is seen landing (the user,
+  // Oct 26, 2026). Resolves at the top, when the page stops moving (a hand on the wheel), or at TOP_CAP_MS at the latest.
+  const TOP_CAP_MS = 1500;   // measured Oct 26, 2026: 811 ms back from the phone landing's foot (1,049 px), 461 ms from 392 px at 1280
+  function toTop() {
+    if (scrollY < 1 || matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+    scrollTo({ top: 0, behavior: 'smooth' });
+    return new Promise(res => {
+      const t0 = performance.now();
+      let last = scrollY, still = 0;
+      const check = () => {
+        still = scrollY === last ? still + 1 : 0;
+        last = scrollY;
+        if (scrollY < 1 || still >= 8 || performance.now() - t0 > TOP_CAP_MS) res();
+        else requestAnimationFrame(check);
+      };
+      requestAnimationFrame(check);
+    });
   }
 
   // ---------- replays ----------

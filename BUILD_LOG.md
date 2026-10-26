@@ -2994,3 +2994,16 @@ Iterating continues (00:42). The full suite, the browser sweep and the sign-off 
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none beyond P4.45.
+
+## Oct 26, 2026, 01:09 CDT — Frontend: the user's review, round 28; back to the top before the exit
+**Asked (the user):** *"whenever a person hit search opinions or click on any recorded run, we should first scroll them up top before we play our probable clause l insertion animation. Otherwise, they would miss it."*
+**Came back:** `toRun` in `web/js/main.js` now calls a new `toTop()` before `margin.exit()`. When the landing is scrolled down, the page glides back to the top. The exit, with the "l" sliding into "clause", starts once the page is at the top. It also starts if the page stops moving for 8 frames, for example when a hand is on the wheel, or after `TOP_CAP_MS` (1,500 ms) at the latest. At the top, or with reduced motion, the exit starts at once, as before. The run still starts underneath at once, so the scroll never holds the run up. The token is checked again after the scroll, so a newer click or run wins.
+- The main session's call: the cap of 1,500 ms. Basis, measured in the mock: 811 ms back from the phone landing's foot (1,049 px); 461 ms from 392 px at 1280×800.
+**Checked:** in the mock, by tracking the scroll position and the exit's start in the page:
+- a recorded-run chip from the phone landing's foot, 375×812: the exit started at 811 ms, at the top, and the "l" went in at the top;
+- "Search opinions" from 392 px down, 1280×800: the exit started at 461 ms, at the top;
+- a chip clicked at the top: the exit started after 10 ms, so there is no delay.
+Node tests: 84 of 84.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none yet.
