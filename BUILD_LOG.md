@@ -2681,3 +2681,18 @@ The main session's calls from 23:08 are locked with it, as the user approved the
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** lock the inserted "l", quoted above. Locked as P4.37.
+
+## Oct 25, 2026, 23:28 CDT — Frontend: the user's review, round 19; the exit holds "probable clause" longer
+**Asked (the user):** *"What's the timing on the animation currently? I want it to hang a bit more before the run start?"*
+**Came back:** until now the exit ran in this order, measured in the mock:
+- the notes erase and the hero steps back (0.45 s);
+- the words fall from 0.25 s to 0.9 s and are gone by about 1.6 s;
+- *probable cause* brightens at 0.5 s;
+- the "l" starts at 1.15 s and lands at 1.78 s;
+- the run screen showed at 2.1 s, so the finished "probable clause" held for only about 0.35 s.
+
+`EXIT_MS` in `web/js/margin.js` goes from 2,100 to 2,900 ms, so the finished frame now holds for about 1.1 s. Only the run screen waits; the run itself still starts at once. This departs from P4.36's 2.1 s exit and is not locked until the user says so.
+**Checked:** the mock server, timed without viewport emulation. The "l" is inserted at 1,156 ms; its width, opacity and drop end at 1,647, 1,681 and 1,781 ms; the run screen shows at 2,910 ms.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** a longer hang, quoted above. The 2.9 s is the main session's call, not yet locked.

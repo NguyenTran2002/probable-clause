@@ -10,7 +10,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 // pacing: the user's mock, Oct 25, 2026 (placeholders until the user says otherwise)
 const NEW_NOTE_MS = 3600;      // a new note every 3.6 s; the older of two is erased as it starts
 const WRITE_MS_PER_CHAR = 45;  // the hand's speed
-const EXIT_MS = 2100;          // from a run's start to the run screen
+const EXIT_MS = 2900;          // from a run's start to the run screen: "probable clause" holds about 1.15 s once its "l" lands (1.75 s)
 
 // [words|key] an anchor, {words} the exit's phrase (also an anchor, "probable"), anything else plain text
 export function parseAmendment(src) {
