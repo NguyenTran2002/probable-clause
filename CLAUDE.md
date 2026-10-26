@@ -91,16 +91,21 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 26, 2026, 00:35 CDT: the user's local review, rounds 1 to 25 done; P4.36 to P4.43 locked from it.*
+*Updated Oct 26, 2026, 00:41 CDT: the user's local review, rounds 1 to 26 done; P4.36 to P4.44 locked from it; the user: "Lock frontend as is."*
 
-- **The review rounds** (BUILD_LOG from "Oct 25, 2026, 17:50 CDT" to "Oct 26, 2026, 00:24 CDT"): each round the user asks, the main session builds, tests only what changed (the user: full suite when iterating ends), logs, commits by path and rebuilds `deploy/local.sh`. Locks from the review:
+- **The review rounds** (BUILD_LOG from "Oct 25, 2026, 17:50 CDT" to "Oct 26, 2026, 00:41 CDT"): each round the user asks, the main session builds, tests only what changed (the user: full suite when iterating ends), logs, commits by path and rebuilds `deploy/local.sh`. Locks from the review:
   - P4.36, the landing;
   - P4.37 and P4.38, its exit animation;
   - P4.39, the step log showing research only;
   - P4.40, "Later developments" under the answer, inked in at the run's end;
   - P4.41, the web search's wording ("update check" retired from the page);
   - P4.42, "Search opinions" and the placeholder;
-  - P4.43, the palette, Evergreen deepened (round 25).
+  - P4.43, the palette, Evergreen deepened (round 25: warm paper from `--hn`, a deep brand from `--h0`, `--live` for what is working, a green-black API window);
+  - P4.44, the margin notes on phones (round 26: the phone hero 11rem down, the pause control top right).
+- **Ask the user first:** whether "Lock frontend as is" (00:41) ends the iterating. The main session did not take it as the local review's sign-off, and nothing of it is logged. If iterating is done, the next steps are:
+  - the full suite (Python and Node) and the browser sweep;
+  - the sign-off in the user's words, logged;
+  - delete `replays/`.
 - **Still open from the review:**
   - **T5.6's replay questions.** The user wants them simpler and shaped like how the tool is used. The main session's latest draft, not yet answered:
     - "What has the Court said about searching a phone after an arrest?"
@@ -108,13 +113,13 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
     - "What has the Court said about geofence warrants?" (also the pre-*Chatrie* fifth)
     - "Can police watch a backyard from the air?"
   - The 17:50 items (light-mode contrast closed by P4.43): the skipped line's repeated reason, the cost line counting our estimates.
-- **Running now:** the mock (`webdev/serve.py`, 8765) and `deploy/local.sh` (8080, `local-3799de6` at 00:22). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay. Notes on the landing need a view at least 760 px wide.
+- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-0a5aab4` at 00:40). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay. Contrast checks: a scratch script converting OKLCH to sRGB WCAG ratios (BUILD_LOG 00:31 has the figures).
 
 - **Now: the user's local review (frontend plan step 9).** `deploy/local.sh` is running (started by the main session): the page at http://localhost:8080, the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`. Each question asked is a real paid run; P4.22's allowance has $2.46 and 17 Exa searches left, so ask for a new allowance before going past it. Ctrl-C in its shell (or stopping the background task) removes both containers.
   - The recorded-run chips play two of Wave 3's real runs from a local `replays/` (excluded in `.git/info/exclude`, never committed). Delete `replays/` after the review; the real replays come later (P4.32).
   - Then the user's sign-off, in their words, logged. The deploy green light is separate.
-  - **Open for the user** (BUILD_LOG 17:50): light-mode contrast against T4.1's palette, the skipped band line's repeated reason, the cost line counting our estimates, and the main session's wording calls listed there.
-- **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (84 at round 24). Contract v2.1 (`config.json` gains seven figures).
+  - **Open for the user** (BUILD_LOG 17:50): the skipped band line's repeated reason, the cost line counting our estimates, and the main session's wording calls listed there. Light-mode contrast is closed by P4.43.
+- **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (84 at round 26). Contract v2.1 (`config.json` gains seven figures).
 - **After the sign-off:** T5.6's five replays recorded on the final code (P4.32); the cloud setup script (P4.30); the goodnight block in `~/Documents/Developer/framedbytran` (P4.26); the deploy, each on its green light.
 - **Done today since Wave 3** (BUILD_LOG 16:15 to 16:46):
   - P4.23, the prompts approved;
@@ -149,7 +154,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
 - **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.43** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.44** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
   - `locked-decisions.md`, P4.1 to P4.22 above all (P4.18 to P4.22 amend or supersede 14 earlier entries, marked in their headings);
@@ -187,7 +192,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.44). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.45). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** research and the update step `claude-sonnet-5-5` high (P2.1, P4.19); composition `claude-sonnet-5-5` high (P4.20, built).
   - **Limits (P4.18, built):** 12 research rounds; loop input 2M, loop output 16,000; update rounds 8, update input 2M, update output 6,000; 5 update searches; composition output 16,000; no run-wide limit; `MAX_CONCURRENT_RUNS` 5; `RUN_WATCHDOG_S` 2,400. **$15 a day** (P4.11), $60 a month, unchanged.

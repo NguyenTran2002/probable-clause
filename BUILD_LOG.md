@@ -2908,3 +2908,17 @@ The source hues, flag red and system-following dark mode are kept from T4.1. It 
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none yet. This would amend P4.36's "no notes on phones" if locked.
+
+## Oct 26, 2026, 00:41 CDT — Frontend: the user's review, round 26 locked; the margin notes show on phones (P4.44)
+**Asked (the user):** *"Lock frontend as is. Prepare for compaction."*
+**Came back:** P4.44 locks round 26 (0a5aab4) as built, with no code change:
+- notes at every width;
+- the phone hero starting 11rem down;
+- the pause control in the top right corner on phones.
+It amends P4.36's "no notes on phones". The frontend now stands as locked through P4.44.
+The main session read "Lock frontend as is" as locking what is built. It did not read it as the local review's sign-off, so that sign-off is not logged here. The full suite and the browser sweep still wait for the user's word that iterating is done.
+CLAUDE.md's current state is updated for the compaction.
+**Checked:** nothing, since nothing changed (round 26 was checked at 00:39).
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Lock frontend as is."* Locked as P4.44.

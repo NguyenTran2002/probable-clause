@@ -1159,7 +1159,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 20:57 CDT — Frontend: the user's review, round 13; a passage's tag reads as a citation (P4.35)"
 
-### P4.36 The landing page (adds to T4.1; T4.1's look is kept)
+### P4.36 The landing page (adds to T4.1; T4.1's look is kept) — AMENDED by P4.44 (the notes show on phones)
 
 - **Decision:** the landing page as built in the user's review, round 17 (f13afd3).
   1. **The first view:** the Fourth Amendment's text sits large and pale behind it; the hero (wordmark, pitch, question box, recorded runs) sits at its foot, the amendment from its head.
@@ -1260,3 +1260,14 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I want tech and legal at the same time but that's hard to mix. What do you think?"* Then: *"Let's try evergreen deepened."* Then: *"Looks really good. Lock."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:35 CDT — Frontend: the user's review, round 25 locked; the palette is Evergreen deepened (P4.43)"
+
+### P4.44 The margin notes show on phones (amends P4.36's "no notes on phones")
+
+- **Decision:** as built in round 26 (0a5aab4).
+  1. **Notes at every width:** `web/js/margin.js` no longer skips them below 760 px.
+  2. **Room on a phone:** below 760 px the hero starts 11rem down (`.first`). The amendment's first lines stay clear above it, so a note can write itself beside one of their words. The cost: at 375 × 812 the second recorded-run chip sits just below the first view.
+  3. **The pause control** shows on phones too (WCAG 2.2.2), in the first view's top right corner. The notes keep out of its box.
+  4. **Unchanged from P4.36:** the notes' rule and their 26 texts, the pace, at most two at once, the exit, and reduced motion.
+- **User's words:** *"Quick check, on mobile, the noting in the frontend is not working?"* Then: *"Just turn on notes on phone quickly."* Then: *"Lock frontend as is."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:41 CDT — Frontend: the user's review, round 26 locked; the margin notes show on phones (P4.44)"
