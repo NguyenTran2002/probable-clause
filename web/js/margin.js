@@ -1,7 +1,7 @@
 // The landing's annotated amendment (the user, Oct 25, 2026). The Fourth Amendment sits large and pale behind the first
 // view; margin notes, each the Court's reading of a word (text.js MARGIN_NOTES), write themselves beside the words the
 // hero leaves visible, at most two at once, each held and then erased, with a leader to its word's underline. When a
-// run starts, the notes erase, the words fall away but "probable cause", which takes a written "l", and the page moves
+// run starts, the notes erase, the words fall away but "probable cause", which takes the missing "l", and the page moves
 // to the run. Reduced motion: two still notes, no exit. The pure parts (the amendment's pieces, where a note fits, its
 // leader) take no DOM, for Node's tests.
 import * as T from './text.js';
@@ -210,22 +210,15 @@ export function createMargin(first, { notes = T.MARGIN_NOTES } = {}) {
       }
       if (pc) {
         later(() => pc.classList.add('lit'), 500);
-        // the editor's mark: a caret under "c|ause" and a written "l" above it
+        // the missing "l" slides into "c|ause" in the page's green, as in the wordmark: the amendment reads "probable clause"
         later(() => {
           const c = pc.querySelectorAll('.wd')[1];
-          if (!c) return;
-          const b = box(c), fs = parseFloat(getComputedStyle(c).fontSize);
-          const ctx = document.createElement('canvas').getContext('2d');
-          ctx.font = getComputedStyle(c).font;
-          const cx = b.x + ctx.measureText('c').width;
-          const ins = Object.assign(document.createElement('div'), { className: 'ins', textContent: 'l' });
-          ins.setAttribute('aria-hidden', 'true');
-          Object.assign(ins.style, { fontSize: `${fs * 1.25}px`, left: `${cx - fs * 0.1}px`, top: `${b.y - fs * 0.95}px` });
-          first.append(ins);
-          const by = b.y + b.h * 0.9, k = fs * 0.14;
-          const caret = leads.appendChild(document.createElementNS(SVG, 'path'));
-          caret.setAttribute('d', `M${cx - k},${by + fs * 0.12} L${cx},${by - fs * 0.08} L${cx + k},${by + fs * 0.12}`);
-          requestAnimationFrame(() => requestAnimationFrame(() => ins.classList.add('go')));
+          if (!c || !c.textContent.startsWith('c')) return;
+          const ins = Object.assign(document.createElement('span'), { className: 'ins', textContent: 'l' });
+          c.replaceChildren('c', ins, c.textContent.slice(1));
+          const w = ins.offsetWidth;
+          ins.style.width = '0px';
+          requestAnimationFrame(() => requestAnimationFrame(() => { ins.style.width = `${w}px`; ins.classList.add('go'); }));
         }, 1150);
       }
       return (exiting = new Promise(res => later(res, EXIT_MS)));

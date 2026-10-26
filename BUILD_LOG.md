@@ -2657,3 +2657,19 @@ The main session's calls from 23:08 are locked with it, as the user approved the
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** lock the landing page, quoted above. Locked as P4.36.
+
+## Oct 25, 2026, 23:25 CDT — Frontend: the user's review, round 18; the exit's "l" set in the word
+**Asked (the user):** with a screenshot of the exit's last frame: *"The current disappearance animation doesn't really display probable clause cleanly but it's some weird drawings"*
+**Came back:** the cause was the written "l". It was a Caveat letter in its own box, which was only as wide as the letter's advance (7 px at 40 px). Its reveal (`clip-path`) cut the ink outside that box, so only a green sliver showed above "cause", with the caret under it.
+- Now the "l" goes into the word itself, as `c|l|ause`. It is in the amendment's italic and the page's green, like the wordmark's "l". Its room opens in 0.45 s and it drops in.
+- Nothing clips it. The caret is gone, so the last frame reads "probable clause".
+- Timing is unchanged: the "l" starts at 1.15 s, and the run shows at 2.1 s.
+- `web/js/margin.js` (the exit) and `web/css/style.css` (`.amend .ins`; the Caveat rule for the old `.ins` is removed).
+- This departs from P4.36's "a written caret and 'l'". It is not locked until the user says so.
+**Checked:**
+- Node: `margin.test.mjs`, 7 passed.
+- **The mock server, at the pane's width,** with the exit frozen before the run shows: the words read "probable clause" and the "l" is in the brand green.
+- **Unfrozen:** the run shows by 3 s. Going home brings back "probable cause", with no "l" left and the leaving state cleared.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the complaint, quoted above. The fix is the main session's call, not yet locked.

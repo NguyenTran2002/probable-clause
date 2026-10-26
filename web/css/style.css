@@ -162,9 +162,10 @@ html { scroll-behavior: smooth; }
   color: var(--muted); opacity: 0; transition: opacity 0.4s ease; }
 .note .src + .src { margin-top: 0; }
 .note.cited .src { opacity: 1; }
-.ins { position: absolute; z-index: 2; pointer-events: none; color: var(--brand); font-family: "Caveat", var(--src); font-weight: 600;
-  clip-path: inset(100% 0 0 0); transition: clip-path 0.35s linear; }
-.ins.go { clip-path: inset(0 0 0 0); }
+/* the exit's "l": opens its room in "cause" and drops in; nothing clips it, so the italic's overhang shows whole */
+.amend .ins { display: inline-block; color: var(--brand); opacity: 0; transform: translateY(-0.35em);
+  transition: width 0.45s ease, opacity 0.35s ease 0.15s, transform 0.45s ease 0.15s; }
+.amend .ins.go { opacity: 1; transform: none; }
 .motion { position: absolute; right: 1rem; bottom: 1rem; z-index: 1; border: 0; background: none; padding: 0.25rem 0.4rem;
   font: inherit; font-size: 0.8125rem; color: var(--muted); cursor: pointer; }
 .motion:hover { color: var(--ink); }
