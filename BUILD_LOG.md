@@ -3471,3 +3471,37 @@ It amends P4.40.
 **Failures:** the typo at 02:43.
 **Spend:** none.
 **DECISION (user):** none.
+
+## Oct 26, 2026, 02:52 CDT — Phase 4: Build, closed (P4.53)
+**Asked (the user):** *"We're done with Phase 4 Build."*
+**Came back:** locked as P4.53.
+- **Phase 4 ends here, before the first deploy.** The brief's table puts the first deploy and the first cold-start sample at the end of Phase 4 (§3). At the user's word they move into Phase 5, under P5.1 below.
+- **What Phase 4 built** (every part logged above):
+  - the backend, parts A to I, on contract v2.1;
+  - the frontend (P4.28 to P4.47, P4.51);
+  - the four replays (P4.50, P4.52).
+- **The whole suite at the last full run:** 2,959 passed and 54 skipped (BUILD_LOG 01:26, after P4.48).
+- **Tagged** `phase-4-done` on this commit. `git worktree list` shows only the main checkout, so no worktree is left to remove.
+- **Still open, carried into Phase 5:**
+  - T5.6's fifth replay;
+  - the skipped band line's repeated reason (17:50);
+  - the cost line counting our estimates (17:50).
+
+**Checked:** `git worktree list`.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** Phase 4 closed, as quoted. Locked as P4.53.
+
+## Oct 26, 2026, 02:52 CDT — Phase 5: the deploy green-lit, setup, deploy and goodnight (P5.1)
+**Asked:** the deploy's order, as the main session proposed it just before this entry: the free prep; then green light 1, the cloud setup script (P4.30); green light 2, `deploy/deploy.sh`; green light 3, goodnight's block deployed (P4.26); green light 4, the first live paid run on the domain. Also four questions: the GitHub link, the Phase 4 tag, turning the site off, the public Cloud Run addresses.
+**Came back:** locked as P5.1.
+- **Green lights 1, 2 and 3 are given.** The main session runs the setup script, then `deploy.sh`, then deploys goodnight with this site's block.
+- **The first live paid run on the domain is the user's own,** not the main session's.
+- **The GitHub link** (`github.com/NguyenTran2002/probable-clause`) is correct. The repo is pushed later, on the user's word; until then the link is a dead page.
+- **The off switch** after launch is removing goodnight's block: accepted.
+- **The public Cloud Run addresses** (T3.5): accepted.
+
+**Checked:** nothing yet.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"GitHub link github.com/NguyenTran2002/probable-clause is correct. We will push soon."* On the off switch: *"Sure."* On the public addresses: *"Not a problem."* Then: *"I'll greenlight 1, 2, and 3. For green light 4, I'd do the live paid run on the domain myself."* Locked as P5.1.

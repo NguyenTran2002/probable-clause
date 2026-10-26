@@ -1383,3 +1383,21 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I want to replace the question "What has the Court said about geofence warrants?" with something else. It's an alright run, but it's not the best to demo because it's too broad, leading to Claude trying to read as many passages as possible."* Then: *"Go with "Can police get your Google location history without a warrant?""* Then: *"Export the 02:36 location-history run (bLe0Pl-WUxOnNjQWauyXmg) in place of geofence-warrants, as the third chip"*. Then: *"I reviewed the location-history replay. Approved: commit replays/ with it in place of geofence-warrants."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:33 CDT — The replays: a tighter question recorded to replace the geofence chip", "02:37 CDT — The replays: the location-history question re-recorded", "02:40 CDT — The replays: the location-history run exported as the third chip, uncommitted, on the local stack" and "02:43 CDT — The replays: the location-history replay approved and committed (P4.52)"
+
+### P4.53 Phase 4 closed before the first deploy
+
+- **Decision:** Phase 4 (Build) ends with the backend, the frontend and the four replays, tagged `phase-4-done`. The first deploy and the first cold-start sample, which the brief's §3 puts at Phase 4's end, move into Phase 5 (P5.1). Carried into Phase 5: T5.6's fifth replay, the skipped band line's repeated reason and the cost line counting our estimates (BUILD_LOG "Oct 25, 2026, 17:50 CDT").
+- **User's words:** *"We're done with Phase 4 Build."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:52 CDT — Phase 4: Build, closed (P4.53)"
+
+### P5.1 The deploy green-lit: the setup script, deploy.sh and goodnight's block; the first live run is the user's
+
+- **Decision:**
+  - The main session runs the cloud setup script (P4.30), then `deploy/deploy.sh`, then deploys goodnight with this site's block (P4.26, T3.5).
+  - The first live paid run on the domain is the user's own.
+  - The GitHub link `github.com/NguyenTran2002/probable-clause` is correct; the repo is pushed later, on the user's word.
+  - After launch, the off switch is removing goodnight's block. The public Cloud Run addresses (T3.5) are accepted.
+- **User's words:** *"GitHub link github.com/NguyenTran2002/probable-clause is correct. We will push soon."* *"Sure."* *"Not a problem."* *"I'll greenlight 1, 2, and 3. For green light 4, I'd do the live paid run on the domain myself."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:52 CDT — Phase 5: the deploy green-lit, setup, deploy and goodnight (P5.1)"
