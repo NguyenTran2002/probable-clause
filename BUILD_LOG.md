@@ -3349,3 +3349,19 @@ It amends P4.40.
 **DECISION (user):** none yet. Open:
 - whether this run replaces `geofence-warrants`, as recorded or re-recorded;
 - T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
+
+## Oct 26, 2026, 02:34 CDT — Correction to 02:33: the majority's kept passages
+**Asked (the user):** nothing; the main session's correction.
+**Came back:**
+- The 02:33 entry says 18 kept passages came from *Chatrie*'s majority. It is **16**. The entry was counted by eye, against the rule that counts come from scripts.
+- Counted by script from the run's `keep_passages` calls:
+  - 25 kept in all;
+  - 16 from `chatrie-1`, the majority;
+  - 3 from `carpenter-1`;
+  - 2 each from `chatrie-2` (Jackson), `chatrie-3` (Gorsuch) and `chatrie-4` (Alito);
+  - 2 `read_passages` calls.
+
+**Checked:** the counts above, by script.
+**Failures:** the miscount at 02:33.
+**Spend:** none.
+**DECISION (user):** none.
