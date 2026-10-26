@@ -10,8 +10,12 @@ command, a notification, a compaction summary or a subagent's message, plus any 
 busy (queued). Records are deduplicated across files by ID and by time and text, since a continued transcript
 repeats the records it carries over.
 
-Sittings: a prompt more than two hours after the one before starts a new sitting; a sitting runs from its first
-prompt to the last recorded activity (a prompt or a reply) before the next. Breaks under two hours are counted.
+Sittings: a prompt more than two hours after the one before starts a new sitting. A sitting runs from its first
+prompt to the last recorded activity (a prompt or a reply) reached from its last prompt without a gap of more than
+two hours, and never past the next sitting's start. Breaks under two hours are counted.
+
+The build ended with the first push to GitHub (BUILD_ENDED_BY, P5.5). A sitting that starts after that commit is
+listed as "after the build" and is never added to the build's prompts, words or hours (P5.6).
 
 Redactions, each marked where it happens: local paths become `~` or "[temporary path]", images become
 "[image not published]" (P0.4), the e-mail address and the name of another project of the author's are
@@ -27,6 +31,7 @@ import argparse
 import json
 import re
 import statistics
+import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -37,6 +42,7 @@ TRANSCRIPTS = Path.home() / ".claude" / "projects" / re.sub(r"[^A-Za-z0-9]", "-"
 OUT = ROOT / "docs" / "PROMPTS.md"
 CT = ZoneInfo("America/Chicago")
 SITTING_GAP = timedelta(hours=2)
+BUILD_ENDED_BY = "4ad0ea2"      # the commit that went up in the first push (P5.5): the build's end
 
 FRONTEND = {"4d7c2cf3-4dc2-4029-b1b6-dd937b4e17a5", "a19b23a6-08d8-4423-aaad-3ff9e2acef8a"}  # the look tests, Oct 23
 
@@ -141,11 +147,22 @@ def sittings(prompts, activity):
         (groups.append([b]) if b["at"] - a["at"] > SITTING_GAP else groups[-1].append(b))
     out = []
     for i, g in enumerate(groups):
-        start = g[0]["at"]
-        nxt = groups[i + 1][0]["at"] if i + 1 < len(groups) else None
-        end = max(t for t in activity if t >= start and (nxt is None or t < nxt))
-        out.append({"start": start, "end": end, "prompts": g})
+        limit = groups[i + 1][0]["at"] if i + 1 < len(groups) else None
+        end = g[-1]["at"]
+        for t in activity:
+            if t > end:
+                if (limit and t >= limit) or t - end > SITTING_GAP:
+                    break
+                end = t
+        out.append({"start": g[0]["at"], "end": end, "prompts": g})
     return out
+
+
+def build_end():
+    done = subprocess.run(["git", "show", "-s", "--format=%cI", BUILD_ENDED_BY], cwd=ROOT, capture_output=True, text=True)
+    if done.returncode:
+        raise SystemExit(f"stopped: cannot read the time of commit {BUILD_ENDED_BY}")
+    return datetime.fromisoformat(done.stdout.strip())
 
 
 def local(t, fmt="%Y-%m-%d %H:%M"):
@@ -163,9 +180,17 @@ def words(text):
 def render(prompts, groups, compactions, agents):
     texts = [clean(p) for p in prompts]
     by_id = {id(p): t for p, t in zip(prompts, texts)}
-    counts = [words(t) for t, _ in texts]
-    total_h = sum(hours(g["start"], g["end"]) for g in groups)
-    per_conv = {c: sum(1 for p in prompts if p["conversation"] == c) for c in ("main", "frontend")}
+    ended = build_end()
+    for g in groups:
+        g["after"] = g["start"] > ended
+    built = [g for g in groups if not g["after"]]
+    later = [g for g in groups if g["after"]]
+    b_prompts = [p for g in built for p in g["prompts"]]
+    b_counts = [words(by_id[id(p)][0]) for p in b_prompts]
+    total_h = sum(hours(g["start"], g["end"]) for g in built)
+    later_h = sum(hours(g["start"], g["end"]) for g in later)
+    later_n = sum(len(g["prompts"]) for g in later)
+    per_conv = {c: sum(1 for p in b_prompts if p["conversation"] == c) for c in ("main", "frontend")}
     lines = [
         "# Every prompt",
         "",
@@ -173,6 +198,10 @@ def render(prompts, groups, compactions, agents):
         "the transcripts by [`scripts/extract_prompts.py`](../scripts/extract_prompts.py). The **main** conversation "
         "ran every phase; the **frontend** conversation built the look tests on Oct 23, 2026. Subagents' messages, "
         "slash commands, tool output and Claude's replies are left out.",
+        "",
+        f"The build ended with the first push to GitHub (commit `{BUILD_ENDED_BY}`, {local(ended, '%b %d, %H:%M')} CDT). "
+        "Sittings after it are listed here as **after the build** and are not counted in the build's prompts, words "
+        "or hours.",
         "",
         "Times are Chicago time (CDT). A prompt more than two hours after the one before starts a new sitting; a "
         "sitting runs from its first prompt to the last activity before the next, so breaks under two hours are "
@@ -184,25 +213,28 @@ def render(prompts, groups, compactions, agents):
         "",
         "| | |",
         "|---|---|",
-        f"| Prompts | {len(prompts)} ({per_conv['main']} main, {per_conv['frontend']} frontend) |",
-        f"| Words | {sum(counts):,}, median {statistics.median(counts):.0f} a prompt |",
-        f"| Span | {local(groups[0]['start'])} to {local(groups[-1]['end'])} CDT |",
-        f"| Time in sittings | {total_h:.1f} hours, in {len(groups)} sittings |",
+        f"| Prompts in the build | {len(b_prompts)} ({per_conv['main']} main, {per_conv['frontend']} frontend) |",
+        f"| Words in the build | {sum(b_counts):,}, median {statistics.median(b_counts):.0f} a prompt |",
+        f"| Span of the build | {local(built[0]['start'])} to {local(built[-1]['end'])} CDT |",
+        f"| Time in the build | {total_h:.1f} hours, in {len(built)} sittings |",
+        f"| After the build | {later_n} prompts in {len(later)} sitting{'' if len(later) == 1 else 's'}, "
+        f"{later_h:.1f} hours; not counted above |" if later else "| After the build | none |",
         f"| Context compactions | {len(compactions)} |",
         f"| Subagents started | {sum(agents.values())} ({'; '.join(f'{n} {k}' for k, n in agents.items())}) |",
         "",
         "### Sittings",
         "",
-        "| Sitting | From | To | Hours | Prompts | Words |",
-        "|---|---|---|---|---|---|",
+        "| Sitting | From | To | Hours | Prompts | Words | Part |",
+        "|---|---|---|---|---|---|---|",
     ]
     for i, g in enumerate(groups, 1):
         w = sum(words(by_id[id(p)][0]) for p in g["prompts"])
         lines.append(f"| {i} | {local(g['start'])} | {local(g['end'])} | {hours(g['start'], g['end']):.1f} "
-                     f"| {len(g['prompts'])} | {w:,} |")
+                     f"| {len(g['prompts'])} | {w:,} | {'after the build' if g['after'] else 'build'} |")
     pending = list(compactions)
     for i, g in enumerate(groups, 1):
-        lines += ["", f"## Sitting {i}: {local(g['start'])} to {local(g['end'], '%H:%M')} CDT", ""]
+        part = " (after the build)" if g["after"] else ""
+        lines += ["", f"## Sitting {i}{part}: {local(g['start'])} to {local(g['end'], '%H:%M')} CDT", ""]
         for p in g["prompts"]:
             while pending and pending[0] < p["at"]:
                 if pending[0] >= g["start"]:
@@ -213,9 +245,10 @@ def render(prompts, groups, compactions, agents):
             lines.append("")
             lines += [("> " + l) if l.strip() else ">" for l in text.splitlines()]
             lines.append("")
-    stats = {"prompts": len(prompts), "main": per_conv["main"], "frontend": per_conv["frontend"],
-             "words": sum(counts), "median_words": statistics.median(counts), "sittings": len(groups),
-             "hours": round(total_h, 1), "start": local(groups[0]["start"]), "end": local(groups[-1]["end"]),
+    stats = {"build_prompts": len(b_prompts), "main": per_conv["main"], "frontend": per_conv["frontend"],
+             "build_words": sum(b_counts), "median_words": statistics.median(b_counts), "build_sittings": len(built),
+             "build_hours": round(total_h, 1), "start": local(built[0]["start"]), "end": local(built[-1]["end"]),
+             "after_build_prompts": later_n, "after_build_sittings": len(later), "after_build_hours": round(later_h, 1),
              "compactions": len(compactions), "subagents": agents}
     flags = [f"{local(p['at'])} [{', '.join(h)}] {t[:160]!r}" for p, (t, h) in zip(prompts, texts) if h]
     return "\n".join(lines).rstrip() + "\n", stats, flags

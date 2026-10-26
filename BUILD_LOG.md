@@ -3631,3 +3631,33 @@ It amends P4.40.
 **Failures:** the first README draft carried the 22 discrepancies above, all caught by the fact-check before commit. My first time measurement counted 337 prompts, not 304, because it did not deduplicate across transcript files.
 **Spend:** none.
 **DECISION (user):** P5.5, as asked above.
+
+## Oct 26, 2026, 11:51 CDT — Phase 5: a cold start measured after 7 h 24 min idle; later sittings are not build time (P5.6)
+**Asked (the user):** *"Without pinging the live site (frontend and backend alike), can you check if we're clear to do a cold start measurement?"* Then: *"Proceed with measurements. Check the logs right before, send one health check through the domain, then read the start from the logs and report."* Then: *"Log this sample as a BUILD_LOG entry, update the README's cold-start text and timeline, and commit. I want to be clear that we're not including this as development time as the app is already done and no longer being modified, but we will re-export and publish the prompts again."* After the process was laid out: *"Looks good to me. Proceed with: Fix the extractor, Log the sample, Re-export the prompts, Update README, Commit, Push."*
+**Came back:**
+- **The check before** (read only, 11:39 to 11:42 CDT): both services on automatic scaling, the API with a maximum of 1 instance and the web service 2, no minimum on either; the API's newest request was a `/health` at 04:17:51 CDT, with no instance start after it; no scheduled job or task in this session. Idle for 7 h 24 min.
+- **The sample:** one `GET /probable-clause/api/health` through the domain, sent at 11:42:13.884 CDT (16:42:13.884 UTC), with no warm-up and no retry. Answer: 200, `ready: true`, commit `62d6272`.
+  - **Caller's side:** 32.516 s in all (name lookup 0.114 s, connect 0.140 s, TLS 0.243 s, first byte 32.516 s).
+  - **Cloud Run's log, UTC:**
+
+    | Time | Event |
+    |---|---|
+    | 16:42:14.689 | the request arrived (0.8 s after it was sent, so the gateway was not cold; its own logs were not read) |
+    | 16:42:14.740 | "Starting new instance", reason autoscaling |
+    | 16:42:19.193 | the Python process started (4.5 s after the instance) |
+    | 16:42:46.251 | the app ready, "api.server ready in 27.051 s" |
+    | 16:42:46.254 | startup probe succeeded, 31.5 s after "Starting new instance" |
+
+    Cloud Run's logged latency for the request was 31.337 s; about 1.2 s of the caller's time was outside Cloud Run.
+  - **The app's start-up steps** (its own log), this sample against the first deploy's: corpus 5.7 s against 3.4 s; keyword index, vectors and Atlas indexes about 1.4 s against 1.0 s; "clients and the loop" **19.9 s against 7.4 s**; ready at 27.1 s against 11.8 s. That step imports `api.loop` (the Anthropic SDK and the MCP client, `api/main.py`) and builds the clients; why it took 19.9 s was not measured.
+- **Other starts read from the logs,** same two lines ("Starting new instance" to "startup probe succeeded"): 15.3 s at the first deploy (02:59 CDT); **44.4 s at the 03:15 redeploy**, which the 03:19 entry recorded as not measured; **30.7 s at 04:17**, a visitor's landing after about 48 minutes idle (all its page files were revalidated with 304, a returning browser).
+- **What the samples show:** two natural starts, after about 48 minutes and after 7 h 24 min idle, were within a second of each other (30.7 s and 31.5 s). Two samples are too few to call a trend; the brief expects long idles to run longer. The page's "taking longer than usual" message comes at 90 s (`LONG_WAIT_S`) and its give-up at 300 s, so a 32 s start shows the counter only.
+- **Stray traffic seen:** the 04:17 landing above, and at 09:44 CDT a `GET /api` on the web service's own address (404).
+- **No cloud change.** No scaling change, no deploy, no goodnight change. The instance is warm and idles out on its own.
+- **The prompts extractor** (`scripts/extract_prompts.py`) was fixed. A dry run for this re-export showed it would end the last build sitting at the 11:38 reopening of this session, reading 19.4 hours and a build total of 42.7. A sitting now ends at the last record reached from its last prompt without a gap over two hours, never past the next sitting; and the build ends at the first push (commit `4ad0ea2`, 04:07:44 CDT): a sitting that starts after it is listed as after the build and never added to the build's prompts, words or hours. With the fix the build is 304 prompts, 12,062 words, **35.1 hours** in four sittings (the 35.0 in the P5.5 entry and the README was the export at 04:06, before the wrap-up ended at 04:08; this entry corrects it, and that entry is not edited). This measurement is a fifth sitting, after the build.
+- **The README:** the cold-start text now gives all four starts, and the timeline gains a row for this measurement with no hours counted; the build time reads 35.1 hours.
+
+**Checked:** the sample's figures from the caller's output and Cloud Run's logs (UTC read against the CDT clock); the build figures by running the extractor into the scratchpad before the real export.
+**Failures:** the extractor's sitting-end rule (above), found by a dry run before anything was published; my first in-memory test of the fix let one sitting run into the next, a mistake in the test only, corrected before the real change. For the health check's reply I used a temporary file in `/tmp` rather than the scratchpad; it was deleted at once.
+**Spend:** none. `/health` calls no paid service.
+**DECISION (user):** P5.6, as asked above.

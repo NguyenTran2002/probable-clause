@@ -2,27 +2,31 @@
 
 Every prompt typed in the two Claude Code conversations that built Probable Clause, in order, generated from the transcripts by [`scripts/extract_prompts.py`](../scripts/extract_prompts.py). The **main** conversation ran every phase; the **frontend** conversation built the look tests on Oct 23, 2026. Subagents' messages, slash commands, tool output and Claude's replies are left out.
 
+The build ended with the first push to GitHub (commit `4ad0ea2`, Oct 26, 04:07 CDT). Sittings after it are listed here as **after the build** and are not counted in the build's prompts, words or hours.
+
 Times are Chicago time (CDT). A prompt more than two hours after the one before starts a new sitting; a sitting runs from its first prompt to the last activity before the next, so breaks under two hours are counted and this is not time at the desk. Local paths, images, an e-mail address and the name of another of the author's projects are redacted where they occur, marked in square brackets, as is text the author pasted in. A prompt sent twice with the same text within ten minutes is listed once.
 
 ## Figures
 
 | | |
 |---|---|
-| Prompts | 304 (289 main, 15 frontend) |
-| Words | 12,062, median 22 a prompt |
-| Span | 2026-10-23 16:15 to 2026-10-26 04:06 CDT |
-| Time in sittings | 35.0 hours, in 4 sittings |
+| Prompts in the build | 304 (289 main, 15 frontend) |
+| Words in the build | 12,062, median 22 a prompt |
+| Span of the build | 2026-10-23 16:15 to 2026-10-26 04:08 CDT |
+| Time in the build | 35.1 hours, in 4 sittings |
+| After the build | 4 prompts in 1 sitting, 0.2 hours; not counted above |
 | Context compactions | 32 |
 | Subagents started | 75 (27 sonnet, high effort; 23 opus, default effort; 11 opus, xhigh effort; 6 sonnet, xhigh effort; 5 opus, high effort; 3 the parent model, default effort) |
 
 ### Sittings
 
-| Sitting | From | To | Hours | Prompts | Words |
-|---|---|---|---|---|---|
-| 1 | 2026-10-23 16:15 | 2026-10-23 21:20 | 5.1 | 39 | 2,303 |
-| 2 | 2026-10-24 12:47 | 2026-10-25 02:50 | 14.0 | 139 | 4,405 |
-| 3 | 2026-10-25 12:08 | 2026-10-25 16:11 | 4.0 | 19 | 909 |
-| 4 | 2026-10-25 16:14 | 2026-10-26 04:06 | 11.9 | 107 | 4,445 |
+| Sitting | From | To | Hours | Prompts | Words | Part |
+|---|---|---|---|---|---|---|
+| 1 | 2026-10-23 16:15 | 2026-10-23 21:20 | 5.1 | 39 | 2,303 | build |
+| 2 | 2026-10-24 12:47 | 2026-10-25 02:50 | 14.0 | 139 | 4,405 | build |
+| 3 | 2026-10-25 12:08 | 2026-10-25 16:11 | 4.0 | 19 | 909 | build |
+| 4 | 2026-10-25 16:14 | 2026-10-26 04:08 | 11.9 | 107 | 4,445 | build |
+| 5 | 2026-10-26 11:39 | 2026-10-26 11:52 | 0.2 | 4 | 170 | after the build |
 
 ## Sitting 1: 2026-10-23 16:15 to 21:20 CDT
 
@@ -1174,7 +1178,7 @@ Times are Chicago time (CDT). A prompt more than two hours after the one before 
 > Proceed with Wave 3.
 
 
-## Sitting 4: 2026-10-25 16:14 to 04:06 CDT
+## Sitting 4: 2026-10-25 16:14 to 04:08 CDT
 
 **Oct 25, 16:14** · main
 
@@ -1834,3 +1838,34 @@ Times are Chicago time (CDT). A prompt more than two hours after the one before 
 > Oh, don't forget that we had 2 conversations working on this project, the other conversation being the frontend one.
 >
 > Good luck! It has been a wild ride!
+
+
+## Sitting 5 (after the build): 2026-10-26 11:39 to 11:52 CDT
+
+**Oct 26, 11:39** · main
+
+> Checking back in at 11:38 AM. Without pinging the live site (frontend and backend alike), can you check if we're clear to do a cold start measurement?
+
+**Oct 26, 11:41** · main
+
+> Proceed with measurements. Check the logs right before, send one health check through the domain, then read the start from the logs and report.
+
+**Oct 26, 11:46** · main
+
+> Log this sample as a BUILD_LOG entry, update the README's cold-start text and timeline, and commit. I want to be clear that we're not including this as development time as the app is already done and no longer being modified, but we will re-export and publish the prompts again.
+>
+> Confirm with me the process here.
+
+**Oct 26, 11:49** · main
+
+> Looks good to me. Proceed with:
+>
+> * Fix the extractor
+> * Log the sample
+> * Re-export the prompts
+> * Update README
+> * Commit
+> * Push
+>
+>
+> I'd check the README after you push and edit if needed. If it's good, there would be no further action from me. Treat this as the very last prompt sent by me. Good luck! It has been a ride!

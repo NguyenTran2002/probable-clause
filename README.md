@@ -133,7 +133,7 @@ Each limit is a backstop meant almost never to fire.
 
 If research stops with nothing kept, no answer is written and the page says so. Anthropic and Voyage calls that fail on a transient error are retried up to twice, each retry shown as a step; Exa searches are never retried by this site. A transient error that persists after the retries ends research, and the answer is written from what was kept, labelled as stopped by an error.
 
-**Cold starts.** The API scales to zero when idle, so the first question after a quiet spell waits for it to start; the landing page starts health checks on load, one at a time, until the API answers, so it is often awake by the time a question is asked; the page shows "Starting the research server" with a counter while it waits. One start has been measured, during the first deploy: 15.3 s from the instance starting to ready (Cloud Run's logs, Oct 26, 2026). Google does not guarantee these times.
+**Cold starts.** The API scales to zero when idle, so the first question after a quiet spell waits for it to start; the landing page starts health checks on load, one at a time, until the API answers, so it is often awake by the time a question is asked; the page shows "Starting the research server" with a counter while it waits. Starts measured on Oct 26, 2026, from Cloud Run's logs ("Starting new instance" to the startup probe succeeding): 15.3 s at the first deploy and 44.4 s at the redeploy; 30.7 s for a visitor after about 48 minutes idle; and 31.5 s after 7 h 24 min idle, which a request through the domain saw as 32.5 s. In that last sample about 4.5 s was the container starting and 27 s the app loading its corpus, index and clients. A long idle gave no longer start than a short one in these two samples, which is too few to call a trend. Google does not guarantee these times.
 
 ## Cost
 
@@ -191,8 +191,8 @@ One person and Claude Code (Claude Opus 5.5), from the first prompt to this READ
 
 | | |
 |---|---|
-| Time | built part time over about two and a half days (Oct 23 to 26, 2026): four sittings, 35.0 hours in all from each sitting's first prompt to its last activity. A prompt more than two hours after the one before starts a new sitting; shorter breaks are counted, so this is not time at the desk. |
-| Prompts typed | 304 (289 main, 15 frontend), 12,062 words, median 22 words a prompt |
+| Time | built part time over about two and a half days (Oct 23 to 26, 2026): four sittings, 35.1 hours in all from each sitting's first prompt to its last activity, up to the first push to GitHub. A prompt more than two hours after the one before starts a new sitting; shorter breaks are counted, so this is not time at the desk. Work after the push, such as the cold-start measurement below, is not counted. |
+| Prompts typed | 304 in the build (289 main, 15 frontend), 12,062 words, median 22 words a prompt. Prompts after the build are listed in [docs/PROMPTS.md](docs/PROMPTS.md) and not counted here |
 | Context compactions | 32 |
 | Code | about 9,300 lines of Python in `api/`, 5,500 in `scripts/`, 21,100 in `tests/`; about 4,200 lines of JavaScript, CSS and HTML in `web/` (the look tests aside) |
 | Tests | 2,967 Python tests passing (54 skipped), 86 Node tests |
@@ -211,6 +211,7 @@ Each phase ends with a git tag. Times are Chicago time (CDT).
 | 3. Architecture | Oct 24, 20:03 | 121 | Five areas discussed topic by topic, each topic locked in the author's words; the design note |
 | 4. Build | Oct 26, 02:52 | 168 | The interfaces contract, subagent waves against it, paid build tests, the page built and reviewed in 29 rounds, the four replays |
 | Deploy | Oct 26, 03:06 | | Live on Cloud Run behind the author's gateway; the first live run at 03:25 |
+| After the build: a cold start | Oct 26, 11:42 | | One cold start measured after 7 h 24 min idle: 32.5 s as the caller saw it, 31.5 s on Cloud Run's side. The app was not modified, and this is not counted as build time |
 
 ### How the work was run
 

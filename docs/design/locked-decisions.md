@@ -1435,3 +1435,13 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I'm overriding Phase 5 for this instance to bring our GitHub page online asap as the site is already live. We will write the README as a complete document, with no open item. When we had a chance to do a cold start test, then we will update it."* *"Your recommendations are sound. One thing to note though, do NOT mention the [previous] project in this project. It's meant to be a reference within this conversation only."* *"Wrap up the repo, then push. You have my green light."* *"Don't worry about transcript clean up for now."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 04:06 CDT — Phase 5: the README and the prompts published now, and the first push (P5.5)"
+
+### P5.6 Sittings after the first push are not build time; the prompts are re-exported (amends P5.5)
+
+- **Decision:**
+  - The build ended with the first push to GitHub (commit `4ad0ea2`, Oct 26, 2026, 04:07:44 CDT). Sittings after it, such as the cold-start measurement, are not development: the app is done and no longer being modified. They are not counted in the README's build time, prompts or words (35.1 hours and 304 prompts, in four sittings).
+  - They are still published: `docs/PROMPTS.md` lists every prompt, marks later sittings "after the build", and is re-exported before each push (brief §10.5).
+  - `scripts/extract_prompts.py` carries the rule: a sitting ends at the last record reached from its last prompt without a gap over two hours, and the build ends at `4ad0ea2`.
+- **User's words:** *"I want to be clear that we're not including this as development time as the app is already done and no longer being modified, but we will re-export and publish the prompts again."* *"Looks good to me. Proceed with: Fix the extractor, Log the sample, Re-export the prompts, Update README, Commit, Push."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 11:51 CDT — Phase 5: a cold start measured after 7 h 24 min idle; later sittings are not build time (P5.6)"
