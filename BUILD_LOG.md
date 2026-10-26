@@ -3304,3 +3304,16 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the direction above, as quoted. Not locked: round 29 waits for the user's look. The local stack (8080) is rebuilt from this commit for it.
+
+## Oct 26, 2026, 02:26 CDT — Frontend: the user's review, round 29 locked; the later-developments box reordered (P4.51)
+**Asked (the user):** *"Lock as is."*
+**Came back:** P4.51 locks round 29 (a3b1dbe) as built, with no code change:
+- the box's new order, with the overview first under its own subheading;
+- the run's end scrolling only as far as the box's first subheading;
+- no scroll at all after the visitor's own scroll during the web search's wait.
+
+It amends P4.40.
+**Checked:** nothing, since nothing changed (round 29 was checked at 02:16). The local stack runs `local-a3b1dbe`.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** round 29 locked as is (P4.51).

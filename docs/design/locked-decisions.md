@@ -1213,7 +1213,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:24 CDT — Frontend: the user's review, round 23 locked; the step log shows research only (P4.39)"
 
-### P4.40 "Later developments" sits under the answer and is inked in when the run ends (amends T4.3 #4)
+### P4.40 "Later developments" sits under the answer and is inked in when the run ends (amends T4.3 #4) — AMENDED by P4.51 (the box's order; the run's end scrolls only to its first subheading)
 
 - **Decision:** as built in round 23 (f1b5883).
   1. **Place:** under the answer and its two warnings, above the run's cost line.
@@ -1347,3 +1347,23 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I reviewed the four replays. Approved: commit replays/ and take it out of the exclude."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:48 CDT — The replays approved and committed (P4.50)"
+
+### P4.51 The later-developments box reordered; the run's end scrolls only to its first subheading (amends P4.40)
+
+- **Decision:** as built in round 29 (a3b1dbe).
+  1. **The order,** for a box with findings:
+     - "Later developments";
+     - the line on what Claude searched (T5.3);
+     - "Claude's overview" and the overview;
+     - "What Claude found, in its own words";
+     - the line on what this site checks;
+     - the points and their links;
+     - "How Claude searched";
+     - every page the search returned.
+
+     The overview's heading is a subheading like the other two, no longer a label inside its paragraph. For a box without findings, the outcome line comes first and the overview after it.
+  2. **The scroll at the run's end** stops with the box's first subheading ("Claude's overview" where there is one) at the bottom of the conversation, so the answer above stays in view. It never scrolls up. A box with no subheading follows to the bottom as before.
+  3. **Hands off:** once the answer is written and the web search still runs, any scroll of the visitor's, up or down, means the run's end does not scroll at all.
+- **User's words:** *"I want us to rearrange the later development box because they can get quite long an unituitive."* Then: *"scroll to expose at most to the line "Claude's overview" only, and nothing more, not even the overview content, so that user can still see the actual answer above and won't get disoriented."* Then: *"in case the answer finishes streaming but the later development search has not, then, the user already did their own scrolling (up down doesn't matter), we shall not scroll them automatically anymore but let them find the section on their own."* Then: *"Lock as is."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:16 CDT — Frontend: the user's review, round 29; the later-developments box reordered, its scroll capped" and "Oct 26, 2026, 02:26 CDT — Frontend: the user's review, round 29 locked; the later-developments box reordered (P4.51)"
