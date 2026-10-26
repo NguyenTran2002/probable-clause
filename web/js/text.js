@@ -30,8 +30,12 @@ function overPhrase(s) { return s === 60 ? 'over a minute' : s % 60 === 0 ? `ove
 export const REPO_URL = 'https://github.com/NguyenTran2002/probable-clause';
 
 // ---------- T5.1, the standing lines ----------
+// two lines (the user's wording, Oct 25, 2026): the lead in bold, then the rest, quieter, with its last two words marked
 export function pitch(corpus) {
-  return `Ask about the Fourth Amendment and surveillance technology, from wiretaps to phone location data. Claude searches ${num(corpus.case_count)} Supreme Court cases, keeps the passages that bear on your question, and writes an answer whose every citation leads to the exact sentences it rests on.`;
+  return {
+    lead: 'See Claude Citations in action. Ask anything about the Fourth Amendment and surveillance technology, from wiretaps to phone location data.',
+    more: [`Claude searches ${num(corpus.case_count)} Supreme Court cases, keeps the passages that bear on your question, and writes an answer with `, { em: 'precise citations' }, '.'],
+  };
 }
 // the first screen's pointer to the figure below it, and the figure's heading
 export const HOW_IT_WORKS = 'How the citations work';

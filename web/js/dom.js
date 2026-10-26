@@ -36,6 +36,7 @@ export function rich(parts) {
     if (typeof p === 'string') return document.createTextNode(p);
     if (p.i) return h('i', null, p.i);
     if (p.b) return h('strong', null, p.b);
+    if (p.em) return h('em', null, p.em);
     if (p.a) return webLink(p.href, p.a);
     return null;
   }).filter(Boolean);

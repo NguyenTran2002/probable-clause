@@ -136,7 +136,10 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
 html { scroll-behavior: smooth; }
 .hero { width: 100%; max-width: var(--chat); }
 .hero .wordmark { font-size: clamp(2.75rem, 8vw, 5.25rem); line-height: 1; view-transition-name: wordmark; }
-.pitch { margin: 1.25rem 0 2rem; font-size: 1.1875rem; color: var(--muted); }
+.pitch { margin: 1.25rem 0 2rem; font-size: 1.0625rem; color: var(--muted); }
+.pitch p { margin: 0; }
+.pitch .lead { margin-bottom: 0.6rem; font-size: 1.25rem; font-weight: 600; line-height: 1.4; letter-spacing: -0.01em; color: var(--ink); }
+.pitch em { font-style: normal; font-weight: 600; color: var(--brand); }
 .field {
   display: flex;
   align-items: flex-end;
@@ -641,7 +644,8 @@ body.playing .scratch { display: none; }
 @media (max-width: 759px) {
   .first { padding: 2rem 1rem 4.5rem; }
   .below { gap: 3rem; padding-top: 3rem; }
-  .pitch { font-size: 1.0625rem; }
+  .pitch { font-size: 1rem; }
+  .pitch .lead { font-size: 1.125rem; }
   .field { padding-left: 1rem; flex-wrap: wrap; }
   .field textarea { flex-basis: 100%; font-size: 1.0625rem; }
   .field .primary { margin-left: auto; }

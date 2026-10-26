@@ -2,7 +2,7 @@
 // replays, and a reload going straight back into its run (T3.2, T4.4 #6).
 
 import markdownit from '../vendor/markdown-it/markdown-it.esm.min.mjs';
-import { h, $, $$, clear, webLink, siteLink, session } from './dom.js';
+import { h, $, $$, clear, rich, webLink, siteLink, session } from './dom.js';
 import { loadStatic, loadReplays, loadReplay } from './config.js';
 import { createWaker } from './wake.js';
 import { attach } from './stream.js';
@@ -33,7 +33,8 @@ function standing(corpus) {
   // keeps only the status, the composer and the from-scratch line; its disclaimers sit under each answer (view.js).
   const links = () => [siteLink('sources-and-credits', T.CREDITS_SUMMARY), siteLink('privacy', T.PRIVACY_SUMMARY),
     webLink(T.REPO_URL, T.REPO_LINK_TEXT)];
-  $('#pitch').textContent = T.pitch(corpus);
+  const pitch = T.pitch(corpus);
+  clear($('#pitch')).append(h('p', { class: 'lead' }, pitch.lead), h('p', null, ...rich(pitch.more)));
   clear($('#landing-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'block' }, T.AI_DISCLOSURE),
     h('p', null, T.coverageLine(corpus)), h('p', { class: 'aff' }, T.AFFILIATION), h('p', { class: 'links' }, ...links()));
   clear($('#bar-links')).append(...links());

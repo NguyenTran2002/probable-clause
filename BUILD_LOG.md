@@ -2457,3 +2457,19 @@ After the discussion: *"Let's give this a try: the dock keeps the status, the co
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the direction and the approval quoted above. Not a lock; the main session's calls are the 68rem column, the 960 px point where the cards stack, the hint's wording, and the cards for the chips.
+
+## Oct 25, 2026, 20:26 CDT — Frontend: the user's review, round 10; the pitch in the user's words
+**Asked (the user):** "Use this pitch instead: See Claude Citations in action. Ask anything about the Fourth Amendment and surveillance technology, from wiretaps to phone location data. (Bold highlighted line.) Claude searches 32 Supreme Court cases, keeps the passages that bear on your question, and writes an answer with *precise citations* (make these 2 letters stand out). (Less highlighted line.) I'm also open to improvements on the copy as well. I want this to be intuitive, catchy, and easy to understand."
+**Came back:**
+- **The pitch is two lines, as worded by the user.** `T.pitch` now returns `{lead, more}`, and the count of cases still comes from `corpus.json`.
+  - **The lead** is semibold, in the ink colour, and slightly larger: 1.25rem, or 1.125rem on a phone.
+  - **The second line** is muted and smaller: 1.0625rem, or 1rem on a phone.
+  - **"precise citations"** is in the brand green and semibold. The main session read "these 2 letters" as these two words.
+- **`rich()` gains `{em}`,** used only here.
+- **Checked (only what changed), in the mock:**
+  - **393×852:** the first screen still fits. The hero ends at 713 and the hint starts at 796. There is no horizontal scroll.
+  - **1440×900:** the lead wraps to two lines and the second line to two.
+  - Node: 71 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the pitch's wording and emphasis, quoted above. Not a lock; the main session offered copy suggestions in its reply, none applied.
