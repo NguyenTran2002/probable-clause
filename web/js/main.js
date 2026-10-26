@@ -38,6 +38,8 @@ function standing(corpus) {
     h('p', null, T.coverageLine(corpus)), h('p', { class: 'aff' }, T.AFFILIATION), h('p', { class: 'links' }, ...links()));
   clear($('#bar-links')).append(...links());
   $('#trace-caption').textContent = T.TRACE_CAPTION;
+  $('#how-title').textContent = T.HOW_IT_WORKS;
+  $('#more').textContent = T.HOW_IT_WORKS;
   $('#from-scratch').textContent = T.FROM_SCRATCH;
 }
 

@@ -33,6 +33,8 @@ export const REPO_URL = 'https://github.com/NguyenTran2002/probable-clause';
 export function pitch(corpus) {
   return `Ask about the Fourth Amendment and surveillance technology, from wiretaps to phone location data. Claude searches ${num(corpus.case_count)} Supreme Court cases, keeps the passages that bear on your question, and writes an answer whose every citation leads to the exact sentences it rests on.`;
 }
+// the first screen's pointer to the figure below it, and the figure's heading
+export const HOW_IT_WORKS = 'How the citations work';
 export const TRACE_CAPTION = 'Each cited sentence carries a citation the Claude API returned: which kept passage it rests on, and exactly which of that passage’s sentences. Follow one from the answer, to those sentences in the passage, to the part of the API response that links them.';
 export const NOT_ADVICE = 'Research, not legal advice: it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.';
 export const AI_DISCLOSURE = 'This is AI. Claude, Anthropic’s AI model, does the research and writes the answers through the Claude API. Check what it says against the opinions and linked sources before relying on it.';

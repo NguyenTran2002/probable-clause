@@ -13,6 +13,9 @@
 <body data-view="landing" data-pane="thread">
 
 <section id="landing" aria-label="Start">
+  <!-- the first screen holds only the question and the recorded runs; the figure and the fine print are a scroll
+       below it (the user, Oct 25, 2026) -->
+  <div class="first">
   <div class="hero">
     <h1 class="wordmark">Probable C<span class="l">l</span>ause</h1>
     <p class="pitch" id="pitch"></p>
@@ -28,10 +31,16 @@
       <p id="recorded-label"></p>
     </div>
   </div>
+  <a class="more" href="#how" id="more"></a>
+  </div>
+
+  <div class="below" id="how">
 
   <!-- The trace figure (T5.1 #2): one citation from a run on Oct 25, 2026 (Kyllo v. United States), followed from
        the answer, to the sentence in the kept passage, to the citation in the API response. -->
   <figure class="trace">
+    <h2 class="how" id="how-title"></h2>
+    <figcaption id="trace-caption"></figcaption>
     <div class="trace-row">
       <div class="t-card">
         <p class="t-where">In the answer</p>
@@ -54,10 +63,10 @@
 <span class="k">"cited_text"</span>: <span class="s">"This case presents the question whether the use of a thermal-imaging device aimed at a private home from a public street to detect relative amounts of heat within the home constitutes a \"search\" within the meaning of the Fourth Amendment."</span></pre>
       </div>
     </div>
-    <figcaption id="trace-caption"></figcaption>
   </figure>
 
   <footer class="fine" id="landing-fine"></footer>
+  </div>
 </section>
 
 <section id="run" aria-label="Research">

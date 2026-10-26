@@ -2438,3 +2438,22 @@ After the discussion: *"Let's give this a try: the dock keeps the status, the co
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the four points quoted above; locked as P4.34, amending T5.2 #4 and T5.4 #6.
+
+## Oct 25, 2026, 20:20 CDT — Frontend: the user's review, round 9; the landing page in two parts
+**Asked (the user):** "I'd want us to rethink the landing page for both desktop and mobile together. For desktop, in particular, it looks quite off because there are just too much empty spaces, and it's not responsive. For mobile view, it's too dense. I'm thinking a minimal landing view, then user can scroll down to read more?" After two mockups, with one change of theirs: "the text "or watch a recorded run" should be on its own line, then the chips of the recorded runs below it, arranged responsively to screen sizes." Then: *"Yes, build the landing page as sketched: the first screen, the citation figure below it, the footer, and the recorded runs on their own line."*
+**Came back:**
+- **The first screen fills one screen** (`.first`, `min-height: 100dvh`). It holds the wordmark, the pitch, the question box and the recorded runs, with a quiet "How the citations work" link and a chevron at its bottom edge. The link points to the section below, and the scroll is smooth unless reduced motion is set.
+- **The recorded runs:** the label is on its own line, and the chips sit below it in a grid (`minmax(min(100%, 18rem), 1fr)`), side by side where they fit and one to a line on a phone. They show the full questions, as cards rather than pills, because the questions wrap.
+- **Below the first screen** (`.below`, `#how`):
+  - The figure gets a wider column (68rem) and a heading, "How the citations work" (`HOW_IT_WORKS`), with its caption above the cards.
+  - Its three cards stack below 960 px rather than below 760 px, so a sideways phone gets them stacked.
+  - Then the footer: a rule across the wide column, with the disclaimers, the coverage line, the affiliation and the three links.
+- **Left as is:** the pitch's wording. The main session said it would draft a shorter one and show it before it goes in; it is not drafted yet.
+- **Checked (only what changed), in the mock:**
+  - **1440×900:** the first screen is exactly 900 tall. The two chips sit side by side (406 px each). The hint sits at 844 to 880. The three cards are in a row (338 to 341 px each). There is no horizontal scroll.
+  - **393×852:** the first screen is exactly 852 tall, with everything on it. The chips are one to a line (361 px). There is no horizontal scroll.
+  - **852×393:** the first screen runs to 548, since its content is taller than the screen. The chips sit side by side and the cards are stacked. There is no horizontal scroll.
+  - Node: 71 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the direction and the approval quoted above. Not a lock; the main session's calls are the 68rem column, the 960 px point where the cards stack, the hint's wording, and the cards for the chips.
