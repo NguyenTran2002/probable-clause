@@ -2577,3 +2577,16 @@ It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. T
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the wording quoted above. Not a lock.
+
+## Oct 25, 2026, 21:17 CDT — Frontend: the user's review, round 16; the bottom of the landing page
+**Asked (the user):** *"similar to how we tidied up the bottom of the page during the chat UI, brainstorm with me how do we tidy up the bottom of the landing page as well. Currently, it's a clear after thought section with no coherent design whatsoever."* Three options were mocked up: A, two columns; B, the warnings as the figure's closing note with a short footer; C, one column with labels. Then: *"Go with B: the two warnings as the figure's closing note, then a one-line footer. Keep the locked wording unless I approve the shortened line."*
+**Came back:**
+- **The figure's closing note:** the not-legal-advice line and the AI disclosure (T5.1 #3 and #4, word for word) sit under the three steps in an `aside`, under the heading "What it won’t do" (`LIMITS_TITLE`, the main session's wording, from the mock-up). It uses the steps' grid (heading in the 17rem column, text beside it) after a hairline, and stacks below 760 px. This matches the run screen, which keeps the same two lines under each answer.
+- **The footer** is now the figure's width (60rem, was 68rem; the unused `--wide` token is removed) and left-aligned. The coverage line (T5.2 #2) is on its own line, then the affiliation line on the left with the three links on the right. The locked wording is kept, so the footer is two lines, not one. The shortened single line from the mock-up waits for the user's approval.
+- **Checked (only what changed):**
+  - Node: 77 passed.
+  - **The mock at 1440×900:** the note, the steps and the footer all start at x 240 and are 960 px wide. The affiliation and the links share one row; the links end at the right edge.
+  - **The mock at 393×852:** the note stacks (361 px), the links wrap under the affiliation, and there is no horizontal scroll.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** option B, quoted above, with the locked wording kept. Not a lock; the main session's calls are the heading "What it won’t do" and the two-line footer.

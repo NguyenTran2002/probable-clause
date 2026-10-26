@@ -101,7 +101,6 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
 /* ---------- landing ---------- */
 /* two parts (the user, Oct 25, 2026): a first screen with only the question and the recorded runs, and a scroll
    below it for the figure, in a wider column, and the fine print */
-#landing { --wide: 68rem; }
 .first {
   position: relative;
   min-height: 100dvh;
@@ -248,6 +247,12 @@ html { scroll-behavior: smooth; }
 .t-text .pin { font-family: var(--ui); font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
 .t-text .hit { background: color-mix(in oklab, var(--h1) var(--mix), transparent); border-radius: 3px; }
 .t-wire { background: var(--code-bg); border-color: var(--code-bg); color: var(--code-ink); }
+/* the figure's closing note: the two warnings, laid on the steps' grid without a number */
+.fig-limits { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 0.75rem 2rem; align-items: start;
+  margin-top: 2.5rem; padding-top: 1.75rem; border-top: 1px solid var(--line); }
+.fig-limits h3 { margin: 0; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+.limits-text p { margin: 0 0 0.6rem; font-size: 0.9375rem; line-height: 1.55; color: var(--muted); }
+.limits-text p:last-child { margin-bottom: 0; }
 .t-wire pre { margin: 0; font-family: var(--code); font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 .t-wire .cm { color: var(--code-muted); }
 .fig-full { margin-top: 0.75rem; border-top: 1px solid var(--code-line); padding-top: 0.6rem; }
@@ -259,8 +264,12 @@ html { scroll-behavior: smooth; }
 .n { color: var(--code-num); }
 
 .fine { font-size: 0.8125rem; color: var(--muted); width: 100%; max-width: var(--chat); text-align: center; }
-#landing-fine { max-width: var(--wide); padding-top: 1.5rem; border-top: 1px solid var(--line); }
-#landing-fine p { max-width: var(--chat); margin-left: auto; margin-right: auto; }
+/* the landing footer at the figure's width: the coverage line, then the affiliation left and the links right */
+#landing-fine { max-width: 60rem; padding-top: 1.25rem; border-top: 1px solid var(--line); text-align: left;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.35rem 2rem; }
+#landing-fine p { margin: 0; }
+#landing-fine .cover { flex-basis: 100%; }
+#landing-fine .links { justify-content: flex-start; margin: 0 !important; }
 .fine p { margin: 0 0 0.4rem; }
 
 .pill {
@@ -655,6 +664,7 @@ body.playing .scratch { display: none; }
 /* the figure's steps: words above their card until there is room beside it (a sideways phone included) */
 @media (max-width: 759px) {
   .fig-step { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .fig-limits { grid-template-columns: minmax(0, 1fr); }
   .fig-say { display: grid; grid-template-columns: auto 1fr; column-gap: 0.75rem; align-items: center; }
   .fig-say h3 { margin: 0; }
   .fig-say p { grid-column: 2; }

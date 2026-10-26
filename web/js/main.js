@@ -35,8 +35,11 @@ function standing(corpus) {
     webLink(T.REPO_URL, T.REPO_LINK_TEXT)];
   const pitch = T.pitch(corpus);
   clear($('#pitch')).append(h('p', { class: 'lead' }, pitch.lead), h('p', null, ...rich(pitch.more)));
-  clear($('#landing-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'block' }, T.AI_DISCLOSURE),
-    h('p', null, T.coverageLine(corpus)), h('p', { class: 'aff' }, T.AFFILIATION), h('p', { class: 'links' }, ...links()));
+  // the warnings close the figure; the footer keeps the coverage line, then the affiliation with the links beside it
+  $('#limits-title').textContent = T.LIMITS_TITLE;
+  clear($('#limits-text')).append(h('p', null, T.NOT_ADVICE), h('p', null, T.AI_DISCLOSURE));
+  clear($('#landing-fine')).append(h('p', { class: 'cover' }, T.coverageLine(corpus)), h('p', null, T.AFFILIATION),
+    h('p', { class: 'links' }, ...links()));
   clear($('#bar-links')).append(...links());
   $('#trace-caption').textContent = T.TRACE_CAPTION;
   $$('.fig-step').forEach((li, i) => { $('h3', li).textContent = T.FIG_STEPS[i][0]; $('.fig-say p', li).textContent = T.FIG_STEPS[i][1]; });

@@ -48,6 +48,8 @@ export const FIG_STEPS = [
 export const FIG_NOTES = ['// which opinion', '// which sentences', '// the quote, copied by code'];
 export const FIG_FULL = 'Show the full API response';
 export const FIG_TITLE = 'Follow one citation';
+// the heading of the figure's closing note, which holds NOT_ADVICE and AI_DISCLOSURE
+export const LIMITS_TITLE = 'What it won’t do';
 export const TRACE_CAPTION = 'A real answer from this site, traced back to the Court’s words in three steps.';
 export const NOT_ADVICE = 'Research, not legal advice: it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.';
 export const AI_DISCLOSURE = 'This is AI. Claude, Anthropic’s AI model, does the research and writes the answers through the Claude API. Check what it says against the opinions and linked sources before relying on it.';
