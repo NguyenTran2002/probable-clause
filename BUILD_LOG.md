@@ -2966,3 +2966,17 @@ CLAUDE.md's current state is updated for the compaction.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** none yet. This would amend T4.1's fonts if locked.
+
+## Oct 26, 2026, 01:05 CDT — Frontend: the user's review, round 27 locked; the fonts are Founding print (P4.45)
+**Asked (the user):** *"Lock founding print. Prepare for compaction."*
+**Came back:** P4.45 locks round 27 (cf58b57) as built, with no code change:
+- the type tokens, every family named once in `style.css`;
+- IBM Plex Sans and Mono;
+- Libre Caslon Text and Display;
+- Caveat kept for the notes.
+It amends T4.1's fonts, and T4.1's heading now says so.
+The former fonts' files stay in `web/fonts/`. No token names them, so they are never fetched; removing them is the user's call.
+**Checked:** nothing, since nothing changed (round 27 was checked at 01:03).
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** *"Lock founding print."* Locked as P4.45.

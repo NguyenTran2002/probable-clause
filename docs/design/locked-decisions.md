@@ -705,7 +705,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:38 CDT — Phase 3: Architecture, Area 3 (protections and retention, T3.7)"
 
-### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6) — AMENDED by T5.5 (the fonts are served by our own web service, not Google Fonts); AMENDED by P4.43 (the palette is Evergreen deepened)
+### T4.1 Art direction: the machinery prototype in Evergreen (brief §7.3, P1.6) — AMENDED by T5.5 (the fonts are served by our own web service, not Google Fonts); AMENDED by P4.43 (the palette is Evergreen deepened); AMENDED by P4.45 (the fonts are Founding print)
 
 - **Decision:** Area 4, topic 1. The prototype at `web/looktests/machinery/` as of commit badc05f is the art direction and **the baseline for the build**: what it shows stays, except where Area 4's topic 3 changes it to match Areas 1 to 3 or topic 4 adds to it.
   - **Character:** a tech demo first, legal in flavour, for a technical visitor who came to see Claude and Citations.
@@ -1271,3 +1271,26 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Quick check, on mobile, the noting in the frontend is not working?"* Then: *"Just turn on notes on phone quickly."* Then: *"Lock frontend as is."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 00:41 CDT — Frontend: the user's review, round 26 locked; the margin notes show on phones (P4.44)"
+
+### P4.45 The fonts are Founding print, each named once in a type token (amends T4.1's fonts)
+
+- **Decision:** as built in round 27 (cf58b57).
+  1. **The type tokens:** every family the page uses is named once, in `web/css/style.css`'s type block:
+     - `--ui`, the product;
+     - `--src`, the Court's words;
+     - `--display`, the amendment behind the first view;
+     - `--display-i`, its italic phrase;
+     - `--code`, the API;
+     - `--hand`, the margin notes.
+     `web/css/fonts.css` loads the files. To change a font, add its `@font-face` rules and point one token at it.
+  2. **Founding print:**
+     - IBM Plex Sans v23 (`--ui`);
+     - Libre Caslon Text v5 (`--src`, `--display-i`);
+     - Libre Caslon Display v18 (`--display`; it has no italic, so `--display-i` takes Caslon Text's);
+     - IBM Plex Mono v20 (`--code`);
+     - Caveat v23 kept (`--hand`).
+  3. **Self-hosted (T5.5):** Latin and Latin Extended `.woff2` files from fonts.gstatic.com and their SIL OFL 1.1 texts in `web/fonts/`, downloaded Oct 26, 2026 on the user's word.
+  4. **Left in place:** the former fonts' files and faces (Instrument Sans, Newsreader, JetBrains Mono). No token names them, so the browser never fetches them. Removing them is the user's call.
+- **User's words:** *"I agree it's the same tension of legal and tech. Propose and mock up a few fonts."* Then: *"Try stand up founding print. Also, use master variables to make things easier for us in the future as well."* Then: *"Lock founding print."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:05 CDT — Frontend: the user's review, round 27 locked; the fonts are Founding print (P4.45)"
