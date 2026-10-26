@@ -91,18 +91,18 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 26, 2026, 01:43 CDT: the full test passed (01:26); the four replays are recorded and exported, three of them re-recorded after the check fixes (P4.48). Next: the user's review of the replays, then the deploy.*
+*Updated Oct 26, 2026, 01:47 CDT: the full test passed (01:26); the four replays are recorded on `84c0db4` after the check fixes (P4.48, P4.49) and exported. Next: the user's review of the replays, then the deploy.*
 
 - **Next, in the user's order (P4.46, BUILD_LOG "Oct 26, 2026, 01:15 CDT"):**
   1. **The full test: done** (BUILD_LOG 01:26). Every suite passed and the browser sweep was clean. Since the fixes (P4.48) the whole suite is 2,959 passed and 54 skipped.
-  2. **The replays: recorded, waiting on the user's review (T5.6)** (BUILD_LOG 01:34, 01:35, 01:43):
+  2. **The replays: recorded, waiting on the user's review (T5.6)** (BUILD_LOG 01:34, 01:35, 01:43, 01:45, 01:47):
      - The four chips, in the user's order, are in `replays/` (contract §11.2), written by `scripts/export_replay.py`:
-       - `phone-search-arrest`, at `c74b3e0`;
-       - `gps-tracking-car`, `geofence-warrants` and `backyard-from-air`, re-recorded at `84c0db4` after P4.48 fixed two false-flag defects in `api/checks/`.
+       - all four were recorded at `84c0db4`, after P4.48 fixed two false-flag defects in `api/checks/`: `phone-search-arrest` at 01:45 (P4.49), and the other three at 01:39;
+       - no replay is specific to a screen size: the page picks a replay by its slug alone.
        - All four have no flags.
      - `replays/` is still in `.git/info/exclude` and uncommitted. On the user's approval of the recordings: take `replays/` out of the exclude, commit the five files, and rebuild.
      - Every run's events are kept in `data/verification/replays/`, the superseded first recordings included. The rendered answers are in `data/verification/replays/answers/`.
-     - **P4.48's allowance:** $3.00 and 10 Exa searches, counted from the test database's $3.6735. At 01:40 the total was $4.4755, so $0.8020 and 3 searches are used.
+     - **P4.48's allowance:** $3.00 and 10 Exa searches, counted from the test database's $3.6735. At 01:46 the total was $4.6799, so $1.0064 and 4 searches are used.
      - **Still open:** T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*, which the user's request did not include.
   3. **The deploy,** only on the user's explicit green light (P4.1), with what goes before it: the cloud setup script (P4.30) and the goodnight block in `~/Documents/Developer/framedbytran` (P4.26), each on its own green light.
 - **Replays are frontend-only (the user, 01:15), and already were.** A replay is static files on the web service (`replays/index.json`, `replays/<slug>.json`), played by the page's own code. `config.json`, `corpus.json` and `opinions/*.json` are static too. The landing's wake (`api/health`) is the only API call and a replay never waits on it. Checked at 01:15 with the web container alone and no API. Keep it that way.
@@ -121,7 +121,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **The former fonts are removed** (P4.47, 01:18): `web/fonts/` holds only Founding print and Caveat.
 - **Still open, the user's call:**
   - from BUILD_LOG 17:50, the skipped band line's repeated reason and the cost line counting our estimates.
-- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-84c0db4` at 01:41, serving the four replays; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
+- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-ed2dd8e` at 01:46, the code of `84c0db4`, serving the four replays; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
 - **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (84). Contract v2.1 (`config.json` gains seven figures).
 - **Done today since Wave 3** (BUILD_LOG 16:15 to 16:46):
   - P4.23, the prompts approved;

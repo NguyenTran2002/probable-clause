@@ -3216,3 +3216,35 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none yet. About $0.30 expected, inside P4.48's $2.198 and 7 Exa searches left.
 **DECISION (user):** as quoted. Locked as P4.49.
+
+## Oct 26, 2026, 01:47 CDT — The replays: phone-search re-recorded, all four from 84c0db4 (P4.49)
+**Asked (the user):** *"Hold up, I want the newest recordings used across the board, not using anything separate for phones."*
+**Came back:**
+- **The re-recording:** `phone-search-arrest`, run `LHdjNk0iXw_0fRhlj1MzlA`, started at 01:45 on `local-84c0db4`. It answered in full with no stop:
+  - 5 rounds, 25 kept of 43 found;
+  - 77 answer blocks with 38 citations;
+  - quotations 3 of 3, names and cites 4 of 4, **no flags**;
+  - the web search band: found (the overview reports no new ruling on phone searches after an arrest and *Riley* still governing; the later activity is *Chatrie*, a Second Circuit border-search decision and a New Jersey geofence ruling);
+  - 43 s, $0.2044.
+- **The export:** all four went to `replays/` at `84c0db4`, in the user's order:
+  - `phone-search-arrest`, 01:45;
+  - `gps-tracking-car`, `geofence-warrants` and `backyard-from-air`, 01:39.
+- The 01:28 recording of the phone-search question stays in `data/verification/replays/`, kept but not exported.
+- **No replay is specific to a screen size.** `web/js/replay.js` and `main.js` pick a replay by its slug alone, so the same four files play on phones and on wide screens.
+- `replays/` is still uncommitted until the user has reviewed the recordings (T5.6).
+
+**Checked:**
+- the stack, rebuilt (`local-ed2dd8e`, the same code as `84c0db4` plus the log), serves the new file;
+- in the browser at 375×812:
+  - the index lists the four chips in order;
+  - the phone-search replay skipped to "Finished: 5 tool rounds and the answer, 43 s.", with "Recorded run, Oct 26, 2026.", the cost line, 0 flags and no sideways scroll.
+
+**Failures:** none.
+**Spend:**
+- $0.2044 (test database month total $4.6799);
+- 1 Exa search;
+- left of P4.48's allowance: $1.9936 and 6 Exa searches.
+
+**DECISION (user):** P4.49, as quoted. Open:
+- the user's review of the four recordings before they are committed and published (T5.6);
+- T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.
