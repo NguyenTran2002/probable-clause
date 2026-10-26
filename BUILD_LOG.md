@@ -3568,3 +3568,24 @@ It amends P4.40.
 **Came back:** locked as P5.4: the note is added and the site redeployed now, which is the deploy green light for this change.
 **Spend:** none.
 **DECISION (user):** *"Add and redeploy now."* Locked as P5.4.
+
+## Oct 26, 2026, 03:19 CDT — Phase 5: the cost line's estimate note built and redeployed (P5.4)
+**Asked:** P5.4: add the note, and redeploy now.
+**Came back:**
+- **The change** (62d6272):
+  - `model.js` counts the run's `paid_call` events with `estimated: true`, Claude's and Exa's only, since Voyage is not in the shown total;
+  - `costs.js` adds one line under the cost details' note when that count is above 0, from `text.js`'s `COST_ESTIMATED`: "Includes this site’s estimate for N attempt(s) that reported no usage.";
+  - runs with no estimate, and so all four replays, are unchanged (no replay has an estimated `paid_call`).
+- **Tests:**
+  - two new Node tests: the count matches every fixture's estimated Claude and Exa attempts, and the wording for 1 and 3 attempts. The Node tests: 86 passed;
+  - the whole Python suite: 2,967 passed, 54 skipped.
+- **In the page,** on the mock with `retries-anthropic-and-voyage-recovered`: the details read "Includes this site’s estimate for 3 attempts that reported no usage." The fixture's three Voyage estimates are not counted. The mock is back on its default fixture and speed.
+- **Before the redeploy:** the API's logs for the past hour show no `/runs` request except the main session's 404 probe at 03:02, and `Probable_Clause` has no spend, so no live run was cut off.
+- **The redeploy,** `deploy.sh` from 03:14:34 to 03:16:04 CDT, exit 0, at commit `62d6272`: `probable-clause-api-00002-f67` and `probable-clause-web-00002-jfn`. goodnight is untouched.
+- **On the domain:** `/health` reports commit `62d6272`; the served `text.js`, `costs.js` and `model.js` carry the change; the page, the replay index, an opinion file and `/goodnight` answer 200.
+- **Not done:** this redeploy's start-up time. The log query for it stalled and was stopped, and the second, simpler query returned nothing. The first sample (03:06) stands.
+
+**Checked:** as above.
+**Failures:** the stalled log query.
+**Spend:** none on Anthropic, Voyage or Exa.
+**DECISION (user):** none beyond P5.4.
