@@ -3154,3 +3154,53 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the fixes, the re-recording of the three runs, and the allowance, as quoted. Locked as P4.48.
+
+## Oct 26, 2026, 01:43 CDT — The replays: the checks fixed, three runs re-recorded, all four clean (P4.48)
+**Asked (the user):** *"Fix the two check bugs with tests, then re-record the three flagged runs. New allowance: $3.00 and 10 Exa searches."*
+**Came back:**
+- **The fixes,** tests first (84c0db4). The 16 new tests were written before the code: 12 failed as expected, and 4 that guard what must not change already passed.
+  - **`api/checks/quotations.py`:** `_strip_marks` also drops Markdown emphasis: every `*`, and any `_` not inside a word. This applies to the quotation and the source alike, so:
+    - "*Katz*" inside a quotation reads as "Katz";
+    - star paging ("Commentaries *225", *Ciraolo*) still matches;
+    - an underscore inside a URL in *Chatrie*'s footnotes stays a character;
+    - a changed word is still flagged when it is italicised.
+    - The corpus holds 51 `*` (star paging and "* * *" breaks) and 6 `_` (inside URLs), counted by script.
+  - **`api/checks/citations.py`:** `_walk_right` stops at a token that opens a parenthesis or bracket.
+    - "Chatrie v. United States (Alito, joined by …)" resolves.
+    - "Hester v. Ohio (Holmes, J.)" is flagged as "Hester v. Ohio".
+    - "Carpenter v. United States (2018)" resolves as before.
+  - The bracketed insertion in *Florida v. Riley* stays a flag (P4.48 #2).
+  - The 01:34 replays' exact sentences, run through the fixed functions, now pass.
+- **The re-recordings,** started together at 01:39 on `local-84c0db4` (`PC_ENV=test`, `Probable_Clause_test`). Each answered in full with no stop:
+
+| Run | Rounds | Kept of found | Answer blocks | Citations | Quotations | Names and cites | Web search band | Time | Cost |
+|---|---|---|---|---|---|---|---|---|---|
+| `gps-tracking-car` | 4 | 23 of 38 | 67 | 33 | 2 of 2 | 4 of 4 | found (cert denied in *Thompson v. Wilson*, Oct 5, 2026; commentary; no new ruling) | 44 s | $0.2133 |
+| `geofence-warrants` | 6 | 40 of 95 | 112 | 56 | 8 of 8 | 1 of 1 | nothing relevant | 64 s | $0.3511 |
+| `backyard-from-air` | 6 | 20 of 52 | 61 | 30 | 1 of 1 | 5 of 5 | found (no new decision on drones; commentary) | 54 s | $0.2376 |
+
+  No flags on any of the three. The answers' wording differs from the first recordings, so the fixes are tested by the unit tests, not by these runs.
+- **The export:** `scripts/export_replay.py` now takes a commit per run (`slug=events.jsonl@commit`).
+  - The four went to `replays/` in the user's order:
+    - `phone-search-arrest`, the 01:28 run at `c74b3e0`, byte for byte unchanged;
+    - the three re-recordings, at `84c0db4`.
+  - The first recordings of the three stay in `data/verification/replays/`, kept, not exported.
+  - `replays/` is still uncommitted until the user has reviewed the recordings (T5.6).
+
+**Checked:**
+- the whole suite: **2,959 passed, 54 skipped** (2,943 and 16 new);
+- the Node tests: 84 of 84;
+- the browser, on the rebuilt stack at 375×812:
+  - the GPS and geofence replays skipped to their ends;
+  - the backyard replay played at its recorded pace to "Finished: 6 tool rounds and the answer, 54 s.";
+  - every one had 0 flags drawn, the cost line and no sideways scroll, and the GPS band showed its finding.
+
+**Failures:** none.
+**Spend:**
+- Anthropic, Voyage and Exa together: $0.8020 (`spend_report.py`; test database month total $4.4755);
+- Exa: 3 searches;
+- left of P4.48's allowance: $2.198 and 7 Exa searches.
+
+**DECISION (user):** none beyond P4.48. Open:
+- the user's review of the four recordings before they are committed and published (T5.6);
+- T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*.

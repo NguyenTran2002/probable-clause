@@ -4,10 +4,11 @@ A replay is a run's events as they were streamed, never edited (T5.6). Each run 
 its envelopes number 1 to N with no gap, every one passes `contracts/events.schema.json`, the stream ends with
 `run_ended`, and no web result carries page text (§1). The index lists the chips in the order given.
 
-    uv run python scripts/export_replay.py --commit c74b3e0 \\
-        phone-search-arrest=data/verification/replays/phone-search-arrest-<run_id>.jsonl ...
+    uv run python scripts/export_replay.py --commit 84c0db4 \\
+        phone-search-arrest=data/verification/replays/phone-search-arrest-<run_id>.jsonl@c74b3e0 ...
 
-`--commit` is the code the runs were recorded on (the API's `/health` commit). Reads no secret, calls nothing.
+`--commit` is the code the runs were recorded on (the API's `/health` commit); a run recorded on other code names
+its own after `@`. Reads no secret, calls nothing.
 Exit 0 when every file was written, 1 when a run failed a check (nothing is written then).
 """
 
@@ -64,17 +65,19 @@ def document(slug: str, events: list[dict], commit: str) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("runs", nargs="+", metavar="slug=events.jsonl")
-    ap.add_argument("--commit", required=True)
+    ap.add_argument("runs", nargs="+", metavar="slug=events.jsonl[@commit]")
+    ap.add_argument("--commit", help="the commit of every run that names none")
     ap.add_argument("--out", type=Path, default=OUT)
     a = ap.parse_args()
 
     docs: list[dict] = []
     failed = False
     for arg in a.runs:
-        slug, _, path = arg.partition("=")
-        if not SLUG.fullmatch(slug) or not path:
-            print(f"{arg}: expected slug=path, the slug in lower case, digits and hyphens")
+        slug, _, rest = arg.partition("=")
+        path, _, commit = rest.partition("@")
+        commit = commit or a.commit
+        if not SLUG.fullmatch(slug) or not path or not commit:
+            print(f"{arg}: expected slug=path[@commit], the slug in lower case, digits and hyphens, and a commit")
             return 1
         events = load(Path(path))
         found = problems(events)
@@ -82,7 +85,7 @@ def main() -> int:
             print(f"{slug}: {p}")
         failed |= bool(found)
         if not found:
-            docs.append(document(slug, events, a.commit))
+            docs.append(document(slug, events, commit))
     if failed:
         print("nothing written")
         return 1

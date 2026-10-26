@@ -41,7 +41,7 @@ More, each from the brief:
 - `docs/research/phase2-findings.md`: the Phase 2 research (brief §9), every claim with its source and tag, sources re-checked.
 - `docs/research/retention.md`: what each provider keeps of what the page sends (Area 5, T5.5), quotes string-matched.
 - `docs/sessions/overnight-run.md`: the main session's guide for the overnight run of Oct 25, 2026 (approved plan, limits, steps, what waits for the user), kept for the record.
-- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them; `scripts/render_run.py`: a saved run as a readable Markdown file.
+- `docs/design/paid-build-tests.md`: the priced plan for Phase 4's paid build tests (approved; run Oct 25, results in BUILD_LOG). `scripts/run_client.py`: the client that ran them; `scripts/render_run.py`: a saved run as a readable Markdown file. `scripts/export_replay.py`: saved runs as replay files and `replays/index.json` (contract §11.2), each run checked first.
 - `docs/design/wave3-design.md`: the Wave 3 design (update step beside composition, composition on Sonnet, no reservation, looser limits), approved Oct 25, 13:47 (P4.18 to P4.22).
 - `docs/sessions/wave3-plan.md`: the main session's plan for building Wave 3 (steps 0 to 6, agents, reviews, the paid tests), approved Oct 25, 13:47.
 - `docs/sessions/frontend-brief.md`: the frontend session's brief. `docs/sessions/frontend-log.md`: its own append-only log (frontend session only).
@@ -91,15 +91,19 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 
 ## Current state and next step
 
-*Updated Oct 26, 2026, 01:15 CDT: the frontend is finished (P4.46); the local review ended at 2341af0 after 28 rounds, P4.36 to P4.46 locked from it. Next, in the user's order: the full test, the replays, the deploy.*
+*Updated Oct 26, 2026, 01:43 CDT: the full test passed (01:26); the four replays are recorded and exported, three of them re-recorded after the check fixes (P4.48). Next: the user's review of the replays, then the deploy.*
 
 - **Next, in the user's order (P4.46, BUILD_LOG "Oct 26, 2026, 01:15 CDT"):**
-  1. **The full test:** the whole Python suite (`.venv/bin/pytest -q`; the last full count was 3,456 passed and 49 skipped before Wave 3, and 2,943 passed and 54 skipped at Wave 3's merge), the Node tests (`node --test webdev/test/`, 84), and the browser sweep (landing, exit, a replay, dark mode, phone 375×812, no sideways scroll). Report every failure with its output; a fix is a change after the user said the frontend is finished, so say so.
-  2. **The replays (P4.32, T5.6):** "Populate and cache in parallel a few runs. (Questions need approval first.)" Propose the questions and get the user's approval before any run. Each is a real paid run on the final code. P4.22's allowance has $2.46 and 17 Exa searches left, so ask for a new allowance if the runs would go past it. Runs at once are capped by `MAX_CONCURRENT_RUNS` (5). Export them to `replays/` (contract §11.2), replacing the two local review files there now (excluded in `.git/info/exclude`). Keep every run's files in `data/verification/`. The latest question draft, not yet answered:
-     - "What has the Court said about searching a phone after an arrest?"
-     - "When is tracking a car with GPS a search?"
-     - "What has the Court said about geofence warrants?" (also the pre-*Chatrie* fifth)
-     - "Can police watch a backyard from the air?"
+  1. **The full test: done** (BUILD_LOG 01:26). Every suite passed and the browser sweep was clean. Since the fixes (P4.48) the whole suite is 2,959 passed and 54 skipped.
+  2. **The replays: recorded, waiting on the user's review (T5.6)** (BUILD_LOG 01:34, 01:35, 01:43):
+     - The four chips, in the user's order, are in `replays/` (contract §11.2), written by `scripts/export_replay.py`:
+       - `phone-search-arrest`, at `c74b3e0`;
+       - `gps-tracking-car`, `geofence-warrants` and `backyard-from-air`, re-recorded at `84c0db4` after P4.48 fixed two false-flag defects in `api/checks/`.
+       - All four have no flags.
+     - `replays/` is still in `.git/info/exclude` and uncommitted. On the user's approval of the recordings: take `replays/` out of the exclude, commit the five files, and rebuild.
+     - Every run's events are kept in `data/verification/replays/`, the superseded first recordings included. The rendered answers are in `data/verification/replays/answers/`.
+     - **P4.48's allowance:** $3.00 and 10 Exa searches, counted from the test database's $3.6735. At 01:40 the total was $4.4755, so $0.8020 and 3 searches are used.
+     - **Still open:** T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*, which the user's request did not include.
   3. **The deploy,** only on the user's explicit green light (P4.1), with what goes before it: the cloud setup script (P4.30) and the goodnight block in `~/Documents/Developer/framedbytran` (P4.26), each on its own green light.
 - **Replays are frontend-only (the user, 01:15), and already were.** A replay is static files on the web service (`replays/index.json`, `replays/<slug>.json`), played by the page's own code. `config.json`, `corpus.json` and `opinions/*.json` are static too. The landing's wake (`api/health`) is the only API call and a replay never waits on it. Checked at 01:15 with the web container alone and no API. Keep it that way.
 - **The review's locks** (BUILD_LOG from "Oct 25, 2026, 17:50 CDT" to "Oct 26, 2026, 01:15 CDT"):
@@ -117,7 +121,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **The former fonts are removed** (P4.47, 01:18): `web/fonts/` holds only Founding print and Caveat.
 - **Still open, the user's call:**
   - from BUILD_LOG 17:50, the skipped band line's repeated reason and the cost line counting our estimates.
-- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-2341af0` at 01:15; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
+- **Running now:** the mock (`webdev/serve.py`, 8765, started from a plain background shell) and `deploy/local.sh` (8080, `local-84c0db4` at 01:41, serving the four replays; the API on 8000 with `PC_ENV=test`, the development keys and `Probable_Clause_test`). Stopping the API container makes `local.sh` remove both containers (its cleanup). Mock live runs play quietly (the fixtures' timestamps are old), so animations are checked on a replay.
 - **The frontend** (BUILD_LOG "Oct 25, 2026, 16:52 CDT" and "17:50 CDT"): `web/` (the page; 16 modules; fonts and markdown-it 15.0.3 vendored), `webdev/serve.py` (the mock, `.venv/bin/python webdev/serve.py`, port 8765, switches at `/__dev/`), Node tests `node --test webdev/test/` (84). Contract v2.1 (`config.json` gains seven figures).
 - **Done today since Wave 3** (BUILD_LOG 16:15 to 16:46):
   - P4.23, the prompts approved;
@@ -152,7 +156,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
 - **Reading the answers:** `uv run python scripts/render_run.py <events.jsonl>` writes a readable file under `data/verification/phase4/answers/`.
 - **Keep every run** (the user): run files are never overwritten or deleted. Atlas keeps events only 24 hours, so the local files are the only lasting copy; whether to commit them is the user's call.
 - **The keys in `.env`** reach the API only through `uv run --env-file .env`; check them only with `uv run python scripts/check_env.py --phase 4`. Never open, cat, grep or print `.env` or a key (the user, 12:17). Start the API with `uv run --env-file .env .venv/bin/uvicorn api.main:app --port 8000` (`PC_ENV` unset for the test database).
-- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.47** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
+- **State:** Wave 3 built (contract v2.0); see above. Phases 0 to 3 done (tag `phase-3-done`). P4.16 locked (`submit_answer` alone in its turn); P4.17 (quotations compared without regard to case). Phase 4 Waves 1 and 2 merged and reviewed, patched overnight for P4.6 to P4.10, then for P4.11 and P4.13. Decisions P0.1 to P2.12, T1.1 to T5.6 and **P4.1 to P4.48** are locked (P4.11 to P4.15 at 12:09, P4.16 at 12:42, P4.17 at 12:55, P4.18 to P4.22 at 13:47, not yet built; the prompt drafts are approved, P4.15). `BUILD_LOG.md` is the authoritative record (P2.12). Corpus frozen: 32 cases, 102 opinions, 2,462 passages, 11,005 sentences.
 - **Resume by reading:**
   - the brief;
   - `locked-decisions.md`, P4.1 to P4.22 above all (P4.18 to P4.22 amend or supersede 14 earlier entries, marked in their headings);
@@ -190,7 +194,7 @@ Two Claude Code sessions share this folder and the `main` branch. The **main ses
   - subagents Sonnet 5.5 or Opus 5.5, effort high or xhigh only, never max, with model and effort stated per agent;
   - agents never commit; the main session commits each part's paths by name;
   - no deploy before the user's local review sign-off and a separate green light.
-- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.48). Run `date` in its own step, then write the time it printed.
+- **Lock pattern (keep it):** each decision gets its own `BUILD_LOG.md` entry with a `date` heading, written with its `locked-decisions.md` entry in one commit, and the reply names the log entry. Phase 4 decisions are numbered P4.n (next: P4.49). Run `date` in its own step, then write the time it printed.
 - **Settled facts to build with:**
   - **Models:** research and the update step `claude-sonnet-5-5` high (P2.1, P4.19); composition `claude-sonnet-5-5` high (P4.20, built).
   - **Limits (P4.18, built):** 12 research rounds; loop input 2M, loop output 16,000; update rounds 8, update input 2M, update output 6,000; 5 update searches; composition output 16,000; no run-wide limit; `MAX_CONCURRENT_RUNS` 5; `RUN_WATCHDOG_S` 2,400. **$15 a day** (P4.11), $60 a month, unchanged.
