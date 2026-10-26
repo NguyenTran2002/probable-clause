@@ -2712,3 +2712,13 @@ The main session's calls from 23:08 are locked with it, as the user approved the
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the request, quoted above. Not a lock.
+
+## Oct 25, 2026, 23:31 CDT — Frontend: the user's review, rounds 19 and 20 locked; the exit's hold and final frame (P4.38)
+**Asked (the user):** after trying rounds 19 and 20: *"Tried it, lock the 2.9 s exit and the final frame with only "probable clause"."*
+**Came back:** P4.38 locks the exit as built at 23:28 (eae8a4e) and 23:29 (868bd92). It amends P4.36 points 3 and 4, with no code change:
+- the run screen shows 2.9 s after a run starts, not 2.1 s, so the finished "probable clause" holds for about 1.1 s;
+- everything but the amendment's "probable clause" fades, the wordmark included, and the wordmark no longer flies into the bar.
+**Checked:** nothing, since nothing changed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** lock the 2.9 s exit and the final frame, quoted above. Locked as P4.38.

@@ -1192,3 +1192,12 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"Lock the inserted l because that's clearer."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 23:27 CDT — Frontend: the user's review, round 18 locked; the exit's inserted "l" (P4.37)"
+
+### P4.38 The exit's hold and final frame (amends P4.36 points 3 and 4)
+
+- **Decision:** as built in rounds 19 and 20 (eae8a4e, 868bd92).
+  1. **The hold:** the run screen shows 2.9 s after a run or replay starts, not 2.1 s. The "l" (P4.37) lands at about 1.8 s, so the finished "probable clause" holds for about 1.1 s. The run itself still starts at once.
+  2. **The final frame:** everything but the amendment's "probable clause" disappears: the notes, their leaders and underlines, the other words, and the whole hero, wordmark included. The wordmark no longer moves into the bar; the bar's wordmark appears with the run screen.
+- **User's words:** *"Tried it, lock the 2.9 s exit and the final frame with only "probable clause"."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 23:31 CDT — Frontend: the user's review, rounds 19 and 20 locked; the exit's hold and final frame (P4.38)"
