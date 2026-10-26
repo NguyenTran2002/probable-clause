@@ -2980,3 +2980,17 @@ The former fonts' files stay in `web/fonts/`. No token names them, so they are n
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"Lock founding print."* Locked as P4.45.
+
+## Oct 26, 2026, 01:05 CDT — Frontend: the user's review continues; prepared for compaction
+**Asked (the user):** *"Lock founding print. Prepare for compaction."*
+**Came back:** CLAUDE.md's current state now covers:
+- rounds 1 to 27, with P4.45 locked;
+- the type tokens;
+- the former fonts left unused;
+- `local-cf58b57` on 8080;
+- the next number, P4.46.
+Iterating continues (00:42). The full suite, the browser sweep and the sign-off still wait for the user's word that it is done. The scratch mockup server on 8790 is stopped.
+**Checked:** nothing, since nothing changed in the code.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none beyond P4.45.
