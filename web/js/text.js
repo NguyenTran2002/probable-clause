@@ -328,5 +328,35 @@ export function pin(p) {
   if (p.slip_opinion) return `slip op., at ${pages}`;
   return `${p.citation.replace(/\s+\d+$/, '')}, at ${pages}`;
 }
+// ---------- a passage's tag (P4.35): the case's short name and page, as a citation reads, instead of its ID ----------
+// Curated, not derived: both Rileys would read "Riley", and a first party is often "United States".
+export const SHORT_NAMES = {
+  berger: 'Berger', boyd: 'Boyd', carpenter: 'Carpenter', chatrie: 'Chatrie', ciraolo: 'Ciraolo', clinton: 'Clinton',
+  dow: 'Dow Chemical', dunn: 'Dunn', ex_parte_jackson: 'Ex parte Jackson', florida_v_riley: 'Florida v. Riley',
+  goldman: 'Goldman', grady: 'Grady', greenwood: 'Greenwood', hester: 'Hester', jacobsen: 'Jacobsen',
+  jardines: 'Jardines', jones: 'Jones', karo: 'Karo', katz: 'Katz', knotts: 'Knotts', kyllo: 'Kyllo', lee: 'Lee',
+  lopez: 'Lopez', miller: 'Miller', oliver: 'Oliver', olmstead: 'Olmstead', on_lee: 'On Lee',
+  riley: 'Riley v. California', shultz: 'Shultz', silverman: 'Silverman', smith: 'Smith', white: 'White',
+};
+// the opinion, as a citation's parenthetical names it; the majority (and a per curiam) gets none
+const ROLE = {
+  plurality: 'plurality', dissent: 'dissenting', concurrence: 'concurring',
+  'concurrence in the judgment': 'concurring in judgment', 'concurrence in part': 'concurring in part',
+  'concurrence in part and in the judgment': 'concurring in part and in judgment',
+  'concurrence in part and dissent in part': 'concurring in part, dissenting in part',
+};
+// level 0: "Kyllo at 29", "Kyllo at 32 n.1", "Carpenter at 361 (dissenting)"; level 1 adds the paragraph's number in
+// its opinion ("Kyllo at 29, ¶3"); level 2 also names the author ("On Lee at 758, ¶1 (Douglas, dissenting)")
+export function passageTag(p, level = 0) {
+  const name = SHORT_NAMES[p.case_key] || p.case_name;
+  const at = p.slip_opinion ? `, slip op. at ${p.page_start}` : ` at ${p.page_start}`;
+  const note = p.kind === 'footnote' ? ` n.${p.footnote_label}` : '';
+  const n = /-p(\d+)$/.exec(p.id);
+  const para = level >= 1 && n ? `, ¶${n[1]}` : '';
+  const role = ROLE[p.opinion_type];
+  const who = level >= 2 && role && p.authors.length ? `${andList(p.authors)}, ` : '';
+  return `${name}${at}${note}${para}${role ? ` (${who}${role})` : ''}`;
+}
+export const passageId = id => `ID ${id}.`;
 export const decided = iso => `Decided ${longDate(iso)}.`;
 export function footnoteLabel(p) { return `Footnote ${p.footnote_label}`; }

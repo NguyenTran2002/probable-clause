@@ -4,7 +4,7 @@
 // inside its card. Hues follow keep order, four repeating, with the passage-ID pill to tell same-hued ones apart.
 
 import { h, fresh, clear } from './dom.js';
-import { cardState, hueOf } from './model.js';
+import { cardState, hueOf, tagOf } from './model.js';
 import { rangesToUnits } from './cp.js';
 import * as T from './text.js';
 
@@ -66,18 +66,18 @@ export function createSources({ list, countEl, tabCount, onApi, onRead }) {
   function cardBody(run, id, p, state) {
     const keep = run.keeps.get(id);
     const frag = document.createDocumentFragment();
-    frag.append(h('p', { class: 'verdict' }, h('span', { class: 'pid' }, id), h('span', { class: 'mark' }, T.MARK[state]),
+    frag.append(h('p', { class: 'verdict' }, h('span', { class: 'pid', attrs: { title: id } }, tagOf(run, id)), h('span', { class: 'mark' }, T.MARK[state]),
       keep && state !== 'notkept' ? h('span', { class: 'reason' }, keep.reason) : null));
     frag.append(h('p', { class: 'case' }, h('i', null, p.case_name), `, ${p.citation}`));
     frag.append(h('p', { class: 'meta' }, `${T.decided(p.decided)} ${T.lineup(p)}`,
-      p.kind === 'footnote' ? ` ${T.footnoteLabel(p)}.` : '', p.section ? ` Section ${p.section}.` : ''));
+      p.kind === 'footnote' ? ` ${T.footnoteLabel(p)}.` : '', p.section ? ` Section ${p.section}.` : '', ' ', h('span', { class: 'id' }, T.passageId(id))));
     const body = h('div', { class: 'body' });
     body.append(h('p', { class: 'text' }, ...sentenceSpans(p), ' ', h('span', { class: 'pin' }, T.pin(p))));
     // attached footnotes, folded (T4.3 #1); a footnote kept or matched alone has its own card as well
     const notes = (p.footnotes || []).map(fid => run.passages.get(fid)).filter(Boolean);
     if (notes.length) {
       body.append(h('details', { class: 'fns' }, h('summary', null, T.FOOTNOTES_IN(notes.length)),
-        ...notes.map(n => h('p', { class: 'fn' }, h('span', { class: 'fn-label' }, `${n.footnote_label} `), n.text, ' ', h('span', { class: 'pid' }, n.id)))));
+        ...notes.map(n => h('p', { class: 'fn' }, h('span', { class: 'fn-label' }, `${n.footnote_label} `), n.text, ' ', h('span', { class: 'pid', attrs: { title: n.id } }, tagOf(run, n.id))))));
     }
     body.append(h('p', { class: 'small guarantee' }, T.GUARANTEE));
     if (p.slip_opinion) body.append(h('p', { class: 'slip' }, T.SLIP_NOTE));

@@ -63,8 +63,8 @@ function blockOf(starts, pos) {
 }
 
 // blocks: [{index, text, citations}], in order; flags: CheckResult.flags (code points within each block's text);
-// hueOf(passage_id) -> 'h1'...; returns {nodes, straddled: [block index], flagged: [{flag, i}]}
-export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
+// hueOf(passage_id) -> 'h1'...; tagOf(passage_id) -> the pill's words (P4.35), the ID by default; returns {nodes, straddled: [block index], flagged: [{flag, i}]}
+export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1', tagOf = id => id }) {
   blocks = blocks.filter(Boolean).map(b => ({ ...b, text: b.text.replace(PUA, '\ufffd') }));
   const starts = [];
   let src = '';
@@ -141,7 +141,7 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
         if (straddled.has(p.b)) {
           if (placed.has(p.b)) continue;
           placed.add(p.b);
-          top.kids.push(cited(blk, p.b, plainWithFlags(blk.text, starts[p.b], fl, flagged, top.notes), hueOf, true));
+          top.kids.push(cited(blk, p.b, plainWithFlags(blk.text, starts[p.b], fl, flagged, top.notes), hueOf, tagOf, true));
           continue;
         }
         const raw = tok.content.slice(p.i, p.k);
@@ -149,7 +149,7 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
           // the pills follow the cited words; the block's trailing space goes after them, before the next block
           const body = raw.replace(/\s+$/, '');
           const inner = inlinePiece(md, body, map.slice(p.i, p.i + body.length), fl, flagged, top.notes);
-          top.kids.push(cited(blk, p.b, inner, hueOf, false));
+          top.kids.push(cited(blk, p.b, inner, hueOf, tagOf, false));
           if (body.length < raw.length) top.kids.push(text(' '));
         } else top.kids.push(...inlinePiece(md, raw, map.slice(p.i, p.k), fl, flagged, top.notes));
       }
@@ -164,10 +164,10 @@ export function layoutAnswer({ md, blocks, flags = [], hueOf = () => 'h1' }) {
   return { nodes: root, straddled: [...straddled].map(b => blocks[b].index), flagged };
 }
 
-function cited(blk, b, inner, hueOf, plain) {
+function cited(blk, b, inner, hueOf, tagOf, plain) {
   const first = blk.citations[0];
-  const pills = blk.citations.map((c, ci) => el('button', `pill ${hueOf(c.passage_id) || ''}`.trim(), [text(c.passage_id)],
-    { type: 'button', 'data-b': String(blk.index), 'data-ci': String(ci), 'aria-label': `Source ${c.passage_id}` }));
+  const pills = blk.citations.map((c, ci) => el('button', `pill ${hueOf(c.passage_id) || ''}`.trim(), [text(tagOf(c.passage_id))],
+    { type: 'button', 'data-b': String(blk.index), 'data-ci': String(ci), 'aria-label': `Source: ${tagOf(c.passage_id)}`, title: c.passage_id }));
   return el('span', `cited ${hueOf(first.passage_id) || ''}${plain ? ' straddle' : ''}`.trim(), [...inner, text(' '), ...pills],
     { 'data-b': String(blk.index) });
 }

@@ -2,7 +2,7 @@
 // panel, fed one event at a time through the run model. Live runs, reattached runs and replays all play here.
 
 import { h, $, $$, clear, fresh, setQuiet } from './dom.js';
-import { createRun, apply, answerLabels, hueOf } from './model.js';
+import { createRun, apply, answerLabels, hueOf, tagsFor } from './model.js';
 import { createSteps } from './steps.js';
 import { createSources, lightSentences, unlightSentences } from './sources.js';
 import { renderBand } from './band.js';
@@ -173,7 +173,8 @@ export function createView({ cfg, corpus, md }) {
         h('p', { class: 'key' }, h('span', { class: 'key-cited' }, T.ANSWER_KEY.split(';')[0]), T.ANSWER_KEY.slice(T.ANSWER_KEY.indexOf(';'))));
     }
     const prose = h('div', { class: 'prose' });
-    const laid = layoutAnswer({ md, blocks: run.blocks, flags: run.checks ? run.checks.flags : [], hueOf: id => hueOf(run, id) });
+    const tags = tagsFor(run, run.blocks.filter(Boolean).flatMap(b => b.citations.map(c => c.passage_id)));
+    const laid = layoutAnswer({ md, blocks: run.blocks, flags: run.checks ? run.checks.flags : [], hueOf: id => hueOf(run, id), tagOf: id => tags.get(id) || id });
     prose.append(mount(laid.nodes));
     // each note names the words it is about, and each marked span points to its note for screen readers
     const flags = run.checks ? run.checks.flags : [];

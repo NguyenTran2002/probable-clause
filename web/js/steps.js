@@ -3,7 +3,7 @@
 // from the run model; each one's element is kept and refreshed in place, so nothing already shown moves.
 
 import { h, fresh, clear } from './dom.js';
-import { callVisible, hueOf } from './model.js';
+import { callVisible, hueOf, tagOf } from './model.js';
 import { quoted } from './sources.js';
 import * as T from './text.js';
 
@@ -120,8 +120,8 @@ export function createSteps(container, { cfg, onGoto }) {
 
   function chips(run, ids) {
     return h('p', { class: 'chips' }, ids.map(id => h('button', {
-      class: `pill ${hueOf(run, id) || ''}`.trim(), attrs: { type: 'button', 'data-goto': id }, on: { click: () => onGoto(id) },
-    }, id)));
+      class: `pill ${hueOf(run, id) || ''}`.trim(), attrs: { type: 'button', 'data-goto': id, title: id }, on: { click: () => onGoto(id) },
+    }, tagOf(run, id))));
   }
 
   function renderTool(run, it, li) {

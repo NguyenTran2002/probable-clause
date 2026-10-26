@@ -5,6 +5,8 @@
 // Each item is one thing the visitor watches happen: a Claude call waiting for its reply (shown only while it waits
 // or when it needed a retry), a tool call with its result, a pause or a resume.
 
+import { passageTag } from './text.js';
+
 export const HUES = ['h1', 'h2', 'h3', 'h4'];
 const SEARCHES = new Set(['search_meaning', 'search_exact']);
 
@@ -56,6 +58,30 @@ function addCard(run, id) { if (!run.cards.includes(id)) run.cards.push(id); }
 export function hueOf(run, id) {
   const k = run.keeps.get(id);
   return k ? HUES[k.order % HUES.length] : null;
+}
+
+// A passage's tag (P4.35), at the lowest level that keeps it apart from the others in `ids`: the answer's tags go up a
+// level only when two in the answer would read the same. An unknown passage keeps its ID.
+export function tagsFor(run, ids, minLevel = 0) {
+  const ps = [...new Set(ids)].map(id => run.passages.get(id) || { id });
+  const level = new Map(ps.map(p => [p.id, minLevel]));
+  const label = p => (p.case_name ? passageTag(p, level.get(p.id)) : p.id);
+  for (let round = 0; round < 3; round++) {
+    const seen = new Map();
+    for (const p of ps) { const l = label(p); seen.set(l, [...(seen.get(l) || []), p]); }
+    let bumped = false;
+    for (const group of seen.values()) if (group.length > 1) for (const p of group) if (level.get(p.id) < 2) { level.set(p.id, level.get(p.id) + 1); bumped = true; }
+    if (!bumped) break;
+  }
+  return new Map(ps.map(p => [p.id, label(p)]));
+}
+// the cards and the step log list many passages from the same pages, so theirs always carry the paragraph (level 1),
+// and the author when even that is shared
+export function tagOf(run, id) {
+  const p = run.passages.get(id);
+  if (!p) return id;
+  const same = [...run.passages.values()].filter(q => q.case_key === p.case_key && q.page_start === p.page_start);
+  return tagsFor(run, same.map(q => q.id), 1).get(id);
 }
 
 // What each card shows once the run is over (T4.3 #1), or now while it runs.

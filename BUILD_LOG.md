@@ -2501,3 +2501,45 @@ After the discussion: *"Let's give this a try: the dock keeps the status, the co
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the line quoted above, with its ending left to the main session. Not a lock.
+
+## Oct 25, 2026, 20:57 CDT — Frontend: the user's review, round 13; a passage's tag reads as a citation (P4.35)
+**Asked (the user):** after the landing figure's redesign was mocked, *"Discuss whether we can make the tag friendlier without losing organization."* The main session proposed citation-style tags. The user suggested a hybrid, `kyllo-majority-p29-13531`, and the main session advised against it:
+- the trailing number would be a second, made-up ID;
+- "p29" would mean a page where today's "p" means a paragraph;
+- it still reads as code, at 24 characters.
+
+It offered the ¶ as the tie-breaker instead. The user: *"Your proposal works. To confirm, this would be a frontend change only with nothing touching the backend and API right?"* The main session confirmed this from the code: each passage's event carries every field the tag needs. It noted that the change amends T4.3 #3. Then: *"Yes, lock it as P4.35 and build it: tags like "Kyllo at 29", the opinion type when it isn't the majority, "n.1" for footnotes, the ¶ mark only when two tags in one answer would match, and the real ID kept in the hover text, the card's small print and the API view."*
+**Came back:**
+- **`text.js`:**
+  - `SHORT_NAMES` holds 32 curated short names. Both Rileys are in full: "Florida v. Riley" and "Riley v. California".
+  - `passageTag(p, level)` writes the tag at three levels:
+    - level 0 is the case, page, footnote and opinion parenthetical;
+    - level 1 adds ", ¶N", the paragraph number from the ID;
+    - level 2 also names the author.
+  - The parentheticals use a citation's verbs: "dissenting", "concurring", "concurring in judgment", "plurality" and so on.
+- **`model.js`:**
+  - `tagsFor(run, ids)` raises a tag's level only where two tags in the set would read the same.
+  - `tagOf(run, id)` gives the cards and the step log level 1 always, and level 2 only when needed. This is the main session's call: those lists hold many passages from the same pages.
+- **The answer (`answer.js`, `view.js`):** each tag is unique within the answer. Its hover text is the ID, and its screen-reader label is "Source: <tag>".
+- **The step log's chips and the source cards** show `tagOf`, with the ID as hover text.
+  - The card's small print ends "ID kyllo-1-p1.", in the code face.
+  - The footnotes folded inside a card show their tags.
+- **Unchanged:** the API view's title and fragments, which keep the ID, and the landing figure's live data. The figure's static tag now reads "Kyllo at 29", with the ID as hover text.
+- **Tests:** new `webdev/test/tags.test.mjs`, 5 tests:
+  - the forms;
+  - all 32 corpus cases have distinct short names;
+  - the ¶ appears only on a clash;
+  - over every fixture, the answer's tags are distinct, and so are all the run's passage tags;
+  - over the whole corpus (from the local `web/_generated/`), all 2,462 passages are distinct at level 2.
+- **Checked:**
+  - Node: 76 passed.
+  - In the mock, `answered-phone-location-records` gave these tags, among others:
+    - "Carpenter at 309";
+    - "Smith at 744";
+    - "Katz at 361 (concurring)";
+    - "Carpenter at 316, ¶41" and "Carpenter at 316, ¶40", the only clash in that answer;
+    - "Carpenter at 362 (dissenting)".
+  - The cards read "Carpenter at 310 n.3" and "Chatrie, slip op. at 1, ¶1 (dissenting)", with "ID carpenter-1-p41." in the small print.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** quoted above; locked as P4.35, amending T4.3 #1 and #3.

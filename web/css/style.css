@@ -416,6 +416,8 @@ body:not(.replaying) #skip, body.replaying #send { display: none; }
 .verdict .reason { flex-basis: 100%; color: var(--muted); }
 .card .case { margin-top: 0.55rem !important; font-family: var(--src); font-size: 1.0625rem; line-height: 1.35; }
 .card .meta { font-size: 0.8125rem; color: var(--muted); margin-top: 0.15rem !important; }
+/* the passage's real ID, in the small print (P4.35): its tag leads the card */
+.card .meta .id { font-family: var(--code); font-size: 0.75rem; white-space: nowrap; }
 .card .text { margin-top: 0.6rem !important; font-family: var(--src); font-size: 1rem; line-height: 1.55; }
 .card .pin { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
 .card .small { font-size: 0.8125rem; color: var(--muted); margin-top: 0.45rem !important; }

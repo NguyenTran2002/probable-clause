@@ -740,7 +740,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **Date:** Oct 24, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 24, 2026, 18:52 CDT — Phase 3: Architecture, Area 4 (the frontend stack, T4.2)"
 
-### T4.3 Where Areas 1 to 3 change the prototype (amends T3.1: the reader fetches whole opinions from the web service)
+### T4.3 Where Areas 1 to 3 change the prototype (amends T3.1: the reader fetches whole opinions from the web service) — AMENDED by P4.35 (#3: the tag after each citation reads as a citation, not as the passage ID; #1: the ID moves to the card's small print)
 
 - **Decision:** Area 4, topic 3. The prototype (T4.1) keeps its look; only these change:
   1. **Source cards (P2.3: no discards).** A card starts **Found** and becomes **Kept** with Claude's reason; a re-keep replaces the reason (T1.7). When the answer is done each card ends **kept and cited** (its hue), **kept, not cited** (its hue, labelled) or **not kept** (grey, folded to one line, no reason). The count reads "N found, K kept". Real IDs (`katz-3-p12`, T1.6). "Found by" lists every search or read that returned the passage; a passage matched again gets no new card. A paragraph's footnotes sit folded inside its card; a footnote gets its own card only when a search matches it alone or it is kept (T1.6). Passages from reads get cards too, folded like the rest.
@@ -1146,3 +1146,15 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"My pov is that the project's is show casing claude citations, and these additional checks are good quality of life add on, not guarantees."* Then: *"The line under each answer goes. The flags and their notes stay as they are. (i. e. when the check catches something, we still flag) "The checks did not run on it", on a partial answer should probably not display anything because again the checks are add on, not the key piece. Update and log my decision."*
 - **Date:** Oct 25, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 19:59 CDT — Frontend: the user's review, round 8; the checks are an add-on, shown only as flags (P4.34)"
+
+### P4.35 A passage's tag reads as a citation (amends T4.3 #1 and #3)
+
+- **Decision:** the tag after each cited sentence, and on the source cards and in the step log, names the passage as a citation reads, not by its ID.
+  1. **The form:** the case's short name and page: *"Kyllo at 29"*. A footnote adds its number: *"Kyllo at 32 n.1"*. A slip opinion reads *"Chatrie, slip op. at 4"*. The short names are a curated list of 32 (both Rileys are named in full).
+  2. **The opinion,** when it isn't the majority, in a citation's parenthetical: *"(dissenting)"*, *"(concurring)"*, *"(concurring in judgment)"*, *"(plurality)"* and so on.
+  3. **The ¶ mark:** in the answer, the paragraph's number in its opinion is added only when two tags in that answer would otherwise read the same (*"Kyllo at 29, ¶3"*). In the rare case where even that is shared, the author is named too (*"(Douglas, dissenting)"*). The cards and the step log list many passages from the same pages, so theirs always carry the ¶ (the main session's call).
+  4. **The real ID** (`kyllo-1-p1`) stays in each tag's hover text, the card's small print, and the API view, so a developer can match a tag to the tool calls and the API traffic.
+  5. **Frontend only:** the passage IDs, the prompts, the tool calls, the API traffic, the events and the replays are unchanged; every field the tag needs already arrives in each passage's event.
+- **User's words:** *"Yes, lock it as P4.35 and build it: tags like "Kyllo at 29", the opinion type when it isn't the majority, "n.1" for footnotes, the ¶ mark only when two tags in one answer would match, and the real ID kept in the hover text, the card's small print and the API view."*
+- **Date:** Oct 25, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 25, 2026, 20:57 CDT — Frontend: the user's review, round 13; a passage's tag reads as a citation (P4.35)"
