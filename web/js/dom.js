@@ -25,6 +25,11 @@ export function webLink(url, label) {
   return h('a', { attrs: { href: url, target: '_blank', rel: 'noopener noreferrer' } }, label);
 }
 
+// A link to one of this site's own pages, relative to this one so it works under any path prefix; a new tab.
+export function siteLink(path, label) {
+  return h('a', { attrs: { href: path, target: '_blank', rel: 'noopener' } }, label);
+}
+
 // Rich text from text.js: strings, {i}, {b}, {a, href}. Every piece is text.
 export function rich(parts) {
   return parts.map(p => {

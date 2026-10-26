@@ -2,7 +2,7 @@
 // replays, and a reload going straight back into its run (T3.2, T4.4 #6).
 
 import markdownit from '../vendor/markdown-it/markdown-it.esm.min.mjs';
-import { h, $, $$, clear, rich, webLink, session } from './dom.js';
+import { h, $, $$, clear, webLink, siteLink, session } from './dom.js';
 import { loadStatic, loadReplays, loadReplay } from './config.js';
 import { createWaker } from './wake.js';
 import { attach } from './stream.js';
@@ -28,16 +28,16 @@ function swap(view) {
 
 // ---------- the standing lines (T5.1, T5.2, T5.5), filled from corpus.json ----------
 function standing(corpus) {
-  const credits = () => h('details', { class: 'credits' }, h('summary', null, T.CREDITS_SUMMARY),
-    h('p', null, ...rich(T.creditsSources(corpus))), h('p', null, T.CREDITS_BUILT), h('p', null, T.CREDITS_LICENCE),
-    h('p', null, T.coverageDates(corpus.coverage)), h('p', null, T.TEXT_STATUS));
-  const privacy = () => h('details', { class: 'credits' }, h('summary', null, T.PRIVACY_SUMMARY), ...T.PRIVACY.map(par => h('p', null, ...rich(par))));
-  const affiliation = () => h('p', { class: 'aff' }, `${T.AFFILIATION} `, webLink(T.REPO_URL, T.REPO_LINK_TEXT));
+  // the credits and the privacy note are pages of their own, each opened in a new tab (the user, Oct 25, 2026),
+  // on one line with the source code
+  const links = () => h('p', { class: 'links' }, siteLink('sources-and-credits', T.CREDITS_SUMMARY),
+    siteLink('privacy', T.PRIVACY_SUMMARY), webLink(T.REPO_URL, T.REPO_LINK_TEXT));
+  const affiliation = () => h('p', { class: 'aff' }, T.AFFILIATION);
   $('#pitch').textContent = T.pitch(corpus);
   clear($('#landing-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'block' }, T.AI_DISCLOSURE),
-    h('p', null, T.coverageLine(corpus)), affiliation(), h('div', { class: 'folds' }, credits(), privacy()));
+    h('p', null, T.coverageLine(corpus)), affiliation(), links());
   clear($('#dock-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'long' }, T.AI_DISCLOSURE),
-    h('div', { class: 'folds' }, credits(), privacy()), affiliation());
+    links(), affiliation());
   $('#trace-caption').textContent = T.TRACE_CAPTION;
   $('#from-scratch').textContent = T.FROM_SCRATCH;
 }

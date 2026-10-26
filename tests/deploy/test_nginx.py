@@ -60,7 +60,7 @@ def test_basics(name):
     assert "charset utf-8;" in text and "gzip_vary on;" in text and "worker_processes 1;" in text
     assert "autoindex off;" in text and "autoindex on" not in text
     assert re.search(r"listen 8080\b", text)               # deploy.sh passes --port=8080
-    assert "try_files $uri $uri/index.html =404;" in text  # no directory listing, no fall-through to a directory
+    assert "try_files $uri $uri.html $uri/index.html =404;" in text  # no directory listing, no fall-through to a directory
     assert "access_log off;" in text                       # T3.7: no client address kept by us
     assert "X-Forwarded-For" not in text or 'X-Forwarded-For ""' in text
 

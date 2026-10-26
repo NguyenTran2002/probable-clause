@@ -37,7 +37,7 @@ export const TRACE_CAPTION = 'Each cited sentence carries a citation the Claude 
 export const NOT_ADVICE = 'Research, not legal advice: it shows what the Court said and never applies it to your situation. It does not tell you whether a case is still good law, and it can miss relevant passages.';
 export const AI_DISCLOSURE = 'This is AI. Claude, Anthropic’s AI model, does the research and writes the answers through the Claude API. Check what it says against the opinions and linked sources before relying on it.';
 export const AFFILIATION = 'Independent project. Not affiliated with Anthropic.';
-export const REPO_LINK_TEXT = 'Source code on GitHub.';
+export const REPO_LINK_TEXT = 'Source code on GitHub';   // one of three links on a line, so no full stop
 export function creditsSources(corpus) {
   const c = corpus.source_counts;
   return [
@@ -245,6 +245,7 @@ export const SOURCES_EMPTY = 'Passages appear here as Claude finds them.';
 export const sourcesCount = (found, kept) => `${num(found)} found, ${num(kept)} kept`;
 export const CREDITS_SUMMARY = 'Sources and credits';
 export const PRIVACY_SUMMARY = 'Privacy';
+export const PAGE_FAILURE = 'This page could not load its figures. Please try again in a minute.';
 export const GROUP_ANSWER = 'Writing the answer';
 export const GROUP_UPDATE = 'Update check, running beside the answer';
 export const THINKING = 'Claude is thinking';           // the user's words, Oct 25, 2026

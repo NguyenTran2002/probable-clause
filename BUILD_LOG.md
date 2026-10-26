@@ -2374,3 +2374,21 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 **Failures:** the first try of the fold's reveal never ran. A function named `reveal` already existed in `view.js` (the passage reveal), and the later declaration replaced it; renamed `revealFold`.
 **Spend:** none.
 **DECISION (user):** none beyond the three requests (bug fixes).
+
+## Oct 25, 2026, 19:42 CDT — Frontend: the user's review, round 6 (sources and credits, and privacy, as pages of their own)
+**Asked (the user):** "I want they all to open in a new tab that is a new page such as nguyennhattran.com/probable-clause/sources-and-credits. That means building the 2 simple pages too (GitHub is already its own page.) I want the line Source code on GitHub to be at the sale line as Sources and credits and Privacy buttons."
+**Came back:**
+- **Two pages:** `web/sources-and-credits.html` and `web/privacy.html`, with `web/js/page.js` filling them from `text.js`, so the wording still lives in one place. The credits page reads `corpus.json` for its counts and dates; if that fails, it says so (`PAGE_FAILURE`, a new line). Each has the wordmark linking back to the start page.
+- **The URLs:** `sources-and-credits` and `privacy`, beside the start page. nginx now tries `$uri.html` (both profiles, `tests/deploy/test_nginx.py` updated), and so does the mock. Under goodnight's prefix that is `/probable-clause/sources-and-credits`. With a trailing slash the address is a 404, not a page with broken paths.
+- **The footer:** the folds are gone. One line of three links ("Sources and credits", "Privacy", "Source code on GitHub"), each opening in a new tab. "Independent project. Not affiliated with Anthropic." stays as its own line, above the links on the landing page and below them under the composer. On a phone the run's dock still hides both, as before.
+- **The main session's calls (wording):**
+  - "Source code on GitHub" loses its full stop, now that it is one of three links.
+  - On the privacy page the note's bold lead "Privacy." is dropped, since the page's heading says it.
+- **Checked (only what changed):**
+  - In the browser on the mock: the three links on one line at 1,391 px, each with `target="_blank"`.
+  - Both pages render with their text and links. On the privacy page, the four provider links open in a new tab.
+  - Under the composer at 1440×900, the links sit on one line above the affiliation.
+  - `tests/deploy`: 40 passed, 2 skipped. Node: 71 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the request quoted above.

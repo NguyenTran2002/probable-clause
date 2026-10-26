@@ -278,9 +278,6 @@ body:not(.replaying) #skip, body.replaying #send { display: none; }
 .disclaimer { margin-top: 0.5rem !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
 .disclaimer p { margin: 0; }
 .disclaimer .long { display: block; } /* the AI-disclosure sentence always starts its own line */
-.disclaimer details { margin-top: 0.2rem; }
-.disclaimer summary { cursor: pointer; color: var(--brand); display: inline; }
-.disclaimer details p { margin-top: 0.3rem; text-align: left; }
 
 /* steps: a numbered sequence on a rail */
 .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
@@ -511,14 +508,9 @@ button:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.6; }
 .chiplist, .recorded ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .step .chiplist { margin-top: 0.6rem; }
 .fine .block { margin-top: 0.4rem; }
-.folds { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1.25rem; margin: 0.2rem 0 0.4rem; }
-.folds details { text-align: left; }
-.folds summary, .credits summary { cursor: pointer; color: var(--brand); }
-.folds details[open] { flex-basis: 100%; }
-.folds details p { margin: 0.4rem 0 0; }
+.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1.25rem; margin: 0.2rem 0 0.4rem !important; }
 .scratch { margin: 0.35rem 0 0 !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
 body.playing .scratch { display: none; }
-.disclaimer .folds { justify-content: center; }
 
 /* the step log after research: two groups, each with its own spinner */
 .steps-box { display: grid; gap: 1.1rem; }
@@ -642,11 +634,10 @@ body.playing .scratch { display: none; }
   .pg { float: none; display: block; width: auto; margin: 0 0 0.15rem; text-align: left; line-height: 1.4; }
   .pg-word { display: inline; }
   .reader-text .pg { display: none; }
-  /* the run's dock stays short on a phone: the credits, privacy and affiliation are on the landing page */
-  .disclaimer .folds, .disclaimer .aff { display: none; }
+  /* the run's dock stays short on a phone: the links and the affiliation are on the landing page */
+  .disclaimer .links, .disclaimer .aff { display: none; }
   .disclaimer { font-size: 0.6875rem; }
   .pgb .pg-word { display: block; margin: 0.4rem 0 0.15rem; font-family: var(--ui); font-size: 0.75rem; color: var(--muted); }
-  .folds { justify-content: flex-start; }
   .excerpt { margin: 1.25rem 0; }
   .excerpt > .pg { position: static; margin: 0 0 0.15rem; }
 }
@@ -654,7 +645,7 @@ body.playing .scratch { display: none; }
 /* sideways phone: short viewport */
 @media (max-height: 500px) and (min-width: 760px) {
   .bar { padding: 0.35rem 1rem; }
-  .disclaimer details, .disclaimer .folds, .disclaimer .aff, .scratch { display: none; }
+  .disclaimer .links, .disclaimer .aff, .scratch { display: none; }
   .dock { padding-top: 0.25rem; }
   .status { margin-bottom: 0.2rem !important; }
   .composer { padding: 0.3rem 0.3rem 0.3rem 0.8rem; }
@@ -665,6 +656,12 @@ body.playing .scratch { display: none; }
   .dlg-body { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
   .dlg-source, .dlg-wire { overflow: visible; }
 }
+
+/* ---------- the site's own pages: sources and credits, privacy ---------- */
+.doc { max-width: 42rem; margin: 0 auto; padding: 1.5rem var(--gutter) 4rem; }
+a.wordmark { display: inline-block; color: var(--ink); text-decoration: none; }
+.doc h1 { margin: 3rem 0 1.5rem; font-size: clamp(1.75rem, 5vw, 2.25rem); font-weight: 600; letter-spacing: -0.025em; line-height: 1.15; }
+.doc p { margin: 0 0 1.1rem; line-height: 1.65; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

@@ -117,8 +117,9 @@ class Handler(BaseHTTPRequestHandler):
             rel += "index.html"
         if ".." in Path(rel).parts:
             return self.send(404, "not found", "text/plain")
-        for base in (WEB, GENERATED):
-            f = (base / rel).resolve()
+        # as nginx does: the file, then the page by its name without .html (sources-and-credits, privacy)
+        for base, name in ((WEB, rel), (WEB, rel + ".html"), (GENERATED, rel)):
+            f = (base / name).resolve()
             if f.is_file() and f.is_relative_to(WEB):
                 ctype = TYPES.get(f.suffix, mimetypes.guess_type(f.name)[0] or "application/octet-stream")
                 return self.send(200, f.read_bytes(), ctype)
