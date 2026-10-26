@@ -230,7 +230,10 @@ body[data-view="run"] { height: 100dvh; overflow: hidden; display: grid; grid-te
 .bar { grid-row: 1; }
 .tabs { grid-row: 2; }
 .cols { grid-row: 3; }
-.bar { padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line); }
+.bar { padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.bar-links { display: flex; gap: 1.25rem; font-size: 0.8125rem; }
+.bar-links a { color: var(--muted); text-decoration: none; }
+.bar-links a:hover { color: var(--ink); text-decoration: underline; }
 .wordmark.small { font-size: 1.25rem; border: 0; background: none; padding: 0; view-transition-name: wordmark; }
 .tabs { display: none; }
 
@@ -275,9 +278,6 @@ body:not(.replaying) #skip, body.replaying #send { display: none; }
 .status { min-height: 1.3rem; margin-top: 0 !important; margin-bottom: 0.4rem !important; font-size: 0.8125rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; }
 /* no pulsing dot here: the working step in the log already pulses (the user, Oct 25, 2026) */
 @keyframes pulse { 50% { opacity: 0.25; } }
-.disclaimer { margin-top: 0.5rem !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
-.disclaimer p { margin: 0; }
-.disclaimer .long { display: block; } /* the AI-disclosure sentence always starts its own line */
 
 /* steps: a numbered sequence on a rail */
 .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
@@ -509,7 +509,8 @@ button:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.6; }
 .step .chiplist { margin-top: 0.6rem; }
 .fine .block { margin-top: 0.4rem; }
 .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1.25rem; margin: 0.2rem 0 0.4rem !important; }
-.scratch { margin: 0.35rem 0 0 !important; font-size: 0.75rem; color: var(--muted); text-align: center; }
+/* centred under the composer, in its column: auto side margins, as .dock > * sets them */
+.scratch { margin: 0.4rem auto 0; font-size: 0.8125rem; color: var(--muted); text-align: center; }
 body.playing .scratch { display: none; }
 
 /* the step log after research: two groups, each with its own spinner */
@@ -554,6 +555,8 @@ body.playing .scratch { display: none; }
 .prose code { font-family: var(--code); font-size: 0.875em; }
 .cited.straddle { white-space: normal; }
 .caret-host::after { content: ""; display: inline-block; width: 2px; height: 1.05em; background: var(--brand); vertical-align: -0.15em; margin-left: 2px; animation: pulse 0.9s step-end infinite; }
+.run-fine { font-size: 0.8125rem; color: var(--muted); }
+.run-fine p { margin: 0 0 0.4rem; }
 .costs { margin-top: 0.25rem; font-size: 0.8125rem; color: var(--muted); }
 .costs summary { cursor: pointer; }
 .costs .params { margin: 0.5rem 0; }
@@ -634,9 +637,9 @@ body.playing .scratch { display: none; }
   .pg { float: none; display: block; width: auto; margin: 0 0 0.15rem; text-align: left; line-height: 1.4; }
   .pg-word { display: inline; }
   .reader-text .pg { display: none; }
-  /* the run's dock stays short on a phone: the links and the affiliation are on the landing page */
-  .disclaimer .links, .disclaimer .aff { display: none; }
-  .disclaimer { font-size: 0.6875rem; }
+  /* no room beside the wordmark on a phone: the links are under the landing page */
+  .bar-links { display: none; }
+  .scratch { font-size: 0.75rem; }
   .pgb .pg-word { display: block; margin: 0.4rem 0 0.15rem; font-family: var(--ui); font-size: 0.75rem; color: var(--muted); }
   .excerpt { margin: 1.25rem 0; }
   .excerpt > .pg { position: static; margin: 0 0 0.15rem; }
@@ -645,12 +648,11 @@ body.playing .scratch { display: none; }
 /* sideways phone: short viewport */
 @media (max-height: 500px) and (min-width: 760px) {
   .bar { padding: 0.35rem 1rem; }
-  .disclaimer .links, .disclaimer .aff, .scratch { display: none; }
+  .scratch { display: none; }
   .dock { padding-top: 0.25rem; }
   .status { margin-bottom: 0.2rem !important; }
   .composer { padding: 0.3rem 0.3rem 0.3rem 0.8rem; }
   .composer .primary, .composer .ghost { padding: 0.4rem 0.8rem; }
-  .disclaimer { margin-top: 0.25rem !important; }
   .dock { padding-bottom: 0.4rem; }
   .cols { grid-template-columns: minmax(0, 1fr) 22rem; }
   .dlg-body { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }

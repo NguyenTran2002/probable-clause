@@ -2392,3 +2392,27 @@ Checks: `tests/corpus/test_web_data.py` and `tests/deploy/` pass (48 passed, 2 s
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** the request quoted above.
+
+## Oct 25, 2026, 19:51 CDT — Frontend: the user's review, round 7 (the run screen's dock cleaned up)
+**Asked (the user):** the bottom of the run screen "looks like an absolute mess straight from a horror movie. Let's discuss this." The main session's diagnosis:
+- The from-scratch line hung off the dock's left edge, outside the composer's column. Its `margin: … 0 0 !important` cancelled the auto side margins.
+- 6 to 8 lines of fine print sat under the composer on every run, repeating the landing page.
+- The strip mixed three alignments and three text sizes.
+After the discussion: *"Let's give this a try: the dock keeps the status, the composer and the from-scratch line; the disclaimers go under each answer; the links go in the top bar."*
+**Came back:**
+- **The dock:** the status line, the composer and the from-scratch line, now centred under the composer in its column (0.8125rem, the status line's size; 0.75rem on a phone). `#dock-fine` and its `.disclaimer` styles are removed.
+- **The disclaimers:** the not-legal-advice line and the AI disclosure, each its own paragraph (T4.1), now appear once per run.
+  - They sit at the run's end, under the answer's checks line and above the cost line, so every ending gets them, a run with no answer included.
+  - The landing page keeps them, so the AI disclosure is still seen before the first question.
+- **The links:** "Sources and credits", "Privacy" and "Source code on GitHub" sit to the right of the run screen's top bar, muted and not underlined until hovered.
+  - Hidden on a phone, where there is no room; the landing page has them.
+  - Shown sideways.
+- **The affiliation:** now on the landing page only.
+- **Checked (only what changed), in the browser on the thermal-imager replay, skipped to the end:**
+  - **1440×900:** the composer, the status and the from-scratch line share one column (94 to 914 px). The checks, the two disclaimers and the cost line run in that order (579 to 752). The links are on one line in the bar.
+  - **393×852:** no horizontal scroll, and the bar's links are hidden. The dock is the status, the composer and the from-scratch line, which wraps to two centred lines.
+  - **852×393:** the links fit in the bar (498 to 836 of 852), and the from-scratch line stays hidden, as before.
+  - Node: 71 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the direction quoted above. Not a lock; the main session's calls are the order (disclaimers before the cost line), the sizes, and the bar's link style.

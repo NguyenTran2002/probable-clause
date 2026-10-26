@@ -220,10 +220,13 @@ export function createView({ cfg, corpus, md }) {
     else if (e.state === 'refusal') steps.last(T.REFUSAL_ENDED);
     else if (e.state === 'failed' && !kept) steps.last(T.FAILED_NOTHING_KEPT(T.failureWords(e.failure_reason)));
     else if (['step_limit', 'token_ceiling', 'time_limit', 'error_stopped'].includes(e.state) && !run.blocks.length) steps.last(T.stopNothingKept(e.state, cfg));
+    // the disclaimers, once under each run's answer rather than always in the dock (the user, Oct 25, 2026); the
+    // AI disclosure starts its own line (T4.1)
+    clear(endSlot).append(h('div', { class: 'run-fine' }, h('p', null, T.NOT_ADVICE), h('p', null, T.AI_DISCLOSURE)));
     if (e.totals) {
       const costs = renderCosts(e.totals, replayDate);
       costs.addEventListener('toggle', () => { if (costs.open) requestAnimationFrame(() => revealFold(costs)); });
-      clear(endSlot).append(costs);
+      endSlot.append(costs);
     }
   }
 

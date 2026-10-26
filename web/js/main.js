@@ -28,16 +28,15 @@ function swap(view) {
 
 // ---------- the standing lines (T5.1, T5.2, T5.5), filled from corpus.json ----------
 function standing(corpus) {
-  // the credits and the privacy note are pages of their own, each opened in a new tab (the user, Oct 25, 2026),
-  // on one line with the source code
-  const links = () => h('p', { class: 'links' }, siteLink('sources-and-credits', T.CREDITS_SUMMARY),
-    siteLink('privacy', T.PRIVACY_SUMMARY), webLink(T.REPO_URL, T.REPO_LINK_TEXT));
-  const affiliation = () => h('p', { class: 'aff' }, T.AFFILIATION);
+  // the credits and the privacy note are pages of their own, each opened in a new tab, on one line with the source
+  // code (the user, Oct 25, 2026): under the landing page, and in the run screen's top bar. The run screen's dock
+  // keeps only the status, the composer and the from-scratch line; its disclaimers sit under each answer (view.js).
+  const links = () => [siteLink('sources-and-credits', T.CREDITS_SUMMARY), siteLink('privacy', T.PRIVACY_SUMMARY),
+    webLink(T.REPO_URL, T.REPO_LINK_TEXT)];
   $('#pitch').textContent = T.pitch(corpus);
   clear($('#landing-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'block' }, T.AI_DISCLOSURE),
-    h('p', null, T.coverageLine(corpus)), affiliation(), links());
-  clear($('#dock-fine')).append(h('p', null, T.NOT_ADVICE), h('p', { class: 'long' }, T.AI_DISCLOSURE),
-    links(), affiliation());
+    h('p', null, T.coverageLine(corpus)), h('p', { class: 'aff' }, T.AFFILIATION), h('p', { class: 'links' }, ...links()));
+  clear($('#bar-links')).append(...links());
   $('#trace-caption').textContent = T.TRACE_CAPTION;
   $('#from-scratch').textContent = T.FROM_SCRATCH;
 }
