@@ -1323,7 +1323,7 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
      - the case-name check ends a name at an opening parenthesis, so "*Chatrie v. United States* (Alito, joined by …)" names *Chatrie*.
   2. **The bracketed insertion stays flagged.** "knowingly expose[] [an area] to the public" has no source words behind "[an area]", and that flag holds under T1.12.
   3. **The three flagged runs are re-recorded on the fixed code:** `gps-tracking-car`, `geofence-warrants`, `backyard-from-air`. `phone-search-arrest`, recorded at `c74b3e0` with no flags, is kept as recorded. A re-recorded run is published with whatever flags it then carries, the user's call after review (T5.6).
-  4. **The replays' allowance:** $3.00 of Anthropic and 10 Exa searches. It starts from the test database's month total of $3.6735 at 01:34 (`spend_report.py`), and Voyage counts in that total. P4.22's tally closes at 01:34: $1.9034 spent in all and 12 Exa searches.
+  4. **The replays' allowance:** $3.00 of Anthropic and 10 Exa searches. It starts from the test database's month total of $3.6735 at 01:34 (`spend_report.py`), and Voyage counts in that total. P4.22's tally closes at 01:34: $1.9034 spent ($0.5383 in the Wave 3 tests, $1.3651 tonight) and 7 Exa searches.
 - **User's words:** *"Fix the two check bugs with tests, then re-record the three flagged runs. New allowance: $3.00 and 10 Exa searches."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 01:35 CDT — The replays: the check fixes, the re-recording and its allowance (P4.48)"
