@@ -2933,3 +2933,36 @@ CLAUDE.md's current state is updated for the compaction.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"Nope, iterating is still on."*
+
+## Oct 26, 2026, 01:03 CDT — Frontend: the user's review, round 27; the fonts tried as Founding print, behind master tokens
+**Asked (the user):** after a mockup of four font sets (scratch only, not committed): *"Try stand up founding print. Also, use master variables to make things easier for us in the future as well. (So no multiple changes across many files.) Unless, it'd be too much of a refactor."* Then: *"Yes, download the 16 font files and the 3 licence texts."*
+**Came back:**
+- **Master tokens.** No refactor was needed: fonts were already named only in `fonts.css` (the files) and `style.css`'s tokens, except the margin notes' Caveat. Every family is now named once, in `style.css`'s type block:
+  - `--ui`, the product;
+  - `--src`, the Court's words;
+  - `--display`, the amendment behind the first view;
+  - `--display-i`, its italic phrase, for a display cut with no italic;
+  - `--code`, the API;
+  - `--hand`, the margin notes.
+  A change of font is its `@font-face` rules in `fonts.css` plus one token.
+- **Founding print:**
+  - IBM Plex Sans v23 for `--ui`;
+  - Libre Caslon Text v5 for `--src` and `--display-i`;
+  - Libre Caslon Display v18 for `--display`;
+  - IBM Plex Mono v20 for `--code`;
+  - Caveat kept for `--hand`.
+- **The files:** 16 `.woff2` files (Latin and Latin Extended, 288 KB) from fonts.gstatic.com, and 3 SIL OFL 1.1 texts from github.com/google/fonts (`OFL-ibmplex.txt`, `OFL-librecaslontext.txt`, `OFL-librecaslondisplay.txt`), downloaded Oct 26, 2026 on the user's word. Each file was checked as woff2 and each licence as OFL 1.1.
+- The old fonts' files and faces stay until a choice is locked, so going back is three tokens.
+**Checked:**
+- In the browser pane, on the mock:
+  - the landing at 1280×800, with the notes, the hero and the chips;
+  - the exit animation, where "probable cause" is in Caslon Text italic;
+  - a recorded run's answer, source cards and API window;
+  - dark mode;
+  - the phone landing at 375×812, with notes shown and no sideways scroll.
+- The browser loaded exactly the new families plus Caveat.
+- Node tests: 84 of 84 pass.
+- `tests/deploy`: 40 passed, 2 skipped.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** none yet. This would amend T4.1's fonts if locked.
