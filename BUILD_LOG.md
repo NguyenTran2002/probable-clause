@@ -3056,3 +3056,22 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** *"Remove the old font files."* Locked as P4.47.
+
+## Oct 26, 2026, 01:26 CDT — Full test before the replays (the user's step 1)
+**Asked (the user):** *"Full test, launch."* This is step 1 of the order locked in P4.46.
+**Came back:** every suite passes, and the browser sweep found no defect. Nothing was changed.
+**Checked:**
+- the whole Python suite (`.venv/bin/pytest -q`): **2,943 passed, 54 skipped**, the same count as at Wave 3's merge;
+- the Atlas tests against `Probable_Clause_test` (`PC_ATLAS_TEST=1`, `tests/state/test_store_atlas.py`): 45 passed. These are 45 of the 54 the full suite skips;
+- the Node tests (`node --test webdev/test/`): 84 of 84;
+- the browser sweep on the local stack (`deploy/local.sh`, `local-c74b3e0`, 8080):
+  - **landing at 654 px, light:** loaded with only the five current font families and none in error, every resource answering 200, and no sideways scroll;
+  - **the thermal-imager replay at 654 px:** played at its recorded pace. "Skip to the end" reached the finished answer, with "Later developments" (no web search), the cost line and the finish line;
+  - **a citation tag:** tapping one at this width switched to Sources and lit the cited passage, and "View source" opened the reader at `jardines-2-p5` with the cited sentence marked;
+  - **landing and a replay at 1280×800, dark:** both rendered, filling the viewport, with no sideways scroll;
+  - **phone, 375×812, light:** the phone-tracking chip pressed from the landing's foot glided back to the top in 910 ms. The run view followed at 2,962 ms, so the exit played after the scroll (P4.46). The replay played and skipped to its end (the web search's band and the cost line), with no element past the viewport edge and no failed request;
+  - **phone, 375×812, dark:** the landing and the "Follow one citation" figure rendered.
+- One screenshot of the figure after a wheel scroll came back blank. The page itself showed every step at full opacity, and a second screenshot showed the figure, so the blank came from the screenshot, not the page.
+**Failures:** none.
+**Spend:** none. No live run was started. Only replays were played.
+**DECISION (user):** none. Next is the replays (step 2): the questions go to the user for approval first.
