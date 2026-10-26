@@ -3139,3 +3139,18 @@ The full stack was then rebuilt with `deploy/local.sh`.
 **DECISION (user):** none yet. Open:
 - whether to publish each flagged run as recorded or to fix the checks and re-record it (T5.6);
 - T5.6's fifth replay, the geofence question on the corpus that ends before *Chatrie*, which was not in this request.
+
+## Oct 26, 2026, 01:35 CDT — The replays: the check fixes, the re-recording and its allowance (P4.48)
+**Asked (the user):** *"Fix the two check bugs with tests, then re-record the three flagged runs. New allowance: $3.00 and 10 Exa searches."*
+**Came back:** locked as P4.48.
+- The two false-flag defects (01:34) are to be fixed in `api/checks/`, tests first:
+  - Markdown emphasis inside a quotation;
+  - a case name running into a following parenthesis.
+- The bracketed insertion in *Florida v. Riley* stays flagged (T1.12).
+- To re-record: `gps-tracking-car`, `geofence-warrants`, `backyard-from-air`. `phone-search-arrest` is kept.
+- The new allowance is $3.00 and 10 Exa searches, counted from the test database's month total of $3.6735.
+
+**Checked:** nothing yet.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** the fixes, the re-recording of the three runs, and the allowance, as quoted. Locked as P4.48.
