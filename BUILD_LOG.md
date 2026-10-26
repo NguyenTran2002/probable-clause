@@ -3550,3 +3550,21 @@ It amends P4.40.
 **Failures:** none.
 **Spend:** none on Anthropic, Voyage or Exa. Cloud Run, Artifact Registry and Secret Manager now bill in `probable-clause`, min 0 instances.
 **DECISION (user):** none beyond P5.1.
+
+## Oct 26, 2026, 03:11 CDT — Phase 5: four replays for now; T5.6's fifth deferred (P5.2)
+**Asked:** the open item carried by P4.53: T5.6's fifth replay, the question on the corpus that ends before *Chatrie*. The main session recommended recording it with the location-history question.
+**Came back:** locked as P5.2. The site keeps its four replays for now (P4.50, P4.52). T5.6's fifth replay is deferred, not dropped. Three of the four end with the band's outcome `found` (counted by script from `update_band` in each replay).
+**Spend:** none.
+**DECISION (user):** *"Let's keep it to four replays for now."* Locked as P5.2.
+
+## Oct 26, 2026, 03:11 CDT — Phase 5: the skipped band line left as built (P5.3)
+**Asked:** the open item from "Oct 25, 2026, 17:50 CDT": T5.3 #4 gives both "Update check skipped: <reason>" and "Claude's reason: <reason>", and the page shows only the first, so the reason is not repeated. The main session recommended keeping it as built.
+**Came back:** locked as P5.3. The page stays as built for now; T5.3 #4's second line is not shown.
+**Spend:** none.
+**DECISION (user):** *"Leave at is for now."* Locked as P5.3.
+
+## Oct 26, 2026, 03:11 CDT — Phase 5: the cost line's note on estimates, and a redeploy now (P5.4)
+**Asked:** the open item from "Oct 25, 2026, 17:50 CDT": the cost line's total counts this site's estimates for attempts that reported no usage (T3.3), while its note (T5.2) says "from each response's token counts". The main session recommended a short note shown only when an estimate is in the total.
+**Came back:** locked as P5.4: the note is added and the site redeployed now, which is the deploy green light for this change.
+**Spend:** none.
+**DECISION (user):** *"Add and redeploy now."* Locked as P5.4.

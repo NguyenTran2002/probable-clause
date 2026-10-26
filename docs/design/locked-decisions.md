@@ -1401,3 +1401,24 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"GitHub link github.com/NguyenTran2002/probable-clause is correct. We will push soon."* *"Sure."* *"Not a problem."* *"I'll greenlight 1, 2, and 3. For green light 4, I'd do the live paid run on the domain myself."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 02:52 CDT — Phase 5: the deploy green-lit, setup, deploy and goodnight (P5.1)"
+
+### P5.2 Four replays for now; T5.6's fifth deferred (amends P4.32)
+
+- **Decision:** The site keeps its four replays (P4.50, P4.52). T5.6's fifth replay, on the corpus that ends before *Chatrie*, is deferred.
+- **User's words:** *"Let's keep it to four replays for now."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 03:11 CDT — Phase 5: four replays for now; T5.6's fifth deferred (P5.2)"
+
+### P5.3 The skipped band line left as built (amends T5.3 #4)
+
+- **Decision:** When the web search is skipped, the page shows "Update check skipped: <reason>" only; T5.3 #4's "Claude's reason: <reason>" line is not shown, so the reason is not repeated. Left as built for now.
+- **User's words:** *"Leave at is for now."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 03:11 CDT — Phase 5: the skipped band line left as built (P5.3)"
+
+### P5.4 The cost line notes this site's estimates; redeployed now (amends T5.2)
+
+- **Decision:** When a run's cost total includes this site's estimate for attempts that reported no usage (T3.3), the cost details say so, with the count. Runs without one are unchanged. The site is redeployed with this change now.
+- **User's words:** *"Add and redeploy now."*
+- **Date:** Oct 26, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 03:11 CDT — Phase 5: the cost line's note on estimates, and a redeploy now (P5.4)"
