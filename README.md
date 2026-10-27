@@ -218,6 +218,7 @@ Each phase ends with a git tag. Times are Chicago time (CDT).
 | Deploy | Oct 26, 03:06 | | Live on Cloud Run behind the author's gateway; the first live run at 03:25 |
 | After the build: a cold start | Oct 26, 11:42 | | One cold start measured after 7 h 24 min idle: 32.5 s as the caller saw it, 31.5 s on Cloud Run's side. The app was not modified, and this is not counted as build time |
 | After the build: this README reworked | Oct 26, 12:10 | | The opening now points to this section, which gained the commit, decision and subagent counts and the points on discussion, the two conversations and the overnight run. Prompts re-exported; not counted as build time |
+| After the build: a step log patch | Oct 27, 11:58 | | Found by the author on a live cold start: "Starting the research server" was numbered 1, and so was research's first step. It is now unnumbered and gives way to research's first step. Checked on the mock, redeployed, prompts re-exported; not counted as build time |
 
 ### How the work was run
 

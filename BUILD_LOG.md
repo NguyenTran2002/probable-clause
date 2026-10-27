@@ -3704,3 +3704,17 @@ It amends P4.40.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** P5.9, as asked above.
+
+## Oct 27, 2026, 11:59 CDT — Phase 5: P5.8 and P5.9 redeployed; prompts re-exported; pushed
+**Asked (the user):** *"Looking good to me. Same protocol as before for redeployment and push."* *"You'll just need to re-export the prompt (including this one), update some counters here and there, commit, then push. I'd treat this as a small add on production patching session, not counting toward main development time."*
+**Came back:**
+- **Before the redeploy:** the API's logs for the past two hours show one run, the user's own cold-start run `UrpyfOFC2cqor71oRrqCSg` (POST at 10:39:53 CDT, keep-alives to 10:40:33), ended over an hour before; no run was cut off. Its events were kept first by `scripts/fetch_run.py` as `data/verification/live/live-cold-start-oct27-UrpyfOFC2cqor71oRrqCSg.jsonl` (220 events; `answered`, answer complete, 4 rounds, 6 Claude calls, no Exa search).
+- **The redeploy,** `deploy.sh` from 11:56:53 to 11:58:19 CDT, exit 0, at commit `c39434b`: `probable-clause-api-00003-zhs` and `probable-clause-web-00003-c85`. goodnight is untouched.
+- **On the domain:** `/health` reports commit `c39434b`; the served `steps.js` and `style.css` carry P5.8 and P5.9; the page and the replay index answer 200, and goodnight's own page 200. No live run was sent to check the step log, since one would be paid; the mock check stands.
+- **The prompts,** re-exported: the build is unchanged (304 prompts, 12,062 words, 35.1 hours, four sittings, 32 compactions). This sitting is the sixth, after the build: 6 prompts so far. After the build in all: 14 prompts in two sittings, 2 compactions. 23 prompts carry a redaction (this sitting's screenshot is "[image not published]"); the flag list was read, and the file has no local path, e-mail address or the previous project's name.
+- **The README:** a timeline row for this sitting, after the build, with no hours or prompts counted (P5.6). The build's figures are unchanged.
+
+**Checked:** as above.
+**Failures:** none.
+**Spend:** none on Anthropic, Voyage or Exa.
+**DECISION (user):** the redeploy and the push, as asked above; this sitting is not build time (P5.6).
