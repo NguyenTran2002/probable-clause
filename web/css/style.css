@@ -406,6 +406,8 @@ body:not(.replaying) #skip, body.replaying #send { display: none; }
   background: var(--surface);
   color: var(--muted);
 }
+/* the waking step and the run's last step sit in lists of their own, outside research's count: a mark, no number */
+.steps.pre .step::before, .steps.post .step::before { content: ""; }
 .step::after { content: ""; position: absolute; left: calc(0.8rem - 1px); top: 1.85rem; bottom: 0.2rem; width: 2px; background: var(--line); }
 .step:last-child { padding-bottom: 0; }
 .step:last-child::after { display: none; }

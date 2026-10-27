@@ -3677,3 +3677,18 @@ It amends P4.40.
 **Failures:** a first count of prompts saying "open to" (32) was mostly "Open topic"; it was dropped before the draft was shown.
 **Spend:** none.
 **DECISION (user):** P5.7, as asked above.
+
+## Oct 27, 2026, 11:35 CDT — Phase 5: the waking step unnumbered, and replaced by the first tool step (P5.8)
+**Asked (the user),** after a cold-start run on the live site: *"I noticed that "Starting the research server" is also numbered 1 as well."* *"We should have this step to be not-numbered for consistency."* *"Preferably, as soon as the first tool call is in, replace Starting the research server with it."*
+**Came back:**
+- **The cause:** the step log is three lists (`web/js/steps.js`): the waking step, research's steps, and the run's last step. Each `.steps` list resets the CSS counter, so the waking step was 1 and research's first step was 1 again. The run's last step (a refusal, or an end the visitor is told about, such as "interrupted") had the same defect: it showed 1 after research's steps.
+- **The fix:**
+  - `style.css`: the waking step and the run's last step keep their mark on the rail with no number; research's steps alone are counted.
+  - `steps.js`: the waking step is removed when the first tool step shows. While Claude's first call is thinking, the waking step stays, done and unnumbered, above "Claude is thinking" (1); the first search then takes its place. If the server never starts, the waking step stays with its "did not start" line, as before.
+  - The run's last step unnumbered is the main session's call, the same defect as the one reported; it is one CSS selector to undo.
+- **Not deployed and not pushed.** The live site still numbers the waking step until a redeploy, on the user's green light.
+
+**Checked:** on the mock (8765), with a cold start of 8 s and events at a fifth of their speed: the waking step pulsing with no number; then done, unnumbered, above "Claude is thinking" with 1; then removed as "Searching by meaning" showed with 1. A refused run (`busy`): its last step unnumbered. The page's Node tests: 86 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** P5.8, as asked above.

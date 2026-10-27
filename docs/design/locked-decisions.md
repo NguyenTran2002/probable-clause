@@ -1456,3 +1456,13 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"I want to modify the current version to highlight the process more and call attention to it much earlier"* *"It's meant to be a pointer with some hook information but not laying out everything in the interest of space."* *"We still leave it in the full body below as I think an engineer understanding how to build with claude code will see how well the overnight run is regulated and carried out. However, having that part at the very beginning can trigger an HR recruiter who might not be that familiar with Claude Code."*
 - **Date:** Oct 26, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 26, 2026, 12:22 CDT — Phase 5: the README's opening points to the process; the build section expanded (P5.7)"
+
+### P5.8 The waking step is unnumbered and gives way to the first tool step
+
+- **Decision:**
+  - "Starting the research server" has a mark on the rail and no number; research's steps alone are numbered, from 1.
+  - The waking step is removed when the first tool step shows.
+  - The run's last step (a refusal, or an end the visitor is told about) is unnumbered too (the main session's call, the same defect).
+- **User's words:** *"We should have this step to be not-numbered for consistency."* *"Preferably, as soon as the first tool call is in, replace Starting the research server with it."*
+- **Date:** Oct 27, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 27, 2026, 11:35 CDT — Phase 5: the waking step unnumbered, and replaced by the first tool step (P5.8)"
