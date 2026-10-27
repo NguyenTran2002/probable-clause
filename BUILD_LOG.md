@@ -3692,3 +3692,15 @@ It amends P4.40.
 **Failures:** none.
 **Spend:** none.
 **DECISION (user):** P5.8, as asked above.
+
+## Oct 27, 2026, 11:50 CDT — Phase 5: "Claude is thinking" replaces the waking step (P5.9, amends P5.8)
+**Asked (the user),** after seeing P5.8 on the mock: *"Claude is thinking is when the server already sent an API request to Anthropic, so it should replace the starting the research server as well."* And: *"is it sending actual calls to Anthropic if I type in and hit search opinion?"*
+**Came back:**
+- **The change:** `steps.js` removes the waking step when research's first step shows, whatever it is, so "Claude is thinking" (1) takes its place; P5.8 waited for the first tool step. Everything else in P5.8 stands.
+- **The mock makes no paid call:** `webdev/serve.py` imports the standard library only, with no HTTP client, and plays every run from `tests/fixtures/`. Typing a question there plays the fixture `answered-phone-location-records` whatever is asked.
+- **Not deployed and not pushed.**
+
+**Checked:** on the mock (8765), with every health check taking 6 s and events at 0.3 of their speed: the waking step at 0.8 s, unnumbered and pulsing; at 6.05 s it was gone and "Claude is thinking" showed alone, numbered 1. The page's Node tests: 86 passed.
+**Failures:** none.
+**Spend:** none.
+**DECISION (user):** P5.9, as asked above.

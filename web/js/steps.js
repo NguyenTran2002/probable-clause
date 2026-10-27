@@ -21,7 +21,7 @@ export function createSteps(container, { onGoto }) {
   const pre = h('ol', { class: 'steps pre' });     // the waking step and refusals before any event
   const post = h('ol', { class: 'steps post' });   // the run's last step
   container.append(pre, research, post);
-  let wakeLi = null;   // the waking step, until the first tool step takes its place
+  let wakeLi = null;   // the waking step, until research's first step takes its place
 
   function sync(run) {
     for (const [step, list] of Object.entries(run.lists)) {
@@ -36,7 +36,7 @@ export function createSteps(container, { onGoto }) {
           els.set(it, rec);
           // a Claude call's item sits before the tools it led to
           research.append(fresh(li));
-          if (it.type === 'tool' && wakeLi) { wakeLi.remove(); wakeLi = null; }
+          if (wakeLi) { wakeLi.remove(); wakeLi = null; }
         }
         if (rec.sig !== sig) { render(run, it, rec.li); rec.sig = sig; }
       }
@@ -142,7 +142,7 @@ export function createSteps(container, { onGoto }) {
   }
 
   // the run's first step, before any event: waking (T4.4 #1). Unnumbered, like the run's last step (style.css), and
-  // removed when the first tool step shows, so research's steps alone are counted (the user, Oct 27, 2026)
+  // removed when research's first step shows, "Claude is thinking" included (the user, Oct 27, 2026)
   function waking() {
     const li = h('li', { class: 'step working' }, h('h3', null, T.WAKING));
     wakeLi = li;

@@ -1466,3 +1466,10 @@ Numbering: `P<phase>.<n>` for decisions made in Phases 0 to 2 and 4 to 5; `T<top
 - **User's words:** *"We should have this step to be not-numbered for consistency."* *"Preferably, as soon as the first tool call is in, replace Starting the research server with it."*
 - **Date:** Oct 27, 2026
 - **Log:** `BUILD_LOG.md`, "Oct 27, 2026, 11:35 CDT — Phase 5: the waking step unnumbered, and replaced by the first tool step (P5.8)"
+
+### P5.9 Research's first step replaces the waking step, "Claude is thinking" included (amends P5.8)
+
+- **Decision:** the waking step is removed when research's first step shows, not when the first tool step shows. The rest of P5.8 stands.
+- **User's words:** *"Claude is thinking is when the server already sent an API request to Anthropic, so it should replace the starting the research server as well."*
+- **Date:** Oct 27, 2026
+- **Log:** `BUILD_LOG.md`, "Oct 27, 2026, 11:50 CDT — Phase 5: "Claude is thinking" replaces the waking step (P5.9, amends P5.8)"
